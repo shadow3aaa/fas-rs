@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Fps"],"macro":["support_controller","support_sensor"],"struct":["Scheduler"],"trait":["VirtualFrameSensor","VirtualPerformanceController"],"type":["FrameTime"]};

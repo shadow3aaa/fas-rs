@@ -1,1 +1,6 @@
-/*/target
+# target
+/target
+/fas_rs_fw/target
+
+# vscode
+.vscode
