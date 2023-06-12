@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"fas_rs_fw":[["impl&lt;'a&gt; !<a class=\"trait\" href=\"https://doc.rust-lang.org/1.69.0/core/marker/trait.Sync.html\" title=\"trait core::marker::Sync\">Sync</a> for <a class=\"struct\" href=\"fas_rs_fw/struct.Scheduler.html\" title=\"struct fas_rs_fw::Scheduler\">Scheduler</a>&lt;'a&gt;",1,["fas_rs_fw::scheduler::Scheduler"]],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.69.0/core/marker/trait.Sync.html\" title=\"trait core::marker::Sync\">Sync</a> for <a class=\"enum\" href=\"fas_rs_fw/enum.Fps.html\" title=\"enum fas_rs_fw::Fps\">Fps</a>",1,["fas_rs_fw::Fps"]]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

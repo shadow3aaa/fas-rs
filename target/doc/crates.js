@@ -1,0 +1,1 @@
+window.ALL_CRATES = ["fas_rs","fas_rs_fw"];
