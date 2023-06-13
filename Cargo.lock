@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "fas-rs"
+name = "fas-rs-bin"
 version = "0.1.0"
 dependencies = [
  "fas-rs-fw",
