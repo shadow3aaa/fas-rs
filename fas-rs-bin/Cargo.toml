@@ -12,4 +12,4 @@ opt-level = 3
 strip = true
 
 [dependencies]
-fas-rs-fw = { path = "../fas_rs_fw" }
+fas-rs-fw = { path = "../fas-rs-fw" }

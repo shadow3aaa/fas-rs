@@ -8,6 +8,7 @@ use std::time::Duration;
 /// 这里的[`self::FrameTime`]可能是 `帧渲染间隔` 或 `帧渲染时间`
 /// 一般来说, 后者比较难从系统获得
 pub type FrameTime = Duration;
+pub type TargetFps = u32;
 
 /// [`self::Fps`]获取结果一般有两种形式
 /// 如果系统给出的是从开始到现在一共渲染了多少帧, 那就易计算出平均[`self::Fps`] (dumpsys就是)
@@ -20,7 +21,7 @@ pub enum Fps {
 /// 帧传感器接口
 /// `Frame Aware` 意为感知帧变化
 /// 目前没有发现通用且高效的获取[`self::FrameTime`]方法, 需要针对不同设备实现
-pub trait VirtualFrameSensor {
+pub trait VirtualFrameSensor: Send {
     /// 设备是否支持此实现
     fn support() -> bool
     where
@@ -50,7 +51,7 @@ pub trait VirtualFrameSensor {
 /// 性能控制器接口
 /// 控制设备性能状态的控制器
 /// 目前只实现了一个设备基本通用的Cpu控制器
-pub trait VirtualPerformanceController {
+pub trait VirtualPerformanceController: Send {
     /// 设备是否支持此实现
     fn support() -> bool
     where

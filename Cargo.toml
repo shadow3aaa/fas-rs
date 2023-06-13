@@ -1,5 +1,5 @@
 [workspace]
 members = [
-    "fas_rs_bin",
-    "fas_rs_fw"
+    "fas-rs-bin",
+    "fas-rs-fw"
 ]
