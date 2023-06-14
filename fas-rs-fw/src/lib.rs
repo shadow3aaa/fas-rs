@@ -34,8 +34,8 @@ pub trait VirtualFrameSensor: Send {
         Self: Sized;
     /// 获取指定数量的历史[`self::FrameTime`]的平均数
     fn frametimes(&self, count: u32) -> Vec<FrameTime>;
-    /// 获取指定时间内的历史[`self::Fps`]的平均数
-    fn avg_fps(&self, time: Duration) -> Fps;
+    /// 获取指定时间内的历史[`self::Fps`]
+    fn fps(&self, time: Duration) -> Fps;
     /// 很多时候, 监视帧状态是开销较大的
     /// 因此[`self::Scheduler`]在每次从调度中退出后
     /// 会调用此方法关闭监视

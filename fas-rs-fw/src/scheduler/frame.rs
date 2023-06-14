@@ -22,11 +22,11 @@ impl Scheduler {
         target_fps: TargetFps,
     ) -> Result<(), Box<dyn Error>> {
         if target_fps <= 10 {
-            return Err("Target Fps should be no less than 10".into());
+            return Err("Target Fps should never be less than 10".into());
         }
 
         let frametimes = sensor.frametimes(10);
-        let fps = sensor.avg_fps(Duration::from_millis(400));
+        let fps = sensor.fps(Duration::from_millis(400));
 
         if jank(frametimes, fps, target_fps) {
             controller.release();

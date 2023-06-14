@@ -1,4 +1,3 @@
-//! [`self::Scheduler]通过[`crate::VirtualFrameSensor`]和[`crate::VirtualPerformanceController`]来进行调度
 //! 提供一个帧感知调度基本逻辑和一些api
 
 mod frame;
@@ -10,6 +9,7 @@ use std::thread;
 use crate::TargetFps;
 use crate::{VirtualFrameSensor, VirtualPerformanceController};
 
+/// [`self::Scheduler]通过[`crate::VirtualFrameSensor`]和[`crate::VirtualPerformanceController`]来进行调度
 pub struct Scheduler {
     sender: SyncSender<Command>,
 }
@@ -73,6 +73,7 @@ impl Scheduler {
                     Command::Unload => {
                         if loaded {
                             loaded = false;
+                            // init unload
                             Self::process_unload(&*sensor, &*controller).unwrap();
                         }
                     }
