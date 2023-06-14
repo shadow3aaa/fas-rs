@@ -1,2 +1,3 @@
-//! 放置[`crate::VirtualFrameSensor`]的实现
+//! 放置[`fas_rs_fw::VirtualFrameSensor`]的实现
 
+pub mod mtk_fpsgo;
