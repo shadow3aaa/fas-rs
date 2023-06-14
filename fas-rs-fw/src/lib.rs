@@ -1,5 +1,5 @@
-mod scheduler;
 pub mod prelude;
+mod scheduler;
 
 use std::error::Error;
 use std::time::Duration;

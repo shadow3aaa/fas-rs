@@ -6,18 +6,13 @@
 //! use fas_rs_fw::prelude::contoller::*;
 //! ```
 
-
 pub mod sensor {
-    pub use crate::{
-        VirtualFrameSensor,
-        Fps,
-        FrameTime,
-    };
+    pub use crate::{Fps, FrameTime, VirtualFrameSensor};
+    pub use std::error::Error;
     pub use std::time::Duration;
 }
 
 pub mod controller {
-    pub use crate::{
-        VirtualPerformanceController,
-    };
+    pub use crate::VirtualPerformanceController;
+    pub use std::error::Error;
 }

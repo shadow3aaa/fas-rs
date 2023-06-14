@@ -1,21 +1,17 @@
-use std::error::Error;
-
 use fas_rs_fw::prelude::sensor::*;
 
-pub struct SensorMtkFpsGo {
-
-}
+pub struct SensorMtkFpsGo {}
 
 impl VirtualFrameSensor for SensorMtkFpsGo {
     fn support() -> bool
     where
-        Self: Sized
+        Self: Sized,
     {
         todo!()
     }
     fn new() -> Result<Self, Box<dyn Error>>
     where
-        Self: Sized
+        Self: Sized,
     {
         todo!()
     }
@@ -26,11 +22,11 @@ impl VirtualFrameSensor for SensorMtkFpsGo {
     fn fps(&self, time: Duration) -> Fps {
         todo!()
     }
-    
+
     fn pause(&self) -> Result<(), Box<dyn Error>> {
         todo!()
     }
-    
+
     fn resume(&self) -> Result<(), Box<dyn Error>> {
         todo!()
     }
