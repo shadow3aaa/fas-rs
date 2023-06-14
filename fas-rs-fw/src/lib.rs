@@ -1,9 +1,10 @@
 mod scheduler;
 pub mod tools;
-pub use scheduler::Scheduler;
 
 use std::error::Error;
 use std::time::Duration;
+
+pub use scheduler::Scheduler;
 
 /// 这里的[`self::FrameTime`]可能是 `帧渲染间隔` 或 `帧渲染时间`
 /// 一般来说, 后者比较难从系统获得
@@ -31,9 +32,9 @@ pub trait VirtualFrameSensor: Send {
     fn new() -> Result<Self, Box<dyn Error>>
     where
         Self: Sized;
-    /// 获取指定数量的历史[`self::FrameTime`]
+    /// 获取指定数量的历史[`self::FrameTime`]的平均数
     fn frametimes(&self, count: u32) -> Vec<FrameTime>;
-    /// 获取指定时间内的历史[`self::Fps`]
+    /// 获取指定时间内的历史[`self::Fps`]的平均数
     fn avg_fps(&self, time: Duration) -> Fps;
     /// 很多时候, 监视帧状态是开销较大的
     /// 因此[`self::Scheduler`]在每次从调度中退出后

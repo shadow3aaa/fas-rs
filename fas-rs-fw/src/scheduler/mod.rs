@@ -7,7 +7,7 @@ use std::error::Error;
 use std::sync::mpsc::{self, Receiver, SyncSender};
 use std::thread;
 
-use crate::{Fps, FrameTime, TargetFps};
+use crate::TargetFps;
 use crate::{VirtualFrameSensor, VirtualPerformanceController};
 
 pub struct Scheduler {
@@ -15,9 +15,17 @@ pub struct Scheduler {
 }
 
 enum Command {
-    Unload,
     Load(TargetFps),
+    Unload,
     Stop,
+}
+
+impl Drop for Scheduler {
+    // 这个drop实现是堵塞的…
+    // 不过一般来说你也不会drop它，而且send而不是try_send可以保证发送
+    fn drop(&mut self) {
+        let _ = self.sender.send(Command::Stop);
+    }
 }
 
 impl Scheduler {
@@ -33,22 +41,18 @@ impl Scheduler {
         Ok(Self { sender: tx })
     }
 
-    /// 卸载
+    /// 卸载[`self::Scheduler`]
+    /// 用于临时暂停
     pub fn unload(&self) -> Result<(), Box<dyn Error>> {
         self.sender.try_send(Command::Unload)?;
         Ok(())
     }
 
-    /// 载入
+    /// 载入[`self::Scheduler`]
     /// 如果已经载入，再次调用会重载
     /// 每次载入/重载要指定新的[`crate::TargetFps`]
     pub fn load(&self, target: TargetFps) -> Result<(), Box<dyn Error>> {
         self.sender.try_send(Command::Load(target))?;
-        Ok(())
-    }
-
-    fn stop(&self) -> Result<(), Box<dyn Error>> {
-        self.sender.try_send(Command::Stop)?;
         Ok(())
     }
 }
@@ -60,19 +64,31 @@ impl Scheduler {
         receiver: Receiver<Command>,
     ) {
         let mut loaded = false;
+        let mut target_fps = TargetFps::default();
+
         loop {
-            match receiver.recv().unwrap() {
-                Command::Stop => return,
-                Command::Unload => {
-                    if loaded {
-                        loaded = false;
-                        Self::process_unload();
+            if let Ok(command) = receiver.try_recv() {
+                match command {
+                    Command::Stop => return,
+                    Command::Unload => {
+                        if loaded {
+                            loaded = false;
+                            Self::process_unload(&*sensor, &*controller).unwrap();
+                        }
+                    }
+                    Command::Load(fps) => {
+                        loaded = true;
+                        target_fps = fps;
+
+                        // init load
+                        sensor.resume().unwrap();
+                        controller.plug_in().unwrap();
                     }
                 }
-                Command::Load(fps) => {
-                    loaded = true;
-                    Self::process_load(&sensor, &controller, fps);
-                }
+            }
+
+            if loaded {
+                Self::process_load(&*sensor, &*controller, target_fps).unwrap();
             }
         }
     }
