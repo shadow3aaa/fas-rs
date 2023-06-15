@@ -37,7 +37,7 @@ impl Scheduler {
         let sleep_time = Duration::from_secs(1)
             .saturating_mul(10)
             .checked_div(target_fps)
-            .unwrap_or(Duration::from_millis(10));
+            .unwrap_or(Duration::from_millis(6));
 
         thread::sleep(sleep_time);
 
@@ -46,11 +46,8 @@ impl Scheduler {
 }
 
 // 判断是否出现卡顿
-fn jank(frametimes: Vec<FrameTime>, fps: Fps, target: TargetFps) -> bool {
-    let avg_fps = match fps {
-        Fps::Avg(avg) => avg,
-        Fps::PerSec(fps_vec) => fps_vec.iter().sum::<u32>() / fps_vec.len() as u32,
-    };
+fn jank(frametimes: Vec<FrameTime>, fps_vec: Vec<Fps>, target: TargetFps) -> bool {
+    let avg_fps = fps_vec.iter().sum::<u32>() / fps_vec.len() as u32;
 
     if avg_fps < target - 3 {
         return true;

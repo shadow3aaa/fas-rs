@@ -5,11 +5,6 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[profile.release]
-lto = "fat"
-codegen-units = 1
-opt-level = 3
-strip = true
-
 [dependencies]
+crossbeam-channel = "0.5.8"
 fas-rs-fw = { path = "../fas-rs-fw" }

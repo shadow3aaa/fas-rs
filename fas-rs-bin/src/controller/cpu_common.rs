@@ -1,9 +1,8 @@
-use fas_rs_fw::prelude::controller::*;
+use fas_rs_fw::prelude::*;
 
 pub struct CpuCommon {}
 
 impl VirtualPerformanceController for CpuCommon {
-    /// 设备是否支持此实现
     fn support() -> bool
     where
         Self: Sized,

@@ -3,9 +3,14 @@ mod sensor;
 
 use std::error::Error;
 
-fn main() -> Result<(), Box<dyn Error>> {
-    todo!()
-    /* let scheduler = Scheduler::new()?;
+use fas_rs_fw::prelude::*;
+use fas_rs_fw::Scheduler;
 
-    Ok(()) */
+use controller::cpu_common::CpuCommon;
+use sensor::mtk_fpsgo::MtkFpsGo;
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let scheduler = Scheduler::new(Box::new(MtkFpsGo::new()?), Box::new(CpuCommon::new()?))?;
+
+    Ok(())
 }

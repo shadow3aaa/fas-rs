@@ -10,14 +10,7 @@ pub use scheduler::Scheduler;
 /// 一般来说, 后者比较难从系统获得
 pub type FrameTime = Duration;
 pub type TargetFps = u32;
-
-/// [`self::Fps`]获取结果一般有两种形式
-/// 如果系统给出的是从开始到现在一共渲染了多少帧, 那就易计算出平均[`self::Fps`] (dumpsys就是)
-/// 如果只能获得当前的[`self::Fps`], 那么就易收集为一个数组
-pub enum Fps {
-    Avg(u32),
-    PerSec(Vec<u32>),
-}
+pub type Fps = u32;
 
 /// 帧传感器接口
 /// `Frame Aware` 意为感知帧变化
@@ -35,7 +28,7 @@ pub trait VirtualFrameSensor: Send {
     /// 获取指定数量的历史[`self::FrameTime`]的平均数
     fn frametimes(&self, count: u32) -> Vec<FrameTime>;
     /// 获取指定时间内的历史[`self::Fps`]
-    fn fps(&self, time: Duration) -> Fps;
+    fn fps(&self, time: Duration) -> Vec<Fps>;
     /// 很多时候, 监视帧状态是开销较大的
     /// 因此[`self::Scheduler`]在每次从调度中退出后
     /// 会调用此方法关闭监视
