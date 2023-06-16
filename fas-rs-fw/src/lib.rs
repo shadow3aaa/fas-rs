@@ -26,7 +26,7 @@ pub trait VirtualFrameSensor: Send {
     where
         Self: Sized;
     /// 获取指定数量的历史[`self::FrameTime`]的平均数
-    fn frametimes(&self, count: usize) -> Vec<FrameTime>;
+    fn frametimes(&self, count: usize, target_fps: TargetFps) -> Vec<FrameTime>;
     /// 获取指定时间内的历史[`self::Fps`]
     fn fps(&self, time: Duration) -> Vec<Fps>;
     /// 很多时候, 监视帧状态是开销较大的

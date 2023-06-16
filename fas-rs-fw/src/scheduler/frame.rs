@@ -25,7 +25,7 @@ impl Scheduler {
             return Err("Target Fps should never be less than 10".into());
         }
 
-        let frametimes = sensor.frametimes(10);
+        let frametimes = sensor.frametimes(10, target_fps);
         let fps = sensor.fps(Duration::from_millis(400));
 
         if jank(frametimes, fps, target_fps) {
