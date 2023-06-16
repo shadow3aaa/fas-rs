@@ -5,6 +5,7 @@ use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
+use std::time::Instant;
 
 use fas_rs_fw::prelude::*;
 use parse::*;
@@ -15,9 +16,9 @@ pub(crate) const BUFFER_CAP: usize = 512;
 pub struct MtkFpsGo {
     // 缓冲区
     frametime_buffer: Arc<Mutex<Vec<FrameTime>>>,
-    fps_buffer: Arc<Mutex<Vec<Fps>>>,
+    fps_buffer: Arc<Mutex<Vec<(Instant, Fps)>>>,
     // 控制启停
-    thread_handle: (JoinHandle<()>, JoinHandle<()>),
+    thread_handle: [JoinHandle<()>; 2],
     pause: Arc<AtomicBool>,
 }
 
@@ -47,10 +48,10 @@ impl VirtualFrameSensor for MtkFpsGo {
         let frametime_clone = frametime_buffer.clone();
         let fps_clone = fps_buffer.clone();
 
-        let thread_handle = (
+        let thread_handle = [
             thread::spawn(move || frametime_thread(frametime_clone, pause_frametime)),
             thread::spawn(move || fps_thread(fps_clone, pause_fps)),
-        );
+        ];
 
         Ok(Self {
             frametime_buffer,
@@ -60,12 +61,20 @@ impl VirtualFrameSensor for MtkFpsGo {
         })
     }
 
-    fn frametimes(&self, count: u32) -> Vec<FrameTime> {
-        *self.frametime_buffer.lock().unwrap()
+    fn frametimes(&self, count: usize) -> Vec<FrameTime> {
+        let mut data = (*self.frametime_buffer.lock().unwrap()).clone();
+        data.truncate(count);
+        data
     }
 
     fn fps(&self, time: Duration) -> Vec<Fps> {
-        *self.fps_buffer.lock().unwrap()
+        let mut data = (*self.fps_buffer.lock().unwrap()).clone();
+
+        let now = Instant::now();
+        if let Some(pos) = data.iter().position(|(stamp, _)| now - *stamp >= time) {
+            data.truncate(pos);
+        }
+        data.into_iter().map(|(_, fps)| fps).collect()
     }
 
     fn pause(&self) -> Result<(), Box<dyn Error>> {
@@ -74,11 +83,17 @@ impl VirtualFrameSensor for MtkFpsGo {
     }
 
     fn resume(&self) -> Result<(), Box<dyn Error>> {
-        fs::write(Path::new(FPSGO).join("common/fpsgo_enable"), "1")?;
+        enable_fpsgo()?;
 
-        self.thread_handle.0.thread().unpark();
-        self.thread_handle.1.thread().unpark();
+        for handle in &self.thread_handle {
+            handle.thread().unpark();
+        }
 
         Ok(())
     }
+}
+
+#[inline]
+pub(crate) fn enable_fpsgo() -> Result<(), std::io::Error> {
+    fs::write(Path::new(FPSGO).join("common/fpsgo_enable"), "1")
 }
