@@ -101,9 +101,6 @@ fn parse_frametime(fbt_info: &str) -> Option<u64> {
         return None; // 需要重新读取
     }
 
-    /*println!("{}", fbt_info.lines().nth(8)?.trim());
-    println!("{:?}", parse_line.nth(0));*/
-
     return parse_line.nth(5)?.trim().parse::<u64>().ok();
 }
 

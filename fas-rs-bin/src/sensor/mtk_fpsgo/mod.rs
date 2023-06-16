@@ -7,6 +7,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::Instant;
 
+use super::IgnoreFrameTime;
 use fas_rs_fw::prelude::*;
 use parse::*;
 
@@ -17,6 +18,8 @@ pub struct MtkFpsGo {
     // 缓冲区
     frametime_buffer: Arc<Mutex<Vec<FrameTime>>>,
     fps_buffer: Arc<Mutex<Vec<(Instant, Fps)>>>,
+    // 异常FrameTime忽略器
+    ignore: IgnoreFrameTime,
     // 控制启停
     thread_handle: [JoinHandle<()>; 2],
     pause: Arc<AtomicBool>,
@@ -56,15 +59,18 @@ impl VirtualFrameSensor for MtkFpsGo {
         Ok(Self {
             frametime_buffer,
             fps_buffer,
+            ignore: IgnoreFrameTime::new(),
             pause,
             thread_handle,
         })
     }
 
-    fn frametimes(&self, count: usize) -> Vec<FrameTime> {
+    fn frametimes(&self, count: usize, target_fps: TargetFps) -> Vec<FrameTime> {
         let mut data = (*self.frametime_buffer.lock().unwrap()).clone();
         data.truncate(count);
-        data
+        data.into_iter()
+            .filter_map(|frametime| self.ignore.ign(frametime, target_fps))
+            .collect()
     }
 
     fn fps(&self, time: Duration) -> Vec<Fps> {
