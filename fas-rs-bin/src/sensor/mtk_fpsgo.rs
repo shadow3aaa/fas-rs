@@ -108,9 +108,45 @@ fn frametime_thread(
         if buffer.len() > BUFFER_CAP {
             buffer.pop_front();
         }
-        
-        buffer.push_back()
+
+        let stamps = [0, 0];
+
+        if let Some(stamp) = parse_fbt_info() {
+            stamps[0] = stamp
+        } else {
+            continue;
+        }
+
+        loop {
+            if let Some(stamp) = parse_fbt_info() {
+                if stamps[0] < stamp {
+                    stamps[1] = stamp;
+                    break;
+                }
+            }
+            thread::sleep(Duration::from_millis(6));
+        }
+
+        let frametime = FrameTime::from_nanos(stamps[1] - stamps[0]);
+
+        buffer.push_back(frametime);
     }
+}
+
+fn parse_fbt_info() -> Option<u64> {
+    /* 解析第8(从0开始)行
+    1(状态)	0		37	19533	0x4c2e00000021	60(屏幕刷新率)	24029340996131(最新帧的vsync时间戳) */
+    let fbt_info = fs::read_to_string(Path::new(FPSGO).join("/fbt/fbt_info")).unwrap();
+    let parse_line = fbt_info.lines().nth(8)?.split_whitespace();
+
+    let enabled = parse_line.nth(0)?.trim().parse::<u64>().ok()? == 1;
+
+    if !enabled {
+        fs::write(Path::new(FPSGO).join("common/fpsgo_enable"), "1").unwrap();
+        return None; // 需要重新读取
+    }
+
+    return Some(parse_line.nth(6)?.trim().parse::<u64>().ok()?);
 }
 
 fn fps_thread(
