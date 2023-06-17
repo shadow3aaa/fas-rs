@@ -44,7 +44,6 @@ pub trait VirtualFrameSensor: Send {
 
 /// 性能控制器接口
 /// 控制设备性能状态的控制器
-/// 目前只实现了一个设备基本通用的Cpu控制器
 pub trait VirtualPerformanceController: Send {
     /// 设备是否支持此实现
     fn support() -> bool

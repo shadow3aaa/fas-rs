@@ -7,8 +7,9 @@ use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::Instant;
 
-use super::IgnoreFrameTime;
 use fas_rs_fw::prelude::*;
+
+use super::IgnoreFrameTime;
 use parse::*;
 
 pub(crate) const FPSGO: &str = "/sys/kernel/fpsgo";
