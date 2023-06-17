@@ -1,9 +1,9 @@
 mod process;
 
-use std::sync::mpsc::{self, SyncSender};
 use std::fs;
-use std::thread::{self, JoinHandle};
 use std::path::Path;
+use std::sync::mpsc::{self, SyncSender};
+use std::thread::{self, JoinHandle};
 
 use fas_rs_fw::prelude::*;
 
@@ -20,7 +20,7 @@ pub struct CpuCommon {
 
 pub(crate) enum Command {
     Pause, // 暂停
-    Stop, // 结束
+    Stop,  // 结束
     Release,
     Limit,
 }
@@ -49,11 +49,11 @@ impl VirtualPerformanceController for CpuCommon {
         for policy in cpufreq {
             let path = policy?.path();
             let table_path = path.join("scaling_available_frequencies");
-            let this_table: FrequencyTable = fs::read_to_string(table_path)?
-                .trim()
+            let mut this_table: FrequencyTable = fs::read_to_string(table_path)?
                 .split_whitespace()
                 .filter_map(|freq| freq.parse().ok())
                 .collect();
+            this_table.sort_unstable(); // 频率表升序排列
 
             table.push((this_table, path.join("scaling_max_freq")));
         }
@@ -62,9 +62,13 @@ impl VirtualPerformanceController for CpuCommon {
         table.truncate(2); // 保留后两个集群即可
 
         let (command_sender, command_receiver) = mpsc::sync_channel(1);
-        let thread_handle = thread::spawn(|| process_freq(table, command_receiver));
 
-        Ok(Self { command_sender, thread_handle })
+        let thread_handle = thread::spawn(move || process_freq(table, command_receiver));
+
+        Ok(Self {
+            command_sender,
+            thread_handle,
+        })
     }
 
     fn limit(&self) {
