@@ -14,19 +14,19 @@ struct CpuFreq {
 
 impl CpuFreq {
     fn new(table: FrequencyTable, write_path: PathBuf) -> Self {
-        Self { table, path: write_path, pos: table.len() }
+        Self { pos: table.len(), table, path: write_path }
     }
     
-    fn prev(&mut self) -> Frequency {
-        if pos > 0 {
-            pos--;
+    fn prev(&mut self) {
+        if self.pos > 0 {
+            self.pos = self.pos - 1;
             self.write();
         }
     }
     
     fn next(&mut self) {
-        if pos < self.table.len() {
-            pos++;
+        if self.pos < self.table.len() {
+            self.pos = self.pos + 1;
             self.write();
         }
     }
@@ -38,7 +38,7 @@ impl CpuFreq {
     
     fn write(&self) {
         let value = self.table[self.pos].to_string();
-        let _ = fs::write(self.path, value);
+        let _ = fs::write(&self.path, value);
     }
 }
 
@@ -48,42 +48,32 @@ enum Mode {
 }
 
 enum Status {
-    OnLeft(bool),
-    OnRight(bool),
-    Single,
+    OnLeft,
+    OnRight,
 }
 
 impl Status {
-    fn swap() {
-        self = match self {
-            OnLeft(b) => Self::OnRight(b),
-            OnRight(b) => Self::OnLeft(b),
-            Single => Self::Single,
-        }
-    }
-    
-    fn swap_target(&mut self, b: bool) {
-        self = match self {
-            OnLeft(_) => Self::OnRight(b),
-            OnRight(_) => Self::OnLeft(b),
-            Single => Self::Single,
+    fn swap(self) -> Self {
+        match self {
+            Self::OnLeft => Self::OnRight,
+            Self::OnRight => Self::OnLeft,
         }
     }
 }
 
 pub(super) fn process_freq(
-    tables: Vec<(FrequencyTable, PathBuf)>,
+    mut tables: Vec<(FrequencyTable, PathBuf)>,
     command_receiver: Receiver<Command>,
 ) {
-    let mut status = Status::Signle;
-    let cpufreq = if tables.len() > 1 {
+    let mut status = None;
+    let mut cpufreq = if tables.len() > 1 {
         let table = tables.remove(0);
         let freq_a = CpuFreq::new(table.0, table.1);
         
         let table = tables.remove(0);
         let freq_b = CpuFreq::new(table.0, table.1);
         
-        status = Status::Onleft(false);
+        status = Some(Status::OnLeft);
         
         Mode::Double([freq_a, freq_b])
     } else {
@@ -91,7 +81,7 @@ pub(super) fn process_freq(
         let freq = CpuFreq::new(table.0, table.1);
         
         Mode::Single(freq)
-    }
+    };
 
     loop {
         if let Ok(command) = command_receiver.recv() {
@@ -104,12 +94,8 @@ pub(super) fn process_freq(
                     process_pause(&mut cpufreq);
                     return;
                 }
-                Command::Release => {
-                    process_release(&table, &mut policy_janked, &mut policy_pos, &mut policy_now)
-                }
-                Command::Limit => {
-                    process_limit(&table, &mut policy_janked, &mut policy_pos, &mut policy_now)
-                }
+                Command::Release => status = process_release(&mut cpufreq, status),
+                Command::Limit => status = process_limit(&mut cpufreq, status),
             }
         } else {
             return;
@@ -119,8 +105,8 @@ pub(super) fn process_freq(
 
 fn process_pause(cpufreq: &mut Mode) {
     match cpufreq {
-        Single(cpu) => cpu.reset(),
-        Double(cpus) => {
+        Mode::Single(cpu) => cpu.reset(),
+        Mode::Double(cpus) => {
             for cpu in cpus {
                 cpu.reset();
             }
@@ -128,33 +114,36 @@ fn process_pause(cpufreq: &mut Mode) {
     }
 }
 
-fn process_release(cpufreq: &mut Mode, status: &mut Status) {
+fn process_release(cpufreq: &mut Mode, status: Option<Status>) -> Option<Status> {
     match cpufreq {
-        Single(cpu) => cpu.next(),
-        Double(cpus) => {
+        Mode::Single(cpu) => {
+            cpu.next();
+            return None;
+        }
+        Mode::Double(cpus) => {
+            let status = status.unwrap();
             match status {
-                Status::OnLeft(twice) => {
-                    if twice {
-                        cpus[1].next();
-                    } else {
-                        cpus[0].next();
-                    }
-                },
-                Status::OnRight(twice) => cpus[1].next();
+                Status::OnLeft => cpus[0].next(),
+                Status::OnRight => cpus[1].next(),
             }
+            return Some(status.swap());
         }
     }
 }
 
-fn process_limit(cpufreq: &mut Mode, status: &mut Status) {
-    status.swap();
+fn process_limit(cpufreq: &mut Mode, status: Option<Status>) -> Option<Status> {
     match cpufreq {
-        Single(cpu) => cpu.next(),
-        Double(cpus) => {
+        Mode::Single(cpu) => {
+            cpu.next();
+            return None;
+        }
+        Mode::Double(cpus) => {
+            let status = status.unwrap().swap();
             match status {
                 Status::OnLeft => cpus[0].prev(),
-                Status::OnRight => cpus[1].prev();
+                Status::OnRight => cpus[1].prev(),
             }
+            return Some(status);
         }
     }
 }
