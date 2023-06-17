@@ -2,7 +2,9 @@ mod process;
 
 use std::fs;
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, SyncSender};
+use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 
 use fas_rs_fw::prelude::*;
@@ -16,11 +18,11 @@ pub(crate) type FrequencyTable = Vec<Frequency>;
 pub struct CpuCommon {
     command_sender: SyncSender<Command>,
     thread_handle: JoinHandle<()>,
+    pause: Arc<AtomicBool>,
 }
 
 pub(crate) enum Command {
-    Pause, // 暂停
-    Stop,  // 结束
+    Stop,
     Release,
     Limit,
 }
@@ -62,12 +64,16 @@ impl VirtualPerformanceController for CpuCommon {
         table.truncate(2); // 保留后两个集群即可
 
         let (command_sender, command_receiver) = mpsc::sync_channel(1);
+        let pause = Arc::new(AtomicBool::new(false));
+        let pause_clone = pause.clone();
 
-        let thread_handle = thread::spawn(move || process_freq(table, command_receiver));
+        let thread_handle =
+            thread::spawn(move || process_freq(table, command_receiver, pause_clone));
 
         Ok(Self {
             command_sender,
             thread_handle,
+            pause,
         })
     }
 
@@ -80,12 +86,13 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn plug_in(&self) -> Result<(), Box<dyn Error>> {
+        self.pause.store(false, Ordering::Release);
         self.thread_handle.thread().unpark();
         Ok(())
     }
 
     fn plug_out(&self) -> Result<(), Box<dyn Error>> {
-        self.command_sender.try_send(Command::Pause)?;
+        self.pause.store(true, Ordering::Release);
         Ok(())
     }
 }

@@ -68,6 +68,7 @@ impl VirtualFrameSensor for MtkFpsGo {
 
     fn frametimes(&self, count: usize, target_fps: TargetFps) -> Vec<FrameTime> {
         let mut data = (*self.frametime_buffer.lock().unwrap()).clone();
+
         data.truncate(count);
         data.into_iter()
             .filter_map(|frametime| self.ignore.ign(frametime, target_fps))
