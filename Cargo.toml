@@ -7,6 +7,6 @@ members = [
 [profile.release]
 lto = 'fat'
 codegen-units = 1
-opt-level = 'z'
+opt-level = 3
 strip = true
 panic = 'abort'

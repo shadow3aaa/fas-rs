@@ -34,11 +34,7 @@ impl Scheduler {
             controller.limit();
         }
 
-        let sleep_time = Duration::from_secs(1)
-            .saturating_mul(10)
-            .checked_div(target_fps)
-            .unwrap_or(Duration::from_millis(6));
-
+        let sleep_time = Duration::from_secs(10) / target_fps; // 等待10帧
         thread::sleep(sleep_time);
 
         Ok(())

@@ -59,7 +59,15 @@ impl VirtualPerformanceController for CpuCommon {
             table.push((this_table, path.join("scaling_max_freq")));
         }
 
-        table.reverse();
+        // 按policy降序排列
+        table.sort_by(|a, b| {
+            let name_a = a.1.parent().unwrap().file_name().unwrap().to_str().unwrap();
+            let name_b = b.1.parent().unwrap().file_name().unwrap().to_str().unwrap();
+
+            let num_a: usize = name_a.split("policy").nth(1).unwrap().parse().unwrap();
+            let num_b: usize = name_b.split("policy").nth(1).unwrap().parse().unwrap();
+            num_b.cmp(&num_a)
+        });
         table.truncate(2); // 保留后两个集群即可
 
         let (command_sender, command_receiver) = mpsc::sync_channel(1);

@@ -13,7 +13,6 @@ use super::{BUFFER_CAP, FPSGO};
 
 pub(super) fn frametime_thread(frametime: Arc<Mutex<Vec<FrameTime>>>, pause: Arc<AtomicBool>) {
     let mut buffer = VecDeque::with_capacity(BUFFER_CAP);
-    let mut stamps = [0, 0];
 
     loop {
         if pause.load(Ordering::Acquire) {
@@ -29,6 +28,8 @@ pub(super) fn frametime_thread(frametime: Arc<Mutex<Vec<FrameTime>>>, pause: Arc
             *lock = buffer.clone().into();
             drop(lock);
         }
+
+        let mut stamps = [0, 0];
 
         // 获取第一个时间戳
         let fbt_info = fs::read_to_string(Path::new(FPSGO).join("fbt/fbt_info")).unwrap();
@@ -49,6 +50,7 @@ pub(super) fn frametime_thread(frametime: Arc<Mutex<Vec<FrameTime>>>, pause: Arc
                 enable_fpsgo().unwrap();
                 break;
             }
+
             // 轮询间隔6ms
             thread::sleep(Duration::from_millis(6));
         }
@@ -76,6 +78,8 @@ pub(super) fn fps_thread(fps: Arc<Mutex<Vec<(Instant, Fps)>>>, pause: Arc<Atomic
             buffer.pop_back();
         }
 
+        thread::sleep(Duration::from_millis(10));
+
         // 尝试复制buffer到读取区
         if let Ok(mut lock) = fps.try_lock() {
             *lock = buffer.clone().into();
@@ -89,8 +93,6 @@ pub(super) fn fps_thread(fps: Arc<Mutex<Vec<(Instant, Fps)>>>, pause: Arc<Atomic
             enable_fpsgo().unwrap();
             continue;
         }
-
-        thread::sleep(Duration::from_millis(10));
     }
 }
 
@@ -132,11 +134,7 @@ fn parse_fps(fpsgo_status: &str) -> Option<Fps> {
         let mut parsed_line = line.split_whitespace();
         let this_fps = parsed_line.nth(3)?;
 
-        if this_fps == "-1" {
-            continue;
-        }
-
-        let this_fps = this_fps.parse().ok()?;
+        let this_fps = this_fps.parse().unwrap_or(0);
 
         if let Some(fps) = max_fps {
             max_fps = Some(max(fps, this_fps));

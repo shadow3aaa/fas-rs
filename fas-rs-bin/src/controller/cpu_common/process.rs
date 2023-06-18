@@ -48,6 +48,7 @@ impl CpuFreq {
         let value = self.table[self.pos].to_string();
         set_permissions(&self.path, PermissionsExt::from_mode(0o644)).unwrap();
         fs::write(&self.path, value).unwrap();
+        set_permissions(&self.path, PermissionsExt::from_mode(0o444)).unwrap();
     }
 }
 
@@ -94,23 +95,20 @@ pub(super) fn process_freq(
     };
 
     loop {
-        if let Ok(command) = command_receiver.recv() {
-            if pause.load(Ordering::Acquire) {
-                process_pause(&mut cpufreq);
-                thread::park();
-                continue;
-            }
+        let command = command_receiver.recv().unwrap();
 
-            match command {
-                Command::Stop => {
-                    process_pause(&mut cpufreq);
-                    return;
-                }
-                Command::Release => status = process_release(&mut cpufreq, status),
-                Command::Limit => status = process_limit(&mut cpufreq, status),
+        if pause.load(Ordering::Acquire) {
+            process_pause(&mut cpufreq);
+            thread::park();
+        }
+
+        match command {
+            Command::Stop => {
+                process_pause(&mut cpufreq);
+                return;
             }
-        } else {
-            return;
+            Command::Release => status = process_release(&mut cpufreq, status),
+            Command::Limit => status = process_limit(&mut cpufreq, status),
         }
     }
 }
