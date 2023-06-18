@@ -25,7 +25,10 @@ pub(super) fn frametime_thread(frametime: Arc<Mutex<Vec<FrameTime>>>, pause: Arc
         }
 
         // 尝试复制buffer到读取区
-        *frametime.try_lock().unwrap() = buffer.clone().into();
+        if let Ok(mut lock) = frametime.try_lock() {
+            *lock = buffer.clone().into();
+            drop(lock);
+        }
 
         // 获取第一个时间戳
         let fbt_info = fs::read_to_string(Path::new(FPSGO).join("fbt/fbt_info")).unwrap();
@@ -55,7 +58,6 @@ pub(super) fn frametime_thread(frametime: Arc<Mutex<Vec<FrameTime>>>, pause: Arc
             continue; // 失败就重新解析
         }
 
-        // todo: 消除屏幕刷新率和目标帧率不一样的时候产生的误差
         let frametime = FrameTime::from_nanos(stamps[1] - stamps[0]);
 
         buffer.push_front(frametime);
@@ -75,7 +77,10 @@ pub(super) fn fps_thread(fps: Arc<Mutex<Vec<(Instant, Fps)>>>, pause: Arc<Atomic
         }
 
         // 尝试复制buffer到读取区
-        *fps.try_lock().unwrap() = buffer.clone().into();
+        if let Ok(mut lock) = fps.try_lock() {
+            *lock = buffer.clone().into();
+            drop(lock);
+        }
 
         let fpsgo_status = fs::read_to_string(Path::new(FPSGO).join("fstb/fpsgo_status")).unwrap();
         if let Some(fps) = parse_fps(&fpsgo_status) {

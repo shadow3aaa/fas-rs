@@ -40,8 +40,12 @@ impl IgnoreFrameTime {
             self.refresh_rate.set(Self::get_refresh_rate());
         }
 
+        if self.refresh_rate.get().unwrap() == target_fps {
+            return Some(frametime);
+        }
+
         let target_frametime = Duration::from_secs(1) / target_fps;
-        let refresh_time = Duration::from_secs(1) / self.refresh_rate.get()?;
+        let refresh_time = Duration::from_secs(1) / self.refresh_rate.get().unwrap();
         let total_ign_time = target_frametime.saturating_add(refresh_time);
 
         if frametime < target_frametime
@@ -66,12 +70,15 @@ impl IgnoreFrameTime {
         let parse_line = dumpsys_data
             .lines()
             .find(|line| line.contains("refresh-rate"))?;
-        parse_line
-            .split(':')
-            .nth(1)?
-            .split('.')
-            .next()?
-            .parse()
-            .ok()
+        Some(
+            parse_line
+                .split(':')
+                .nth(1)?
+                .split('.')
+                .next()?
+                .trim()
+                .parse()
+                .unwrap(),
+        )
     }
 }

@@ -51,11 +51,10 @@ impl VirtualPerformanceController for CpuCommon {
         for policy in cpufreq {
             let path = policy?.path();
             let table_path = path.join("scaling_available_frequencies");
-            let mut this_table: FrequencyTable = fs::read_to_string(table_path)?
+            let this_table: FrequencyTable = fs::read_to_string(table_path)?
                 .split_whitespace()
                 .filter_map(|freq| freq.parse().ok())
                 .collect();
-            this_table.sort_unstable(); // 频率表升序排列
 
             table.push((this_table, path.join("scaling_max_freq")));
         }
@@ -78,11 +77,11 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn limit(&self) {
-        let _ = self.command_sender.try_send(Command::Limit);
+        self.command_sender.try_send(Command::Limit).unwrap();
     }
 
     fn release(&self) {
-        let _ = self.command_sender.try_send(Command::Release);
+        self.command_sender.try_send(Command::Release).unwrap();
     }
 
     fn plug_in(&self) -> Result<(), Box<dyn Error>> {

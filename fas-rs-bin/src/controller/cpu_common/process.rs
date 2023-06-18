@@ -15,7 +15,8 @@ struct CpuFreq {
 }
 
 impl CpuFreq {
-    fn new(table: FrequencyTable, write_path: PathBuf) -> Self {
+    fn new(mut table: FrequencyTable, write_path: PathBuf) -> Self {
+        table.sort_unstable();
         Self {
             pos: table.len(),
             table,
@@ -31,7 +32,7 @@ impl CpuFreq {
     }
 
     fn next(&mut self) {
-        if self.pos < self.table.len() {
+        if self.pos + 1 < self.table.len() {
             self.pos += 1;
             self.write();
         }
@@ -43,8 +44,10 @@ impl CpuFreq {
     }
 
     fn write(&self) {
+        use std::{fs::set_permissions, os::unix::fs::PermissionsExt};
         let value = self.table[self.pos].to_string();
-        let _ = fs::write(&self.path, value);
+        set_permissions(&self.path, PermissionsExt::from_mode(0o644)).unwrap();
+        fs::write(&self.path, value).unwrap();
     }
 }
 

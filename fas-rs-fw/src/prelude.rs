@@ -8,6 +8,6 @@
 pub use std::error::Error;
 pub use std::time::Duration;
 // sensor
-pub use crate::{Fps, TargetFps, FrameTime, VirtualFrameSensor};
+pub use crate::{Fps, FrameTime, TargetFps, VirtualFrameSensor};
 // controller
 pub use crate::VirtualPerformanceController;

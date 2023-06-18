@@ -5,6 +5,7 @@ mod frame;
 use std::error::Error;
 use std::sync::mpsc::{self, Receiver, SyncSender};
 use std::thread;
+use std::time::Duration;
 
 use crate::TargetFps;
 use crate::{VirtualFrameSensor, VirtualPerformanceController};
@@ -90,6 +91,8 @@ impl Scheduler {
 
             if loaded {
                 Self::process_load(&*sensor, &*controller, target_fps).unwrap();
+            } else {
+                thread::sleep(Duration::from_secs(1));
             }
         }
     }
