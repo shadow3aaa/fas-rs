@@ -1,4 +1,5 @@
 [workspace]
+resolver = '2'
 members = [
     "fas-rs-bin",
     "fas-rs-fw"
