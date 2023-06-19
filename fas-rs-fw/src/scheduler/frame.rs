@@ -42,29 +42,22 @@ impl Scheduler {
 }
 
 // 判断是否出现卡顿
-fn jank(frametime: Vec<FrameTime>, fps: Vec<Fps>, target: TargetFps) -> bool {
-    if fps.is_empty() {
+fn jank(frametime: Vec<FrameTime>, fps: Vec<Fps>, target_fps: TargetFps) -> bool {
+    if fps.is_empty() || frametime.is_empty() {
         return true;
     }
 
     let avg_fps = fps.iter().sum::<u32>() / fps.len() as u32;
-
-    if avg_fps < target - 3 {
-        return true;
-    }
-
+    let target_frametime = Duration::from_secs(1) / target_fps;
+    
     // debug
-    // println!("{:#?}", &avg_fps);
-    // println!("{:#?}", &frametime.iter().max());
-
-    if let Some(target_frametime) = Duration::from_secs(1).checked_div(target) {
-        // debug
-        // println!("{:#?}", &target_frametime);
-
-        frametime
+    /* println!("fps: {}, target: {}", &avg_fps, &target_fps);
+    println!("frametime: {:#?}, target: {:#?}", &frametime.iter().max(), &target_frametime);
+    println!("Jank: {}", avg_fps < target_fps - 3 || frametime
             .iter()
-            .any(|ft| *ft > target_frametime.saturating_mul(11) / 10)
-    } else {
-        true
-    }
+            .any(|ft| *ft > target_frametime)); */
+
+    avg_fps < target_fps - 3 || frametime
+            .iter()
+            .any(|ft| *ft > target_frametime)
 }
