@@ -48,16 +48,16 @@ fn jank(frametime: Vec<FrameTime>, fps: Vec<Fps>, target_fps: TargetFps) -> bool
     }
 
     let avg_fps = fps.iter().sum::<u32>() / fps.len() as u32;
-    let target_frametime = Duration::from_secs(1) / target_fps;
+    let target_frametime = (Duration::from_secs(1) / target_fps ).saturating_add(Duration::from_micros(100));
     
     // debug
     /* println!("fps: {}, target: {}", &avg_fps, &target_fps);
     println!("frametime: {:#?}, target: {:#?}", &frametime.iter().max(), &target_frametime);
-    println!("Jank: {}", avg_fps < target_fps - 3 || frametime
+    println!("Jank: {}", avg_fps <= target_fps - 3 || frametime
             .iter()
             .any(|ft| *ft > target_frametime)); */
 
-    avg_fps < target_fps - 3 || frametime
+    avg_fps <= target_fps - 3 || frametime
             .iter()
             .any(|ft| *ft > target_frametime)
 }

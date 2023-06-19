@@ -129,7 +129,10 @@ fn parse_fps(fpsgo_status: &str) -> Option<Fps> {
 
     for line in lines {
         let mut parsed_line = line.split_whitespace();
-        let this_fps = parsed_line.nth(3)?;
+        let this_fps = match parsed_line.nth(3) {
+            Some(o) => o,
+            None => continue,
+        };
 
         let this_fps = this_fps.parse().unwrap_or(0);
 

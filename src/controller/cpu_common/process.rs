@@ -29,7 +29,7 @@ impl CpuFreq {
             table,
             path: write_path,
             release_count: [0, max_release],
-            limit_count: [1, max_limit],
+            limit_count: [0, max_limit],
         }
     }
 
@@ -56,7 +56,7 @@ impl CpuFreq {
             self.pos = self.table.len() - 1;
         }
 
-        self.limit_count[0] = 1;
+        self.limit_count[0] = 0;
 
         if self.release_count[0] < self.release_count[1] {
             self.release_count[0] += 1;
@@ -67,7 +67,7 @@ impl CpuFreq {
         self.pos = self.table.len() - 1;
         self.write();
         self.release_count[0] = 0;
-        self.limit_count[0] = 1;
+        self.limit_count[0] = 0;
     }
 
     fn write(&self) {
