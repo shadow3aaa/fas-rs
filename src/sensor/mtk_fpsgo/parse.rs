@@ -123,14 +123,11 @@ fn parse_fps(fpsgo_status: &str) -> Option<Fps> {
 
     let mut max_fps = None;
 
-    for line in fpsgo_status.lines().skip(1) {
-        if line.contains("fstb_self_ctrl_fps_enable")
-            || line.contains("fstb_is_cam_active")
-            || line.contains("dfps_ceiling")
-        {
-            continue;
-        }
+    let mut lines: Vec<&str> = fpsgo_status.lines().skip(1).collect();
+    lines.reverse();
+    let lines: Vec<&str> = lines.into_iter().skip(3).collect();
 
+    for line in lines {
         let mut parsed_line = line.split_whitespace();
         let this_fps = parsed_line.nth(3)?;
 
@@ -165,12 +162,12 @@ fn test_parse() {
     assert_eq!(parse_frametime(fbt_info), Some(15827015268850));
 
     let fpsgo_status = r"##tid	bufID		name		currentFPS	targetFPS	FPS_margin	FPS_margin_GPU	FPS_margin_thrs	sbe_state	HWUI
-    26994	0x69550000025d	bin.mt.plus	120		120		0		0		0		0		1
+    26994	0x69550000025d	bin.mt.plus	60		120		0		0		0		0		1
     26994	0x69550000025c	bin.mt.plus	115		120		0		0		0		0		1
-    8606	0x136d0000003f	curitycenter:ui	120		120		0		0		0		0		1
+    8606	0x136d0000003f	curitycenter:ui	110		120		0		0		0		0		1
     2756	0x9d9000002ce	com.miui.home	0		120		0		0		0		0		1
     2898	0x9d700000001	ndroid.systemui	-1		10		0		0		0		0		1
-    24678	0x12fb00000009	m.omarea.vtools	0		10		0		0		0		0		1
+    24678	0x12fb00000009	m.omarea.vtools	120		10		0		0		0		0		1
     24678	0x12fb0000000b	m.omarea.vtools	0		10		0		0		0		0		1
     fstb_self_ctrl_fps_enable:1
     fstb_is_cam_active:0
