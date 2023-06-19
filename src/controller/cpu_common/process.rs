@@ -12,45 +12,62 @@ struct CpuFreq {
     table: FrequencyTable,
     path: PathBuf,
     pos: usize,
-    count: [usize; 2], // 升频计数器
+    release_count: [usize; 2], // 升频计数器
+    limit_count: [usize; 2],   // 降频计数器
 }
 
 impl CpuFreq {
-    fn new(mut table: FrequencyTable, write_path: PathBuf, max_count: usize) -> Self {
+    fn new(
+        mut table: FrequencyTable,
+        write_path: PathBuf,
+        max_release: usize,
+        max_limit: usize,
+    ) -> Self {
         table.sort_unstable();
         Self {
-            pos: table.len(),
+            pos: table.len() - 1,
             table,
             path: write_path,
-            count: [0, max_count],
+            release_count: [0, max_release],
+            limit_count: [1, max_limit],
         }
     }
 
     fn prev(&mut self) {
-        if self.pos > 0 {
-            self.pos -= 1;
+        if self.pos >= self.limit_count[0] {
+            self.pos -= self.limit_count[0];
             self.write();
+        } else {
+            self.pos = 0;
         }
-        self.count[0] = 0;
+
+        self.release_count[0] = 0;
+
+        if self.limit_count[0] < self.limit_count[1] {
+            self.limit_count[0] += 1;
+        }
     }
 
     fn next(&mut self) {
-        if self.pos + self.count[0] < self.table.len() {
-            self.pos += self.count[0];
+        if self.pos + self.release_count[0] < self.table.len() {
+            self.pos += self.release_count[0];
             self.write();
         } else {
             self.pos = self.table.len() - 1;
         }
 
-        if self.count[0] < self.count[1] {
-            self.count[0] += 1;
+        self.limit_count[0] = 1;
+
+        if self.release_count[0] < self.release_count[1] {
+            self.release_count[0] += 1;
         }
     }
 
     fn reset(&mut self) {
-        self.pos = self.table.len();
+        self.pos = self.table.len() - 1;
         self.write();
-        self.count[0] = 0;
+        self.release_count[0] = 0;
+        self.limit_count[0] = 1;
     }
 
     fn write(&self) {
@@ -89,17 +106,17 @@ pub(super) fn process_freq(
     let mut status = None;
     let mut cpufreq = if tables.len() > 1 {
         let table = tables.remove(0);
-        let freq_a = CpuFreq::new(table.0, table.1, 4);
+        let freq_a = CpuFreq::new(table.0, table.1, 4, 3);
 
         let table = tables.remove(0);
-        let freq_b = CpuFreq::new(table.0, table.1, 3);
+        let freq_b = CpuFreq::new(table.0, table.1, 3, 2);
 
         status = Some(Status::OnLeft);
 
         Mode::Double([freq_a, freq_b])
     } else {
         let table = tables.remove(0);
-        let freq = CpuFreq::new(table.0, table.1, 3);
+        let freq = CpuFreq::new(table.0, table.1, 3, 2);
 
         Mode::Single(freq)
     };
