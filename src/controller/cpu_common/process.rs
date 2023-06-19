@@ -36,10 +36,11 @@ impl CpuFreq {
     fn prev(&mut self) {
         if self.pos >= self.limit_count[0] {
             self.pos -= self.limit_count[0];
-            self.write();
         } else {
             self.pos = 0;
         }
+
+        self.write();
 
         self.release_count[0] = 0;
 
@@ -51,10 +52,11 @@ impl CpuFreq {
     fn next(&mut self) {
         if self.pos + self.release_count[0] < self.table.len() {
             self.pos += self.release_count[0];
-            self.write();
         } else {
             self.pos = self.table.len() - 1;
         }
+
+        self.write();
 
         self.limit_count[0] = 0;
 

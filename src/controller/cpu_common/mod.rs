@@ -29,7 +29,7 @@ pub(crate) enum Command {
 
 impl Drop for CpuCommon {
     fn drop(&mut self) {
-        self.command_sender.send(Command::Stop).unwrap();
+        let _ = self.command_sender.send(Command::Stop);
     }
 }
 
@@ -85,11 +85,11 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn limit(&self) {
-        let _ = self.command_sender.send(Command::Limit);
+        self.command_sender.send(Command::Limit).unwrap();
     }
 
     fn release(&self) {
-        let _ = self.command_sender.send(Command::Release);
+        self.command_sender.send(Command::Release).unwrap();
     }
 
     fn plug_in(&self) -> Result<(), Box<dyn Error>> {
