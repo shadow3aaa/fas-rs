@@ -3,7 +3,7 @@ mod process;
 use std::fs;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{self, SyncSender};
+use std::sync::mpsc::{self, Sender};
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 
@@ -16,7 +16,7 @@ const CPUFREQ: &str = "/sys/devices/system/cpu/cpufreq";
 pub(crate) type Frequency = usize;
 pub(crate) type FrequencyTable = Vec<Frequency>;
 pub struct CpuCommon {
-    command_sender: SyncSender<Command>,
+    command_sender: Sender<Command>,
     thread_handle: JoinHandle<()>,
     pause: Arc<AtomicBool>,
 }
@@ -70,7 +70,7 @@ impl VirtualPerformanceController for CpuCommon {
         });
         table.truncate(2); // 保留后两个集群即可
 
-        let (command_sender, command_receiver) = mpsc::sync_channel(20);
+        let (command_sender, command_receiver) = mpsc::channel();
         let pause = Arc::new(AtomicBool::new(false));
         let pause_clone = pause.clone();
 
@@ -85,11 +85,11 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn limit(&self) {
-        let _ = self.command_sender.try_send(Command::Limit);
+        let _ = self.command_sender.send(Command::Limit);
     }
 
     fn release(&self) {
-        let _ = self.command_sender.try_send(Command::Release);
+        let _ = self.command_sender.send(Command::Release);
     }
 
     fn plug_in(&self) -> Result<(), Box<dyn Error>> {
