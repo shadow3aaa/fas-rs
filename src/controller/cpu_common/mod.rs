@@ -85,11 +85,11 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn limit(&self) {
-        self.command_sender.try_send(Command::Limit).unwrap();
+        let _ = self.command_sender.try_send(Command::Limit);
     }
 
     fn release(&self) {
-        self.command_sender.try_send(Command::Release).unwrap();
+        let _ = self.command_sender.try_send(Command::Release);
     }
 
     fn plug_in(&self) -> Result<(), Box<dyn Error>> {

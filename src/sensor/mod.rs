@@ -40,7 +40,7 @@ impl IgnoreFrameTime {
             self.refresh_rate.set(Self::get_refresh_rate());
         }
 
-        if self.refresh_rate.get().unwrap() == target_fps {
+        if self.refresh_rate.get().is_none() || self.refresh_rate.get().unwrap() == target_fps {
             return Some(frametime);
         }
 

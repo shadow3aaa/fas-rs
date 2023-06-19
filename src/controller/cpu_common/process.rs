@@ -12,15 +12,17 @@ struct CpuFreq {
     table: FrequencyTable,
     path: PathBuf,
     pos: usize,
+    count: [usize; 2], // 升频计数器
 }
 
 impl CpuFreq {
-    fn new(mut table: FrequencyTable, write_path: PathBuf) -> Self {
+    fn new(mut table: FrequencyTable, write_path: PathBuf, max_count: usize) -> Self {
         table.sort_unstable();
         Self {
             pos: table.len(),
             table,
             path: write_path,
+            count: [0, max_count],
         }
     }
 
@@ -29,18 +31,26 @@ impl CpuFreq {
             self.pos -= 1;
             self.write();
         }
+        self.count[0] = 0;
     }
 
     fn next(&mut self) {
-        if self.pos + 1 < self.table.len() {
-            self.pos += 1;
+        if self.pos + self.count[0] < self.table.len() {
+            self.pos += self.count[0];
             self.write();
+        } else {
+            self.pos = self.table.len() - 1;
+        }
+
+        if self.count[0] < self.count[1] {
+            self.count[0] += 1;
         }
     }
 
     fn reset(&mut self) {
         self.pos = self.table.len();
         self.write();
+        self.count[0] = 0;
     }
 
     fn write(&self) {
@@ -79,17 +89,17 @@ pub(super) fn process_freq(
     let mut status = None;
     let mut cpufreq = if tables.len() > 1 {
         let table = tables.remove(0);
-        let freq_a = CpuFreq::new(table.0, table.1);
+        let freq_a = CpuFreq::new(table.0, table.1, 4);
 
         let table = tables.remove(0);
-        let freq_b = CpuFreq::new(table.0, table.1);
+        let freq_b = CpuFreq::new(table.0, table.1, 3);
 
         status = Some(Status::OnLeft);
 
         Mode::Double([freq_a, freq_b])
     } else {
         let table = tables.remove(0);
-        let freq = CpuFreq::new(table.0, table.1);
+        let freq = CpuFreq::new(table.0, table.1, 3);
 
         Mode::Single(freq)
     };
