@@ -32,30 +32,28 @@ impl IgnoreFrameTime {
         }
     }
 
-    fn ign(&self, frametime: FrameTime, target_fps: TargetFps) -> Option<FrameTime> {
+    fn ign(&self, frametime: FrameTime, target_fps: TargetFps) -> FrameTime {
         let now = Instant::now();
-
         if now - self.timer.get() >= Duration::from_secs(5) {
             self.timer.set(now);
             self.refresh_rate.set(Self::get_refresh_rate());
         }
 
-        if self.refresh_rate.get().is_none() || self.refresh_rate.get().unwrap() == target_fps {
-            return Some(frametime);
+        if let Some(refresh_rate) = self.refresh_rate.get() {
+            if refresh_rate != target_fps {
+                let target_frametime = Duration::from_secs(1) / target_fps;
+                let refresh_time = Duration::from_secs(1) / refresh_rate;
+                let total_ign_time = target_frametime.saturating_add(refresh_time);
+
+                if frametime > total_ign_time {
+                    return frametime - refresh_time;
+                } else {
+                    return frametime;
+                }
+            }
         }
 
-        let target_frametime = Duration::from_secs(1) / target_fps;
-        let refresh_time = Duration::from_secs(1) / self.refresh_rate.get().unwrap();
-        let total_ign_time = target_frametime.saturating_add(refresh_time);
-
-        if frametime < target_frametime
-            || (frametime >= total_ign_time.saturating_mul(9).checked_div(10)?
-                && frametime <= total_ign_time.saturating_mul(10).checked_div(9)?)
-        {
-            None
-        } else {
-            Some(frametime)
-        }
+        frametime
     }
 
     fn get_refresh_rate() -> Option<Fps> {

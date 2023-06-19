@@ -71,7 +71,7 @@ impl VirtualFrameSensor for MtkFpsGo {
 
         data.truncate(count);
         data.into_iter()
-            .filter_map(|frametime| self.ignore.ign(frametime, target_fps))
+            .map(|frametime| self.ignore.ign(frametime, target_fps))
             .collect()
     }
 

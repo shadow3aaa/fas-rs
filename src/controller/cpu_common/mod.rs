@@ -70,7 +70,7 @@ impl VirtualPerformanceController for CpuCommon {
         });
         table.truncate(2); // 保留后两个集群即可
 
-        let (command_sender, command_receiver) = mpsc::sync_channel(1);
+        let (command_sender, command_receiver) = mpsc::sync_channel(10);
         let pause = Arc::new(AtomicBool::new(false));
         let pause_clone = pause.clone();
 
