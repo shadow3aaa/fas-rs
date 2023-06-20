@@ -3,8 +3,10 @@
 
 pub mod mtk_fpsgo;
 
-use std::cell::Cell;
-use std::time::{Duration, Instant};
+use std::{
+    cell::Cell,
+    time::{Duration, Instant},
+};
 
 use fas_rs_fw::prelude::*;
 
@@ -62,7 +64,7 @@ impl IgnoreFrameTime {
         let dumpsys_data = Command::new("dumpsys")
             .arg("SurfaceFlinger")
             .output()
-            .expect("Err : Failed to execute dumpsys SurfaceView");
+            .ok()?;
         let dumpsys_data = String::from_utf8_lossy(&dumpsys_data.stdout).into_owned();
 
         let parse_line = dumpsys_data

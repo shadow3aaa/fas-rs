@@ -2,10 +2,12 @@
 
 mod frame;
 
-use std::error::Error;
-use std::sync::mpsc::{self, Receiver, SyncSender};
-use std::thread;
-use std::time::Duration;
+use std::{
+    error::Error,
+    sync::mpsc::{self, Receiver, SyncSender},
+    thread,
+    time::Duration,
+};
 
 use crate::TargetFps;
 use crate::{VirtualFrameSensor, VirtualPerformanceController};

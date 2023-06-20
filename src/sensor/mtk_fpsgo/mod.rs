@@ -1,11 +1,15 @@
 mod parse;
 
-use std::fs;
-use std::path::Path;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
-use std::thread::{self, JoinHandle};
-use std::time::Instant;
+use std::{
+    fs,
+    path::Path,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Mutex,
+    },
+    thread::{self, JoinHandle},
+    time::Instant,
+};
 
 use fas_rs_fw::prelude::*;
 

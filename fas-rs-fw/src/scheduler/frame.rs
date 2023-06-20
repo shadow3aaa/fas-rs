@@ -1,6 +1,4 @@
-use std::error::Error;
-use std::thread;
-use std::time::Duration;
+use std::{error::Error, thread, time::Duration};
 
 use super::Scheduler;
 use crate::{Fps, FrameTime, TargetFps};
@@ -48,8 +46,9 @@ fn jank(frametime: Vec<FrameTime>, fps: Vec<Fps>, target_fps: TargetFps) -> bool
     }
 
     let avg_fps = fps.iter().sum::<u32>() / fps.len() as u32;
-    let target_frametime = (Duration::from_secs(1) / target_fps ).saturating_add(Duration::from_micros(100));
-    
+    let target_frametime =
+        (Duration::from_secs(1) / target_fps).saturating_add(Duration::from_micros(100));
+
     // debug
     /* println!("fps: {}, target: {}", &avg_fps, &target_fps);
     println!("frametime: {:#?}, target: {:#?}", &frametime.iter().max(), &target_frametime);
@@ -57,7 +56,5 @@ fn jank(frametime: Vec<FrameTime>, fps: Vec<Fps>, target_fps: TargetFps) -> bool
             .iter()
             .any(|ft| *ft > target_frametime)); */
 
-    avg_fps <= target_fps - 3 || frametime
-            .iter()
-            .any(|ft| *ft > target_frametime)
+    avg_fps <= target_fps - 3 || frametime.iter().any(|ft| *ft > target_frametime)
 }

@@ -10,6 +10,7 @@ members = ['fas-rs-fw']
 
 [dependencies]
 fas-rs-fw = { path = "./fas-rs-fw" }
+inotify = {version = "0.10.1", default_features = false}
 
 [profile.release]
 lto = 'fat'

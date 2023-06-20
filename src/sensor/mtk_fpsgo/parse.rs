@@ -1,10 +1,14 @@
-use std::collections::VecDeque;
-use std::fs;
-use std::path::Path;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::Instant;
+use std::{
+    collections::VecDeque,
+    fs,
+    path::Path,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Mutex,
+    },
+    thread,
+    time::Instant,
+};
 
 use fas_rs_fw::prelude::*;
 

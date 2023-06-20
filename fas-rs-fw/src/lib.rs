@@ -1,8 +1,7 @@
 pub mod prelude;
 mod scheduler;
 
-use std::error::Error;
-use std::time::Duration;
+use std::{error::Error, time::Duration};
 
 pub use scheduler::Scheduler;
 

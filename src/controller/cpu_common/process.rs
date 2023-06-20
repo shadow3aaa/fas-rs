@@ -1,9 +1,13 @@
-use std::fs;
-use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::Receiver;
-use std::sync::Arc;
-use std::thread;
+use std::{
+    fs,
+    path::PathBuf,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc::Receiver,
+        Arc,
+    },
+    thread,
+};
 
 use super::Command;
 use super::FrequencyTable;

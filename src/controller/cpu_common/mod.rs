@@ -1,13 +1,16 @@
 mod process;
 
-use std::fs;
-use std::path::Path;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{self, Sender};
-use std::sync::Arc;
-use std::thread::{self, JoinHandle};
-
 use fas_rs_fw::prelude::*;
+use std::{
+    fs,
+    path::Path,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc::{self, Sender},
+        Arc,
+    },
+    thread::{self, JoinHandle},
+};
 
 use process::*;
 
