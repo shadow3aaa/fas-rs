@@ -15,9 +15,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     set_self_sched();
 
     let scheduler = Scheduler::new(Box::new(MtkFpsGo::new()?), Box::new(CpuCommon::new()?))?;
-    scheduler.load(120)?;
 
-    let config = Config::new(PathBuf::from_str("/path/to/config")?);
+    let config = Config::new(PathBuf::from_str("/sdcard/games.txt")?);
     let mut temp = None;
     loop {
         let current = config.cur_game_fps();
