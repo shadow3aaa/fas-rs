@@ -119,19 +119,13 @@ pub(super) fn process_freq(
 fn process_pause(cpufreq: &mut Mode) {
     match cpufreq {
         Mode::Single(cpu) => cpu.reset(),
-        Mode::Double(cpus) => {
-            for cpu in cpus {
-                cpu.reset();
-            }
-        }
+        Mode::Double(cpus) => cpus.iter_mut().for_each(|cpu| cpu.reset()),
     }
 }
 
 fn process_release(cpufreq: &mut Mode, status: &mut Status) {
     match cpufreq {
-        Mode::Single(cpu) => {
-            cpu.next();
-        }
+        Mode::Single(cpu) => cpu.next(),
         Mode::Double(cpus) => {
             match status {
                 Status::OnLeft => cpus[0].next(),
@@ -144,9 +138,7 @@ fn process_release(cpufreq: &mut Mode, status: &mut Status) {
 
 fn process_limit(cpufreq: &mut Mode, status: &mut Status) {
     match cpufreq {
-        Mode::Single(cpu) => {
-            cpu.next();
-        }
+        Mode::Single(cpu) => cpu.next(),
         Mode::Double(cpus) => {
             status.swap();
             match status {

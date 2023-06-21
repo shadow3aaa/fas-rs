@@ -30,7 +30,6 @@ pub(super) fn frametime_thread(frametime: Arc<Mutex<Vec<FrameTime>>>, pause: Arc
         // 尝试复制buffer到读取区
         if let Ok(mut lock) = frametime.try_lock() {
             *lock = buffer.clone().into();
-            drop(lock);
         }
 
         let mut stamps = [0, 0];
@@ -87,7 +86,6 @@ pub(super) fn fps_thread(fps: Arc<Mutex<Vec<(Instant, Fps)>>>, pause: Arc<Atomic
         // 尝试复制buffer到读取区
         if let Ok(mut lock) = fps.try_lock() {
             *lock = buffer.clone().into();
-            drop(lock);
         }
 
         let fpsgo_status = fs::read_to_string(Path::new(FPSGO).join("fstb/fpsgo_status")).unwrap();

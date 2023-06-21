@@ -1,7 +1,8 @@
 mod parse;
 
 use std::{
-    fs,
+    fs::{self, set_permissions},
+    os::unix::fs::PermissionsExt,
     path::Path,
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -109,8 +110,6 @@ impl VirtualFrameSensor for MtkFpsGo {
 }
 
 pub(crate) fn enable_fpsgo() -> Result<(), std::io::Error> {
-    use std::{fs::set_permissions, os::unix::fs::PermissionsExt};
-
     let path = Path::new(FPSGO).join("common/fpsgo_enable");
     set_permissions(&path, PermissionsExt::from_mode(0o644))?;
     fs::write(&path, "1")?;
@@ -118,8 +117,6 @@ pub(crate) fn enable_fpsgo() -> Result<(), std::io::Error> {
 }
 
 fn disable_fpsgo() -> Result<(), std::io::Error> {
-    use std::{fs::set_permissions, os::unix::fs::PermissionsExt};
-
     let path = Path::new(FPSGO).join("common/fpsgo_enable");
     set_permissions(&path, PermissionsExt::from_mode(0o644))?;
     fs::write(&path, "0")?;
