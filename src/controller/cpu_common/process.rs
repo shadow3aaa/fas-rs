@@ -17,7 +17,7 @@ impl CpuFreq {
             pos: table.len() - 1,
             table,
             path: write_path,
-            jump: [1, 3],
+            jump: [1, 4],
         }
     }
 
