@@ -7,6 +7,7 @@ struct CpuFreq {
     table: FrequencyTable,
     path: PathBuf,
     pos: usize,
+    jump: [usize; 2],
 }
 
 impl CpuFreq {
@@ -16,6 +17,7 @@ impl CpuFreq {
             pos: table.len() - 1,
             table,
             path: write_path,
+            jump: [1, 3],
         }
     }
 
@@ -24,18 +26,25 @@ impl CpuFreq {
             self.pos -= 1;
             self.write();
         }
+        self.jump[0] = 1;
     }
 
     fn next(&mut self) {
-        if self.pos < self.table.len() - 1 {
-            self.pos += 1;
+        if self.pos + self.jump[0] < self.table.len() {
+            self.pos += self.jump[0];
             self.write();
+        }
+        
+        if self.jump[0] < self.jump[1] {
+            self.jump[0] += 1;
         }
     }
 
     fn reset(&mut self) {
         self.pos = self.table.len() - 1;
         self.write();
+
+        self.jump[0] = 1;
     }
 
     fn write(&self) {

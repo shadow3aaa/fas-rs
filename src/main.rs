@@ -50,6 +50,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn set_self_sched() {
-    let self_pid = &std::process::id().to_string();
-    let _ = std::fs::write("/dev/cpuset/background/tasks", self_pid);
+    let self_pid = std::process::id();
+    let _ = std::fs::write("/dev/cpuset/background/tasks", self_pid.to_string());
 }
