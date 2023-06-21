@@ -132,6 +132,10 @@ pub(super) fn process_freq(
 
         if pause.load(Ordering::Acquire) {
             process_pause(&mut cpufreq);
+
+            // count清空管道
+            let _ = command_receiver.try_iter().count();
+
             thread::park();
         }
 
