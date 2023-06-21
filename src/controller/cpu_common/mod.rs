@@ -1,4 +1,5 @@
 mod process;
+pub(crate) mod write_pool;
 
 use fas_rs_fw::prelude::*;
 use std::{

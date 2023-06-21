@@ -1,11 +1,13 @@
-use std::{fs, path::PathBuf, sync::mpsc::Receiver, thread};
+use std::{path::PathBuf, sync::mpsc::Receiver, thread};
 
+use super::write_pool::WritePool;
 use super::Command;
 use super::FrequencyTable;
 
 struct CpuFreq {
     table: FrequencyTable,
     path: PathBuf,
+    pool: WritePool,
     pos: usize,
     jump: [usize; 2],
 }
@@ -13,9 +15,11 @@ struct CpuFreq {
 impl CpuFreq {
     fn new(mut table: FrequencyTable, write_path: PathBuf) -> Self {
         table.sort_unstable();
+        let pool = WritePool::new(2);
         Self {
             pos: table.len() - 1,
             table,
+            pool,
             path: write_path,
             jump: [1, 4],
         }
@@ -47,12 +51,10 @@ impl CpuFreq {
         self.jump[0] = 1;
     }
 
-    fn write(&self) {
-        use std::{fs::set_permissions, os::unix::fs::PermissionsExt};
-        let value = self.table[self.pos].to_string();
-        set_permissions(&self.path, PermissionsExt::from_mode(0o644)).unwrap();
-        fs::write(&self.path, value).unwrap();
-        set_permissions(&self.path, PermissionsExt::from_mode(0o444)).unwrap();
+    fn write(&mut self) {
+        let _ = self
+            .pool
+            .write(&self.path, &self.table[self.pos].to_string());
     }
 }
 
