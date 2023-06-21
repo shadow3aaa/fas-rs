@@ -1,35 +1,31 @@
 /// 返回第一个当前设备支持的[`self::VirtualFrameSensor`]
 #[macro_export]
 macro_rules! support_sensor {
-    ($($sensor: ty: VirtualFrameSensor),*) => {
+    ($($sensor: ty),*) => {
         {
-            let result: Result<<$sensor>, ()>;
+            let result: Box<dyn VirtualFrameSensor>;
             $(if <$sensor>::support() {
-                result = <$sensor>::new();
+                result = Box::new(<$sensor>::new().unwrap());
             }else)* {
-                result = Err(());
+                std::process::exit(1);
             }
-                result
-            }
-        };
-    }
+            result
+        }
+    };
+}
 
 /// 返回第一个当前设备支持的[`self::VirtualPerformanceController`]
 #[macro_export]
 macro_rules! support_controller {
-    ($($controller: ty: VirtualPerformanceController),*) => {
+    ($($controller: ty),*) => {
         {
-            let result: Result<<$controller>, ()>;
+            let result: Box<dyn VirtualPerformanceController>;
             $(if <$controller>::support() {
-                result = <$controller>::new();
+                result = Box::new(<$controller>::new().unwrap());
             }else)* {
-                result = Err(());
+                std::process::exit(1);
             }
-            if let Ok(o) = result {
-                o
-            } else {
-                Err(())
-            }
+            result
         }
     };
 }
