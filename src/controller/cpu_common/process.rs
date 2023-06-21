@@ -102,9 +102,9 @@ pub(super) fn process_freq(
         match command {
             Command::Pause => {
                 process_pause(&mut cpufreq);
+                thread::park();
                 // count清空管道
                 let _ = command_receiver.try_iter().count();
-                thread::park();
             }
             Command::Stop => {
                 process_pause(&mut cpufreq);
