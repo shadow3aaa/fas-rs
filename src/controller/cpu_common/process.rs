@@ -34,7 +34,7 @@ impl CpuFreq {
             self.pos += self.jump[0];
             self.write();
         }
-        
+
         if self.jump[0] < self.jump[1] {
             self.jump[0] += 1;
         }
