@@ -69,11 +69,11 @@ enum Status {
 }
 
 impl Status {
-    fn swap(self) -> Self {
-        match self {
+    fn swap(&mut self) {
+        *self = match *self {
             Self::OnLeft => Self::OnRight,
             Self::OnRight => Self::OnLeft,
-        }
+        };
     }
 }
 
@@ -81,15 +81,13 @@ pub(super) fn process_freq(
     mut tables: Vec<(FrequencyTable, PathBuf)>,
     command_receiver: Receiver<Command>,
 ) {
-    let mut status = None;
+    let mut status = Status::OnLeft;
     let mut cpufreq = if tables.len() > 1 {
         let table = tables.remove(0);
         let freq_a = CpuFreq::new(table.0, table.1);
 
         let table = tables.remove(0);
         let freq_b = CpuFreq::new(table.0, table.1);
-
-        status = Some(Status::OnLeft);
 
         Mode::Double([freq_a, freq_b])
     } else {
@@ -112,8 +110,8 @@ pub(super) fn process_freq(
                 process_pause(&mut cpufreq);
                 return;
             }
-            Command::Release => status = process_release(&mut cpufreq, status),
-            Command::Limit => status = process_limit(&mut cpufreq, status),
+            Command::Release => process_release(&mut cpufreq, &mut status),
+            Command::Limit => process_limit(&mut cpufreq, &mut status),
         }
     }
 }
@@ -129,36 +127,32 @@ fn process_pause(cpufreq: &mut Mode) {
     }
 }
 
-fn process_release(cpufreq: &mut Mode, status: Option<Status>) -> Option<Status> {
+fn process_release(cpufreq: &mut Mode, status: &mut Status) {
     match cpufreq {
         Mode::Single(cpu) => {
             cpu.next();
-            None
         }
         Mode::Double(cpus) => {
-            let status = status.unwrap();
             match status {
                 Status::OnLeft => cpus[0].next(),
                 Status::OnRight => cpus[1].next(),
             }
-            Some(status.swap())
+            status.swap();
         }
     }
 }
 
-fn process_limit(cpufreq: &mut Mode, status: Option<Status>) -> Option<Status> {
+fn process_limit(cpufreq: &mut Mode, status: &mut Status) {
     match cpufreq {
         Mode::Single(cpu) => {
             cpu.next();
-            None
         }
         Mode::Double(cpus) => {
-            let status = status.unwrap().swap();
+            status.swap();
             match status {
                 Status::OnLeft => cpus[0].prev(),
                 Status::OnRight => cpus[1].prev(),
             }
-            Some(status)
         }
     }
 }
