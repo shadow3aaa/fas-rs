@@ -4,11 +4,7 @@ use fas_rs_fw::prelude::*;
 use std::{
     fs,
     path::Path,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        mpsc::{self, Sender},
-        Arc,
-    },
+    sync::mpsc::{self, Sender},
     thread::{self, JoinHandle},
 };
 
@@ -21,13 +17,13 @@ pub(crate) type FrequencyTable = Vec<Frequency>;
 pub struct CpuCommon {
     command_sender: Sender<Command>,
     thread_handle: JoinHandle<()>,
-    pause: Arc<AtomicBool>,
 }
 
 pub(crate) enum Command {
     Stop,
     Release,
     Limit,
+    Pause,
 }
 
 impl Drop for CpuCommon {
@@ -74,16 +70,12 @@ impl VirtualPerformanceController for CpuCommon {
         table.truncate(2); // 保留后两个集群即可
 
         let (command_sender, command_receiver) = mpsc::channel();
-        let pause = Arc::new(AtomicBool::new(false));
-        let pause_clone = pause.clone();
 
-        let thread_handle =
-            thread::spawn(move || process_freq(table, command_receiver, pause_clone));
+        let thread_handle = thread::spawn(move || process_freq(table, command_receiver));
 
         Ok(Self {
             command_sender,
             thread_handle,
-            pause,
         })
     }
 
@@ -96,13 +88,12 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn plug_in(&self) -> Result<(), Box<dyn Error>> {
-        self.pause.store(false, Ordering::Release);
         self.thread_handle.thread().unpark();
         Ok(())
     }
 
     fn plug_out(&self) -> Result<(), Box<dyn Error>> {
-        self.pause.store(true, Ordering::Release);
+        self.command_sender.send(Command::Pause).unwrap();
         Ok(())
     }
 }

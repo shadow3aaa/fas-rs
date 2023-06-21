@@ -1,13 +1,4 @@
-use std::{
-    fs,
-    path::PathBuf,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        mpsc::Receiver,
-        Arc,
-    },
-    thread,
-};
+use std::{fs, path::PathBuf, sync::mpsc::Receiver, thread};
 
 use super::Command;
 use super::FrequencyTable;
@@ -16,64 +7,35 @@ struct CpuFreq {
     table: FrequencyTable,
     path: PathBuf,
     pos: usize,
-    release_count: [usize; 2], // 升频计数器
-    limit_count: [usize; 2],   // 降频计数器
 }
 
 impl CpuFreq {
-    fn new(
-        mut table: FrequencyTable,
-        write_path: PathBuf,
-        max_release: usize,
-        max_limit: usize,
-    ) -> Self {
+    fn new(mut table: FrequencyTable, write_path: PathBuf) -> Self {
         table.sort_unstable();
         Self {
             pos: table.len() - 1,
             table,
             path: write_path,
-            release_count: [0, max_release],
-            limit_count: [0, max_limit],
         }
     }
 
     fn prev(&mut self) {
-        if self.pos >= self.limit_count[0] {
-            self.pos -= self.limit_count[0];
-        } else {
-            self.pos = 0;
-        }
-
-        self.write();
-
-        self.release_count[0] = 0;
-
-        if self.limit_count[0] < self.limit_count[1] {
-            self.limit_count[0] += 1;
+        if self.pos > 1 {
+            self.pos -= 1;
+            self.write();
         }
     }
 
     fn next(&mut self) {
-        if self.pos + self.release_count[0] < self.table.len() {
-            self.pos += self.release_count[0];
-        } else {
-            self.pos = self.table.len() - 1;
-        }
-
-        self.write();
-
-        self.limit_count[0] = 0;
-
-        if self.release_count[0] < self.release_count[1] {
-            self.release_count[0] += 1;
+        if self.pos < self.table.len() - 1 {
+            self.pos += 1;
+            self.write();
         }
     }
 
     fn reset(&mut self) {
         self.pos = self.table.len() - 1;
         self.write();
-        self.release_count[0] = 0;
-        self.limit_count[0] = 0;
     }
 
     fn write(&self) {
@@ -107,39 +69,34 @@ impl Status {
 pub(super) fn process_freq(
     mut tables: Vec<(FrequencyTable, PathBuf)>,
     command_receiver: Receiver<Command>,
-    pause: Arc<AtomicBool>,
 ) {
     let mut status = None;
     let mut cpufreq = if tables.len() > 1 {
         let table = tables.remove(0);
-        let freq_a = CpuFreq::new(table.0, table.1, 4, 3);
+        let freq_a = CpuFreq::new(table.0, table.1);
 
         let table = tables.remove(0);
-        let freq_b = CpuFreq::new(table.0, table.1, 3, 2);
+        let freq_b = CpuFreq::new(table.0, table.1);
 
         status = Some(Status::OnLeft);
 
         Mode::Double([freq_a, freq_b])
     } else {
         let table = tables.remove(0);
-        let freq = CpuFreq::new(table.0, table.1, 3, 2);
+        let freq = CpuFreq::new(table.0, table.1);
 
         Mode::Single(freq)
     };
 
     loop {
         let command = command_receiver.recv().unwrap();
-
-        if pause.load(Ordering::Acquire) {
-            process_pause(&mut cpufreq);
-
-            // count清空管道
-            let _ = command_receiver.try_iter().count();
-
-            thread::park();
-        }
-
         match command {
+            Command::Pause => {
+                process_pause(&mut cpufreq);
+                // count清空管道
+                let _ = command_receiver.try_iter().count();
+                thread::park();
+            }
             Command::Stop => {
                 process_pause(&mut cpufreq);
                 return;
