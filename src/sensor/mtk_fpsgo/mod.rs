@@ -90,6 +90,8 @@ impl VirtualFrameSensor for MtkFpsGo {
     }
 
     fn pause(&self) -> Result<(), Box<dyn Error>> {
+        disable_fpsgo()?;
+
         self.pause.store(true, Ordering::Release);
         Ok(())
     }
@@ -97,6 +99,7 @@ impl VirtualFrameSensor for MtkFpsGo {
     fn resume(&self) -> Result<(), Box<dyn Error>> {
         enable_fpsgo()?;
 
+        self.pause.store(false, Ordering::Release);
         for handle in &self.thread_handle {
             handle.thread().unpark();
         }
@@ -111,5 +114,14 @@ pub(crate) fn enable_fpsgo() -> Result<(), std::io::Error> {
     let path = Path::new(FPSGO).join("common/fpsgo_enable");
     set_permissions(&path, PermissionsExt::from_mode(0o644))?;
     fs::write(&path, "1")?;
+    set_permissions(&path, PermissionsExt::from_mode(0o444))
+}
+
+fn disable_fpsgo() -> Result<(), std::io::Error> {
+    use std::{fs::set_permissions, os::unix::fs::PermissionsExt};
+
+    let path = Path::new(FPSGO).join("common/fpsgo_enable");
+    set_permissions(&path, PermissionsExt::from_mode(0o644))?;
+    fs::write(&path, "0")?;
     set_permissions(&path, PermissionsExt::from_mode(0o444))
 }

@@ -42,6 +42,14 @@ impl Scheduler {
 // 判断是否出现卡顿
 fn jank(frametime: Vec<FrameTime>, fps: Vec<Fps>, target_fps: TargetFps) -> bool {
     if fps.is_empty() || frametime.is_empty() {
+        // debug
+        /* if fps.is_empty() && frametime.is_empty() {
+            println!("empty data");
+        } else if frametime.is_empty() {
+            println!("empty frametime data");
+        } else {
+            println!("empty fps data");
+        } */
         return true;
     }
 
@@ -51,10 +59,15 @@ fn jank(frametime: Vec<FrameTime>, fps: Vec<Fps>, target_fps: TargetFps) -> bool
 
     // debug
     /* println!("fps: {}, target: {}", &avg_fps, &target_fps);
-    println!("frametime: {:#?}, target: {:#?}", &frametime.iter().max(), &target_frametime);
-    println!("Jank: {}", avg_fps <= target_fps - 3 || frametime
-            .iter()
-            .any(|ft| *ft > target_frametime)); */
+    println!(
+        "frametime: {:#?}, target: {:#?}",
+        &frametime.iter().max(),
+        &target_frametime
+    );
+    println!(
+        "Jank: {}",
+        avg_fps <= target_fps - 3 || frametime.iter().any(|ft| *ft > target_frametime)
+    ); */
 
     avg_fps <= target_fps - 3 || frametime.iter().any(|ft| *ft > target_frametime)
 }

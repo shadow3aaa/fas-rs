@@ -39,6 +39,8 @@ impl Scheduler {
         controller: Box<dyn VirtualPerformanceController>,
     ) -> Result<Self, Box<dyn Error>> {
         let (tx, rx) = mpsc::sync_channel(1);
+        tx.send(Command::Unload).unwrap();
+
         thread::spawn(move || Self::run(sensor, controller, rx));
 
         Ok(Self { sender: tx })
@@ -47,7 +49,7 @@ impl Scheduler {
     /// 卸载[`self::Scheduler`]
     /// 用于临时暂停
     pub fn unload(&self) -> Result<(), Box<dyn Error>> {
-        self.sender.try_send(Command::Unload)?;
+        self.sender.send(Command::Unload)?;
         Ok(())
     }
 
@@ -55,7 +57,7 @@ impl Scheduler {
     /// 如果已经载入，再次调用会重载
     /// 每次载入/重载要指定新的[`crate::TargetFps`]
     pub fn load(&self, target: TargetFps) -> Result<(), Box<dyn Error>> {
-        self.sender.try_send(Command::Load(target))?;
+        self.sender.send(Command::Load(target))?;
         Ok(())
     }
 }

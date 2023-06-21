@@ -24,10 +24,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         if temp != current {
             temp = current;
 
-            if let Some((_, fps)) = temp {
+            if let Some((ref game, fps)) = temp {
                 scheduler.load(fps)?;
+                println!("Loaded {} {}", game, fps);
             } else {
                 scheduler.unload()?;
+                println!("Unloaded");
             }
         }
 

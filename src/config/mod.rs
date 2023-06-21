@@ -65,7 +65,7 @@ impl Config {
 
                     let pkg = line.split_whitespace().nth(4)?;
                     let pkg = pkg.split('/').next()?;
-                    Some(pkg.split(':').nth(2)?.to_owned())
+                    Some(pkg.split(':').nth(1)?.to_owned())
                 })
                 .collect::<HashSet<String>>(),
         )
