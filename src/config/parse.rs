@@ -68,6 +68,9 @@ fn parse(path: &Path) -> io::Result<GameList> {
     let game_list = raw
         .lines()
         .filter_map(|line| {
+            if line.trim().starts_with('#') {
+                return None;
+            }
             let mut split = line.split_whitespace();
             let pkg = split.next()?;
             let fps = split.next()?.parse().ok()?;
