@@ -4,8 +4,11 @@ mod sensor;
 
 use std::{path::PathBuf, str::FromStr, thread};
 
-use fas_rs_fw::prelude::*;
-use fas_rs_fw::Scheduler;
+use fas_rs_fw::{
+    prelude::*,
+    Scheduler,
+    macros::{support_sensor, support_controller},
+};
 
 use config::Config;
 use controller::cpu_common::CpuCommon;
@@ -14,9 +17,10 @@ use sensor::mtk_fpsgo::MtkFpsGo;
 fn main() -> Result<(), Box<dyn Error>> {
     set_self_sched();
 
+    let 
     let scheduler = Scheduler::new(Box::new(MtkFpsGo::new()?), Box::new(CpuCommon::new()?))?;
 
-    let config = Config::new(PathBuf::from_str("/sdcard/games.txt")?);
+    let config = Config::new(PathBuf::from_str("/sdcard/fas-rs/games.txt")?);
     let mut temp = None;
     loop {
         let current = config.cur_game_fps();
