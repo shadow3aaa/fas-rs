@@ -1,6 +1,7 @@
 use std::{
     fs, io,
     path::{Path, PathBuf},
+    process,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc, Mutex,
@@ -18,21 +19,32 @@ pub(super) fn wait_and_parse(
     game_list: Arc<Mutex<GameList>>,
     exit: Arc<AtomicBool>,
 ) {
+    let mut retry_count = 0;
     loop {
         if exit.load(Ordering::Acquire) {
             return;
         }
 
+        if retry_count > 10 {
+            eprintln!("Too many read config retries");
+            process::exit(1);
+        }
+
         let mut lock = game_list.lock().unwrap();
         *lock = match parse(&path) {
-            Ok(game_list) => game_list,
+            Ok(game_list) => {
+                retry_count = 0;
+                game_list
+            }
             Err(e) => {
                 if e.kind() == io::ErrorKind::NotFound {
                     println!("File not found: {}", path.display());
+                    retry_count += 1;
                     thread::sleep(Duration::from_secs(1));
                     continue;
                 } else {
                     println!("Failed to read file '{}': {}", path.display(), e);
+                    retry_count += 1;
                     thread::sleep(Duration::from_secs(1));
                     continue;
                 }

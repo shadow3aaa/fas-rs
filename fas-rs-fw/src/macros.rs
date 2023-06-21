@@ -7,6 +7,7 @@ macro_rules! support_sensor {
             $(if <$sensor>::support() {
                 result = Box::new(<$sensor>::new().unwrap());
             }else)* {
+                eprintln!("No supported sensor");
                 std::process::exit(1);
             }
             result
@@ -23,6 +24,7 @@ macro_rules! support_controller {
             $(if <$controller>::support() {
                 result = Box::new(<$controller>::new().unwrap());
             }else)* {
+                eprintln!("No supported controller");
                 std::process::exit(1);
             }
             result
