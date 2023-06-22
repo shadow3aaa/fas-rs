@@ -71,7 +71,7 @@ fn write_thread(receiver: Receiver<Command>, heavy: Arc<AtomicUsize>) {
         } else {
             return;
         }
-        let new_heavy = heavy.load(Ordering::Acquire) - 1;
+        let new_heavy = heavy.load(Ordering::Acquire).saturating_sub(1);
         heavy.store(new_heavy, Ordering::Release); // 完成一个任务负载计数器减一
     }
 }
