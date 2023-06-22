@@ -3,13 +3,16 @@ use std::{
     fs::{self, set_permissions},
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
-    sync::mpsc::{self, Receiver, Sender},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        mpsc::{self, Receiver, Sender},
+        Arc,
+    },
     thread,
 };
 
 pub struct WritePool {
-    pos: usize,
-    senders: Vec<Sender<Command>>,
+    workers: Vec<(Sender<Command>, Arc<AtomicUsize>)>,
 }
 
 enum Command {
@@ -19,38 +22,42 @@ enum Command {
 
 impl Drop for WritePool {
     fn drop(&mut self) {
-        self.senders.iter().for_each(|sender| {
+        self.workers.iter().for_each(|(sender, _)| {
             let _ = sender.send(Command::Exit);
         });
     }
 }
 
 impl WritePool {
-    pub fn new(thread_count: usize) -> Self {
-        let mut senders = Vec::with_capacity(thread_count);
-        for _ in 0..thread_count {
+    pub fn new(worker_count: usize) -> Self {
+        let mut workers = Vec::with_capacity(worker_count);
+        for _ in 0..worker_count {
             let (sender, receiver) = mpsc::channel();
-            thread::spawn(move || write_thread(receiver));
-            senders.push(sender);
+            let heavy = Arc::new(AtomicUsize::new(0));
+            let heavy_clone = heavy.clone();
+            thread::spawn(move || write_thread(receiver, heavy_clone));
+            workers.push((sender, heavy));
         }
 
-        Self { pos: 0, senders }
+        Self { workers }
     }
 
     pub fn write(&mut self, path: &Path, value: &str) -> Result<(), Box<dyn Error>> {
-        self.senders[self.pos].send(Command::Write(path.to_owned(), value.to_owned()))?;
+        let (best_worker, heavy) = self
+            .workers
+            .iter()
+            .min_by_key(|(_, heavy)| heavy.load(Ordering::Acquire))
+            .unwrap();
 
-        if self.pos < self.senders.len() - 1 {
-            self.pos += 1;
-        } else {
-            self.pos = 0;
-        }
+        let new_heavy = heavy.load(Ordering::Acquire) + 1;
+        heavy.store(new_heavy, Ordering::Release); // 完成一个任务负载计数加一
 
+        best_worker.send(Command::Write(path.to_owned(), value.to_owned()))?;
         Ok(())
     }
 }
 
-fn write_thread(receiver: Receiver<Command>) {
+fn write_thread(receiver: Receiver<Command>, heavy: Arc<AtomicUsize>) {
     loop {
         if let Ok(command) = receiver.recv() {
             match command {
@@ -64,5 +71,7 @@ fn write_thread(receiver: Receiver<Command>) {
         } else {
             return;
         }
+        let new_heavy = heavy.load(Ordering::Acquire) - 1;
+        heavy.store(new_heavy, Ordering::Release); // 完成一个任务负载计数器减一
     }
 }
