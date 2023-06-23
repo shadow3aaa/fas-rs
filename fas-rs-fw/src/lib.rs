@@ -20,26 +20,23 @@ pub trait VirtualFrameSensor: Send {
     fn support() -> bool
     where
         Self: Sized;
-    /// 务必在此实现构造函数
+    /// 在此实现构造函数
     /// 初始化操作(比如创建线程/任务也要在这里完成)
     fn new() -> Result<Self, Box<dyn Error>>
     where
         Self: Sized;
     /// 获取指定数量的历史[`self::FrameTime`]的平均数
-    fn frametimes(&self, count: usize, target_fps: TargetFps) -> Vec<FrameTime>;
-    /// 获取指定时间内的历史[`self::Fps`]
-    fn fps(&self, time: Duration) -> Vec<Fps>;
+    fn frametimes(&self, target_fps: TargetFps) -> Vec<FrameTime>;
+    /// 获取指定时间内的历史[`self::Fps`]的平均
+    fn fps(&self) -> Fps;
     /// 很多时候, 监视帧状态是开销较大的
     /// 因此[`self::Scheduler`]在每次从调度中退出后
     /// 会调用此方法关闭监视
-    fn pause(&self) -> Result<(), Box<dyn Error>> {
-        Ok(())
-    }
+    fn pause(&self) -> Result<(), Box<dyn Error>>;
     /// 实现了暂停监视自然还要实现恢复监视
     /// [`self::Scheduler`]在每次从调度开始时调用此方法
-    fn resume(&self) -> Result<(), Box<dyn Error>> {
-        Ok(())
-    }
+    /// `frametime_count`是每次要求数据的量, `fps_time`是取这段时间的平均fps
+    fn resume(&self, frametime_count: usize, fps_time: Duration) -> Result<(), Box<dyn Error>>;
 }
 
 /// 性能控制器接口
@@ -49,7 +46,7 @@ pub trait VirtualPerformanceController: Send {
     fn support() -> bool
     where
         Self: Sized;
-    /// 务必在此实现构造函数
+    /// 在此实现构造函数
     /// 因为会被[`self::support_controller`]调用创建实例
     /// 初始化操作(比如创建线程/任务也要在这里完成)
     fn new() -> Result<Self, Box<dyn Error>>
@@ -59,13 +56,8 @@ pub trait VirtualPerformanceController: Send {
     fn limit(&self);
     /// 释放一级性能
     fn release(&self);
-    /// 有时候控制器需要一些操作初始化才可用
     /// [`self::Scheduler`]每次开始调度的时候会调用此方法初始化(插入)控制器
-    fn plug_in(&self) -> Result<(), Box<dyn Error>> {
-        Ok(())
-    }
-    /// 有时候需要还原(拔出)控制器
-    fn plug_out(&self) -> Result<(), Box<dyn Error>> {
-        Ok(())
-    }
+    fn plug_in(&self) -> Result<(), Box<dyn Error>>;
+    /// 还原(拔出)控制器
+    fn plug_out(&self) -> Result<(), Box<dyn Error>>;
 }

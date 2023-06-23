@@ -40,7 +40,7 @@ impl Scheduler {
     ) -> Result<Self, Box<dyn Error>> {
         sensor.pause()?;
         controller.plug_out()?;
-        
+
         let (tx, rx) = mpsc::sync_channel(1);
         tx.send(Command::Unload).unwrap();
 
@@ -91,9 +91,7 @@ impl Scheduler {
                         loaded = true;
                         target_fps = fps;
 
-                        // init load
-                        sensor.resume().unwrap();
-                        controller.plug_in().unwrap();
+                        Self::init_load(&*sensor, &*controller, target_fps).unwrap();
                     }
                 }
             }

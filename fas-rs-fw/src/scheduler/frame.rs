@@ -16,6 +16,19 @@ impl Scheduler {
         Ok(())
     }
 
+    pub(super) fn init_load(
+        sensor: &dyn VirtualFrameSensor,
+        controller: &dyn VirtualPerformanceController,
+        target_fps: TargetFps,
+    ) -> Result<(), Box<dyn Error>> {
+        sensor.resume(
+            target_fps as usize / 10,
+            Duration::from_millis(target_fps as u64 * 10 / 3),
+        )?;
+        controller.plug_in()?;
+        Ok(())
+    }
+
     pub(super) fn process_load(
         sensor: &dyn VirtualFrameSensor,
         controller: &dyn VirtualPerformanceController,
@@ -25,8 +38,8 @@ impl Scheduler {
             return Err("Target Fps should never be less than 10".into());
         }
 
-        let frametimes = sensor.frametimes(10, target_fps);
-        let fps = sensor.fps(Duration::from_millis(400));
+        let frametimes = sensor.frametimes(target_fps);
+        let fps = sensor.fps();
 
         if jank(frametimes, fps, target_fps) {
             controller.release();
@@ -35,20 +48,18 @@ impl Scheduler {
         }
 
         let sleep_time = Duration::from_secs(10) / target_fps; // 等待10帧
-        SpinSleeper::new(100_000_0).sleep(sleep_time);
+        SpinSleeper::new(1_000_000).sleep(sleep_time);
 
         Ok(())
     }
 }
 
 // 判断是否出现卡顿
-fn jank(frametime: Vec<FrameTime>, fps: Vec<Fps>, target_fps: TargetFps) -> bool {
-    if fps.is_empty() || frametime.is_empty() {
+fn jank(frametime: Vec<FrameTime>, avg_fps: Fps, target_fps: TargetFps) -> bool {
+    if frametime.is_empty() {
         return true;
     }
 
-    let avg_fps = fps.iter().sum::<u32>() / fps.len() as u32;
     let target_frametime = Duration::from_secs(1) / target_fps;
-
     avg_fps <= target_fps - 3 || frametime.iter().any(|ft| *ft > target_frametime)
 }

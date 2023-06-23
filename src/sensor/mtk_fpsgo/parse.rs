@@ -1,10 +1,10 @@
 use std::{
-    collections::VecDeque,
     fs,
     path::Path,
     sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc, Mutex,
+        atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering},
+        mpsc::SyncSender,
+        Arc,
     },
     thread,
     time::Instant,
@@ -13,23 +13,26 @@ use std::{
 use fas_rs_fw::prelude::*;
 
 use super::enable_fpsgo;
-use super::{BUFFER_CAP, FPSGO};
+use super::FPSGO;
 
-pub(super) fn frametime_thread(frametime: Arc<Mutex<Vec<FrameTime>>>, pause: Arc<AtomicBool>) {
-    let mut buffer = VecDeque::with_capacity(BUFFER_CAP);
+pub(super) fn frametime_thread(
+    sender: SyncSender<Vec<FrameTime>>,
+    count: Arc<AtomicUsize>,
+    pause: Arc<AtomicBool>,
+) {
+    thread::park();
+
+    let mut buffer = Vec::with_capacity(144);
 
     loop {
         if pause.load(Ordering::Acquire) {
+            buffer.clear();
             thread::park();
         }
 
-        if buffer.len() > BUFFER_CAP {
-            buffer.pop_back();
-        }
-
-        // 尝试复制buffer到读取区
-        if let Ok(mut lock) = frametime.try_lock() {
-            *lock = buffer.clone().into();
+        if buffer.len() >= count.load(Ordering::Acquire) {
+            sender.send(buffer).unwrap();
+            buffer = Vec::with_capacity(144);
         }
 
         let mut stamps = [0, 0];
@@ -64,33 +67,40 @@ pub(super) fn frametime_thread(frametime: Arc<Mutex<Vec<FrameTime>>>, pause: Arc
         }
 
         let frametime = FrameTime::from_nanos(stamps[1] - stamps[0]);
-
-        buffer.push_front(frametime);
+        buffer.push(frametime);
     }
 }
 
-pub(super) fn fps_thread(fps: Arc<Mutex<Vec<(Instant, Fps)>>>, pause: Arc<AtomicBool>) {
-    let mut buffer = VecDeque::with_capacity(BUFFER_CAP);
+pub(super) fn fps_thread(
+    sender: SyncSender<Fps>,
+    time_millis: Arc<AtomicU64>,
+    pause: Arc<AtomicBool>,
+) {
+    thread::park();
+
+    let mut buffer = Vec::with_capacity(144);
+    let mut temp_now = Instant::now();
 
     loop {
         if pause.load(Ordering::Acquire) {
+            buffer.clear();
             thread::park();
         }
 
-        if buffer.len() > BUFFER_CAP {
-            buffer.pop_back();
+        let now = Instant::now();
+        if now - temp_now > Duration::from_millis(time_millis.load(Ordering::Acquire)) {
+            sender
+                .send(buffer.iter().sum::<Fps>() / buffer.len() as Fps)
+                .unwrap();
+            buffer.clear();
+            temp_now = Instant::now();
         }
 
         thread::sleep(Duration::from_millis(8));
 
-        // 尝试复制buffer到读取区
-        if let Ok(mut lock) = fps.try_lock() {
-            *lock = buffer.clone().into();
-        }
-
         let fpsgo_status = fs::read_to_string(Path::new(FPSGO).join("fstb/fpsgo_status")).unwrap();
         if let Some(fps) = parse_fps(&fpsgo_status) {
-            buffer.push_front((Instant::now(), fps));
+            buffer.push(fps);
         } else {
             enable_fpsgo().unwrap();
             continue;

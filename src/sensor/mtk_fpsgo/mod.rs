@@ -5,11 +5,11 @@ use std::{
     os::unix::fs::PermissionsExt,
     path::Path,
     sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc, Mutex,
+        atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering},
+        mpsc::{self, Receiver},
+        Arc,
     },
     thread::{self, JoinHandle},
-    time::Instant,
 };
 
 use fas_rs_fw::prelude::*;
@@ -18,12 +18,14 @@ use super::IgnoreFrameTime;
 use parse::*;
 
 pub(crate) const FPSGO: &str = "/sys/kernel/fpsgo";
-pub(crate) const BUFFER_CAP: usize = 512;
 
 pub struct MtkFpsGo {
+    // 数据量
+    target_frametime_count: Arc<AtomicUsize>,
+    fps_time_millis: Arc<AtomicU64>,
     // 缓冲区
-    frametime_buffer: Arc<Mutex<Vec<FrameTime>>>,
-    fps_buffer: Arc<Mutex<Vec<(Instant, Fps)>>>,
+    frametime_receiver: Receiver<Vec<FrameTime>>,
+    fps_receiver: Receiver<Fps>,
     // 异常FrameTime忽略器
     ignore: IgnoreFrameTime,
     // 控制启停
@@ -47,47 +49,45 @@ impl VirtualFrameSensor for MtkFpsGo {
         // 控制启停的原子bool
         let pause = Arc::new(AtomicBool::new(false));
 
-        // 缓冲区
-        let frametime_buffer = Arc::new(Mutex::new(Vec::with_capacity(BUFFER_CAP)));
-        let fps_buffer = Arc::new(Mutex::new(Vec::with_capacity(BUFFER_CAP)));
-
         let pause_frametime = pause.clone();
         let pause_fps = pause.clone();
 
-        let frametime_clone = frametime_buffer.clone();
-        let fps_clone = fps_buffer.clone();
+        // 消息管道
+        let (frametime_sender, frametime_receiver) = mpsc::sync_channel(1);
+        let (fps_sender, fps_receiver) = mpsc::sync_channel(1);
+
+        // 数据量
+        let target_frametime_count = Arc::new(AtomicUsize::new(0));
+        let fps_time_millis = Arc::new(AtomicU64::new(0));
+
+        let count_clone = target_frametime_count.clone();
+        let time_clone = fps_time_millis.clone();
 
         let thread_handle = [
-            thread::spawn(move || frametime_thread(frametime_clone, pause_frametime)),
-            thread::spawn(move || fps_thread(fps_clone, pause_fps)),
+            thread::spawn(move || frametime_thread(frametime_sender, count_clone, pause_frametime)),
+            thread::spawn(move || fps_thread(fps_sender, time_clone, pause_fps)),
         ];
 
         Ok(Self {
-            frametime_buffer,
-            fps_buffer,
+            frametime_receiver,
+            fps_receiver,
+            target_frametime_count,
+            fps_time_millis,
             ignore: IgnoreFrameTime::new(),
             pause,
             thread_handle,
         })
     }
 
-    fn frametimes(&self, count: usize, target_fps: TargetFps) -> Vec<FrameTime> {
-        let mut data = (*self.frametime_buffer.lock().unwrap()).clone();
-
-        data.truncate(count);
+    fn frametimes(&self, target_fps: TargetFps) -> Vec<FrameTime> {
+        let data = self.frametime_receiver.recv().unwrap();
         data.into_iter()
             .map(|frametime| self.ignore.ign(frametime, target_fps))
             .collect()
     }
 
-    fn fps(&self, time: Duration) -> Vec<Fps> {
-        let mut data = (*self.fps_buffer.lock().unwrap()).clone();
-
-        let now = Instant::now();
-        if let Some(pos) = data.iter().position(|(stamp, _)| now - *stamp >= time) {
-            data.truncate(pos);
-        }
-        data.into_iter().map(|(_, fps)| fps).collect()
+    fn fps(&self) -> Fps {
+        self.fps_receiver.recv().unwrap()
     }
 
     fn pause(&self) -> Result<(), Box<dyn Error>> {
@@ -97,10 +97,15 @@ impl VirtualFrameSensor for MtkFpsGo {
         Ok(())
     }
 
-    fn resume(&self) -> Result<(), Box<dyn Error>> {
+    fn resume(&self, frametime_count: usize, fps_time: Duration) -> Result<(), Box<dyn Error>> {
         enable_fpsgo()?;
 
         self.pause.store(false, Ordering::Release);
+        self.target_frametime_count
+            .store(frametime_count, Ordering::Release);
+        self.fps_time_millis
+            .store(fps_time.as_millis().try_into().unwrap(), Ordering::Release);
+
         for handle in &self.thread_handle {
             handle.thread().unpark();
         }
