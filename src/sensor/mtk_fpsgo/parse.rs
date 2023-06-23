@@ -81,7 +81,7 @@ pub(super) fn fps_thread(fps: Arc<Mutex<Vec<(Instant, Fps)>>>, pause: Arc<Atomic
             buffer.pop_back();
         }
 
-        thread::sleep(Duration::from_millis(10));
+        thread::sleep(Duration::from_millis(8));
 
         // 尝试复制buffer到读取区
         if let Ok(mut lock) = fps.try_lock() {
@@ -110,7 +110,7 @@ fn parse_frametime(fbt_info: &str) -> Option<u64> {
         return None; // 需要重新读取
     }
 
-    return parse_line.nth(5)?.trim().parse::<u64>().ok();
+    parse_line.nth(5)?.trim().parse().ok()
 }
 
 /* 解析需跳过第0行和最后3行，提取第3个元素
@@ -121,31 +121,14 @@ fstb_self_ctrl_fps_enable:1
 fstb_is_cam_active:0
 dfps_ceiling:60 */
 fn parse_fps(fpsgo_status: &str) -> Option<Fps> {
-    use std::cmp::max;
-
-    let mut max_fps = None;
-
     let mut lines: Vec<&str> = fpsgo_status.lines().skip(1).collect();
     lines.reverse();
     let lines: Vec<&str> = lines.into_iter().skip(3).collect();
 
-    for line in lines {
-        let mut parsed_line = line.split_whitespace();
-        let this_fps = match parsed_line.nth(3) {
-            Some(o) => o,
-            None => continue,
-        };
-
-        let this_fps = this_fps.parse().unwrap_or(0);
-
-        if let Some(fps) = max_fps {
-            max_fps = Some(max(fps, this_fps));
-        } else {
-            max_fps = Some(this_fps)
-        }
-    }
-
-    max_fps
+    lines
+        .into_iter()
+        .filter_map(|line| line.split_whitespace().nth(3)?.parse().ok())
+        .max()
 }
 
 #[test]

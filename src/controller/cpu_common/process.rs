@@ -15,13 +15,13 @@ struct CpuFreq {
 impl CpuFreq {
     fn new(mut table: FrequencyTable, write_path: PathBuf) -> Self {
         table.sort_unstable();
-        let pool = WritePool::new(2);
+        let pool = WritePool::new(3);
         Self {
             pos: table.len() - 1,
             table,
             pool,
             path: write_path,
-            jump: [1, 4],
+            jump: [1, 3],
         }
     }
 

@@ -38,6 +38,9 @@ impl Scheduler {
         sensor: Box<dyn VirtualFrameSensor>,
         controller: Box<dyn VirtualPerformanceController>,
     ) -> Result<Self, Box<dyn Error>> {
+        sensor.pause()?;
+        controller.plug_out()?;
+        
         let (tx, rx) = mpsc::sync_channel(1);
         tx.send(Command::Unload).unwrap();
 
@@ -80,6 +83,8 @@ impl Scheduler {
                             loaded = false;
                             // init unload
                             Self::process_unload(&*sensor, &*controller).unwrap();
+                            // 清空管道
+                            let _ = receiver.try_iter().count();
                         }
                     }
                     Command::Load(fps) => {

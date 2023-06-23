@@ -1,4 +1,6 @@
-use std::{error::Error, thread, time::Duration};
+use std::{error::Error, time::Duration};
+
+use spin_sleep::SpinSleeper;
 
 use super::Scheduler;
 use crate::{Fps, FrameTime, TargetFps};
@@ -33,7 +35,7 @@ impl Scheduler {
         }
 
         let sleep_time = Duration::from_secs(10) / target_fps; // 等待10帧
-        thread::sleep(sleep_time);
+        SpinSleeper::new(100_000_0).sleep(sleep_time);
 
         Ok(())
     }
