@@ -81,6 +81,8 @@ pub(super) fn process_freq(
     mut tables: Vec<(FrequencyTable, PathBuf)>,
     command_receiver: Receiver<Command>,
 ) {
+    thread::park();
+
     let mut status = Status::OnLeft;
     let mut cpufreq = if tables.len() > 1 {
         let table = tables.remove(0);
