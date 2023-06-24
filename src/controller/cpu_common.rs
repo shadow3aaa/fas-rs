@@ -18,7 +18,7 @@ type FrequencyTable = BiHashMap<usize, Frequency>;
 type Policy = (PathBuf, FrequencyTable);
 pub struct CpuCommon {
     write_pool: RefCell<WritePool>,
-    policys: Vec<Policy>,
+    policies: Vec<Policy>,
     jump: Cell<isize>,
 }
 
@@ -51,7 +51,7 @@ impl VirtualPerformanceController for CpuCommon {
     where
         Self: Sized,
     {
-        let mut policys = Vec::with_capacity(5);
+        let mut policies = Vec::with_capacity(5);
 
         let cpufreq = fs::read_dir(POLICY_PATH)?;
         for policy in cpufreq {
@@ -65,11 +65,11 @@ impl VirtualPerformanceController for CpuCommon {
             let freq_table: BiHashMap<usize, Frequency> =
                 freq_table.into_iter().enumerate().collect();
 
-            policys.push((path, freq_table));
+            policies.push((path, freq_table));
         }
 
         // 按policy降序排列
-        policys.sort_by(|a, b| {
+        policies.sort_by(|a, b| {
             let name_a = a.0.file_name().unwrap().to_str().unwrap();
             let name_b = b.0.file_name().unwrap().to_str().unwrap();
 
@@ -77,11 +77,11 @@ impl VirtualPerformanceController for CpuCommon {
             let num_b: u32 = name_b.split("policy").nth(1).unwrap().parse().unwrap();
             num_b.cmp(&num_a)
         });
-        policys.truncate(2); // 保留后两个集群即可
+        policies.truncate(2); // 保留后两个集群即可
 
         Ok(Self {
             write_pool: RefCell::new(WritePool::new(4)),
-            policys,
+            policies,
             jump: Cell::new(0),
         })
     }
@@ -91,7 +91,7 @@ impl VirtualPerformanceController for CpuCommon {
             self.jump.set(0);
         }
 
-        self.policys.iter().for_each(|policy| {
+        self.policies.iter().for_each(|policy| {
             let (pos, _) = Self::read_cur_freq(policy);
             let (path, table) = policy;
 
@@ -115,7 +115,7 @@ impl VirtualPerformanceController for CpuCommon {
             self.jump.set(0);
         }
 
-        self.policys.iter().for_each(|policy| {
+        self.policies.iter().for_each(|policy| {
             let (pos, _) = Self::read_cur_freq(policy);
             let (path, table) = policy;
 
@@ -135,7 +135,7 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn plug_in(&self) -> Result<(), Box<dyn Error>> {
-        self.policys.iter().for_each(|policy| {
+        self.policies.iter().for_each(|policy| {
             let max_freq = Self::max_freq(policy).unwrap().to_string();
             self.write_pool
                 .borrow_mut()
@@ -146,7 +146,7 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn plug_out(&self) -> Result<(), Box<dyn Error>> {
-        self.policys.iter().for_each(|policy| {
+        self.policies.iter().for_each(|policy| {
             let max_freq = Self::max_freq(policy).unwrap();
             self.write_pool
                 .borrow_mut()
