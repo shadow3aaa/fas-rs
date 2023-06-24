@@ -1,8 +1,9 @@
 use std::{
+    collections::VecDeque,
     fs,
     path::Path,
     sync::{
-        atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering},
         mpsc::SyncSender,
         Arc,
     },
@@ -72,14 +73,13 @@ pub(super) fn frametime_thread(
 }
 
 pub(super) fn fps_thread(
-    sender: SyncSender<Fps>,
+    avg_fps: Arc<AtomicU32>,
     time_millis: Arc<AtomicU64>,
     pause: Arc<AtomicBool>,
 ) {
     thread::park();
 
-    let mut buffer = Vec::with_capacity(144);
-    let mut temp_now = Instant::now();
+    let mut buffer = VecDeque::with_capacity(1024);
 
     loop {
         if pause.load(Ordering::Acquire) {
@@ -87,20 +87,25 @@ pub(super) fn fps_thread(
             thread::park();
         }
 
-        let now = Instant::now();
-        if now - temp_now > Duration::from_millis(time_millis.load(Ordering::Acquire)) {
-            sender
-                .send(buffer.iter().sum::<Fps>() / buffer.len() as Fps)
-                .unwrap();
-            buffer.clear();
-            temp_now = Instant::now();
+        if let Some((time, _)) = buffer.front() {
+            if Instant::now() - *time > Duration::from_millis(time_millis.load(Ordering::Acquire)) {
+                buffer.pop_front();
+            }
         }
+
+        let avg = buffer
+            .iter()
+            .map(|(_, fps)| fps)
+            .sum::<Fps>()
+            .checked_div(buffer.len() as u32)
+            .unwrap_or(0);
+        avg_fps.store(avg, Ordering::Release);
 
         thread::sleep(Duration::from_millis(8));
 
         let fpsgo_status = fs::read_to_string(Path::new(FPSGO).join("fstb/fpsgo_status")).unwrap();
         if let Some(fps) = parse_fps(&fpsgo_status) {
-            buffer.push(fps);
+            buffer.push_back((Instant::now(), fps));
         } else {
             enable_fpsgo().unwrap();
             continue;

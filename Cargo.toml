@@ -12,7 +12,6 @@ members = ['fas-rs-fw']
 bimap = "0.6.3"
 fas-rs-fw = { path = "./fas-rs-fw" }
 inotify = {version = "0.10.1", default_features = false}
-spin_sleep = "1.1.1"
 
 [profile.release]
 lto = 'fat'

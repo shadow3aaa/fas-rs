@@ -1,7 +1,5 @@
 use std::{error::Error, time::Duration};
 
-use spin_sleep::SpinSleeper;
-
 use super::Scheduler;
 use crate::{Fps, FrameTime, TargetFps};
 use crate::{VirtualFrameSensor, VirtualPerformanceController};
@@ -22,7 +20,7 @@ impl Scheduler {
         target_fps: TargetFps,
     ) -> Result<(), Box<dyn Error>> {
         sensor.resume(
-            target_fps as usize / 10,
+            target_fps as usize / 12,
             Duration::from_millis(target_fps as u64 * 10 / 3),
         )?;
         controller.plug_in()?;
@@ -34,8 +32,8 @@ impl Scheduler {
         controller: &dyn VirtualPerformanceController,
         target_fps: TargetFps,
     ) -> Result<(), Box<dyn Error>> {
-        if target_fps <= 10 {
-            return Err("Target Fps should never be less than 10".into());
+        if target_fps <= 12 {
+            return Err("Target Fps should never be less than 12".into());
         }
 
         let frametimes = sensor.frametimes(target_fps);
@@ -47,9 +45,6 @@ impl Scheduler {
             controller.limit();
         }
 
-        let sleep_time = Duration::from_secs(10) / target_fps; // 等待10帧
-        SpinSleeper::new(1_000_000).sleep(sleep_time);
-
         Ok(())
     }
 }
@@ -59,6 +54,9 @@ fn jank(frametime: Vec<FrameTime>, avg_fps: Fps, target_fps: TargetFps) -> bool 
     if frametime.is_empty() {
         return true;
     }
+
+    println!("avg fps: {}", avg_fps);
+    println!("frametime: {:?}", frametime.iter().max().unwrap());
 
     let target_frametime = Duration::from_secs(1) / target_fps;
     avg_fps <= target_fps - 3 || frametime.iter().any(|ft| *ft > target_frametime)

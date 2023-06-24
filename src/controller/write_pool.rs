@@ -64,7 +64,6 @@ fn write_thread(receiver: Receiver<Command>, heavy: Arc<AtomicUsize>) {
                 Command::Write(path, value) => {
                     set_permissions(&path, PermissionsExt::from_mode(0o644)).unwrap();
                     fs::write(&path, value).unwrap();
-                    set_permissions(&path, PermissionsExt::from_mode(0o444)).unwrap()
                 }
                 Command::Exit => return,
             }

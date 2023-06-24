@@ -25,22 +25,24 @@ pub trait VirtualFrameSensor: Send {
     fn new() -> Result<Self, Box<dyn Error>>
     where
         Self: Sized;
-    /// 获取指定数量的历史[`self::FrameTime`]的平均数
+    /// 获取指定数量的历史[`self::FrameTime`]
+    /// 如果目前数据还没收集好就堵塞，[`self::Scheduler`]没有sleep，会马上响应
     fn frametimes(&self, target_fps: TargetFps) -> Vec<FrameTime>;
     /// 获取指定时间内的历史[`self::Fps`]的平均
+    /// 不要堵塞
     fn fps(&self) -> Fps;
     /// 很多时候, 监视帧状态是开销较大的
     /// 因此[`self::Scheduler`]在每次从调度中退出后
     /// 会调用此方法关闭监视
     fn pause(&self) -> Result<(), Box<dyn Error>>;
-    /// 实现了暂停监视自然还要实现恢复监视
-    /// [`self::Scheduler`]在每次从调度开始时调用此方法
+    /// [`self::Scheduler`]在每次开始调度时调用此方法
     /// `frametime_count`是每次要求数据的量, `fps_time`是取这段时间的平均fps
     fn resume(&self, frametime_count: usize, fps_time: Duration) -> Result<(), Box<dyn Error>>;
 }
 
 /// 性能控制器接口
 /// 控制设备性能状态的控制器
+/// 这些实现尽量不要堵塞
 pub trait VirtualPerformanceController: Send {
     /// 设备是否支持此实现
     fn support() -> bool
