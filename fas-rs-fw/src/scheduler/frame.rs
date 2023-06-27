@@ -55,8 +55,8 @@ fn jank(frametime: Vec<FrameTime>, avg_fps: Fps, target_fps: TargetFps) -> bool 
         return true;
     }
 
-    println!("avg fps: {}", avg_fps);
-    println!("frametime: {:?}", frametime.iter().max().unwrap());
+    /* println!("avg fps: {}", avg_fps);
+    println!("frametime: {:?}", frametime.iter().max().unwrap()); */
 
     let target_frametime = Duration::from_secs(1) / target_fps;
     avg_fps <= target_fps - 3 || frametime.iter().any(|ft| *ft > target_frametime)

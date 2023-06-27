@@ -17,13 +17,13 @@ pub(super) fn usage_thread(
     pause: Arc<AtomicBool>,
     exit: Arc<AtomicBool>,
 ) {
-    let affect_cpus: HashSet<String> = fs::read_to_string(path.join("affected_cpus"))
+    let affected_cpus: HashSet<String> = fs::read_to_string(path.join("affected_cpus"))
         .unwrap()
         .split_whitespace()
         .map(|cpu| format!("cpu{}", cpu))
         .collect();
 
-    thread::park(); // 等待唤醒
+    thread::park();
 
     loop {
         if exit.load(Ordering::Acquire) {
@@ -32,9 +32,9 @@ pub(super) fn usage_thread(
             thread::park();
         }
 
-        let stat_a = read_stat(&affect_cpus);
-        thread::sleep(Duration::from_millis(100));
-        let stat_b = read_stat(&affect_cpus);
+        let stat_a = read_stat(&affected_cpus);
+        thread::sleep(Duration::from_millis(75));
+        let stat_b = read_stat(&affected_cpus);
 
         let new_usage: u8 = stat_a
             .iter()
@@ -42,7 +42,6 @@ pub(super) fn usage_thread(
             .map(|((total_a, idle_a), (total_b, idle_b))| {
                 let total = total_b - total_a;
                 let idle = idle_b - idle_a;
-
                 100 - idle * 100 / total
             })
             .max()
@@ -53,11 +52,11 @@ pub(super) fn usage_thread(
     }
 }
 
-fn read_stat(affect_cpus: &HashSet<String>) -> Vec<(usize, usize)> {
+fn read_stat(affected_cpus: &HashSet<String>) -> Vec<(usize, usize)> {
     let stat: Vec<String> = fs::read_to_string("/proc/stat")
         .unwrap()
         .lines()
-        .filter(|line| affect_cpus.iter().any(|cpu| line.starts_with(cpu)))
+        .filter(|line| affected_cpus.iter().any(|cpu| line.starts_with(cpu)))
         .map(|s| s.to_owned())
         .collect();
 

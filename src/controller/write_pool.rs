@@ -43,6 +43,7 @@ impl WritePool {
     }
 
     pub fn write(&mut self, path: &Path, value: &str) -> Result<(), Box<dyn Error>> {
+        // println!("path: {}, value: {}", path.display(), value);
         let (best_worker, heavy) = self
             .workers
             .iter()

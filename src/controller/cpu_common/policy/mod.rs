@@ -28,10 +28,10 @@ impl Drop for Policy {
 }
 
 impl Policy {
-    pub fn new(policy_path: &Path, default_target: u8) -> Self {
+    pub fn new(policy_path: &Path, burst_max: usize) -> Self {
         let (usage_sx, usage_rx) = mpsc::channel();
 
-        let target_usage = Arc::new(AtomicU8::new(default_target));
+        let target_usage = Arc::new(AtomicU8::new(75));
         let pause = Arc::new(AtomicBool::new(false));
         let exit = Arc::new(AtomicBool::new(false));
 
@@ -46,7 +46,14 @@ impl Policy {
         let path_clone = policy_path.to_owned();
         let target_clone = target_usage.clone();
         let schedule_thread = thread::spawn(move || {
-            schedule_thread(path_clone, usage_rx, target_clone, pause_clone, exit_clone)
+            schedule_thread(
+                path_clone,
+                usage_rx,
+                target_clone,
+                burst_max,
+                pause_clone,
+                exit_clone,
+            )
         });
 
         let handles = [usage_thread, schedule_thread];
@@ -66,12 +73,13 @@ impl Policy {
             .for_each(|handle| handle.thread().unpark());
     }
 
+    #[allow(unused)]
     pub fn pause(&self) {
         self.pause.store(true, Ordering::Release);
     }
 
     pub fn set_target_usage(&self, t: u8) {
-        assert!(t > 100, "target usage should never be greater than 100");
+        assert!(t <= 100, "target usage should never be greater than 100");
         self.target_usage.store(t, Ordering::Release);
     }
 }

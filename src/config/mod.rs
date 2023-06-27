@@ -51,23 +51,28 @@ impl Config {
 
     fn get_top_pkgname() -> Option<HashSet<String>> {
         let dump = Command::new("dumpsys")
-            .args(["activity", "lru"])
+            .args(["window", "visible-apps"])
             .output()
             .ok()?;
         let dump = String::from_utf8_lossy(&dump.stdout).into_owned();
 
         Some(
             dump.lines()
-                .filter_map(|line| {
-                    if !line.contains("TOP") {
-                        return None;
-                    }
-
-                    let pkg = line.split_whitespace().nth(4)?;
-                    let pkg = pkg.split('/').next()?;
-                    Some(pkg.split(':').nth(1)?.to_owned())
+                .filter(|l| l.contains("package="))
+                .map(|p| {
+                    p.split_whitespace()
+                        .nth(2)
+                        .and_then(|p| p.split('=').nth(1))
+                        .unwrap()
                 })
-                .collect::<HashSet<String>>(),
+                .zip(
+                    dump.lines()
+                        .filter(|l| l.contains("canReceiveKeys()"))
+                        .map(|k| k.contains("canReceiveKeys()=true")),
+                )
+                .filter(|(_, k)| *k)
+                .map(|(p, _)| p.to_owned())
+                .collect(),
         )
     }
 }
