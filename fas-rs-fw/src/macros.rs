@@ -3,12 +3,14 @@
 macro_rules! support_sensor {
     ($($sensor: ty),*) => {
         {
-            let result: Box<dyn VirtualFrameSensor>;
+            let result: Result<Box<dyn VirtualFrameSensor>, Box<dyn Error>>;
             $(if <$sensor>::support() {
-                result = Box::new(<$sensor>::new().unwrap());
+                result = match <$sensor>::new() {
+                    Ok(o) => Ok(Box::new(o)),
+                    Err(e) => Err(e)
+                };
             }else)* {
-                eprintln!("No supported sensor");
-                std::process::exit(1);
+                result = Err("No supported sensor".into())
             }
             result
         }
@@ -20,12 +22,14 @@ macro_rules! support_sensor {
 macro_rules! support_controller {
     ($($controller: ty),*) => {
         {
-            let result: Box<dyn VirtualPerformanceController>;
+            let result: Result<Box<dyn VirtualPerformanceController>, Box<dyn Error>>;
             $(if <$controller>::support() {
-                result = Box::new(<$controller>::new().unwrap());
+                result = match  <$controller>::new() {
+                    Ok(o) => Ok(Box::new(o)),
+                    Err(e) => Err(e)
+                };
             }else)* {
-                eprintln!("No supported controller");
-                std::process::exit(1);
+                result = Err("No supported controller".into());
             }
             result
         }

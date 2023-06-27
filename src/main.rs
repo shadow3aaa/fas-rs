@@ -16,8 +16,20 @@ fn main() -> ! {
     // 搜索列表中第一个支持的控制器和传感器，并且构造
     // 构造错误会panic
     // 没有支持的就退出程序
-    let controller = support_controller!(CpuCommon);
-    let sensor = support_sensor!(MtkFpsGo);
+    let controller = match support_controller!(CpuCommon) {
+        Ok(o) => o,
+        Err(e) => {
+            eprintln!("{}", e);
+            process::exit(1);
+        }
+    };
+    let sensor = match support_sensor!(MtkFpsGo) {
+        Ok(o) => o,
+        Err(e) => {
+            eprintln!("{}", e);
+            process::exit(1);
+        }
+    };
 
     // 如果是测试支持模式这里就退出
     let mut args = env::args();
@@ -45,7 +57,7 @@ fn main() -> ! {
             }
         }
 
-        thread::sleep(Duration::from_millis(50));
+        thread::sleep(Duration::from_millis(100));
     }
 }
 
