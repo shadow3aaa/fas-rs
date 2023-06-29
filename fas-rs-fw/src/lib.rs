@@ -1,6 +1,7 @@
 pub mod macros;
 pub mod prelude;
 mod scheduler;
+pub mod write_pool;
 
 use std::{error::Error, time::Duration};
 

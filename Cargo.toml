@@ -10,7 +10,11 @@ members = ['fas-rs-fw']
 
 [dependencies]
 fas-rs-fw = { path = "./fas-rs-fw" }
-inotify = {version = "0.10.1", default_features = false}
+inotify = { version = "0.10.1", default_features = false }
+lazy_static = "1.4.0"
+parking_lot = "0.12.1"
+toml = "0.7.5"
+yata = { version = "0.6.1", default_features = false }
 
 [profile.release]
 lto = 'fat'

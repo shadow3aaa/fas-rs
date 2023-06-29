@@ -1,12 +1,13 @@
 mod config;
 mod controller;
+mod debug;
 mod sensor;
 
-use std::{env, path::PathBuf, process, str::FromStr, thread};
+use std::{env, process, thread};
 
 use fas_rs_fw::{prelude::*, support_controller, support_sensor, Scheduler};
 
-use config::Config;
+use config::CONFIG;
 use controller::cpu_common::CpuCommon;
 use sensor::mtk_fpsgo::MtkFpsGo;
 
@@ -18,15 +19,15 @@ fn main() -> ! {
     // 没有支持的就退出程序
     let controller = match support_controller!(CpuCommon) {
         Ok(o) => o,
-        Err(e) => {
-            eprintln!("{}", e);
+        Err(_e) => {
+            debug! { println!("{}", _e) }
             process::exit(1);
         }
     };
     let sensor = match support_sensor!(MtkFpsGo) {
         Ok(o) => o,
-        Err(e) => {
-            eprintln!("{}", e);
+        Err(_e) => {
+            debug! { println!("{}", _e) }
             process::exit(1);
         }
     };
@@ -40,20 +41,19 @@ fn main() -> ! {
 
     let scheduler = Scheduler::new(sensor, controller).unwrap();
 
-    let config = Config::new(PathBuf::from_str("/sdcard/Android/fas-rs/games.txt").unwrap());
     let mut temp = None;
     loop {
-        let current = config.cur_game_fps();
+        let current = CONFIG.cur_game_fps();
 
         if temp != current {
             temp = current;
 
-            if let Some((ref game, fps)) = temp {
+            if let Some((ref _game, fps)) = temp {
                 scheduler.load(fps).unwrap();
-                println!("Loaded {} {}", game, fps);
+                debug! { println!("Loaded {} {}", _game, fps) }
             } else {
                 scheduler.unload().unwrap();
-                println!("Unloaded");
+                debug! { println!("Unloaded") }
             }
         }
 
@@ -64,4 +64,5 @@ fn main() -> ! {
 fn set_self_sched() {
     let self_pid = std::process::id();
     let _ = std::fs::write("/dev/cpuset/background/tasks", self_pid.to_string());
+    debug! { println!("Self sched seted") }
 }

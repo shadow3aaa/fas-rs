@@ -1,34 +1,44 @@
 use std::{
-    collections::HashSet,
     fs,
-    path::PathBuf,
+    path::Path,
     sync::{
         atomic::{AtomicBool, Ordering},
-        mpsc::Sender,
         Arc,
     },
     thread,
     time::Duration,
 };
 
+use yata::methods::DEMA;
+use yata::prelude::*;
+
+use super::reset;
+use super::schedule::Schedule;
+use crate::debug;
+
 pub(super) fn usage_thread(
-    path: PathBuf,
-    usage: Sender<u8>,
+    path: &Path,
+    mut schedule: Schedule,
     pause: Arc<AtomicBool>,
     exit: Arc<AtomicBool>,
 ) {
-    let affected_cpus: HashSet<String> = fs::read_to_string(path.join("affected_cpus"))
+    let affected_cpus: Vec<String> = fs::read_to_string(path.join("affected_cpus"))
         .unwrap()
         .split_whitespace()
         .map(|cpu| format!("cpu{}", cpu))
         .collect();
 
+    let mut dema = DEMA::new(4, &0.0).unwrap(); // 指数平滑
+
+    reset(path).unwrap();
     thread::park();
 
     loop {
         if exit.load(Ordering::Acquire) {
+            reset(path).unwrap();
             return;
         } else if pause.load(Ordering::Acquire) {
+            reset(path).unwrap();
             thread::park();
         }
 
@@ -36,31 +46,29 @@ pub(super) fn usage_thread(
         thread::sleep(Duration::from_millis(75));
         let stat_b = read_stat(&affected_cpus);
 
-        let new_usage: u8 = stat_a
-            .iter()
-            .zip(stat_b.iter())
-            .map(|((total_a, idle_a), (total_b, idle_b))| {
-                let total = total_b - total_a;
-                let idle = idle_b - idle_a;
-                100 - idle * 100 / total
-            })
-            .max()
-            .unwrap() as u8;
-
-        usage.send(new_usage).unwrap();
-        // println!("{}％", usage.load(Ordering::Acquire));
+        let new_usage = dema.next(
+            &(stat_a
+                .iter()
+                .zip(stat_b.iter())
+                .map(|((total_a, idle_a), (total_b, idle_b))| {
+                    let total = (total_b - total_a) as f64;
+                    let idle = (idle_b - idle_a) as f64;
+                    100.0 - idle * 100.0 / total
+                })
+                .max_by(|a, b| a.partial_cmp(b).unwrap())
+                .unwrap()),
+        );
+        let new_usage = new_usage.min(100.0);
+        debug! { println!("{:.2}%", new_usage) }
+        schedule.run(new_usage);
     }
 }
 
-fn read_stat(affected_cpus: &HashSet<String>) -> Vec<(usize, usize)> {
-    let stat: Vec<String> = fs::read_to_string("/proc/stat")
+fn read_stat(affected_cpus: &[String]) -> Vec<(usize, usize)> {
+    fs::read_to_string("/proc/stat")
         .unwrap()
         .lines()
         .filter(|line| affected_cpus.iter().any(|cpu| line.starts_with(cpu)))
-        .map(|s| s.to_owned())
-        .collect();
-
-    stat.iter()
         .map(|cpu| {
             (
                 cpu.split_whitespace()

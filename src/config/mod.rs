@@ -1,52 +1,77 @@
-mod parse;
+mod read;
+mod single;
+
+pub use single::CONFIG;
 
 use std::{
-    collections::{HashMap, HashSet},
-    path::PathBuf,
+    collections::HashSet,
+    path::Path,
     process::Command,
     sync::{
         atomic::{AtomicBool, Ordering},
-        Arc, Mutex,
+        Arc,
     },
     thread,
 };
 
 use fas_rs_fw::Fps;
+use parking_lot::RwLock;
+use toml::Value;
 
-pub(crate) type GameList = HashMap<String, u32>;
+use read::wait_and_read;
 
+pub(crate) type ConfData = RwLock<Option<Value>>;
 pub struct Config {
-    game_list: Arc<Mutex<GameList>>,
-    pause: Arc<AtomicBool>,
+    toml: Arc<ConfData>,
+    exit: Arc<AtomicBool>,
 }
 
 impl Drop for Config {
     fn drop(&mut self) {
-        self.pause.store(true, Ordering::Release);
+        self.exit.store(true, Ordering::Release);
     }
 }
 
 impl Config {
-    pub fn new(path: PathBuf) -> Self {
-        let game_list = Arc::new(Mutex::new(GameList::new()));
-        let game_list_clone = game_list.clone();
+    pub fn new(path: &Path) -> Self {
+        let toml = Arc::new(RwLock::new(None));
+        let toml_clone = toml.clone();
 
-        let pause = Arc::new(AtomicBool::new(false));
-        let pause_clone = pause.clone();
+        let exit = Arc::new(AtomicBool::new(false));
+        let exit_clone = exit.clone();
 
-        thread::spawn(move || parse::wait_and_parse(path, game_list_clone, pause_clone));
+        let path = path.to_owned();
 
-        Self { game_list, pause }
+        thread::spawn(move || wait_and_read(&path, toml_clone, exit_clone));
+
+        Self { toml, exit }
     }
 
+    #[allow(unused)]
     pub fn cur_game_fps(&self) -> Option<(String, Fps)> {
-        let list = self.game_list.lock().unwrap();
+        let toml = self.toml.read();
+        let list = toml
+            .as_ref()?
+            .get("game_list")
+            .and_then(|v| v.as_table())
+            .unwrap();
 
         let pkgs = Self::get_top_pkgname()?;
         let pkg = pkgs.into_iter().find(|key| list.contains_key(key))?;
 
-        let (game, fps) = list.get_key_value(&pkg)?;
+        let (game, fps) = (
+            &pkg,
+            list.get(&pkg)?
+                .as_integer()
+                .unwrap() as Fps,
+        );
         Some((game.to_owned(), fps.to_owned()))
+    }
+
+    #[allow(unused)]
+    pub fn get_conf(&self, label: &'static str) -> Option<Value> {
+        let toml = self.toml.read();
+        toml.as_ref()?.get(label).cloned()
     }
 
     fn get_top_pkgname() -> Option<HashSet<String>> {

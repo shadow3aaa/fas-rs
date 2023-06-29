@@ -1,85 +1,113 @@
 use std::{
-    cmp::{self, Ordering as CmpOrdering},
-    fs,
-    path::PathBuf,
+    cmp, fs,
+    path::{Path, PathBuf},
     sync::{
-        atomic::{AtomicBool, AtomicU8, Ordering as AtomOrdering},
-        mpsc::Receiver,
+        atomic::{AtomicU8, Ordering as AtomOrdering},
         Arc,
     },
-    thread,
-    time::Duration,
 };
 
-use crate::controller::write_pool::WritePool;
+use crate::debug;
+use fas_rs_fw::write_pool::WritePool;
 
-pub(super) fn schedule_thread(
+const BURST_DEFAULT: usize = 1;
+
+pub struct Schedule {
     path: PathBuf,
-    usage: Receiver<u8>,
-    target_usage: Arc<AtomicU8>,
+    target_usage: Arc<[AtomicU8; 2]>,
+    burst: usize,
     burst_max: usize,
-    pause: Arc<AtomicBool>,
-    exit: Arc<AtomicBool>,
-) {
-    let count = fs::read_to_string(path.join("affected_cpus"))
-        .unwrap()
-        .split_whitespace()
-        .count();
-    let mut pool = WritePool::new(cmp::max(count / 2, 2));
+    pool: WritePool,
+    table: Vec<usize>,
+    pos: usize,
+}
 
-    let mut table: Vec<usize> = fs::read_to_string(path.join("scaling_available_frequencies"))
-        .unwrap()
-        .split_whitespace()
-        .map(|freq| freq.parse().unwrap())
-        .collect();
-    table.sort_unstable();
-    let mut pos = table.len() - 1;
-    let mut burst = 0;
+impl Schedule {
+    pub fn new(path: &Path, burst_max: usize) -> (Self, Arc<[AtomicU8; 2]>) {
+        let target_usage = Arc::new([AtomicU8::new(65), AtomicU8::new(68)]);
+        let target_usage_clone = target_usage.clone();
 
-    pool.write(
-        &path.join("scaling_max_freq"),
-        &table.iter().max().unwrap().to_string(),
-    )
-    .unwrap();
+        let count = fs::read_to_string(path.join("affected_cpus"))
+            .unwrap()
+            .split_whitespace()
+            .count();
+        let pool = WritePool::new(cmp::max(count / 2, 2));
 
-    thread::park();
+        let table: Vec<usize> = fs::read_to_string(path.join("scaling_available_frequencies"))
+            .unwrap()
+            .split_whitespace()
+            .map(|freq| freq.parse().unwrap())
+            .collect();
 
-    loop {
-        if exit.load(AtomOrdering::Acquire) {
-            return;
-        } else if pause.load(AtomOrdering::Acquire) {
-            pool.write(
-                &path.join("scaling_max_freq"),
-                &table.iter().max().unwrap().to_string(),
-            )
-            .unwrap();
-            thread::park();
-            let _ = usage.iter().count(); // 清空
-        }
+        let table = table_spec(table, 8);
+        debug! { println!("{:#?}", &table) }
 
-        let usage = match usage.try_recv() {
-            Ok(o) => o,
-            Err(_) => {
-                thread::sleep(Duration::from_millis(50));
-                continue;
-            }
-        };
-        let target_usage = target_usage.load(AtomOrdering::Acquire);
+        let pos = table.len() - 1;
 
-        match usage.cmp(&target_usage) {
-            CmpOrdering::Greater => {
-                pos = cmp::min(pos + 1 + burst, table.len() - 1);
-                pool.write(&path.join("scaling_max_freq"), &table[pos].to_string())
-                    .unwrap();
-                burst = cmp::min(burst_max, burst + 1);
-            }
-            CmpOrdering::Less => {
-                pos = pos.saturating_sub(1);
-                pool.write(&path.join("scaling_max_freq"), &table[pos].to_string())
-                    .unwrap();
-                burst = 0;
-            }
-            CmpOrdering::Equal => burst = 0,
+        (
+            Self {
+                path: path.to_owned(),
+                target_usage,
+                burst: BURST_DEFAULT,
+                burst_max,
+                pool,
+                table,
+                pos,
+            },
+            target_usage_clone,
+        )
+    }
+
+    pub fn run(&mut self, usage: f64) {
+        let target_usage = [
+            self.target_usage[0].load(AtomOrdering::Acquire),
+            self.target_usage[1].load(AtomOrdering::Acquire),
+        ];
+
+        if usage < target_usage[0].into() {
+            self.pos = self.pos.saturating_sub(1);
+            self.pool
+                .write(
+                    &self.path.join("scaling_max_freq"),
+                    &self.table[self.pos].to_string(),
+                )
+                .unwrap();
+            self.burst = BURST_DEFAULT;
+        } else if usage > target_usage[1].into() {
+            self.pos = cmp::min(self.pos + 1 + self.burst, self.table.len() - 1);
+            self.pool
+                .write(
+                    &self.path.join("scaling_max_freq"),
+                    &self.table[self.pos].to_string(),
+                )
+                .unwrap();
+            self.burst = cmp::min(self.burst_max, self.burst + 1);
+        } else {
+            self.burst = BURST_DEFAULT;
         }
     }
+}
+
+fn table_spec(mut table: Vec<usize>, save_count: usize) -> Vec<usize> {
+    table.sort_unstable();
+
+    let len = table.len();
+    if len <= save_count {
+        return table;
+    }
+
+    /* let split_freq = table.last().unwrap() / 4;
+    table = table
+        .iter()
+        .filter(|f| **f >= split_freq)
+        .copied()
+        .collect(); */
+
+    table
+        .into_iter()
+        .rev()
+        .step_by(len / save_count)
+        .take(save_count)
+        .rev()
+        .collect()
 }
