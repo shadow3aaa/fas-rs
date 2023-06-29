@@ -46,7 +46,8 @@ pub(super) fn wait_and_read(path: &Path, toml: Arc<ConfData>, exit: Arc<AtomicBo
                 }
             }
         };
-        *toml.write() = Some(toml::from_str(&ori).unwrap());
+        *toml.write() = toml::from_str(&ori).unwrap();
+        debug! { println!("{:#?}", *toml.read()) }
 
         // wait until file change
         let mut inotify = Inotify::init().unwrap();

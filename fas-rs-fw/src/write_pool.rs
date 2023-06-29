@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     error::Error,
     fs::{self, set_permissions},
     os::unix::fs::PermissionsExt,
@@ -13,6 +14,7 @@ use std::{
 
 pub struct WritePool {
     workers: Vec<(Sender<Command>, Arc<AtomicUsize>)>,
+    cache_map: HashMap<PathBuf, String>,
 }
 
 enum Command {
@@ -39,11 +41,17 @@ impl WritePool {
             workers.push((sender, heavy));
         }
 
-        Self { workers }
+        Self {
+            workers,
+            cache_map: HashMap::with_capacity(worker_count),
+        }
     }
 
     pub fn write(&mut self, path: &Path, value: &str) -> Result<(), Box<dyn Error>> {
-        // println!("path: {}, value: {}", path.display(), value);
+        if Some(value) == self.cache_map.get(path).map(|x| x.as_str()) {
+            return Ok(());
+        }
+        
         let (best_worker, heavy) = self
             .workers
             .iter()
@@ -54,6 +62,7 @@ impl WritePool {
         heavy.store(new_heavy, Ordering::Release); // 完成一个任务负载计数加一
 
         best_worker.send(Command::Write(path.to_owned(), value.to_owned()))?;
+        self.cache_map.insert(path.to_owned(), value.to_owned());
         Ok(())
     }
 }
@@ -64,7 +73,8 @@ fn write_thread(receiver: Receiver<Command>, heavy: Arc<AtomicUsize>) {
             match command {
                 Command::Write(path, value) => {
                     set_permissions(&path, PermissionsExt::from_mode(0o644)).unwrap();
-                    fs::write(&path, value).unwrap();
+                    let _ = fs::write(&path, value);
+                    set_permissions(&path, PermissionsExt::from_mode(0o444)).unwrap();
                 }
                 Command::Exit => return,
             }

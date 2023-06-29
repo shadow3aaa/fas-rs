@@ -14,6 +14,7 @@ use yata::prelude::*;
 
 use super::reset;
 use super::schedule::Schedule;
+use crate::config::CONFIG;
 use crate::debug;
 
 pub(super) fn usage_thread(
@@ -28,10 +29,13 @@ pub(super) fn usage_thread(
         .map(|cpu| format!("cpu{}", cpu))
         .collect();
 
-    let mut dema = DEMA::new(4, &0.0).unwrap(); // 指数平滑
+    let window = CONFIG
+        .get_conf("DEMA")
+        .and_then(|d| d.as_integer())
+        .unwrap_or(4);
+    let mut dema = DEMA::new(window as u8, &0.0).unwrap(); // 指数平滑
 
     reset(path).unwrap();
-    thread::park();
 
     loop {
         if exit.load(Ordering::Acquire) {
@@ -43,7 +47,7 @@ pub(super) fn usage_thread(
         }
 
         let stat_a = read_stat(&affected_cpus);
-        thread::sleep(Duration::from_millis(75));
+        thread::sleep(Duration::from_millis(50));
         let stat_b = read_stat(&affected_cpus);
 
         let new_usage = dema.next(
@@ -58,7 +62,7 @@ pub(super) fn usage_thread(
                 .max_by(|a, b| a.partial_cmp(b).unwrap())
                 .unwrap()),
         );
-        let new_usage = new_usage.min(100.0);
+        let new_usage = new_usage.min(100.0).max(0.0);
         debug! { println!("{:.2}%", new_usage) }
         schedule.run(new_usage);
     }

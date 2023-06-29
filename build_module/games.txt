@@ -1,21 +1,28 @@
-# 按照自己的需求改，只是一个例子
+[config]
+DEMA = 4
+freq_count = 8
+always_on_gov = true
+default_target_usage = [73, 75]
+default_fas_target_usage = [50, 52]
+
+[game_list]
 # 和平精英
-com.tencent.tmgp.pubgmhd 120
+"com.tencent.tmgp.pubgmhd" = 60
 # Freeblade(战锤40k: 自由之刃)
-com.pixeltoys.freeblade 60
+"com.pixeltoys.freeblade" = 60
 # 明日方舟
-com.hypergryph.arknights 60
+"com.hypergryph.arknights" = 60
 # 喵斯快跑
-com.prpr.musedash.TapTap
+"com.prpr.musedash.TapTap" = 60
 # Minecraft(我的世界)
-com.mojang.minecraftpe
+"com.mojang.minecraftpe" = 120
 # 我的世界(网易答辩版)
-com.netease.x19 120
+"com.netease.x19" = 20
 # 崩坏3
-com.miHoYo.enterprise.NGHSoD 60
+"com.miHoYo.enterprise.NGHSoD" = 60
 # 星穹铁道
-com.miHoYo.hkrpg 60
+"com.miHoYo.hkrpg" = 60
 # 原神
-com.miHoYo.Yuanshen 60
+"com.miHoYo.Yuanshen" = 60
 # 王者荣耀
-com.tencent.tmgp.sgame 120
+"com.tencent.tmgp.sgame" = 120

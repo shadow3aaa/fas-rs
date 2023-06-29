@@ -7,6 +7,7 @@ use std::{
     },
 };
 
+use crate::config::CONFIG;
 use crate::debug;
 use fas_rs_fw::write_pool::WritePool;
 
@@ -39,7 +40,11 @@ impl Schedule {
             .map(|freq| freq.parse().unwrap())
             .collect();
 
-        let table = table_spec(table, 8);
+        let keep_count = CONFIG
+            .get_conf("freq_count")
+            .and_then(|c| c.as_integer())
+            .unwrap_or(8);
+        let table = table_spec(table, keep_count as usize);
         debug! { println!("{:#?}", &table) }
 
         let pos = table.len() - 1;

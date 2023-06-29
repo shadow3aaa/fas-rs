@@ -3,7 +3,8 @@ mod usage;
 
 use std::{
     error::Error,
-    fs,
+    fs::{self, set_permissions},
+    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, AtomicU8, Ordering},
@@ -77,6 +78,8 @@ pub(crate) fn reset(path: &Path) -> Result<(), Box<dyn Error>> {
     debug! { println!("Reset: {}", path.display()) }
 
     let max = fs::read_to_string(path.join("cpuinfo_max_freq"))?;
-    fs::write(path.join("scaling_max_freq"), max)?;
+    let path = path.join("scaling_max_freq");
+    set_permissions(&path, PermissionsExt::from_mode(0o644))?;
+    fs::write(path, max)?;
     Ok(())
 }

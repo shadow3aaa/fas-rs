@@ -1,10 +1,12 @@
 mod read;
 mod single;
 
+// 全局配置，可以在任何地方线程安全的访问toml
 pub use single::CONFIG;
 
 use std::{
     collections::HashSet,
+    fs,
     path::Path,
     process::Command,
     sync::{
@@ -20,7 +22,7 @@ use toml::Value;
 
 use read::wait_and_read;
 
-pub(crate) type ConfData = RwLock<Option<Value>>;
+pub(crate) type ConfData = RwLock<Value>;
 pub struct Config {
     toml: Arc<ConfData>,
     exit: Arc<AtomicBool>,
@@ -34,7 +36,9 @@ impl Drop for Config {
 
 impl Config {
     pub fn new(path: &Path) -> Self {
-        let toml = Arc::new(RwLock::new(None));
+        let ori = fs::read_to_string(path).unwrap();
+        let toml = toml::from_str(&ori).unwrap();
+        let toml = Arc::new(RwLock::new(toml));
         let toml_clone = toml.clone();
 
         let exit = Arc::new(AtomicBool::new(false));
@@ -50,28 +54,19 @@ impl Config {
     #[allow(unused)]
     pub fn cur_game_fps(&self) -> Option<(String, Fps)> {
         let toml = self.toml.read();
-        let list = toml
-            .as_ref()?
-            .get("game_list")
-            .and_then(|v| v.as_table())
-            .unwrap();
+        let list = toml.get("game_list").and_then(|v| v.as_table()).unwrap();
 
         let pkgs = Self::get_top_pkgname()?;
         let pkg = pkgs.into_iter().find(|key| list.contains_key(key))?;
 
-        let (game, fps) = (
-            &pkg,
-            list.get(&pkg)?
-                .as_integer()
-                .unwrap() as Fps,
-        );
+        let (game, fps) = (&pkg, list.get(&pkg)?.as_integer().unwrap() as Fps);
         Some((game.to_owned(), fps.to_owned()))
     }
 
     #[allow(unused)]
     pub fn get_conf(&self, label: &'static str) -> Option<Value> {
         let toml = self.toml.read();
-        toml.as_ref()?.get(label).cloned()
+        toml.get("config").unwrap().get(label).cloned()
     }
 
     fn get_top_pkgname() -> Option<HashSet<String>> {

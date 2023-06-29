@@ -6,6 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::config::CONFIG;
 use crate::debug;
 use fas_rs_fw::prelude::*;
 use policy::Policy;
@@ -38,7 +39,18 @@ impl VirtualPerformanceController for CpuCommon {
     where
         Self: Sized,
     {
-        let target_usage = [Cell::new(50), Cell::new(52)];
+        let (l, r) = CONFIG
+            .get_conf("default_target_usage")
+            .and_then(|u| {
+                let arr = u.as_array()?;
+                assert_eq!(arr.len(), 2);
+                Some((
+                    arr[0].as_integer().unwrap() as u8,
+                    arr[1].as_integer().unwrap() as u8,
+                ))
+            })
+            .unwrap_or((74, 77));
+        let target_usage = [Cell::new(l), Cell::new(r)];
 
         let cpufreq = fs::read_dir("/sys/devices/system/cpu/cpufreq")?;
         let mut policies: Vec<PathBuf> = cpufreq.into_iter().map(|e| e.unwrap().path()).collect();
@@ -94,13 +106,36 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn plug_in(&self) -> Result<(), Box<dyn Error>> {
+        let (l, r) = CONFIG
+            .get_conf("default_fas_target_usage")
+            .and_then(|u| {
+                let arr = u.as_array()?;
+                assert_eq!(arr.len(), 2);
+                Some((
+                    arr[0].as_integer().unwrap() as u8,
+                    arr[1].as_integer().unwrap() as u8,
+                ))
+            })
+            .unwrap_or((74, 77));
+        self.set_target_usage(l, r);
         self.policies.iter().for_each(|p| p.resume());
         Ok(())
     }
 
     fn plug_out(&self) -> Result<(), Box<dyn Error>> {
-        self.set_target_usage(50, 52);
-        self.policies.iter().for_each(|p| p.pause());
+        let (l, r) = CONFIG
+            .get_conf("default_target_usage")
+            .and_then(|u| {
+                let arr = u.as_array()?;
+                assert_eq!(arr.len(), 2);
+                Some((
+                    arr[0].as_integer().unwrap() as u8,
+                    arr[1].as_integer().unwrap() as u8,
+                ))
+            })
+            .unwrap_or((50, 52));
+        self.set_target_usage(l, r);
+        // self.policies.iter().for_each(|p| p.pause());
         Ok(())
     }
 }
