@@ -29,6 +29,7 @@ impl Drop for Policy {
     fn drop(&mut self) {
         self.resume();
         self.exit.store(true, Ordering::Release);
+        let _ = reset(&self.path);
     }
 }
 
@@ -62,7 +63,6 @@ impl Policy {
     #[allow(unused)]
     pub fn pause(&self) {
         self.pause.store(true, Ordering::Release);
-        reset(&self.path).unwrap();
     }
 
     pub fn set_target_usage(&self, l: u8, r: u8) {

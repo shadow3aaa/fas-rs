@@ -9,13 +9,27 @@ use std::{
     time::Duration,
 };
 
-use yata::methods::DEMA;
+use yata::methods::{DEMA, EMA};
 use yata::prelude::*;
 
 use super::reset;
 use super::schedule::Schedule;
 use crate::config::CONFIG;
 use crate::debug;
+
+enum SpecEma {
+    Ema(EMA),
+    Dema(DEMA),
+}
+
+impl SpecEma {
+    fn next(&mut self, value: &f64) -> f64 {
+        match self {
+            Self::Ema(e) => e.next(value),
+            Self::Dema(e) => e.next(value),
+        }
+    }
+}
 
 pub(super) fn usage_thread(
     path: &Path,
@@ -30,10 +44,18 @@ pub(super) fn usage_thread(
         .collect();
 
     let window = CONFIG
-        .get_conf("DEMA")
+        .get_conf("EMA_WIN")
         .and_then(|d| d.as_integer())
-        .unwrap_or(4);
-    let mut dema = DEMA::new(window as u8, &0.0).unwrap(); // 指数平滑
+        .unwrap_or(4) as u8;
+
+    let mut ema = CONFIG
+        .get_conf("EMA_TYPE")
+        .and_then(|d| match d.as_str()? {
+            "EMA" => Some(SpecEma::Ema(EMA::new(window, &0.0).ok()?)),
+            "DEMA" => Some(SpecEma::Dema(DEMA::new(window, &0.0).ok()?)),
+            _ => None,
+        })
+        .unwrap();
 
     reset(path).unwrap();
 
@@ -50,7 +72,7 @@ pub(super) fn usage_thread(
         thread::sleep(Duration::from_millis(50));
         let stat_b = read_stat(&affected_cpus);
 
-        let new_usage = dema.next(
+        let new_usage = ema.next(
             &(stat_a
                 .iter()
                 .zip(stat_b.iter())

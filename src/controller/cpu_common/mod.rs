@@ -107,7 +107,7 @@ impl VirtualPerformanceController for CpuCommon {
 
     fn plug_in(&self) -> Result<(), Box<dyn Error>> {
         let (l, r) = CONFIG
-            .get_conf("default_fas_target_usage")
+            .get_conf("default_target_usage_fas")
             .and_then(|u| {
                 let arr = u.as_array()?;
                 assert_eq!(arr.len(), 2);
@@ -123,6 +123,16 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn plug_out(&self) -> Result<(), Box<dyn Error>> {
+        let always_on = CONFIG
+            .get_conf("always_on_gov")
+            .and_then(|b| b.as_bool())
+            .unwrap();
+
+        if !always_on {
+            self.policies.iter().for_each(|p| p.pause());
+            return Ok(());
+        }
+
         let (l, r) = CONFIG
             .get_conf("default_target_usage")
             .and_then(|u| {
@@ -135,7 +145,6 @@ impl VirtualPerformanceController for CpuCommon {
             })
             .unwrap_or((50, 52));
         self.set_target_usage(l, r);
-        // self.policies.iter().for_each(|p| p.pause());
         Ok(())
     }
 }

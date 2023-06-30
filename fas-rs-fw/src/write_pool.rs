@@ -51,7 +51,7 @@ impl WritePool {
         if Some(value) == self.cache_map.get(path).map(|x| x.as_str()) {
             return Ok(());
         }
-        
+
         let (best_worker, heavy) = self
             .workers
             .iter()
