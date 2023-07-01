@@ -6,24 +6,25 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use cpu_cycles_reader::Cycles;
+use fas_rs_fw::prelude::*;
+
 use crate::config::CONFIG;
 use crate::debug;
-use fas_rs_fw::prelude::*;
 use policy::Policy;
 
 pub struct CpuCommon {
-    target_usage: [Cell<u8>; 2],
+    target_diff: Cell<Cycles>,
     policies: Vec<Policy>,
 }
 
 impl CpuCommon {
-    fn set_target_usage(&self, l: u8, r: u8) {
-        self.target_usage[0].set(l);
-        self.target_usage[1].set(r);
-        self.policies.iter().for_each(|p| {
-            p.set_target_usage(self.target_usage[0].get(), self.target_usage[1].get())
-        });
-        debug! { println!("taregt usage: {:#?}", self.target_usage) }
+    fn set_target_diff(&self, c: Cycles) {
+        self.target_diff.set(c);
+        self.policies
+            .iter()
+            .for_each(|p| p.set_target_diff(self.target_diff.get()));
+        debug! { println!("taregt diff: {}", self.target_diff.get()) }
     }
 }
 
@@ -39,18 +40,11 @@ impl VirtualPerformanceController for CpuCommon {
     where
         Self: Sized,
     {
-        let (l, r) = CONFIG
-            .get_conf("default_target_usage")
-            .and_then(|u| {
-                let arr = u.as_array()?;
-                assert_eq!(arr.len(), 2);
-                Some((
-                    arr[0].as_integer().unwrap() as u8,
-                    arr[1].as_integer().unwrap() as u8,
-                ))
-            })
-            .unwrap_or((74, 77));
-        let target_usage = [Cell::new(l), Cell::new(r)];
+        let target_diff = CONFIG
+            .get_conf("default_target_diff")
+            .and_then(|d| Some(Cycles::from_mhz(d.as_integer()?)))
+            .unwrap();
+        let target_diff = Cell::new(target_diff);
 
         let cpufreq = fs::read_dir("/sys/devices/system/cpu/cpufreq")?;
         let mut policies: Vec<PathBuf> = cpufreq.into_iter().map(|e| e.unwrap().path()).collect();
@@ -81,43 +75,36 @@ impl VirtualPerformanceController for CpuCommon {
         policies.truncate(2); // 保留后两个集群
         let policies = policies
             .into_iter()
-            .map(|path| Policy::new(&path, 2))
+            .map(|path| Policy::new(&path, 1))
             .collect();
         Ok(Self {
             policies,
-            target_usage,
+            target_diff,
         })
     }
 
     fn limit(&self) {
         debug! { println!("limit") }
-        let min = cmp::min(self.target_usage[0].get() + 2, 100);
-        let max = cmp::min(min + 2, 100);
+        let target_diff = self.target_diff.get() - Cycles::from_mhz(100);
+        let target_diff = cmp::max(target_diff, Cycles::new(0));
 
-        self.set_target_usage(min, max);
+        self.set_target_diff(target_diff);
     }
 
     fn release(&self) {
         debug! { println!("release") }
-        let min = self.target_usage[0].get().saturating_sub(2);
-        let max = cmp::min(min + 2, 100);
+        let target_diff = self.target_diff.get() - Cycles::from_mhz(100);
+        let target_diff = cmp::max(target_diff, Cycles::from_ghz(1));
 
-        self.set_target_usage(min, max);
+        self.set_target_diff(target_diff);
     }
 
     fn plug_in(&self) -> Result<(), Box<dyn Error>> {
-        let (l, r) = CONFIG
-            .get_conf("default_target_usage_fas")
-            .and_then(|u| {
-                let arr = u.as_array()?;
-                assert_eq!(arr.len(), 2);
-                Some((
-                    arr[0].as_integer().unwrap() as u8,
-                    arr[1].as_integer().unwrap() as u8,
-                ))
-            })
-            .unwrap_or((74, 77));
-        self.set_target_usage(l, r);
+        let target_diff = CONFIG
+            .get_conf("default_target_diff_fas")
+            .and_then(|d| Some(Cycles::from_mhz(d.as_integer()?)))
+            .unwrap();
+        self.set_target_diff(target_diff);
         self.policies.iter().for_each(|p| p.resume());
         Ok(())
     }
@@ -133,18 +120,11 @@ impl VirtualPerformanceController for CpuCommon {
             return Ok(());
         }
 
-        let (l, r) = CONFIG
-            .get_conf("default_target_usage")
-            .and_then(|u| {
-                let arr = u.as_array()?;
-                assert_eq!(arr.len(), 2);
-                Some((
-                    arr[0].as_integer().unwrap() as u8,
-                    arr[1].as_integer().unwrap() as u8,
-                ))
-            })
-            .unwrap_or((50, 52));
-        self.set_target_usage(l, r);
+        let target_diff = CONFIG
+            .get_conf("default_target_diff")
+            .and_then(|d| Some(Cycles::from_mhz(d.as_integer()?)))
+            .unwrap();
+        self.set_target_diff(target_diff);
         Ok(())
     }
 }

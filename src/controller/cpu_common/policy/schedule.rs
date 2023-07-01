@@ -1,21 +1,21 @@
 use std::{
-    cmp, fs,
+    cmp::{self, Ordering as CmpOrdering},
+    fs,
     path::{Path, PathBuf},
-    sync::{
-        atomic::{AtomicU8, Ordering as AtomOrdering},
-        Arc,
-    },
+    sync::Arc,
 };
 
 use crate::config::CONFIG;
 use crate::debug;
+use cpu_cycles_reader::Cycles;
 use fas_rs_fw::write_pool::WritePool;
+use parking_lot::RwLock;
 
-const BURST_DEFAULT: usize = 1;
+const BURST_DEFAULT: usize = 0;
 
 pub struct Schedule {
     path: PathBuf,
-    target_usage: Arc<[AtomicU8; 2]>,
+    target_diff: Arc<RwLock<Cycles>>,
     burst: usize,
     burst_max: usize,
     pool: WritePool,
@@ -24,9 +24,10 @@ pub struct Schedule {
 }
 
 impl Schedule {
-    pub fn new(path: &Path, burst_max: usize) -> (Self, Arc<[AtomicU8; 2]>) {
-        let target_usage = Arc::new([AtomicU8::new(65), AtomicU8::new(68)]);
-        let target_usage_clone = target_usage.clone();
+    pub fn new(path: &Path, burst_max: usize) -> (Self, Arc<RwLock<Cycles>>) {
+        let target_diff = Arc::new(RwLock::new(Cycles::from_mhz(200)));
+
+        let target_diff_clone = target_diff.clone();
 
         let count = fs::read_to_string(path.join("affected_cpus"))
             .unwrap()
@@ -52,43 +53,42 @@ impl Schedule {
         (
             Self {
                 path: path.to_owned(),
-                target_usage,
+                target_diff,
                 burst: BURST_DEFAULT,
                 burst_max,
                 pool,
                 table,
                 pos,
             },
-            target_usage_clone,
+            target_diff_clone,
         )
     }
 
-    pub fn run(&mut self, usage: f64) {
-        let target_usage = [
-            self.target_usage[0].load(AtomOrdering::Acquire),
-            self.target_usage[1].load(AtomOrdering::Acquire),
-        ];
+    pub fn run(&mut self, diff: Cycles) {
+        let target_diff = *self.target_diff.read();
 
-        if usage < target_usage[0].into() {
-            self.pos = self.pos.saturating_sub(1);
-            self.pool
-                .write(
-                    &self.path.join("scaling_max_freq"),
-                    &self.table[self.pos].to_string(),
-                )
-                .unwrap();
-            self.burst = BURST_DEFAULT;
-        } else if usage > target_usage[1].into() {
-            self.pos = cmp::min(self.pos + 1 + self.burst, self.table.len() - 1);
-            self.pool
-                .write(
-                    &self.path.join("scaling_max_freq"),
-                    &self.table[self.pos].to_string(),
-                )
-                .unwrap();
-            self.burst = cmp::min(self.burst_max, self.burst + 1);
-        } else {
-            self.burst = BURST_DEFAULT;
+        match target_diff.cmp(&diff) {
+            CmpOrdering::Less => {
+                self.pos = self.pos.saturating_sub(1);
+                self.pool
+                    .write(
+                        &self.path.join("scaling_max_freq"),
+                        &self.table[self.pos].to_string(),
+                    )
+                    .unwrap();
+                self.burst = BURST_DEFAULT;
+            }
+            CmpOrdering::Greater => {
+                self.pos = cmp::min(self.pos + 1 + self.burst, self.table.len() - 1);
+                self.pool
+                    .write(
+                        &self.path.join("scaling_max_freq"),
+                        &self.table[self.pos].to_string(),
+                    )
+                    .unwrap();
+                self.burst = cmp::min(self.burst_max, self.burst + 1);
+            }
+            CmpOrdering::Equal => self.burst = BURST_DEFAULT,
         }
     }
 }
@@ -112,7 +112,6 @@ fn table_spec(mut table: Vec<usize>, save_count: usize) -> Vec<usize> {
         .into_iter()
         .rev()
         .step_by(len / save_count)
-        .take(save_count)
         .rev()
         .collect()
 }

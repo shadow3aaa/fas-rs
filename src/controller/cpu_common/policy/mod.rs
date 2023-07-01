@@ -1,5 +1,5 @@
+mod cycles;
 mod schedule;
-mod usage;
 
 use std::{
     error::Error,
@@ -7,19 +7,22 @@ use std::{
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     sync::{
-        atomic::{AtomicBool, AtomicU8, Ordering},
+        atomic::{AtomicBool, Ordering},
         Arc,
     },
     thread::{self, JoinHandle},
 };
 
+use cpu_cycles_reader::Cycles;
+use parking_lot::RwLock;
+
 use crate::debug;
+use cycles::*;
 use schedule::Schedule;
-use usage::*;
 
 pub struct Policy {
     path: PathBuf,
-    target_usage: Arc<[AtomicU8; 2]>,
+    target_diff: Arc<RwLock<Cycles>>,
     pause: Arc<AtomicBool>,
     exit: Arc<AtomicBool>,
     handle: JoinHandle<()>,
@@ -35,7 +38,7 @@ impl Drop for Policy {
 
 impl Policy {
     pub fn new(policy_path: &Path, burst_max: usize) -> Self {
-        let (schedule, target_usage) = Schedule::new(policy_path, burst_max);
+        let (schedule, target_diff) = Schedule::new(policy_path, burst_max);
 
         let pause = Arc::new(AtomicBool::new(false));
         let exit = Arc::new(AtomicBool::new(false));
@@ -44,11 +47,11 @@ impl Policy {
         let exit_clone = exit.clone();
         let path_clone = policy_path.to_owned();
         let handle =
-            thread::spawn(move || usage_thread(&path_clone, schedule, pause_clone, exit_clone));
+            thread::spawn(move || cycles_thread(&path_clone, schedule, pause_clone, exit_clone));
 
         Self {
             path: policy_path.to_owned(),
-            target_usage,
+            target_diff,
             pause,
             exit,
             handle,
@@ -65,12 +68,8 @@ impl Policy {
         self.pause.store(true, Ordering::Release);
     }
 
-    pub fn set_target_usage(&self, l: u8, r: u8) {
-        assert!(r <= 100, "target usage should never be greater than 100");
-        assert!(l <= r, "Invalid closed range");
-
-        self.target_usage[0].store(l, Ordering::Release);
-        self.target_usage[1].store(r, Ordering::Release);
+    pub fn set_target_diff(&self, c: Cycles) {
+        *self.target_diff.write() = c;
     }
 }
 

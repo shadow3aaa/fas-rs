@@ -1,9 +1,10 @@
 [config]
-DEMA = 4
+EMA_TYPE = "EMA"
+EMA_WIN = 4
 freq_count = 8
 always_on_gov = true
-default_target_usage = [73, 75]
-default_fas_target_usage = [50, 52]
+default_target_diff = 450
+default_target_diff_fas = 600
 
 [game_list]
 # 和平精英
