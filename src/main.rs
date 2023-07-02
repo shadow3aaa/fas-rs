@@ -9,7 +9,11 @@ use fas_rs_fw::{prelude::*, support_controller, support_sensor, Scheduler};
 
 use config::CONFIG;
 use controller::cpu_common::CpuCommon;
+use mimalloc::MiMalloc;
 use sensor::mtk_fpsgo::MtkFpsGo;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 fn main() -> ! {
     set_self_sched();

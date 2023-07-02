@@ -9,10 +9,11 @@ members = ['fas-rs-fw']
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cpu_cycles_reader = "0.1.1"
+cpu_cycles_reader = "*"
 fas-rs-fw = { path = "./fas-rs-fw" }
 inotify = { version = "0.10.1", default_features = false }
 lazy_static = "1.4.0"
+mimalloc = { version = "*", default-features = false }
 parking_lot = "0.12.1"
 toml = "0.7.5"
 yata = { version = "0.6.1", default_features = false }

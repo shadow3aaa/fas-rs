@@ -7,4 +7,5 @@ until [ -d "/sdcard/Android" ]; do
 	sleep 1
 done
 
+killall fas-rs
 nohup $MODDIR/fas-rs >/dev/null 2>&1 &
