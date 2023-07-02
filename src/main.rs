@@ -1,10 +1,10 @@
 mod config;
 mod controller;
-mod debug;
 mod sensor;
 
 use std::{env, process, thread};
 
+pub(crate) use fas_rs_fw::debug;
 use fas_rs_fw::{prelude::*, support_controller, support_sensor, Scheduler};
 
 use config::CONFIG;

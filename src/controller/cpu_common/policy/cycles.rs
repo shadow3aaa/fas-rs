@@ -89,7 +89,7 @@ pub(super) fn cycles_thread(
 
         let cycles = Cycles::from_khz(ema.next(&(cycles.as_khz() as f64)) as i64);
         let cycles = cycles
-            .as_diff(time, *affected_cpus.first().unwrap() as u64)
+            .as_diff(time, *affected_cpus.first().unwrap())
             .unwrap();
         if cycles < Cycles::new(0) {
             continue;

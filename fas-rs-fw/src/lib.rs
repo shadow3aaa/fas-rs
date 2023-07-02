@@ -1,3 +1,4 @@
+pub mod debug;
 pub mod macros;
 pub mod prelude;
 mod scheduler;

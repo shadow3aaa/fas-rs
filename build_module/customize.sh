@@ -7,8 +7,8 @@ fi
 
 conf=/sdcard/Android/fas-rs/games.txt
 if [ ! -f $conf ]; then
-    mkdir -p /sdcard/Android/fas-rs
-    cp $MODPATH/games.txt $conf
+	mkdir -p /sdcard/Android/fas-rs
+	cp $MODPATH/games.txt $conf
 fi
 
 rm $MODPATH/games.txt

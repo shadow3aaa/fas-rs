@@ -34,9 +34,9 @@ checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 
 [[package]]
 name = "cpu_cycles_reader"
-version = "0.1.11"
+version = "0.1.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b01906445a61ffc0188f86a4d5d702223deb1a58c521677f514bb445349ad267"
+checksum = "f4fec78d9214bf7c7b527b5e0e8306673d689f40ca0900c7fe714a4f0dc61c08"
 dependencies = [
  "cc",
  "derive_more",
@@ -71,7 +71,6 @@ dependencies = [
  "inotify",
  "lazy_static",
  "parking_lot",
- "perf-event",
  "toml",
  "yata",
 ]
@@ -165,25 +164,6 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "windows-targets",
-]
-
-[[package]]
-name = "perf-event"
-version = "0.4.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4d6393d9238342159080d79b78cb59c67399a8e7ecfa5d410bd614169e4e823"
-dependencies = [
- "libc",
- "perf-event-open-sys",
-]
-
-[[package]]
-name = "perf-event-open-sys"
-version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c44fb1c7651a45a3652c4afc6e754e40b3d6e6556f1487e2b230bfc4f33c2a8"
-dependencies = [
- "libc",
 ]
 
 [[package]]
