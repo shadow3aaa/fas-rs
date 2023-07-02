@@ -96,7 +96,9 @@ pub(super) fn cycles_thread(
         }
         let cycles = cycles.min(Cycles::from_ghz(1));
 
-        debug! { println!("diff: {}", cycles) }
+        debug! {
+            println!("diff: {}", cycles);
+        }
         schedule.run(cycles);
     }
 }

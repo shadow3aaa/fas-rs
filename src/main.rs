@@ -24,14 +24,20 @@ fn main() -> ! {
     let controller = match support_controller!(CpuCommon) {
         Ok(o) => o,
         Err(_e) => {
-            debug! { println!("{}", _e) }
+            println!("Unsupported");
+            debug! {
+                println!("{}", _e);
+            }
             process::exit(1);
         }
     };
     let sensor = match support_sensor!(MtkFpsGo) {
         Ok(o) => o,
         Err(_e) => {
-            debug! { println!("{}", _e) }
+            println!("Unsupported");
+            debug! {
+                println!("reasion: {}", _e);
+            }
             process::exit(1);
         }
     };
@@ -54,10 +60,14 @@ fn main() -> ! {
 
             if let Some((ref _game, fps)) = temp {
                 scheduler.load(fps).unwrap();
-                debug! { println!("Loaded {} {}", _game, fps) }
+                debug! {
+                    println!("Loaded {} {}", _game, fps);
+                }
             } else {
                 scheduler.unload().unwrap();
-                debug! { println!("Unloaded") }
+                debug! {
+                    println!("Unloaded");
+                }
             }
         }
 
@@ -68,5 +78,7 @@ fn main() -> ! {
 fn set_self_sched() {
     let self_pid = std::process::id();
     let _ = std::fs::write("/dev/cpuset/background/tasks", self_pid.to_string());
-    debug! { println!("Self sched seted") }
+    debug! {
+        println!("Self sched seted");
+    }
 }

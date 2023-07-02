@@ -24,7 +24,9 @@ impl CpuCommon {
         self.policies
             .iter()
             .for_each(|p| p.set_target_diff(self.target_diff.get()));
-        debug! { println!("taregt diff: {}", self.target_diff.get()) }
+        debug! {
+            println!("taregt diff: {}", self.target_diff.get());
+        }
     }
 }
 
@@ -84,7 +86,9 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn limit(&self) {
-        debug! { println!("limit") }
+        debug! {
+            println!("limit");
+        }
         let target_diff = self.target_diff.get() - Cycles::from_mhz(100);
         let target_diff = cmp::max(target_diff, Cycles::new(0));
 
@@ -92,7 +96,9 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn release(&self) {
-        debug! { println!("release") }
+        debug! {
+            println!("release");
+        }
         let target_diff = self.target_diff.get() - Cycles::from_mhz(100);
         let target_diff = cmp::max(target_diff, Cycles::from_ghz(1));
 

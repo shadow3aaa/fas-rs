@@ -23,7 +23,9 @@ pub(super) fn wait_and_read(path: &Path, toml: Arc<ConfData>, exit: Arc<AtomicBo
         }
 
         if retry_count > 10 {
-            debug! { eprintln!("Too many read config retries") }
+            debug! {
+                eprintln!("Too many read config retries");
+            }
             process::exit(1);
         }
 
@@ -34,12 +36,16 @@ pub(super) fn wait_and_read(path: &Path, toml: Arc<ConfData>, exit: Arc<AtomicBo
             }
             Err(e) => {
                 if e.kind() == io::ErrorKind::NotFound {
-                    debug! { println!("File not found: {}", path.display()) }
+                    debug! {
+                        println!("File not found: {}", path.display());
+                    }
                     retry_count += 1;
                     thread::sleep(Duration::from_secs(1));
                     continue;
                 } else {
-                    debug! { println!("Failed to read file '{}': {}", path.display(), e) }
+                    debug! {
+                        println!("Failed to read file '{}': {}", path.display(), e);
+                    }
                     retry_count += 1;
                     thread::sleep(Duration::from_secs(1));
                     continue;
@@ -47,7 +53,9 @@ pub(super) fn wait_and_read(path: &Path, toml: Arc<ConfData>, exit: Arc<AtomicBo
             }
         };
         *toml.write() = toml::from_str(&ori).unwrap();
-        debug! { println!("{:#?}", *toml.read()) }
+        debug! {
+            println!("{:#?}", *toml.read());
+        }
 
         // wait until file change
         let mut inotify = Inotify::init().unwrap();

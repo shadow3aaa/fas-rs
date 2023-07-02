@@ -74,7 +74,9 @@ impl Policy {
 }
 
 pub(crate) fn reset(path: &Path) -> Result<(), Box<dyn Error>> {
-    debug! { println!("Reset: {}", path.display()) }
+    debug! {
+        println!("Reset: {}", path.display());
+    }
 
     let max = fs::read_to_string(path.join("cpuinfo_max_freq"))?;
     let path = path.join("scaling_max_freq");

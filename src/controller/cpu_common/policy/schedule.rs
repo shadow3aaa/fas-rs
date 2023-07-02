@@ -46,7 +46,9 @@ impl Schedule {
             .and_then(|c| c.as_integer())
             .unwrap_or(8);
         let table = table_spec(table, keep_count as usize);
-        debug! { println!("{:#?}", &table) }
+        debug! {
+            println!("{:#?}", &table);
+        }
 
         let pos = table.len() - 1;
 
