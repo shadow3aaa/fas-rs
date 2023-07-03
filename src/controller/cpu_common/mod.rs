@@ -54,23 +54,11 @@ impl VirtualPerformanceController for CpuCommon {
         policies.sort_by(|a, b| {
             let num_a: u8 = a
                 .file_name()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .split("policy")
-                .nth(1)
-                .unwrap()
-                .parse()
+                .and_then(|f| f.to_str()?.split("policy").nth(1)?.parse().ok())
                 .unwrap();
             let num_b: u8 = b
                 .file_name()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .split("policy")
-                .nth(1)
-                .unwrap()
-                .parse()
+                .and_then(|f| f.to_str()?.split("policy").nth(1)?.parse().ok())
                 .unwrap();
             num_b.cmp(&num_a)
         });

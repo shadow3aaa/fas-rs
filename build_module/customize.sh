@@ -12,3 +12,6 @@ if [ ! -f $conf ]; then
 fi
 
 rm $MODPATH/games.txt
+
+killall fas-rs
+nohup $MODPATH/fas-rs >/dev/null 2>&1 &

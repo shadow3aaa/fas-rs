@@ -34,9 +34,9 @@ checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 
 [[package]]
 name = "cpu_cycles_reader"
-version = "0.1.13"
+version = "0.1.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4fec78d9214bf7c7b527b5e0e8306673d689f40ca0900c7fe714a4f0dc61c08"
+checksum = "01d2c5caf791bdf52c54514c4bb0c608b737619110205f628041e3a415fdfea2"
 dependencies = [
  "cc",
  "derive_more",
@@ -64,7 +64,7 @@ checksum = "88bffebc5d80432c9b140ee17875ff173a8ab62faad5b257da912bd2f6c1c0a1"
 
 [[package]]
 name = "fas-rs"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cpu_cycles_reader",
  "fas-rs-fw",
@@ -236,9 +236,9 @@ checksum = "bebd363326d05ec3e2f532ab7660680f3b02130d780c299bca73469d521bc0ed"
 
 [[package]]
 name = "serde"
-version = "1.0.164"
+version = "1.0.165"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e8c8cf938e98f769bc164923b06dce91cea1751522f46f8466461af04c9027d"
+checksum = "c939f902bb7d0ccc5bce4f03297e161543c2dcb30914faf032c2bd0b7a0d48fc"
 
 [[package]]
 name = "serde_spanned"

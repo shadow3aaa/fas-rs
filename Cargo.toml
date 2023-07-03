@@ -1,6 +1,6 @@
 [package]
 name = "fas-rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [workspace]
@@ -24,3 +24,8 @@ codegen-units = 1
 opt-level = 3
 strip = true
 panic = 'abort'
+
+[package.metadata.'cargo-post']
+hooks = [
+    { package = "fas-rs", hook = "package_module.sh" }
+]

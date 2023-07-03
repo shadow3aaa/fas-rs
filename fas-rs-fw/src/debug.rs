@@ -3,9 +3,9 @@ macro_rules! debug {
     ($($tokens:tt)*) => {
         #[cfg(debug_assertions)]
         {
-            println!("###Debug###");
+            print!("[Debug] : ");
             $($tokens)*
-            println!("###Debug###");
+            print!("\n");
         }
     };
 }

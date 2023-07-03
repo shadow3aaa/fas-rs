@@ -35,17 +35,15 @@ impl Schedule {
             .count();
         let pool = WritePool::new(cmp::max(count / 2, 2));
 
-        let table: Vec<usize> = fs::read_to_string(path.join("scaling_available_frequencies"))
+        let mut table: Vec<usize> = fs::read_to_string(path.join("scaling_available_frequencies"))
             .unwrap()
             .split_whitespace()
             .map(|freq| freq.parse().unwrap())
             .collect();
 
-        let keep_count = CONFIG
-            .get_conf("freq_count")
-            .and_then(|c| c.as_integer())
-            .unwrap_or(8);
-        let table = table_spec(table, keep_count as usize);
+        table.sort_unstable();
+        table_spec(&mut table);
+
         debug! {
             println!("{:#?}", &table);
         }
@@ -66,8 +64,20 @@ impl Schedule {
         )
     }
 
-    pub fn run(&mut self, diff: Cycles) {
+    pub fn run(&mut self, diff: Cycles, cur_freq: Cycles) {
+        if diff > cur_freq {
+            return;
+        }
+
+        table_spec(&mut self.table);
+
         let target_diff = *self.target_diff.read();
+        let target_diff = target_diff.min(cur_freq);
+
+        assert!(
+            target_diff.as_hz() > 0,
+            "Target diff should never be less than zero"
+        );
 
         match target_diff.cmp(&diff) {
             CmpOrdering::Less => {
@@ -95,25 +105,29 @@ impl Schedule {
     }
 }
 
-fn table_spec(mut table: Vec<usize>, save_count: usize) -> Vec<usize> {
-    table.sort_unstable();
+fn table_spec(table: &mut Vec<usize>) {
+    let save_count = CONFIG
+        .get_conf("freq_count")
+        .and_then(|c| c.as_integer())
+        .unwrap() as usize;
 
     let len = table.len();
+
     if len <= save_count {
-        return table;
+        return;
     }
 
-    /* let split_freq = table.last().unwrap() / 4;
-    table = table
+    *table = table
         .iter()
-        .filter(|f| **f >= split_freq)
         .copied()
-        .collect(); */
+        .filter(|f| *f >= 500)
+        .collect();
 
-    table
-        .into_iter()
+    *table = table
+        .iter()
         .rev()
         .step_by(len / save_count)
         .rev()
-        .collect()
+        .copied()
+        .collect();
 }

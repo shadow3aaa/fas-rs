@@ -80,7 +80,9 @@ pub(crate) fn reset(path: &Path) -> Result<(), Box<dyn Error>> {
 
     let max = fs::read_to_string(path.join("cpuinfo_max_freq"))?;
     let path = path.join("scaling_max_freq");
+    
     set_permissions(&path, PermissionsExt::from_mode(0o644))?;
     fs::write(path, max)?;
+    
     Ok(())
 }

@@ -1,3 +1,6 @@
+//! 并发写入池
+//! 采用简化的线程池和负载设计
+
 use std::{
     collections::HashMap,
     error::Error,

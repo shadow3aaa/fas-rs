@@ -16,10 +16,10 @@ use sensor::mtk_fpsgo::MtkFpsGo;
 static GLOBAL: MiMalloc = MiMalloc;
 
 fn main() -> ! {
+    // 绑定到小核
     set_self_sched();
 
     // 搜索列表中第一个支持的控制器和传感器，并且构造
-    // 构造错误会panic
     // 没有支持的就退出程序
     let controller = match support_controller!(CpuCommon) {
         Ok(o) => o,
