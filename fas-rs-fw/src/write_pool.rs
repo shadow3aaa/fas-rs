@@ -1,5 +1,6 @@
 //! 并发写入池
-//! 采用简化的线程池和负载设计
+//! 采用简化的线程池和负载设计，并且缓存重复路径
+//! 适合控制器用来向节点写入频率
 
 use std::{
     collections::HashMap,
@@ -13,13 +14,14 @@ use std::{
         Arc,
     },
     thread,
+    time::{Duration, Instant},
 };
 
 use crate::debug;
 
 pub struct WritePool {
     workers: Vec<(Sender<Command>, Arc<AtomicUsize>)>,
-    cache_map: HashMap<PathBuf, String>,
+    cache_map: HashMap<PathBuf, (String, Instant)>,
 }
 
 enum Command {
@@ -53,12 +55,11 @@ impl WritePool {
     }
 
     pub fn write(&mut self, path: &Path, value: &str) -> Result<(), Box<dyn Error>> {
-    
         debug! {
             println!("WritePool: write {} to {}", &value, &path.display());
         }
-    
-        if Some(value) == self.cache_map.get(path).map(|x| x.as_str()) {
+
+        if Some(value) == self.cache_map.get(path).map(|(x, _)| x.as_str()) {
             return Ok(());
         }
 
@@ -72,8 +73,17 @@ impl WritePool {
         heavy.store(new_heavy, Ordering::Release); // 完成一个任务负载计数加一
 
         best_worker.send(Command::Write(path.to_owned(), value.to_owned()))?;
-        self.cache_map.insert(path.to_owned(), value.to_owned());
+
+        self.cache_map
+            .insert(path.to_owned(), (value.to_owned(), Instant::now()));
+        self.map_gc();
+
         Ok(())
+    }
+
+    fn map_gc(&mut self) {
+        self.cache_map
+            .retain(|_, (_, time)| Instant::now() - *time <= Duration::from_secs(5))
     }
 }
 

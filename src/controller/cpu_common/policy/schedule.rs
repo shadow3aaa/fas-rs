@@ -75,8 +75,9 @@ impl Schedule {
         let target_diff = target_diff.min(cur_freq);
 
         assert!(
-            target_diff.as_hz() > 0,
-            "Target diff should never be less than zero"
+            target_diff.as_hz() >= 0,
+            "Target diff should never be less than zero, but got {}",
+            target_diff,
         );
 
         match target_diff.cmp(&diff) {
@@ -117,11 +118,7 @@ fn table_spec(table: &mut Vec<usize>) {
         return;
     }
 
-    *table = table
-        .iter()
-        .copied()
-        .filter(|f| *f >= 500)
-        .collect();
+    *table = table.iter().copied().filter(|f| *f >= 500).collect();
 
     *table = table
         .iter()

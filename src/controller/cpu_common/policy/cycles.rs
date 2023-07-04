@@ -87,15 +87,15 @@ pub(super) fn cycles_thread(
             .max()
             .unwrap();
 
-        let cycles = Cycles::from_khz(ema.next(&(cycles.as_khz() as f64)) as i64);
-
         let path = path.join("scaling_max_freq");
         let cur_freq = fs::read_to_string(&path).unwrap();
         let cur_freq_cycles = cur_freq.trim().parse().map(Cycles::from_khz).unwrap();
 
         let cycles = cycles.as_diff(time, cur_freq_cycles).unwrap();
+        let cycles = Cycles::from_khz(ema.next(&(cycles.as_khz() as f64)) as i64);
+
         schedule.run(cycles, cur_freq_cycles);
-        
+
         debug! {
             println!("diff: {}", cycles);
         }

@@ -4,7 +4,7 @@ EMA_WIN = 4
 freq_count = 8
 always_on_gov = true
 # 单位: Mhz，0Mhz < diff < 1Ghz
-default_target_diff = 435
+default_target_diff = 430
 default_target_diff_fas = 600
 
 [game_list]

@@ -2,7 +2,7 @@ mod policy;
 
 use std::{
     cell::Cell,
-    cmp, fs,
+    fs,
     path::{Path, PathBuf},
 };
 
@@ -78,7 +78,7 @@ impl VirtualPerformanceController for CpuCommon {
             println!("limit");
         }
         let target_diff = self.target_diff.get() - Cycles::from_mhz(100);
-        let target_diff = cmp::max(target_diff, Cycles::new(0));
+        let target_diff = target_diff.max(Cycles::new(0));
 
         self.set_target_diff(target_diff);
     }
@@ -87,8 +87,7 @@ impl VirtualPerformanceController for CpuCommon {
         debug! {
             println!("release");
         }
-        let target_diff = self.target_diff.get() - Cycles::from_mhz(100);
-        let target_diff = cmp::max(target_diff, Cycles::from_ghz(1));
+        let target_diff = self.target_diff.get() + Cycles::from_mhz(100);
 
         self.set_target_diff(target_diff);
     }
@@ -111,6 +110,7 @@ impl VirtualPerformanceController for CpuCommon {
 
         if !always_on {
             self.policies.iter().for_each(|p| p.pause());
+            println!("stopped");
             return Ok(());
         }
 
