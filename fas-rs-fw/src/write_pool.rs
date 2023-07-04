@@ -15,6 +15,8 @@ use std::{
     thread,
 };
 
+use crate::debug;
+
 pub struct WritePool {
     workers: Vec<(Sender<Command>, Arc<AtomicUsize>)>,
     cache_map: HashMap<PathBuf, String>,
@@ -51,6 +53,11 @@ impl WritePool {
     }
 
     pub fn write(&mut self, path: &Path, value: &str) -> Result<(), Box<dyn Error>> {
+    
+        debug! {
+            println!("WritePool: write {} to {}", &value, &path.display());
+        }
+    
         if Some(value) == self.cache_map.get(path).map(|x| x.as_str()) {
             return Ok(());
         }
