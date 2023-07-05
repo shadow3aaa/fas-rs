@@ -1,7 +1,8 @@
 use std::{path::Path, sync::Arc};
 
-use super::Config;
 use lazy_static::*;
+
+use super::Config;
 
 lazy_static! {
     pub static ref CONFIG: Arc<Config> =

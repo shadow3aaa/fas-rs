@@ -9,6 +9,8 @@ use std::{
     time::Duration,
 };
 
+use likely_stable::likely;
+
 use crate::TargetFps;
 use crate::{VirtualFrameSensor, VirtualPerformanceController};
 
@@ -96,7 +98,7 @@ impl Scheduler {
                 }
             }
 
-            if loaded {
+            if likely(loaded) {
                 Self::process_load(&*sensor, &*controller, target_fps).unwrap();
             } else {
                 thread::sleep(Duration::from_secs(1));

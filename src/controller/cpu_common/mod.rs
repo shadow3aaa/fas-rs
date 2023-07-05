@@ -6,8 +6,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use cpu_cycles_reader::Cycles;
 use fas_rs_fw::prelude::*;
+
+use cpu_cycles_reader::Cycles;
+use likely_stable::LikelyOption;
 
 use crate::config::CONFIG;
 use crate::debug;
@@ -24,6 +26,7 @@ impl CpuCommon {
         self.policies
             .iter()
             .for_each(|p| p.set_target_diff(self.target_diff.get()));
+
         debug! {
             println!("taregt diff: {}", self.target_diff.get());
         }
@@ -44,7 +47,7 @@ impl VirtualPerformanceController for CpuCommon {
     {
         let target_diff = CONFIG
             .get_conf("default_target_diff")
-            .and_then(|d| Some(Cycles::from_mhz(d.as_integer()?)))
+            .and_then_likely(|d| Some(Cycles::from_mhz(d.as_integer()?)))
             .unwrap();
         let target_diff = Cell::new(target_diff);
 
@@ -54,11 +57,11 @@ impl VirtualPerformanceController for CpuCommon {
         policies.sort_by(|a, b| {
             let num_a: u8 = a
                 .file_name()
-                .and_then(|f| f.to_str()?.split("policy").nth(1)?.parse().ok())
+                .and_then_likely(|f| f.to_str()?.split("policy").nth(1)?.parse().ok())
                 .unwrap();
             let num_b: u8 = b
                 .file_name()
-                .and_then(|f| f.to_str()?.split("policy").nth(1)?.parse().ok())
+                .and_then_likely(|f| f.to_str()?.split("policy").nth(1)?.parse().ok())
                 .unwrap();
             num_b.cmp(&num_a)
         });
@@ -95,7 +98,7 @@ impl VirtualPerformanceController for CpuCommon {
     fn plug_in(&self) -> Result<(), Box<dyn Error>> {
         let target_diff = CONFIG
             .get_conf("default_target_diff_fas")
-            .and_then(|d| Some(Cycles::from_mhz(d.as_integer()?)))
+            .and_then_likely(|d| Some(Cycles::from_mhz(d.as_integer()?)))
             .unwrap();
         self.set_target_diff(target_diff);
         self.policies.iter().for_each(|p| p.resume());
@@ -105,18 +108,17 @@ impl VirtualPerformanceController for CpuCommon {
     fn plug_out(&self) -> Result<(), Box<dyn Error>> {
         let always_on = CONFIG
             .get_conf("always_on_gov")
-            .and_then(|b| b.as_bool())
+            .and_then_likely(|b| b.as_bool())
             .unwrap();
 
         if !always_on {
             self.policies.iter().for_each(|p| p.pause());
-            println!("stopped");
             return Ok(());
         }
 
         let target_diff = CONFIG
             .get_conf("default_target_diff")
-            .and_then(|d| Some(Cycles::from_mhz(d.as_integer()?)))
+            .and_then_likely(|d| Some(Cycles::from_mhz(d.as_integer()?)))
             .unwrap();
         self.set_target_diff(target_diff);
         Ok(())

@@ -17,6 +17,8 @@ use std::{
 };
 
 use fas_rs_fw::Fps;
+
+use likely_stable::LikelyOption;
 use parking_lot::RwLock;
 use toml::Value;
 
@@ -54,7 +56,10 @@ impl Config {
     #[allow(unused)]
     pub fn cur_game_fps(&self) -> Option<(String, Fps)> {
         let toml = self.toml.read();
-        let list = toml.get("game_list").and_then(|v| v.as_table()).unwrap();
+        let list = toml
+            .get("game_list")
+            .and_then_likely(|v| v.as_table())
+            .unwrap();
 
         let pkgs = Self::get_top_pkgname()?;
         let pkg = pkgs.into_iter().find(|key| list.contains_key(key))?;
@@ -82,7 +87,7 @@ impl Config {
                 .map(|p| {
                     p.split_whitespace()
                         .nth(2)
-                        .and_then(|p| p.split('=').nth(1))
+                        .and_then_unlikely(|p| p.split('=').nth(1))
                         .unwrap()
                 })
                 .zip(

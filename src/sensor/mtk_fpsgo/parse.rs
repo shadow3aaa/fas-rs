@@ -13,6 +13,8 @@ use std::{
 
 use fas_rs_fw::prelude::*;
 
+use likely_stable::{if_likely, if_unlikely};
+
 use super::enable_fpsgo;
 use super::FPSGO;
 
@@ -48,15 +50,15 @@ pub(super) fn frametime_thread(
         // 值变化后保存为第二个时间戳
         loop {
             let fbt_info = fs::read_to_string(Path::new(FPSGO).join("fbt/fbt_info")).unwrap();
-            if let Some(stamp) = parse_frametime(&fbt_info) {
-                if stamps[0] < stamp {
-                    stamps[1] = stamp;
+            if_likely! { let Some(_stamp) = parse_frametime(&fbt_info) => {
+                if stamps[0] < _stamp {
+                    stamps[1] = _stamp;
                     break;
                 }
             } else {
                 enable_fpsgo().unwrap();
                 break;
-            }
+            }};
 
             // 轮询间隔6ms
             thread::sleep(Duration::from_millis(6));
@@ -104,12 +106,12 @@ pub(super) fn fps_thread(
         thread::sleep(Duration::from_millis(8));
 
         let fpsgo_status = fs::read_to_string(Path::new(FPSGO).join("fstb/fpsgo_status")).unwrap();
-        if let Some(fps) = parse_fps(&fpsgo_status) {
-            buffer.push_back((Instant::now(), fps));
+        if_unlikely! { let Some(_fps) = parse_fps(&fpsgo_status) => {
+            buffer.push_back((Instant::now(), _fps));
         } else {
             enable_fpsgo().unwrap();
             continue;
-        }
+        }};
     }
 }
 

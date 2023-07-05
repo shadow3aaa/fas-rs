@@ -4,12 +4,14 @@ mod sensor;
 
 use std::{env, process, thread};
 
-pub(crate) use fas_rs_fw::debug;
+pub use fas_rs_fw::debug;
 use fas_rs_fw::{prelude::*, support_controller, support_sensor, Scheduler};
+
+use likely_stable::if_unlikely;
+use mimalloc::MiMalloc;
 
 use config::CONFIG;
 use controller::cpu_common::CpuCommon;
-use mimalloc::MiMalloc;
 use sensor::mtk_fpsgo::MtkFpsGo;
 
 #[global_allocator]
@@ -57,18 +59,17 @@ fn main() -> ! {
 
         if temp != current {
             temp = current;
-
-            if let Some((ref _game, fps)) = temp {
-                scheduler.load(fps).unwrap();
+            if_unlikely! { let Some((ref _game, _fps)) = &temp => {
+                scheduler.load(*_fps).unwrap();
                 debug! {
-                    println!("Loaded {} {}", _game, fps);
+                    println!("Loaded {} {}", _game, _fps);
                 }
             } else {
                 scheduler.unload().unwrap();
                 debug! {
                     println!("Unloaded");
                 }
-            }
+            }};
         }
 
         thread::sleep(Duration::from_millis(100));

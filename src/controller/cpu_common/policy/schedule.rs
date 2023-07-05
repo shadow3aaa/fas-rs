@@ -5,11 +5,14 @@ use std::{
     sync::Arc,
 };
 
+use fas_rs_fw::write_pool::WritePool;
+
+use cpu_cycles_reader::Cycles;
+use likely_stable::LikelyOption;
+use parking_lot::RwLock;
+
 use crate::config::CONFIG;
 use crate::debug;
-use cpu_cycles_reader::Cycles;
-use fas_rs_fw::write_pool::WritePool;
-use parking_lot::RwLock;
 
 const BURST_DEFAULT: usize = 0;
 
@@ -19,7 +22,7 @@ pub struct Schedule {
     burst: usize,
     burst_max: usize,
     pool: WritePool,
-    table: Vec<usize>,
+    pub table: Vec<Cycles>,
     pos: usize,
 }
 
@@ -35,10 +38,10 @@ impl Schedule {
             .count();
         let pool = WritePool::new(cmp::max(count / 2, 2));
 
-        let mut table: Vec<usize> = fs::read_to_string(path.join("scaling_available_frequencies"))
+        let mut table: Vec<Cycles> = fs::read_to_string(path.join("scaling_available_frequencies"))
             .unwrap()
             .split_whitespace()
-            .map(|freq| freq.parse().unwrap())
+            .map(|freq| Cycles::from_khz(freq.parse().unwrap()))
             .collect();
 
         table.sort_unstable();
@@ -64,15 +67,20 @@ impl Schedule {
         )
     }
 
-    pub fn run(&mut self, diff: Cycles, cur_freq: Cycles) {
-        if diff > cur_freq {
+    #[inline]
+    pub fn current_freq_max(&self) -> Cycles {
+        self.table[self.pos]
+    }
+
+    pub fn run(&mut self, diff: Cycles) {
+        if diff < Cycles::new(0) {
             return;
         }
 
         table_spec(&mut self.table);
 
         let target_diff = *self.target_diff.read();
-        let target_diff = target_diff.min(cur_freq);
+        let target_diff = target_diff.min(self.current_freq_max());
 
         assert!(
             target_diff.as_hz() >= 0,
@@ -83,33 +91,37 @@ impl Schedule {
         match target_diff.cmp(&diff) {
             CmpOrdering::Less => {
                 self.pos = self.pos.saturating_sub(1);
-                self.pool
-                    .write(
-                        &self.path.join("scaling_max_freq"),
-                        &self.table[self.pos].to_string(),
-                    )
-                    .unwrap();
+                self.write();
                 self.burst = BURST_DEFAULT;
             }
             CmpOrdering::Greater => {
                 self.pos = cmp::min(self.pos + 1 + self.burst, self.table.len() - 1);
-                self.pool
-                    .write(
-                        &self.path.join("scaling_max_freq"),
-                        &self.table[self.pos].to_string(),
-                    )
-                    .unwrap();
+                self.write();
                 self.burst = cmp::min(self.burst_max, self.burst + 1);
             }
             CmpOrdering::Equal => self.burst = BURST_DEFAULT,
         }
     }
+
+    pub fn reset(&mut self) {
+        let _ = self.pool.write(
+            &self.path.join("scaling_max_freq"),
+            &self.table.last().unwrap().as_khz().to_string(),
+        );
+    }
+
+    fn write(&mut self) {
+        let _ = self.pool.write(
+            &self.path.join("scaling_max_freq"),
+            &self.table[self.pos].as_khz().to_string(),
+        );
+    }
 }
 
-fn table_spec(table: &mut Vec<usize>) {
+fn table_spec(table: &mut Vec<Cycles>) {
     let save_count = CONFIG
         .get_conf("freq_count")
-        .and_then(|c| c.as_integer())
+        .and_then_likely(|c| c.as_integer())
         .unwrap() as usize;
 
     let len = table.len();
@@ -118,7 +130,11 @@ fn table_spec(table: &mut Vec<usize>) {
         return;
     }
 
-    *table = table.iter().copied().filter(|f| *f >= 500).collect();
+    *table = table
+        .iter()
+        .copied()
+        .filter(|f| *f >= Cycles::from_mhz(500))
+        .collect();
 
     *table = table
         .iter()

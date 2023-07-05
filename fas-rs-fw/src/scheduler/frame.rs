@@ -1,5 +1,7 @@
 use std::{error::Error, time::Duration};
 
+use likely_stable::unlikely;
+
 use super::Scheduler;
 use crate::debug;
 use crate::{Fps, FrameTime, TargetFps};
@@ -40,7 +42,7 @@ impl Scheduler {
         let frametimes = sensor.frametimes(target_fps);
         let fps = sensor.fps();
 
-        if jank(frametimes, fps, target_fps) {
+        if unlikely(jank(frametimes, fps, target_fps)) {
             controller.release();
         } else {
             controller.limit();

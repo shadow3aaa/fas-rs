@@ -17,6 +17,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+use likely_stable::{if_likely, LikelyOption};
+
 use crate::debug;
 
 pub struct WritePool {
@@ -59,7 +61,7 @@ impl WritePool {
             println!("WritePool: write {} to {}", &value, &path.display());
         }
 
-        if Some(value) == self.cache_map.get(path).map(|(x, _)| x.as_str()) {
+        if Some(value) == self.cache_map.get(path).map_likely(|(x, _)| x.as_str()) {
             return Ok(());
         }
 
@@ -89,8 +91,8 @@ impl WritePool {
 
 fn write_thread(receiver: Receiver<Command>, heavy: Arc<AtomicUsize>) {
     loop {
-        if let Ok(command) = receiver.recv() {
-            match command {
+        if_likely! { let Ok(_command) = receiver.recv() => {
+            match _command {
                 Command::Write(path, value) => {
                     set_permissions(&path, PermissionsExt::from_mode(0o644)).unwrap();
                     let _ = fs::write(&path, value);
@@ -100,7 +102,7 @@ fn write_thread(receiver: Receiver<Command>, heavy: Arc<AtomicUsize>) {
             }
         } else {
             return;
-        }
+        }};
         let new_heavy = heavy.load(Ordering::Acquire).saturating_sub(1);
         heavy.store(new_heavy, Ordering::Release); // 完成一个任务负载计数器减一
     }

@@ -1,5 +1,5 @@
 use std::{
-    fs, io,
+    fs,
     path::Path,
     process,
     sync::{
@@ -34,22 +34,13 @@ pub(super) fn wait_and_read(path: &Path, toml: Arc<ConfData>, exit: Arc<AtomicBo
                 retry_count = 0;
                 s
             }
-            Err(e) => {
-                if e.kind() == io::ErrorKind::NotFound {
-                    debug! {
-                        println!("File not found: {}", path.display());
-                    }
-                    retry_count += 1;
-                    thread::sleep(Duration::from_secs(1));
-                    continue;
-                } else {
-                    debug! {
-                        println!("Failed to read file '{}': {}", path.display(), e);
-                    }
-                    retry_count += 1;
-                    thread::sleep(Duration::from_secs(1));
-                    continue;
+            Err(_e) => {
+                debug! {
+                    println!("Failed to read file '{}': {}", path.display(), _e);
                 }
+                retry_count += 1;
+                thread::sleep(Duration::from_secs(1));
+                continue;
             }
         };
         *toml.write() = toml::from_str(&ori).unwrap();
