@@ -9,14 +9,10 @@ pub use fas_rs_fw::debug;
 use fas_rs_fw::{prelude::*, support_controller, support_sensor, Scheduler};
 
 use likely_stable::if_unlikely;
-use mimalloc::MiMalloc;
 
 use config::CONFIG;
 use controller::cpu_common::CpuCommon;
 use sensor::mtk_fpsgo::MtkFpsGo;
-
-#[global_allocator]
-static GLOBAL: MiMalloc = MiMalloc;
 
 fn main() -> ! {
     // 绑定到小核
