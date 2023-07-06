@@ -66,7 +66,7 @@ impl VirtualPerformanceController for CpuCommon {
             num_b.cmp(&num_a)
         });
 
-        // policies.truncate(2); // 保留后两个集群
+        policies.truncate(2); // 保留后两个集群
         let policies = policies
             .into_iter()
             .map(|path| Policy::new(&path, 1))

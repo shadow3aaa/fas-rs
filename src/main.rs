@@ -24,9 +24,10 @@ fn main() -> ! {
 
     // 搜索列表中第一个支持的控制器和传感器，并且构造
     // 没有支持的就退出程序
+    #[allow(unused_variables)]
     let controller = match support_controller!(CpuCommon) {
         Ok(o) => o,
-        Err(_e) => {
+        Err(e) => {
             println!("Unsupported");
             debug! {
                 println!("{}", e);
@@ -34,9 +35,10 @@ fn main() -> ! {
             process::exit(1);
         }
     };
+    #[allow(unused_variables)]
     let sensor = match support_sensor!(MtkFpsGo) {
         Ok(o) => o,
-        Err(_e) => {
+        Err(e) => {
             println!("Unsupported");
             debug! {
                 println!("reasion: {}", e);
