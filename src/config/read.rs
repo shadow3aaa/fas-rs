@@ -15,7 +15,7 @@ use inotify::{Inotify, WatchMask};
 use super::ConfData;
 use crate::debug;
 
-pub(super) fn wait_and_read(path: &Path, toml: Arc<ConfData>, exit: Arc<AtomicBool>) {
+pub(super) fn wait_and_read(path: &Path, toml: &Arc<ConfData>, exit: &Arc<AtomicBool>) {
     let mut retry_count = 0;
     loop {
         if exit.load(Ordering::Acquire) {
@@ -34,9 +34,10 @@ pub(super) fn wait_and_read(path: &Path, toml: Arc<ConfData>, exit: Arc<AtomicBo
                 retry_count = 0;
                 s
             }
-            Err(_e) => {
+            #[allow(unused_variables)]
+            Err(e) => {
                 debug! {
-                    println!("Failed to read file '{}': {}", path.display(), _e);
+                    println!("Failed to read file '{}': {}", path.display(), e);
                 }
                 retry_count += 1;
                 thread::sleep(Duration::from_secs(1));

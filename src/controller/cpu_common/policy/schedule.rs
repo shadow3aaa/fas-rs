@@ -84,8 +84,7 @@ impl Schedule {
 
         assert!(
             target_diff.as_hz() >= 0,
-            "Target diff should never be less than zero, but got {}",
-            target_diff,
+            "Target diff should never be less than zero, but got {target_diff}"
         );
 
         match target_diff.cmp(&diff) {
@@ -121,8 +120,8 @@ impl Schedule {
 fn table_spec(table: &mut Vec<Cycles>) {
     let save_count = CONFIG
         .get_conf("freq_count")
-        .and_then_likely(|c| c.as_integer())
-        .unwrap() as usize;
+        .and_then_likely(|c| usize::try_from(c.as_integer()?).ok())
+        .unwrap();
 
     let len = table.len();
 

@@ -13,7 +13,7 @@ use std::{
 use cpu_cycles_reader::Cycles;
 use parking_lot::RwLock;
 
-use cycles::CyclesDiffReader;
+use cycles::DiffReader;
 use schedule::Schedule;
 
 pub struct Policy {
@@ -32,7 +32,7 @@ impl Drop for Policy {
 
 impl Policy {
     pub fn new(policy_path: &Path, burst_max: usize) -> Self {
-        let mut reader = CyclesDiffReader::new(policy_path);
+        let mut reader = DiffReader::new(policy_path);
         let (mut schedule, target_diff) = Schedule::new(policy_path, burst_max);
 
         let pause = Arc::new(AtomicBool::new(false));

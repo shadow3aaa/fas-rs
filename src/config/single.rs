@@ -1,6 +1,6 @@
 use std::{path::Path, sync::Arc};
 
-use lazy_static::*;
+use lazy_static::lazy_static;
 
 use super::Config;
 

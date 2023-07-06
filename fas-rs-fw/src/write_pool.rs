@@ -40,13 +40,16 @@ impl Drop for WritePool {
 }
 
 impl WritePool {
+    /// 构造一个写入线程池
+    ///
+    #[must_use]
     pub fn new(worker_count: usize) -> Self {
         let mut workers = Vec::with_capacity(worker_count);
         for _ in 0..worker_count {
             let (sender, receiver) = mpsc::channel();
             let heavy = Arc::new(AtomicUsize::new(0));
             let heavy_clone = heavy.clone();
-            thread::spawn(move || write_thread(receiver, heavy_clone));
+            thread::spawn(move || write_thread(&receiver, &heavy_clone));
             workers.push((sender, heavy));
         }
 
@@ -56,6 +59,13 @@ impl WritePool {
         }
     }
 
+    /// 异步写入一个值到指定路径
+    ///
+    /// # Errors
+    /// 向线程池发送写入请求失败
+    ///
+    /// # Panics
+    /// 线程池量为0
     pub fn write(&mut self, path: &Path, value: &str) -> Result<(), Box<dyn Error>> {
         debug! {
             println!("WritePool: write {} to {}", &value, &path.display());
@@ -85,24 +95,27 @@ impl WritePool {
 
     fn map_gc(&mut self) {
         self.cache_map
-            .retain(|_, (_, time)| Instant::now() - *time <= Duration::from_secs(5))
+            .retain(|_, (_, time)| (*time).elapsed() <= Duration::from_secs(5));
     }
 }
 
-fn write_thread(receiver: Receiver<Command>, heavy: Arc<AtomicUsize>) {
+#[allow(unused_variables)]
+fn write_thread(receiver: &Receiver<Command>, heavy: &Arc<AtomicUsize>) {
     loop {
-        if_likely! { let Ok(_command) = receiver.recv() => {
-            match _command {
-                Command::Write(path, value) => {
-                    set_permissions(&path, PermissionsExt::from_mode(0o644)).unwrap();
-                    let _ = fs::write(&path, value);
-                    set_permissions(&path, PermissionsExt::from_mode(0o444)).unwrap();
+        if_likely! {
+            let Ok(command) = receiver.recv() => {
+                match command {
+                    Command::Write(path, value) => {
+                        set_permissions(&path, PermissionsExt::from_mode(0o644)).unwrap();
+                        let _ = fs::write(&path, value);
+                        set_permissions(&path, PermissionsExt::from_mode(0o444)).unwrap();
+                    }
+                    Command::Exit => return,
                 }
-                Command::Exit => return,
+            } else {
+                return;
             }
-        } else {
-            return;
-        }};
+        }
         let new_heavy = heavy.load(Ordering::Acquire).saturating_sub(1);
         heavy.store(new_heavy, Ordering::Release); // 完成一个任务负载计数器减一
     }

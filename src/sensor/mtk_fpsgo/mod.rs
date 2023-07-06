@@ -15,7 +15,7 @@ use std::{
 use fas_rs_fw::prelude::*;
 
 use super::IgnoreFrameTime;
-use parse::*;
+use parse::{fps_thread, frametime_thread};
 
 pub(crate) const FPSGO: &str = "/sys/kernel/fpsgo";
 
@@ -65,8 +65,10 @@ impl VirtualFrameSensor for MtkFpsGo {
         let avg_fps_clone = avg_fps.clone();
 
         let thread_handle = [
-            thread::spawn(move || frametime_thread(frametime_sender, count_clone, pause_frametime)),
-            thread::spawn(move || fps_thread(avg_fps_clone, time_clone, pause_fps)),
+            thread::spawn(move || {
+                frametime_thread(&frametime_sender, &count_clone, &pause_frametime);
+            }),
+            thread::spawn(move || fps_thread(&avg_fps_clone, &time_clone, &pause_fps)),
         ];
 
         Ok(Self {

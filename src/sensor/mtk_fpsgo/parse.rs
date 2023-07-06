@@ -19,9 +19,9 @@ use super::enable_fpsgo;
 use super::FPSGO;
 
 pub(super) fn frametime_thread(
-    sender: SyncSender<Vec<FrameTime>>,
-    count: Arc<AtomicUsize>,
-    pause: Arc<AtomicBool>,
+    sender: &SyncSender<Vec<FrameTime>>,
+    count: &Arc<AtomicUsize>,
+    pause: &Arc<AtomicBool>,
 ) {
     thread::park();
 
@@ -43,22 +43,25 @@ pub(super) fn frametime_thread(
         // 获取第一个时间戳
         let fbt_info = fs::read_to_string(Path::new(FPSGO).join("fbt/fbt_info")).unwrap();
         if let Some(stamp) = parse_frametime(&fbt_info) {
-            stamps[0] = stamp
+            stamps[0] = stamp;
         }
 
         // 轮询(sysfs不可用inotify监听)
         // 值变化后保存为第二个时间戳
+        #[allow(unused_variables)]
         loop {
             let fbt_info = fs::read_to_string(Path::new(FPSGO).join("fbt/fbt_info")).unwrap();
-            if_likely! { let Some(_stamp) = parse_frametime(&fbt_info) => {
-                if stamps[0] < _stamp {
-                    stamps[1] = _stamp;
+            if_likely! {
+                let Some(stamp) = parse_frametime(&fbt_info) => {
+                    if stamps[0] < stamp {
+                        stamps[1] = stamp;
+                        break;
+                    }
+                } else {
+                    enable_fpsgo().unwrap();
                     break;
                 }
-            } else {
-                enable_fpsgo().unwrap();
-                break;
-            }};
+            }
 
             // 轮询间隔6ms
             thread::sleep(Duration::from_millis(6));
@@ -75,14 +78,15 @@ pub(super) fn frametime_thread(
 }
 
 pub(super) fn fps_thread(
-    avg_fps: Arc<AtomicU32>,
-    time_millis: Arc<AtomicU64>,
-    pause: Arc<AtomicBool>,
+    avg_fps: &Arc<AtomicU32>,
+    time_millis: &Arc<AtomicU64>,
+    pause: &Arc<AtomicBool>,
 ) {
     thread::park();
 
-    let mut buffer = VecDeque::with_capacity(1024);
+    let mut buffer: VecDeque<(Instant, Fps)> = VecDeque::with_capacity(1024);
 
+    #[allow(unused_variables)]
     loop {
         if pause.load(Ordering::Acquire) {
             buffer.clear();
@@ -90,7 +94,7 @@ pub(super) fn fps_thread(
         }
 
         if let Some((time, _)) = buffer.front() {
-            if Instant::now() - *time > Duration::from_millis(time_millis.load(Ordering::Acquire)) {
+            if time.elapsed() > Duration::from_millis(time_millis.load(Ordering::Acquire)) {
                 buffer.pop_front();
             }
         }
@@ -99,19 +103,21 @@ pub(super) fn fps_thread(
             .iter()
             .map(|(_, fps)| fps)
             .sum::<Fps>()
-            .checked_div(buffer.len() as u32)
+            .checked_div(u32::try_from(buffer.len()).unwrap())
             .unwrap_or(0);
         avg_fps.store(avg, Ordering::Release);
 
         thread::sleep(Duration::from_millis(8));
 
         let fpsgo_status = fs::read_to_string(Path::new(FPSGO).join("fstb/fpsgo_status")).unwrap();
-        if_unlikely! { let Some(_fps) = parse_fps(&fpsgo_status) => {
-            buffer.push_back((Instant::now(), _fps));
-        } else {
-            enable_fpsgo().unwrap();
-            continue;
-        }};
+        if_unlikely! {
+            let Some(fps) = parse_fps(&fpsgo_status) => {
+                buffer.push_back((Instant::now(), fps));
+            } else {
+                enable_fpsgo().unwrap();
+                continue;
+            }
+        }
     }
 }
 
@@ -164,7 +170,7 @@ fn test_parse() {
     2898	0x9d700000001	0
     8606	0x136d00000021	13
     26994	0x6955000001a7	12##";
-    assert_eq!(parse_frametime(fbt_info), Some(15827015268850));
+    assert_eq!(parse_frametime(fbt_info), Some(15_827_015_268_850));
 
     let fpsgo_status = r"##tid	bufID		name		currentFPS	targetFPS	FPS_margin	FPS_margin_GPU	FPS_margin_thrs	sbe_state	HWUI
     26994	0x69550000025d	bin.mt.plus	60		120		0		0		0		0		1

@@ -24,7 +24,7 @@ impl Scheduler {
     ) -> Result<(), Box<dyn Error>> {
         sensor.resume(
             target_fps as usize / 12,
-            Duration::from_millis(target_fps as u64 * 10 / 3),
+            Duration::from_millis(u64::from(target_fps) * 10 / 3),
         )?;
         controller.plug_in()?;
         Ok(())
@@ -42,7 +42,7 @@ impl Scheduler {
         let frametimes = sensor.frametimes(target_fps);
         let fps = sensor.fps();
 
-        if unlikely(jank(frametimes, fps, target_fps)) {
+        if unlikely(jank(&frametimes, fps, target_fps)) {
             controller.release();
         } else {
             controller.limit();
@@ -53,7 +53,7 @@ impl Scheduler {
 }
 
 // 判断是否出现卡顿
-fn jank(frametime: Vec<FrameTime>, avg_fps: Fps, target_fps: TargetFps) -> bool {
+fn jank(frametime: &[FrameTime], avg_fps: Fps, target_fps: TargetFps) -> bool {
     if frametime.is_empty() {
         return true;
     }

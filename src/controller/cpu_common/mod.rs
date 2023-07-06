@@ -65,14 +65,15 @@ impl VirtualPerformanceController for CpuCommon {
                 .unwrap();
             num_b.cmp(&num_a)
         });
-        policies.truncate(2); // 保留后两个集群
+
+        // policies.truncate(2); // 保留后两个集群
         let policies = policies
             .into_iter()
             .map(|path| Policy::new(&path, 1))
             .collect();
         Ok(Self {
-            policies,
             target_diff,
+            policies,
         })
     }
 
@@ -101,7 +102,7 @@ impl VirtualPerformanceController for CpuCommon {
             .and_then_likely(|d| Some(Cycles::from_mhz(d.as_integer()?)))
             .unwrap();
         self.set_target_diff(target_diff);
-        self.policies.iter().for_each(|p| p.resume());
+        self.policies.iter().for_each(Policy::resume);
         Ok(())
     }
 
@@ -112,7 +113,7 @@ impl VirtualPerformanceController for CpuCommon {
             .unwrap();
 
         if !always_on {
-            self.policies.iter().for_each(|p| p.pause());
+            self.policies.iter().for_each(Policy::resume);
             return Ok(());
         }
 

@@ -48,7 +48,7 @@ impl Config {
 
         let path = path.to_owned();
 
-        thread::spawn(move || wait_and_read(&path, toml_clone, exit_clone));
+        thread::spawn(move || wait_and_read(&path, &toml_clone, &exit_clone));
 
         Self { toml, exit }
     }
@@ -58,14 +58,17 @@ impl Config {
         let toml = self.toml.read();
         let list = toml
             .get("game_list")
-            .and_then_likely(|v| v.as_table())
+            .and_then_likely(Value::as_table)
             .unwrap();
 
         let pkgs = Self::get_top_pkgname()?;
         let pkg = pkgs.into_iter().find(|key| list.contains_key(key))?;
 
-        let (game, fps) = (&pkg, list.get(&pkg)?.as_integer().unwrap() as Fps);
-        Some((game.to_owned(), fps.to_owned()))
+        let (game, fps) = (
+            &pkg,
+            Fps::try_from(list.get(&pkg)?.as_integer().unwrap()).unwrap(),
+        );
+        Some((game.clone(), fps.to_owned()))
     }
 
     #[allow(unused)]

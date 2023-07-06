@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic)]
 mod config;
 mod controller;
 mod sensor;
@@ -28,7 +29,7 @@ fn main() -> ! {
         Err(_e) => {
             println!("Unsupported");
             debug! {
-                println!("{}", _e);
+                println!("{}", e);
             }
             process::exit(1);
         }
@@ -38,7 +39,7 @@ fn main() -> ! {
         Err(_e) => {
             println!("Unsupported");
             debug! {
-                println!("reasion: {}", _e);
+                println!("reasion: {}", e);
             }
             process::exit(1);
         }
@@ -57,19 +58,22 @@ fn main() -> ! {
     loop {
         let current = CONFIG.cur_game_fps();
 
+        #[allow(unused_variables)]
         if temp != current {
             temp = current;
-            if_unlikely! { let Some((ref _game, _fps)) = &temp => {
-                scheduler.load(*_fps).unwrap();
-                debug! {
-                    println!("Loaded {} {}", _game, _fps);
+            if_unlikely! {
+                let Some((ref game, fps)) = &temp => {
+                    scheduler.load(*fps).unwrap();
+                    debug! {
+                        println!("Loaded {} {}", game, fps);
+                    }
+                } else {
+                    scheduler.unload().unwrap();
+                    debug! {
+                        println!("Unloaded");
+                    }
                 }
-            } else {
-                scheduler.unload().unwrap();
-                debug! {
-                    println!("Unloaded");
-                }
-            }};
+            }
         }
 
         thread::sleep(Duration::from_millis(100));

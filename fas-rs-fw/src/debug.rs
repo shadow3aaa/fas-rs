@@ -7,5 +7,8 @@ macro_rules! debug {
             $($tokens)*
             print!("\n");
         }
+        #[cfg(release_assertions)]
+        #[allow_unused_variables]
+        {}
     };
 }

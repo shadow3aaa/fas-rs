@@ -20,22 +20,22 @@ enum SpecEma {
     Dema(DEMA),
 }
 
-pub struct CyclesDiffReader {
+pub struct DiffReader {
     affected_cpus: Vec<i32>,
     ema: SpecEma,
     reader: CyclesReader,
 }
 
 impl SpecEma {
-    fn next(&mut self, value: &f64) -> f64 {
+    fn next(&mut self, value: f64) -> f64 {
         match self {
-            Self::Ema(e) => e.next(value),
-            Self::Dema(e) => e.next(value),
+            Self::Ema(e) => e.next(&value),
+            Self::Dema(e) => e.next(&value),
         }
     }
 }
 
-impl CyclesDiffReader {
+impl DiffReader {
     pub fn new(path: &Path) -> Self {
         let affected_cpus: Vec<i32> = fs::read_to_string(path.join("affected_cpus"))
             .unwrap()
@@ -45,8 +45,8 @@ impl CyclesDiffReader {
 
         let window = CONFIG
             .get_conf("EMA_WIN")
-            .and_then_likely(|d| d.as_integer())
-            .unwrap_or(4) as u8;
+            .and_then_likely(|d| u8::try_from(d.as_integer()?).ok())
+            .unwrap_or(4);
 
         let ema = CONFIG
             .get_conf("EMA_TYPE")
@@ -74,7 +74,7 @@ impl CyclesDiffReader {
         thread::sleep(Duration::from_millis(75));
 
         let cycles_later = self.reader.read().unwrap();
-        let time = Instant::now() - time;
+        let time = time.elapsed();
         self.reader.disable();
 
         let cycles = self
@@ -85,7 +85,9 @@ impl CyclesDiffReader {
             .unwrap();
 
         let cycles = cycles.as_diff(time, cur_freq).unwrap();
-        let diff = Cycles::from_khz(self.ema.next(&(cycles.as_khz() as f64)) as i64);
+        #[allow(clippy::cast_possible_truncation)]
+        #[allow(clippy::cast_precision_loss)]
+        let diff = Cycles::from_khz(self.ema.next(cycles.as_khz() as f64) as i64);
 
         debug! {
             println!("diff: {}", diff);

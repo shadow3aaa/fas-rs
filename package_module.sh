@@ -7,7 +7,8 @@ if [ ! -f $bin ]; then
 fi
 
 if [ ! -f $bin ]; then
-    echo "缺少fas-rs release可执行文件，先编译?"
+    echo "Missing release build, compile first?"
+    echo "Run 'cargo b -r'(on termux) or 'cargo b -r --target aarch64-linux-android' to fix"
     exit 1
 fi
 

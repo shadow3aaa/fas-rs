@@ -15,8 +15,8 @@ likely_stable = "*"
 parking_lot = "0.12.1"
 toml = "0.7.5"
 fas-rs-fw = { path = "./fas-rs-fw" }
-inotify = { version = "0.10.1", default_features = false }
 mimalloc = { version = "*", default-features = false }
+inotify = { version = "0.10.1", default_features = false }
 yata = { version = "0.6.1", default_features = false }
 
 [profile.dev]
