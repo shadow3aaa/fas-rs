@@ -1,4 +1,5 @@
-#![warn(clippy::all, clippy::pedantic)]
+#![deny(clippy::all, clippy::pedantic)]
+#![warn(clippy::nursery, clippy::cargo)]
 mod config;
 mod controller;
 mod sensor;
@@ -6,6 +7,8 @@ mod sensor;
 use std::{env, process, thread};
 
 pub use fas_rs_fw::debug;
+pub use fas_rs_fw::this_unwrap::{ThisOption, ThisResult};
+
 use fas_rs_fw::{prelude::*, support_controller, support_sensor, Scheduler};
 
 use likely_stable::if_unlikely;
@@ -21,27 +24,9 @@ fn main() -> ! {
     // 搜索列表中第一个支持的控制器和传感器，并且构造
     // 没有支持的就退出程序
     #[allow(unused_variables)]
-    let controller = match support_controller!(CpuCommon) {
-        Ok(o) => o,
-        Err(e) => {
-            println!("Unsupported");
-            debug! {
-                println!("{}", e);
-            }
-            process::exit(1);
-        }
-    };
+    let controller = support_controller!(CpuCommon).this_unwrap();
     #[allow(unused_variables)]
-    let sensor = match support_sensor!(MtkFpsGo) {
-        Ok(o) => o,
-        Err(e) => {
-            println!("Unsupported");
-            debug! {
-                println!("reasion: {}", e);
-            }
-            process::exit(1);
-        }
-    };
+    let sensor = support_sensor!(MtkFpsGo).this_unwrap();
 
     // 如果是测试支持模式这里就退出
     let mut args = env::args();
@@ -50,7 +35,7 @@ fn main() -> ! {
         process::exit(0);
     }
 
-    let scheduler = Scheduler::new(sensor, controller).unwrap();
+    let scheduler = Scheduler::new(sensor, controller).this_unwrap();
 
     let mut temp = None;
     loop {
@@ -61,12 +46,12 @@ fn main() -> ! {
             temp = current;
             if_unlikely! {
                 let Some((ref game, fps)) = &temp => {
-                    scheduler.load(*fps).unwrap();
+                    scheduler.load(*fps).this_unwrap();
                     debug! {
                         println!("Loaded {} {}", game, fps);
                     }
                 } else {
-                    scheduler.unload().unwrap();
+                    scheduler.unload().this_unwrap();
                     debug! {
                         println!("Unloaded");
                     }

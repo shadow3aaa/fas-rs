@@ -22,9 +22,10 @@ use likely_stable::LikelyOption;
 use parking_lot::RwLock;
 use toml::Value;
 
+use crate::{ThisOption, ThisResult};
 use read::wait_and_read;
 
-pub(crate) type ConfData = RwLock<Value>;
+pub type ConfData = RwLock<Value>;
 pub struct Config {
     toml: Arc<ConfData>,
     exit: Arc<AtomicBool>,
@@ -38,8 +39,8 @@ impl Drop for Config {
 
 impl Config {
     pub fn new(path: &Path) -> Self {
-        let ori = fs::read_to_string(path).unwrap();
-        let toml = toml::from_str(&ori).unwrap();
+        let ori = fs::read_to_string(path).this_unwrap();
+        let toml = toml::from_str(&ori).this_unwrap();
         let toml = Arc::new(RwLock::new(toml));
         let toml_clone = toml.clone();
 
@@ -53,28 +54,32 @@ impl Config {
         Self { toml, exit }
     }
 
-    #[allow(unused)]
     pub fn cur_game_fps(&self) -> Option<(String, Fps)> {
         let toml = self.toml.read();
+        #[allow(unused)]
         let list = toml
             .get("game_list")
             .and_then_likely(Value::as_table)
-            .unwrap();
+            .cloned()
+            .this_unwrap();
+
+        drop(toml); // early-drop
 
         let pkgs = Self::get_top_pkgname()?;
         let pkg = pkgs.into_iter().find(|key| list.contains_key(key))?;
 
         let (game, fps) = (
             &pkg,
-            Fps::try_from(list.get(&pkg)?.as_integer().unwrap()).unwrap(),
+            Fps::try_from(list.get(&pkg)?.as_integer().this_unwrap()).this_unwrap(),
         );
+
         Some((game.clone(), fps.to_owned()))
     }
 
     #[allow(unused)]
     pub fn get_conf(&self, label: &'static str) -> Option<Value> {
         let toml = self.toml.read();
-        toml.get("config").unwrap().get(label).cloned()
+        toml.get("config").this_unwrap().get(label).cloned()
     }
 
     fn get_top_pkgname() -> Option<HashSet<String>> {
@@ -91,7 +96,7 @@ impl Config {
                     p.split_whitespace()
                         .nth(2)
                         .and_then_unlikely(|p| p.split('=').nth(1))
-                        .unwrap()
+                        .this_unwrap()
                 })
                 .zip(
                     dump.lines()

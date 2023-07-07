@@ -2,6 +2,7 @@
 #[macro_export]
 macro_rules! support_sensor {
     ($($sensor: ty),*) => {
+        #[allow(clippy::useless_let_if_seq)]
         {
             let result: Result<Box<dyn VirtualFrameSensor>, Box<dyn Error>>;
             $(if <$sensor>::support() {
@@ -21,6 +22,7 @@ macro_rules! support_sensor {
 #[macro_export]
 macro_rules! support_controller {
     ($($controller: ty),*) => {
+        #[allow(clippy::useless_let_if_seq)]
         {
             let result: Result<Box<dyn VirtualPerformanceController>, Box<dyn Error>>;
             $(if <$controller>::support() {

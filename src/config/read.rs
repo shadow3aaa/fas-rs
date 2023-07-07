@@ -13,7 +13,7 @@ use std::{
 use inotify::{Inotify, WatchMask};
 
 use super::ConfData;
-use crate::debug;
+use crate::{debug, ThisResult};
 
 pub(super) fn wait_and_read(path: &Path, toml: &Arc<ConfData>, exit: &Arc<AtomicBool>) {
     let mut retry_count = 0;
@@ -44,14 +44,17 @@ pub(super) fn wait_and_read(path: &Path, toml: &Arc<ConfData>, exit: &Arc<Atomic
                 continue;
             }
         };
-        *toml.write() = toml::from_str(&ori).unwrap();
+        *toml.write() = toml::from_str(&ori).this_unwrap();
         debug! {
             println!("{:#?}", *toml.read());
         }
 
         // wait until file change
-        let mut inotify = Inotify::init().unwrap();
-        inotify.watches().add(path, WatchMask::CLOSE_WRITE).unwrap();
+        let mut inotify = Inotify::init().this_unwrap();
+        inotify
+            .watches()
+            .add(path, WatchMask::CLOSE_WRITE)
+            .this_unwrap();
         let _ = inotify.read_events_blocking(&mut []);
     }
 }

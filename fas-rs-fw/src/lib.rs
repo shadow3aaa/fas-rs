@@ -1,8 +1,10 @@
-#![warn(clippy::all, clippy::pedantic)]
+#![deny(clippy::all, clippy::pedantic)]
+#![warn(clippy::nursery, clippy::cargo)]
 pub mod debug;
 pub mod macros;
 pub mod prelude;
 mod scheduler;
+pub mod this_unwrap;
 pub mod write_pool;
 
 use std::{error::Error, time::Duration};

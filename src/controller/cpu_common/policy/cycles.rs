@@ -12,8 +12,7 @@ use yata::{
     prelude::*,
 };
 
-use crate::config::CONFIG;
-use crate::debug;
+use crate::{config::CONFIG, debug, ThisOption, ThisResult};
 
 enum SpecEma {
     Ema(EMA),
@@ -38,9 +37,9 @@ impl SpecEma {
 impl DiffReader {
     pub fn new(path: &Path) -> Self {
         let affected_cpus: Vec<i32> = fs::read_to_string(path.join("affected_cpus"))
-            .unwrap()
+            .this_unwrap()
             .split_whitespace()
-            .map(|cpu| cpu.parse::<i32>().unwrap())
+            .map(|cpu| cpu.parse::<i32>().this_unwrap())
             .collect();
 
         let window = CONFIG
@@ -55,9 +54,9 @@ impl DiffReader {
                 "DEMA" => Some(SpecEma::Dema(DEMA::new(window, &0.0).ok()?)),
                 _ => None,
             })
-            .unwrap();
+            .this_unwrap();
 
-        let reader = CyclesReader::new(affected_cpus.as_slice()).unwrap();
+        let reader = CyclesReader::new(affected_cpus.as_slice()).this_unwrap();
 
         Self {
             affected_cpus,
@@ -69,22 +68,22 @@ impl DiffReader {
     pub fn read_diff(&mut self, cur_freq: Cycles) -> Cycles {
         self.reader.enable();
         let time = Instant::now();
-        let cycles_former = self.reader.read().unwrap();
+        let cycles_former = self.reader.read().this_unwrap();
 
         thread::sleep(Duration::from_millis(75));
 
-        let cycles_later = self.reader.read().unwrap();
+        let cycles_later = self.reader.read().this_unwrap();
         let time = time.elapsed();
         self.reader.disable();
 
         let cycles = self
             .affected_cpus
             .iter()
-            .map(|cpu| *cycles_later.get(cpu).unwrap() - *cycles_former.get(cpu).unwrap())
+            .map(|cpu| *cycles_later.get(cpu).this_unwrap() - *cycles_former.get(cpu).this_unwrap())
             .max()
-            .unwrap();
+            .this_unwrap();
 
-        let cycles = cycles.as_diff(time, cur_freq).unwrap();
+        let cycles = cycles.as_diff(time, cur_freq).this_unwrap();
         #[allow(clippy::cast_possible_truncation)]
         #[allow(clippy::cast_precision_loss)]
         let diff = Cycles::from_khz(self.ema.next(cycles.as_khz() as f64) as i64);

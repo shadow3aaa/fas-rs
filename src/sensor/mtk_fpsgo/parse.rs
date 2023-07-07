@@ -17,6 +17,7 @@ use likely_stable::{if_likely, if_unlikely};
 
 use super::enable_fpsgo;
 use super::FPSGO;
+use crate::ThisResult;
 
 pub(super) fn frametime_thread(
     sender: &SyncSender<Vec<FrameTime>>,
@@ -34,14 +35,14 @@ pub(super) fn frametime_thread(
         }
 
         if buffer.len() >= count.load(Ordering::Acquire) {
-            sender.send(buffer).unwrap();
+            sender.send(buffer).this_unwrap();
             buffer = Vec::with_capacity(144);
         }
 
         let mut stamps = [0, 0];
 
         // 获取第一个时间戳
-        let fbt_info = fs::read_to_string(Path::new(FPSGO).join("fbt/fbt_info")).unwrap();
+        let fbt_info = fs::read_to_string(Path::new(FPSGO).join("fbt/fbt_info")).this_unwrap();
         if let Some(stamp) = parse_frametime(&fbt_info) {
             stamps[0] = stamp;
         }
@@ -50,7 +51,7 @@ pub(super) fn frametime_thread(
         // 值变化后保存为第二个时间戳
         #[allow(unused_variables)]
         loop {
-            let fbt_info = fs::read_to_string(Path::new(FPSGO).join("fbt/fbt_info")).unwrap();
+            let fbt_info = fs::read_to_string(Path::new(FPSGO).join("fbt/fbt_info")).this_unwrap();
             if_likely! {
                 let Some(stamp) = parse_frametime(&fbt_info) => {
                     if stamps[0] < stamp {
@@ -58,7 +59,7 @@ pub(super) fn frametime_thread(
                         break;
                     }
                 } else {
-                    enable_fpsgo().unwrap();
+                    enable_fpsgo().this_unwrap();
                     break;
                 }
             }
@@ -103,18 +104,19 @@ pub(super) fn fps_thread(
             .iter()
             .map(|(_, fps)| fps)
             .sum::<Fps>()
-            .checked_div(u32::try_from(buffer.len()).unwrap())
+            .checked_div(u32::try_from(buffer.len()).this_unwrap())
             .unwrap_or(0);
         avg_fps.store(avg, Ordering::Release);
 
         thread::sleep(Duration::from_millis(8));
 
-        let fpsgo_status = fs::read_to_string(Path::new(FPSGO).join("fstb/fpsgo_status")).unwrap();
+        let fpsgo_status =
+            fs::read_to_string(Path::new(FPSGO).join("fstb/fpsgo_status")).this_unwrap();
         if_unlikely! {
             let Some(fps) = parse_fps(&fpsgo_status) => {
                 buffer.push_back((Instant::now(), fps));
             } else {
-                enable_fpsgo().unwrap();
+                enable_fpsgo().this_unwrap();
                 continue;
             }
         }
@@ -144,12 +146,13 @@ fstb_self_ctrl_fps_enable:1
 fstb_is_cam_active:0
 dfps_ceiling:60 */
 fn parse_fps(fpsgo_status: &str) -> Option<Fps> {
-    let mut lines: Vec<&str> = fpsgo_status.lines().skip(1).collect();
-    lines.reverse();
-    let lines: Vec<&str> = lines.into_iter().skip(3).collect();
-
-    lines
+    fpsgo_status
+        .lines()
+        .collect::<Vec<_>>()
         .into_iter()
+        .skip(1)
+        .rev()
+        .skip(3)
         .filter_map(|line| line.split_whitespace().nth(3)?.parse().ok())
         .max()
 }

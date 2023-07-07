@@ -11,8 +11,7 @@ use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
 use parking_lot::RwLock;
 
-use crate::config::CONFIG;
-use crate::debug;
+use crate::{config::CONFIG, debug, ThisOption, ThisResult};
 
 const BURST_DEFAULT: usize = 0;
 
@@ -33,15 +32,15 @@ impl Schedule {
         let target_diff_clone = target_diff.clone();
 
         let count = fs::read_to_string(path.join("affected_cpus"))
-            .unwrap()
+            .this_unwrap()
             .split_whitespace()
             .count();
         let pool = WritePool::new(cmp::max(count / 2, 2));
 
         let mut table: Vec<Cycles> = fs::read_to_string(path.join("scaling_available_frequencies"))
-            .unwrap()
+            .this_unwrap()
             .split_whitespace()
-            .map(|freq| Cycles::from_khz(freq.parse().unwrap()))
+            .map(|freq| Cycles::from_khz(freq.parse().this_unwrap()))
             .collect();
 
         table.sort_unstable();
@@ -105,7 +104,7 @@ impl Schedule {
     pub fn reset(&mut self) {
         let _ = self.pool.write(
             &self.path.join("scaling_max_freq"),
-            &self.table.last().unwrap().as_khz().to_string(),
+            &self.table.last().this_unwrap().as_khz().to_string(),
         );
     }
 
@@ -121,7 +120,7 @@ fn table_spec(table: &mut Vec<Cycles>) {
     let save_count = CONFIG
         .get_conf("freq_count")
         .and_then_likely(|c| usize::try_from(c.as_integer()?).ok())
-        .unwrap();
+        .this_unwrap();
 
     let len = table.len();
 

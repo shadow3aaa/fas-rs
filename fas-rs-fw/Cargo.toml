@@ -2,8 +2,13 @@
 name = "fas-rs-fw"
 version = "0.1.1"
 edition = "2021"
+description = "Frame-aware scheduling framework"
+license = "WTFPL"
+repository = "https://github.com/shadow3aaa/fas-rs"
+keywords = ["framework", "scheduling", "fas"]
+categories = ["game", "api"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-likely_stable = "*"
+likely_stable = "0.1.2"

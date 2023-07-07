@@ -15,9 +15,10 @@ use std::{
 use fas_rs_fw::prelude::*;
 
 use super::IgnoreFrameTime;
+use crate::ThisResult;
 use parse::{fps_thread, frametime_thread};
 
-pub(crate) const FPSGO: &str = "/sys/kernel/fpsgo";
+pub const FPSGO: &str = "/sys/kernel/fpsgo";
 
 pub struct MtkFpsGo {
     // 数据量
@@ -83,7 +84,7 @@ impl VirtualFrameSensor for MtkFpsGo {
     }
 
     fn frametimes(&self, target_fps: TargetFps) -> Vec<FrameTime> {
-        let data = self.frametime_receiver.recv().unwrap();
+        let data = self.frametime_receiver.recv().this_unwrap();
         data.into_iter()
             .map(|frametime| self.ignore.ign(frametime, target_fps))
             .collect()
@@ -106,8 +107,10 @@ impl VirtualFrameSensor for MtkFpsGo {
         self.pause.store(false, Ordering::Release);
         self.target_frametime_count
             .store(frametime_count, Ordering::Release);
-        self.fps_time_millis
-            .store(fps_time.as_millis().try_into().unwrap(), Ordering::Release);
+        self.fps_time_millis.store(
+            fps_time.as_millis().try_into().this_unwrap(),
+            Ordering::Release,
+        );
 
         self.thread_handle
             .iter()
@@ -117,7 +120,7 @@ impl VirtualFrameSensor for MtkFpsGo {
     }
 }
 
-pub(crate) fn enable_fpsgo() -> Result<(), std::io::Error> {
+pub fn enable_fpsgo() -> Result<(), std::io::Error> {
     let path = Path::new(FPSGO).join("common/fpsgo_enable");
     set_permissions(&path, PermissionsExt::from_mode(0o644))?;
     fs::write(&path, "1")?;
