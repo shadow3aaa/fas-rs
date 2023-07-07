@@ -17,22 +17,34 @@ jobs:
     - name: Setup rust
       uses: actions-rust-lang/setup-rust-toolchain@v1.5.0
       with:
-          toolchain: stable
-          target: aarch64-linux-android
+        toolchain: stable
+        target: aarch64-linux-android
     
     - name: Setup ndk
       uses: nttld/setup-ndk@v1
       with:
-          ndk-version: r25c
+        ndk-version: r25c
+        add-to-path: false
 
     - name: Check code
-      run: cargo c --target aarch64-linux-android && cargo c -r --target aarch64-linux-android
+      run: |
+        NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
+        export PATH=$PATH:$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin
+        cargo c --target aarch64-linux-android
+        cargo c -r --target aarch64-linux-android
 
     - name: Test code
-      run: cargo test --target aarch64-linux-android && cargo test -r --target aarch64-linux-android
+      run: |
+        NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
+        export PATH=$PATH:$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin
+        cargo test --target aarch64-linux-android
+        cargo test -r --target aarch64-linux-android
 
     - name: Build and package
-      run: bash ./make.sh
+      run: |
+        NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
+        export PATH=$PATH:$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin
+        bash ./make.sh
 
     - name: Upload ci
       uses: actions/upload-artifact@v3.1.2
@@ -49,22 +61,32 @@ jobs:
       - name: Setup rust
         uses: actions-rust-lang/setup-rust-toolchain@v1.5.0
         with:
-          toolchain: stable
+          toolchain: nightly
           target: aarch64-linux-android
     
       - name: Setup ndk
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r25c
+          add-to-path: false
 
       - name: Check code
-        run: cargo c --target aarch64-linux-android && cargo c -r --target aarch64-linux-android
+        run: |
+          NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
+          export PATH=$PATH:$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin
+          cargo c --target aarch64-linux-android && cargo c -r --target aarch64-linux-android
 
       - name: Test code
-        run: cargo test --target aarch64-linux-android && cargo test -r --target aarch64-linux-android
+        run: |
+          NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
+          export PATH=$PATH:$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin
+          cargo test --target aarch64-linux-android && cargo test -r --target aarch64-linux-android
 
       - name: Build and package
-        run: bash ./make.sh
+        run: |
+          NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
+          export PATH=$PATH:$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin
+          bash ./make.sh
 
       - name: Upload ci
         uses: actions/upload-artifact@v3.1.2
