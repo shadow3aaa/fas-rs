@@ -25,25 +25,27 @@ jobs:
       with:
         ndk-version: r25c
         add-to-path: false
+        
+    - name: Setup cargo
+      run: |
+       NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
+       echo '[target.aarch64-linux-android]' > ~/.cargo/config.toml
+       echo "ar = \"${NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar\""
+       echo "linker = \"${NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android32-clang\""
+       echo "rustflags = [\"-L\", \"${NDK_HOME}toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/32\"]"
 
     - name: Check code
       run: |
-        NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
-        export PATH=$PATH:$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin
         cargo c --target aarch64-linux-android
         cargo c -r --target aarch64-linux-android
 
     - name: Test code
       run: |
-        NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
-        export PATH=$PATH:$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin
         cargo test --target aarch64-linux-android
         cargo test -r --target aarch64-linux-android
 
     - name: Build and package
       run: |
-        NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
-        export PATH=$PATH:$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin
         bash ./make.sh
 
     - name: Upload ci
