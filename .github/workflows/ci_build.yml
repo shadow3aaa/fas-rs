@@ -1,0 +1,67 @@
+name: CI_BUILD
+
+on:
+  push:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build_stable:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup rust
+      uses: ructions/toolchain@v2.0.0
+      with:
+          profile: minimal
+          toolchain: stable
+          target: aarch64-linux-android
+          override: true
+
+    - name: Check code
+      run: cargo c && cargo c -r
+
+    - name: Test code
+      run: cargo test --target aarch64-linux-android
+
+    - name: Build and package
+      run: bash ./make.sh
+
+    - name: Upload ci
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: ci-build-stable
+        path: fas-rs.zip
+  
+  build_nightly:
+      runs-on: ubuntu-latest
+      steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup rust
+        uses: ructions/toolchain@v2.0.0
+        with:
+            profile: minimal
+            toolchain: nightly
+            target: aarch64-linux-android
+            override: true
+
+      - name: Check code
+        run: cargo c && cargo c -r
+
+      - name: Test code
+        run: cargo test --target aarch64-linux-android
+
+      - name: Build and package
+        run: bash ./make.sh
+
+      - name: Upload ci
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: ci-build-nightly
+          path: fas-rs.zip
