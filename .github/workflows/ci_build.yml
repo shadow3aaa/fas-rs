@@ -21,10 +21,11 @@ jobs:
         target: aarch64-linux-android
     
     - name: Setup ndk
-      uses: nttld/setup-ndk@v1
-      with:
-        ndk-version: r25b
-        add-to-path: false
+      run: |
+        wget -O ndk.zip https://dl.google.com/android/repository/android-ndk-r25c-linux.zip?hl=zh-cn
+        mkdir ndk_cache
+        unzip ndk.zip -d ndk_cache
+        find ndk_cache
         
     - name: Setup cargo
       run: |
@@ -33,10 +34,6 @@ jobs:
         echo "linker = \"${NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android32-clang\"" >> ~/.cargo/config.toml
         echo "rustflags = [\"-L\", \"${NDK_HOME}toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/32\"]" >> ~/.cargo/config.toml
         cat ~/.cargo/config.toml
-        echo ${NDK_HOME}
-        find ${NDK_HOME}
-      env:
-        NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
 
     - name: Check code
       run: |
