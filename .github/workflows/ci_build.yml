@@ -34,7 +34,7 @@ jobs:
        echo "linker = \"${NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android32-clang\"" >> ~/.cargo/config.toml
        echo "rustflags = [\"-L\", \"${NDK_HOME}toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/32\"]" >> ~/.cargo/config.toml
        cat ~/.cargo/config.toml
-       find ~/.cargo
+       echo ${NDK_HOME}
        find ${NDK_HOME}
 
     - name: Check code
