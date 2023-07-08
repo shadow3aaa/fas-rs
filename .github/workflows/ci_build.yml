@@ -22,17 +22,18 @@ jobs:
     
     - name: Setup ndk
       run: |
-        wget -O ndk.zip https://dl.google.com/android/repository/android-ndk-r25c-linux.zip?hl=zh-cn
+        wget -O ndk.zip https://dl.google.com/android/repository/android-ndk-r25c-linux.zip?hl=zh-cn -nv
         mkdir ndk_cache
-        unzip ndk.zip -d ndk_cache
-        find ndk_cache
+        unzip ndk.zip -d ndk_cache 2>&1 > /dev/null
         
     - name: Setup cargo
       run: |
+        NDK_HOME=ndk_cache/android-ndk-r25c
+        echo $NDK_HOME
         echo '[target.aarch64-linux-android]' > ~/.cargo/config.toml
         echo "ar = \"${NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar\"" >> ~/.cargo/config.toml
-        echo "linker = \"${NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android32-clang\"" >> ~/.cargo/config.toml
-        echo "rustflags = [\"-L\", \"${NDK_HOME}toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/32\"]" >> ~/.cargo/config.toml
+        echo "linker = \"${NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang\"" >> ~/.cargo/config.toml
+        echo "rustflags = [\"-L\", \"${NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/33\"]" >> ~/.cargo/config.toml
         cat ~/.cargo/config.toml
 
     - name: Check code
