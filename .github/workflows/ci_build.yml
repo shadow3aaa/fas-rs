@@ -23,12 +23,11 @@ jobs:
     - name: Setup ndk
       uses: nttld/setup-ndk@v1
       with:
-        ndk-version: r25c
+        ndk-version: r25b
         add-to-path: false
         
     - name: Setup cargo
       run: |
-       NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
        echo '[target.aarch64-linux-android]' > ~/.cargo/config.toml
        echo "ar = \"${NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar\"" >> ~/.cargo/config.toml
        echo "linker = \"${NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android32-clang\"" >> ~/.cargo/config.toml
@@ -36,6 +35,8 @@ jobs:
        cat ~/.cargo/config.toml
        echo ${NDK_HOME}
        find ${NDK_HOME}
+     env:
+       NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
 
     - name: Check code
       run: |
