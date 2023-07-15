@@ -14,26 +14,9 @@ impl<T, E: Debug> ThisResult<T, E> for Result<T, E> {
         match self {
             Ok(o) => o,
             Err(e) => {
-                eprintln!("{e:#?}");
-                #[cfg(debug_assertions)]
-                {
-                    use std::panic::Location;
-                    let location = Location::caller();
-                    panic!(
-                        "Errors occurred at file '{}', line {}",
-                        location.file(),
-                        location.line()
-                    );
-                }
-                #[cfg(release_assertions)]
-                {
-                    use std::process;
-                    process::exit(1);
-                }
-                #[allow(unreachable_code)]
-                unsafe {
-                    unreachable_unchecked()
-                }
+                eprintln!("{e:?}");
+                use std::process;
+                process::exit(1)
             }
         }
     }

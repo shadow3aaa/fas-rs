@@ -7,9 +7,9 @@ use std::{
 
 use fas_rs_fw::write_pool::WritePool;
 
+use atomic::{Atomic, Ordering};
 use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
-use parking_lot::RwLock;
 
 use crate::{config::CONFIG, debug, ThisOption, ThisResult};
 
@@ -17,18 +17,18 @@ const BURST_DEFAULT: usize = 0;
 
 pub struct Schedule {
     path: PathBuf,
-    target_diff: Arc<RwLock<Cycles>>,
+    target_diff: Arc<Atomic<Cycles>>,
+    pub cur_cycles: Arc<Atomic<Cycles>>,
     burst: usize,
     burst_max: usize,
     pool: WritePool,
-    pub table: Vec<Cycles>,
+    table: Vec<Cycles>,
     pos: usize,
 }
 
 impl Schedule {
-    pub fn new(path: &Path, burst_max: usize) -> (Self, Arc<RwLock<Cycles>>) {
-        let target_diff = Arc::new(RwLock::new(Cycles::from_mhz(200)));
-
+    pub fn new(path: &Path, burst_max: usize) -> (Self, Arc<Atomic<Cycles>>, Arc<Atomic<Cycles>>) {
+        let target_diff = Arc::new(Atomic::new(Cycles::from_mhz(200)));
         let target_diff_clone = target_diff.clone();
 
         let count = fs::read_to_string(path.join("affected_cpus"))
@@ -46,6 +46,9 @@ impl Schedule {
         table.sort_unstable();
         table_spec(&mut table);
 
+        let cur_cycles = Arc::new(Atomic::new(table.last().copied().this_unwrap()));
+        let cur_cycles_clone = cur_cycles.clone();
+
         debug! {
             println!("{:#?}", &table);
         }
@@ -56,19 +59,16 @@ impl Schedule {
             Self {
                 path: path.to_owned(),
                 target_diff,
+                cur_cycles,
                 burst: BURST_DEFAULT,
                 burst_max,
                 pool,
-                table,
+                table: table.clone(),
                 pos,
             },
             target_diff_clone,
+            cur_cycles_clone,
         )
-    }
-
-    #[inline]
-    pub fn current_freq_max(&self) -> Cycles {
-        self.table[self.pos]
     }
 
     pub fn run(&mut self, diff: Cycles) {
@@ -76,10 +76,11 @@ impl Schedule {
             return;
         }
 
-        table_spec(&mut self.table);
+        let max = self.table[self.pos];
+        self.cur_cycles.store(max, Ordering::Release);
 
-        let target_diff = *self.target_diff.read();
-        let target_diff = target_diff.min(self.current_freq_max());
+        let target_diff = self.target_diff.load(Ordering::Acquire);
+        let target_diff = target_diff.min(self.cur_cycles.load(Ordering::Acquire));
 
         assert!(
             target_diff.as_hz() >= 0,
@@ -99,6 +100,8 @@ impl Schedule {
             }
             CmpOrdering::Equal => self.burst = BURST_DEFAULT,
         }
+
+        table_spec(&mut self.table);
     }
 
     pub fn reset(&mut self) {

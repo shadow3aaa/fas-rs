@@ -10,14 +10,15 @@ use std::{
     thread::{self, JoinHandle},
 };
 
+use atomic::Atomic;
 use cpu_cycles_reader::Cycles;
-use parking_lot::RwLock;
 
 use cycles::DiffReader;
 use schedule::Schedule;
 
 pub struct Policy {
-    target_diff: Arc<RwLock<Cycles>>,
+    target_diff: Arc<Atomic<Cycles>>,
+    cur_cycles: Arc<Atomic<Cycles>>,
     pause: Arc<AtomicBool>,
     exit: Arc<AtomicBool>,
     handle: JoinHandle<()>,
@@ -33,7 +34,7 @@ impl Drop for Policy {
 impl Policy {
     pub fn new(policy_path: &Path, burst_max: usize) -> Self {
         let mut reader = DiffReader::new(policy_path);
-        let (mut schedule, target_diff) = Schedule::new(policy_path, burst_max);
+        let (mut schedule, target_diff, cur_cycles) = Schedule::new(policy_path, burst_max);
 
         let pause = Arc::new(AtomicBool::new(false));
         let exit = Arc::new(AtomicBool::new(false));
@@ -49,33 +50,33 @@ impl Policy {
                 return;
             }
 
-            let max_freq = schedule.current_freq_max();
-            let diff = reader.read_diff(max_freq);
+            let cur_freq = schedule.cur_cycles.load(Ordering::Acquire);
+            let diff = reader.read_diff(cur_freq);
             schedule.run(diff);
         });
 
         Self {
             target_diff,
+            cur_cycles,
             pause,
             exit,
             handle,
         }
     }
 
-    #[inline]
     pub fn resume(&self) {
         self.pause.store(false, Ordering::Release);
         self.handle.thread().unpark();
     }
 
-    #[inline]
-    #[allow(unused)]
     pub fn pause(&self) {
         self.pause.store(true, Ordering::Release);
     }
 
-    #[inline]
-    pub fn set_target_diff(&self, c: Cycles) {
-        *self.target_diff.write() = c;
+    // 返回最大可设置cycles
+    pub fn set_target_diff(&self, c: Cycles) -> Cycles {
+        let c = c.min(self.cur_cycles.load(Ordering::Acquire));
+        self.target_diff.store(c, Ordering::Release);
+        c
     }
 }

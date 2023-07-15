@@ -1,5 +1,5 @@
 #![deny(clippy::all, clippy::pedantic)]
-#![warn(clippy::nursery, clippy::cargo)]
+#![warn(clippy::nursery)]
 mod config;
 mod controller;
 mod sensor;
