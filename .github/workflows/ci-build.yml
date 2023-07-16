@@ -29,8 +29,8 @@ jobs:
         mv ./ndk_temp/*/* ./ndk_temp/
         ls ./ndk_temp/toolchains/llvm/prebuilt
         bin_dir=./ndk_temp/toolchains/llvm/prebuilt/linux-x86_64/bin
-        ln -s $bin_dir/aarch64-linux-android33-clang $bin_dir/aarch64-linux-android-clang
-        ln -s $bin_dir/llvm-ar $bin_dir/aarch64-linux-android-ar
+        cp $bin_dir/aarch64-linux-android33-clang $bin_dir/aarch64-linux-android-clang
+        cp $bin_dir/llvm-ar $bin_dir/aarch64-linux-android-ar
         echo -e "[target.aarch64-linux-android]\nlinker = 'aarch64-linux-android33-clang'\nar = 'llvm-ar'" > ~/.cargo/config.toml
         cat ~/.cargo/config.toml
     - name: Build modules
@@ -39,7 +39,7 @@ jobs:
         export PATH=$PATH:$ndk_dir
         export PATH=$PATH:$ndk_dir/toolchains/llvm/prebuilt/linux-x86_64/bin
         ls $ndk_dir/toolchains/llvm/prebuilt/linux-x86_64/bin
-        source make.sh
+        source ./make.sh
     - name: Upload ci
       uses: actions/upload-artifact@v3.1.2
       with:
