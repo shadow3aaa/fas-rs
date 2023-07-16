@@ -26,14 +26,16 @@ jobs:
         wget -O ndk.zip https://dl.google.com/android/repository/android-ndk-r25c-linux.zip?hl=zh-cn -nv
         mkdir ndk_temp
         unzip ndk.zip -d ndk_temp 2>&1 > /dev/null
+        bin_dir=./ndk_temp/toolchains/llvm/prebuilt/linux-x86_64/bin
+        ln -s $bin_dir/aarch64-linux-android33-clang $bin_dir/aarch64-linux-android-clang
         echo -e "[target.aarch64-linux-android]\nlinker = 'aarch64-linux-android33-clang'\nar = 'llvm-ar'" > ~/.cargo/config.toml
         cat ~/.cargo/config.toml
     - name: Build modules
       run: |
         ndk_dir=$(realpath ./ndk_temp)
         export PATH=$PATH:$ndk_dir
-        export PATH=$PATH:$ndk_dir\toolchains\llvm\prebuilt\linux-x86_64\bin
-        echo $ndk_dir\toolchains\llvm\prebuilt\linux-x86_64\bin
+        export PATH=$PATH:$ndk_dir/toolchains/llvm/prebuilt/linux-x86_64/bin
+        ls $ndk_dir/toolchains/llvm/prebuilt/linux-x86_64/bin
         source make.sh
     - name: Upload ci
       uses: actions/upload-artifact@v3.1.2
