@@ -1,7 +1,7 @@
 #/usr/bin/bash
 
 here=${0%/*}
-bin="${here}/target/aarch64-linux-android/release/fas-rs"
+bin=${here}/target/aarch64-linux-android/release/fas-rs
 
 set -e
 
@@ -9,6 +9,7 @@ cargo b -r --target aarch64-linux-android
 
 if [ ! -f $bin ]; then
     echo "Fail to build release"
+    echo "${here}"
     exit 1
 fi
 
