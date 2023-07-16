@@ -66,10 +66,16 @@ impl VirtualFrameSensor for MtkFpsGo {
         let avg_fps_clone = avg_fps.clone();
 
         let thread_handle = [
-            thread::spawn(move || {
-                frametime_thread(&frametime_sender, &count_clone, &pause_frametime);
-            }),
-            thread::spawn(move || fps_thread(&avg_fps_clone, &time_clone, &pause_fps)),
+            thread::Builder::new()
+                .name("FrameTimeListenerThread".into())
+                .spawn(move || {
+                    frametime_thread(&frametime_sender, &count_clone, &pause_frametime);
+                })
+                .this_unwrap(),
+            thread::Builder::new()
+                .name("FpsListenerThread".into())
+                .spawn(move || fps_thread(&avg_fps_clone, &time_clone, &pause_fps))
+                .this_unwrap(),
         ];
 
         Ok(Self {

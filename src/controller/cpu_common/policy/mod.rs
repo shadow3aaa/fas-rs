@@ -14,6 +14,7 @@ use atomic::Atomic;
 use cpu_cycles_reader::Cycles;
 
 use cycles::DiffReader;
+use fas_rs_fw::this_unwrap::ThisResult;
 use schedule::Schedule;
 
 pub struct Policy {
@@ -41,19 +42,22 @@ impl Policy {
 
         let pause_clone = pause.clone();
         let exit_clone = exit.clone();
-        let handle = thread::spawn(move || loop {
-            if pause_clone.load(Ordering::Acquire) {
-                schedule.reset();
-                thread::park();
-            } else if exit_clone.load(Ordering::Acquire) {
-                schedule.reset();
-                return;
-            }
+        let handle = thread::Builder::new()
+            .name("CpuPolicyThread".into())
+            .spawn(move || loop {
+                if pause_clone.load(Ordering::Acquire) {
+                    schedule.reset();
+                    thread::park();
+                } else if exit_clone.load(Ordering::Acquire) {
+                    schedule.reset();
+                    return;
+                }
 
-            let cur_freq = schedule.cur_cycles.load(Ordering::Acquire);
-            let diff = reader.read_diff(cur_freq);
-            schedule.run(diff);
-        });
+                let cur_freq = schedule.cur_cycles.load(Ordering::Acquire);
+                let diff = reader.read_diff(cur_freq);
+                schedule.run(diff);
+            })
+            .this_unwrap();
 
         Self {
             target_diff,

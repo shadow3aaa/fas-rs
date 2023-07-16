@@ -49,7 +49,10 @@ impl Config {
 
         let path = path.to_owned();
 
-        thread::spawn(move || wait_and_read(&path, &toml_clone, &exit_clone));
+        thread::Builder::new()
+            .name("ConfigThread".into())
+            .spawn(move || wait_and_read(&path, &toml_clone, &exit_clone))
+            .this_unwrap();
 
         Self { toml, exit }
     }

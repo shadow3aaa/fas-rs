@@ -15,8 +15,7 @@ use std::{
 
 use likely_stable::likely;
 
-use crate::TargetFps;
-use crate::{VirtualFrameSensor, VirtualPerformanceController};
+use crate::{this_unwrap::ThisResult, TargetFps, VirtualFrameSensor, VirtualPerformanceController};
 
 /// [`self::Scheduler`]通过[`crate::VirtualFrameSensor`]和[`crate::VirtualPerformanceController`]来进行调度
 pub struct Scheduler {
@@ -51,7 +50,10 @@ impl Scheduler {
         let stop = Arc::new(AtomicBool::new(false));
         let stop_clone = stop.clone();
 
-        thread::spawn(move || Self::run(&*sensor, &*controller, &rx, &stop_clone));
+        let _ = thread::Builder::new()
+            .name("SchedulerThread".into())
+            .spawn(move || Self::run(&*sensor, &*controller, &rx, &stop_clone))
+            .this_unwrap();
 
         Ok(Self { sender: tx, stop })
     }
