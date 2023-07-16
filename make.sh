@@ -9,7 +9,7 @@ cargo b -r --target aarch64-linux-android
 
 if [ ! -f $bin ]; then
     echo "Fail to build release"
-    echo "${here}"
+    ls "${here}"
     exit 1
 fi
 
