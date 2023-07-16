@@ -13,9 +13,6 @@ if [ ! -f $bin ]; then
     exit 1
 fi
 
-strip $bin
-sstrip $bin
-
 echo -e "Build successed"
 cp -f $(realpath $bin) "${here}/build_module/"
 
