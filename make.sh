@@ -1,6 +1,6 @@
 #/usr/bin/bash
 
-here=${0%/*}
+here=$(pwd)
 bin=${here}/target/aarch64-linux-android/release/fas-rs
 
 set -e
