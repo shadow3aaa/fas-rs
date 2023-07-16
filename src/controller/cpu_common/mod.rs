@@ -21,11 +21,12 @@ pub struct CpuCommon {
 
 impl CpuCommon {
     fn set_target_diff(&self, c: Cycles) {
-        
-        let updated_target: Cycles = self.policies
+        let updated_target: Cycles = self
+            .policies
             .iter()
             .map(|p| p.set_target_diff(c))
-            .sum::<Cycles>() / i64::try_from(self.policies.len()).this_unwrap();
+            .sum::<Cycles>()
+            / i64::try_from(self.policies.len()).this_unwrap();
 
         self.target_diff.set(updated_target);
         debug! {

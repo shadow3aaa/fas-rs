@@ -76,7 +76,7 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
 name = "fas-rs"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "atomic",
  "cpu_cycles_reader",
@@ -93,7 +93,7 @@ dependencies = [
 
 [[package]]
 name = "fas-rs-fw"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "likely_stable",
 ]

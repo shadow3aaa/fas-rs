@@ -18,8 +18,6 @@ sstrip $bin
 echo -e "Build successed"
 cp -f $(realpath $bin) "${here}/build_module/"
 
-echo "翻译已完成并写入目标文件"
-
 cd "${here}/build_module/"
 zip -9 -rq ../fas-rs.zip .
 

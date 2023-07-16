@@ -22,8 +22,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let data: TomlData = toml::from_str(&toml)?;
 
     let package = data.package;
-    let id = package.name.replace('-', "_");
-    let version_code: usize = package.version.replace('.', "").trim().parse()?;
+    let id = package.name.replace('-', "_"); // 符合magisk module id要求
+    let version_code: usize = package.version.replace('.', "").trim().parse()?; // 转为纯数字版本
 
     let mut file = fs::OpenOptions::new()
         .create(true)
