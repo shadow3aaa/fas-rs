@@ -30,6 +30,7 @@ jobs:
         ls ./ndk_temp/toolchains/llvm/prebuilt
         bin_dir=./ndk_temp/toolchains/llvm/prebuilt/linux-x86_64/bin
         ln -s $bin_dir/aarch64-linux-android33-clang $bin_dir/aarch64-linux-android-clang
+        ln -s $bin_dir/llvm-ar $bin_dir/aarch64-linux-android-ar
         echo -e "[target.aarch64-linux-android]\nlinker = 'aarch64-linux-android33-clang'\nar = 'llvm-ar'" > ~/.cargo/config.toml
         cat ~/.cargo/config.toml
     - name: Build modules
