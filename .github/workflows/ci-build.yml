@@ -26,7 +26,7 @@ jobs:
         wget -O ndk.zip https://dl.google.com/android/repository/android-ndk-r25c-linux.zip?hl=zh-cn -nv
         mkdir ndk_temp
         unzip ndk.zip -d ndk_temp 2>&1 > /dev/null
-        echo "[target.aarch64-linux-android]\nlinker = 'aarch64-linux-android33-clang'\nar = 'llvm-ar'" > ~/.cargo/config.toml
+        echo -e "[target.aarch64-linux-android]\nlinker = 'aarch64-linux-android33-clang'\nar = 'llvm-ar'" > ~/.cargo/config.toml
         cat ~/.cargo/config.toml
     - name: Build modules
       run: |
