@@ -33,6 +33,7 @@ jobs:
         ndk_dir=$(realpath ./ndk_temp)
         export PATH=$PATH:$ndk_dir
         export PATH=$PATH:$ndk_dir\toolchains\llvm\prebuilt\linux-x86_64\bin
+        echo $ndk_dir\toolchains\llvm\prebuilt\linux-x86_64\bin
         source make.sh
     - name: Upload ci
       uses: actions/upload-artifact@v3.1.2
