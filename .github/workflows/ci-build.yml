@@ -1,0 +1,42 @@
+name: Ci Build
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1.5.0
+      with:
+        toolchain: stable
+        target: aarch64-linux-android
+    - name: Setup ndk
+      run: |
+        wget -O ndk.zip https://dl.google.com/android/repository/android-ndk-r25c-linux.zip?hl=zh-cn -nv
+        mkdir ndk_temp
+        unzip ndk.zip -d ndk_temp 2>&1 > /dev/null
+        echo "[target.aarch64-linux-android]\nlinker = 'aarch64-linux-android33-clang'\nar = 'llvm-ar'" > ~/.cargo/config.toml
+        cat ~/.cargo/config.toml
+    - name: Build modules
+      run: |
+        ndk_dir=$(realpath ./ndk_temp)
+        export PATH=$PATH:$ndk_dir
+        export PATH=$PATH:$ndk_dir\toolchains\llvm\prebuilt\linux-x86_64\bin
+        source make.sh
+    - name: Upload ci
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: ci-build
+        path: ./fas-rs.zip
+        
