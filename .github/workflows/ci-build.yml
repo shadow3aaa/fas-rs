@@ -42,6 +42,6 @@ jobs:
     - name: Upload ci
       uses: actions/upload-artifact@v3.1.2
       with:
-        name: fas-rs(ci_build).zip
+        name: fas-rs(ci_build)
         path: ./build_module
         
