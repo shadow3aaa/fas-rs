@@ -43,5 +43,5 @@ jobs:
       uses: actions/upload-artifact@v3.1.2
       with:
         name: fas-rs(ci_build).zip
-        path: ./fas-rs.zip
+        path: ./build_module
         
