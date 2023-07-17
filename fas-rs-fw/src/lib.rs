@@ -33,6 +33,7 @@ pub trait VirtualFrameSensor: Send {
     /// 初始化操作(比如创建线程/任务也要在这里完成)
     ///
     /// # Errors
+    /// 
     /// 构造失败
     fn new() -> Result<Self, Box<dyn Error>>
     where
@@ -50,6 +51,7 @@ pub trait VirtualFrameSensor: Send {
     /// 因此[`self::Scheduler`]在每次从调度中退出后会调用此方法关闭监视
     ///
     /// # Errors
+    /// 
     /// 关闭监视失败
     fn pause(&self) -> Result<(), Box<dyn Error>>;
     /// [`self::Scheduler`]在每次开始调度时调用此方法
@@ -57,6 +59,7 @@ pub trait VirtualFrameSensor: Send {
     /// `frametime_count`是每次要求数据的量, `fps_time`是取这段时间的平均fps
     ///
     /// # Errors
+    /// 
     /// 恢复监视失败
     fn resume(&self, frametime_count: usize, fps_time: Duration) -> Result<(), Box<dyn Error>>;
 }
@@ -74,6 +77,7 @@ pub trait VirtualPerformanceController: Send {
     /// 初始化操作(比如创建线程/任务也要在这里完成)
     ///
     /// # Errors
+    /// 
     /// 构造失败
     fn new() -> Result<Self, Box<dyn Error>>
     where
@@ -85,11 +89,13 @@ pub trait VirtualPerformanceController: Send {
     /// [`self::Scheduler`]每次开始调度的时候会调用此方法初始化(插入)控制器
     ///
     /// # Errors
+    /// 
     /// 初始化失败
     fn plug_in(&self) -> Result<(), Box<dyn Error>>;
     /// 还原(拔出)控制器
     ///
     /// # Errors
+    /// 
     /// 还原失败
     fn plug_out(&self) -> Result<(), Box<dyn Error>>;
 }

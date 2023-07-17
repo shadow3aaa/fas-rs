@@ -1,7 +1,7 @@
 use std::{fmt::Debug, process};
 
 pub trait ThisResult<T, E> {
-    /// Result附加方法, 类似[`Result::unwrap`]，但是更加精简
+    /// Result附加方法, 类似[`Result::unwrap`]
     ///
     /// 行为: 直接退出，错误码1
     fn this_unwrap(self) -> T;
@@ -20,7 +20,7 @@ impl<T, E: Debug> ThisResult<T, E> for Result<T, E> {
 }
 
 pub trait ThisOption<T> {
-    /// Option附加方法, 类似[`Option::unwrap`]，但是更加精简
+    /// Option附加方法, 类似[`Option::unwrap`]
     ///
     /// 行为: 打印"Null error occurred"直接退出，错误码1
     fn this_unwrap(self) -> T;

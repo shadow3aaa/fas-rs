@@ -38,6 +38,7 @@ impl Scheduler {
     /// 构造一个[`self::Scheduler`]并且初始化
     ///
     /// # Errors
+    /// 
     /// 暂停控制器/传感器失败
     pub fn new(
         sensor: Box<dyn VirtualFrameSensor>,
@@ -62,6 +63,7 @@ impl Scheduler {
     /// 用于临时暂停
     ///
     /// # Errors
+    ///
     /// 发送消息失败(接收端退出)
     pub fn unload(&self) -> Result<(), Box<dyn Error>> {
         self.sender.send(Command::Unload)?;
@@ -73,6 +75,7 @@ impl Scheduler {
     /// 每次载入/重载要指定新的[`crate::TargetFps`]
     ///
     /// # Errors
+    ///
     /// 发送消息失败(接收端退出)
     pub fn load(&self, target: TargetFps) -> Result<(), Box<dyn Error>> {
         self.sender.send(Command::Load(target))?;
