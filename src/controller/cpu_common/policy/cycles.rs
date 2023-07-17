@@ -70,7 +70,7 @@ impl DiffReader {
         let time = Instant::now();
         let cycles_former = self.reader.read().this_unwrap();
 
-        thread::sleep(Duration::from_millis(75));
+        thread::sleep(Duration::from_millis(50));
 
         let cycles_later = self.reader.read().this_unwrap();
         let time = time.elapsed();
@@ -83,13 +83,21 @@ impl DiffReader {
             .max()
             .this_unwrap();
 
-        let cycles = cycles.as_diff(time, cur_freq).this_unwrap();
-        #[allow(clippy::cast_possible_truncation)]
-        #[allow(clippy::cast_precision_loss)]
-        let diff = Cycles::from_khz(self.ema.next(cycles.as_khz() as f64) as i64);
+        let diff = cycles
+            .as_diff(time, cur_freq)
+            .this_unwrap()
+            .max(Cycles::new(0));
 
         debug! {
-            println!("diff: {}", diff);
+            println!("getted diff: {}", diff);
+        }
+
+        #[allow(clippy::cast_possible_truncation)]
+        #[allow(clippy::cast_precision_loss)]
+        let diff = Cycles::from_hz(self.ema.next(diff.as_hz() as f64).max(0.0) as i64);
+
+        debug! {
+            println!("emaed diff: {}", diff);
         }
 
         diff

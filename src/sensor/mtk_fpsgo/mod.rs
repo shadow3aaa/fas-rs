@@ -15,7 +15,7 @@ use std::{
 use fas_rs_fw::prelude::*;
 
 use super::IgnoreFrameTime;
-use crate::ThisResult;
+use crate::{ThisOption, ThisResult};
 use parse::{fps_thread, frametime_thread};
 
 pub const FPSGO: &str = "/sys/kernel/fpsgo";
@@ -90,7 +90,8 @@ impl VirtualFrameSensor for MtkFpsGo {
     }
 
     fn frametimes(&self, target_fps: TargetFps) -> Vec<FrameTime> {
-        let data = self.frametime_receiver.recv().this_unwrap();
+        let data = self.frametime_receiver.iter().last().this_unwrap();
+
         data.into_iter()
             .map(|frametime| self.ignore.ign(frametime, target_fps))
             .collect()

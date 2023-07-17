@@ -13,8 +13,8 @@ use std::{
 use atomic::Atomic;
 use cpu_cycles_reader::Cycles;
 
+use crate::ThisResult;
 use cycles::DiffReader;
-use fas_rs_fw::this_unwrap::ThisResult;
 use schedule::Schedule;
 
 pub struct Policy {
