@@ -5,7 +5,7 @@ use std::{
     os::unix::fs::PermissionsExt,
     path::Path,
     sync::{
-        atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering},
         mpsc::{self, Receiver},
         Arc,
     },
@@ -13,6 +13,8 @@ use std::{
 };
 
 use fas_rs_fw::prelude::*;
+
+use atomic::Atomic;
 
 use super::IgnoreFrameTime;
 use parse::{fps_thread, frametime_thread};
@@ -22,7 +24,7 @@ pub const FPSGO: &str = "/sys/kernel/fpsgo";
 pub struct MtkFpsGo {
     // 数据量
     target_frametime_count: Arc<AtomicUsize>,
-    fps_time_millis: Arc<AtomicU64>,
+    fps_time: Arc<Atomic<Duration>>,
     // 数据
     frametime_receiver: Receiver<Vec<FrameTime>>,
     avg_fps: Arc<AtomicU32>,
@@ -58,10 +60,10 @@ impl VirtualFrameSensor for MtkFpsGo {
 
         // 数据量
         let target_frametime_count = Arc::new(AtomicUsize::new(0));
-        let fps_time_millis = Arc::new(AtomicU64::new(0));
+        let fps_time = Arc::new(Atomic::new(Duration::default()));
 
         let count_clone = target_frametime_count.clone();
-        let time_clone = fps_time_millis.clone();
+        let time_clone = fps_time.clone();
         let avg_fps_clone = avg_fps.clone();
 
         let thread_handle = [
@@ -81,19 +83,20 @@ impl VirtualFrameSensor for MtkFpsGo {
             frametime_receiver,
             avg_fps,
             target_frametime_count,
-            fps_time_millis,
+            fps_time,
             ignore: IgnoreFrameTime::new(),
             pause,
             thread_handle,
         })
     }
 
-    fn frametimes(&self, target_fps: TargetFps) -> Vec<FrameTime> {
-        let data = self.frametime_receiver.iter().last().unwrap();
+    fn frametimes(&self, target_fps: TargetFps) -> Option<Vec<FrameTime>> {
+        let out = Duration::from_secs(1) / (target_fps + 3);
+        let data = self.frametime_receiver.recv_timeout(out).ok()?;
 
-        data.into_iter()
+        Some(data.into_iter()
             .map(|frametime| self.ignore.ign(frametime, target_fps))
-            .collect()
+            .collect())
     }
 
     fn fps(&self) -> Fps {
@@ -113,8 +116,8 @@ impl VirtualFrameSensor for MtkFpsGo {
         self.pause.store(false, Ordering::Release);
         self.target_frametime_count
             .store(frametime_count, Ordering::Release);
-        self.fps_time_millis.store(
-            fps_time.as_millis().try_into().unwrap(),
+        self.fps_time.store(
+            fps_time,
             Ordering::Release,
         );
 

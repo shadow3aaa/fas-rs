@@ -3,7 +3,7 @@ use std::{
     fs,
     path::Path,
     sync::{
-        atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering},
         mpsc::SyncSender,
         Arc,
     },
@@ -13,19 +13,19 @@ use std::{
 
 use fas_rs_fw::prelude::*;
 
+use atomic::Atomic;
 use likely_stable::{if_likely, if_unlikely};
 
-use super::enable_fpsgo;
-use super::FPSGO;
+use super::{enable_fpsgo, FPSGO};
+
+const BUFFER_SIZE: usize = 1024;
 
 pub(super) fn frametime_thread(
     sender: &SyncSender<Vec<FrameTime>>,
     count: &Arc<AtomicUsize>,
     pause: &Arc<AtomicBool>,
 ) {
-    thread::park();
-
-    let mut buffer = Vec::with_capacity(144);
+    let mut buffer = VecDeque::with_capacity(BUFFER_SIZE);
 
     loop {
         if pause.load(Ordering::Acquire) {
@@ -33,9 +33,20 @@ pub(super) fn frametime_thread(
             thread::park();
         }
 
-        if buffer.len() >= count.load(Ordering::Acquire) {
-            sender.send(buffer).unwrap();
-            buffer = Vec::with_capacity(144);
+        if buffer.len() >= BUFFER_SIZE {
+            buffer.pop_front();
+        }
+
+        let count = count.load(Ordering::Acquire);
+
+        if buffer.len() >= count {
+            let data = buffer.iter()
+                .rev()
+                .take(count)
+                .copied()
+                .collect();
+
+            sender.send(data).unwrap();
         }
 
         let mut stamps = [0, 0];
@@ -73,13 +84,13 @@ pub(super) fn frametime_thread(
         }
 
         let frametime = FrameTime::from_nanos(stamps[1] - stamps[0]);
-        buffer.push(frametime);
+        buffer.push_back(frametime);
     }
 }
 
 pub(super) fn fps_thread(
     avg_fps: &Arc<AtomicU32>,
-    time_millis: &Arc<AtomicU64>,
+    time: &Arc<Atomic<Duration>>,
     pause: &Arc<AtomicBool>,
 ) {
     thread::park();
@@ -93,24 +104,26 @@ pub(super) fn fps_thread(
             thread::park();
         }
 
-        if let Some((time, _)) = buffer.front() {
-            if time.elapsed() > Duration::from_millis(time_millis.load(Ordering::Acquire)) {
-                buffer.pop_front();
-            }
+        if buffer.len() >= BUFFER_SIZE {
+            buffer.pop_front();
         }
 
-        let avg = buffer
-            .iter()
-            .map(|(_, fps)| fps)
-            .sum::<Fps>()
-            .checked_div(u32::try_from(buffer.len()).unwrap())
-            .unwrap_or(0);
+        let time = time.load(Ordering::Acquire);
+
+        let taked_data: Vec<_> = buffer.iter()
+            .rev()
+            .take_while(|(i, _)| i.elapsed() <= time)
+            .map(|(_, f)| f)
+            .copied()
+            .collect();
+
+        let avg = taked_data.iter().sum::<Fps>() / Fps::try_from(taked_data.len()).unwrap();
+
         avg_fps.store(avg, Ordering::Release);
 
         thread::sleep(Duration::from_millis(8));
 
-        let fpsgo_status =
-            fs::read_to_string(Path::new(FPSGO).join("fstb/fpsgo_status")).unwrap();
+        let fpsgo_status = fs::read_to_string(Path::new(FPSGO).join("fstb/fpsgo_status")).unwrap();
         if_unlikely! {
             let Some(fps) = parse_fps(&fpsgo_status) => {
                 buffer.push_back((Instant::now(), fps));

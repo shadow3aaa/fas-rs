@@ -37,7 +37,11 @@ impl Scheduler {
             return Err("Target Fps should never be less than 12".into());
         }
 
-        let frametimes = sensor.frametimes(target_fps);
+        let Some(frametimes) = sensor.frametimes(target_fps) else {
+            controller.release();
+            return Ok(());
+        };
+
         let fps = sensor.fps();
 
         if unlikely(jank(&frametimes, fps, target_fps)) {
@@ -52,15 +56,11 @@ impl Scheduler {
 
 // 判断是否出现卡顿
 fn jank(frametime: &[FrameTime], avg_fps: Fps, target_fps: TargetFps) -> bool {
-    if frametime.is_empty() {
-        return true;
-    }
-
     debug! {
         println!("avg fps: {}", avg_fps);
-        println!("frametime: {:?}", frametime.iter().max().unwrap());
+        println!("frametime: {:?}", frametime.iter().max());
     }
 
     let target_frametime = Duration::from_secs(1) / target_fps;
-    avg_fps <= target_fps - 3 || frametime.iter().any(|ft| *ft > target_frametime)
+    frametime.is_empty() || avg_fps <= target_fps - 3 || frametime.iter().any(|ft| *ft > target_frametime)
 }
