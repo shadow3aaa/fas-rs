@@ -21,10 +21,7 @@ impl Scheduler {
         target_fps: TargetFps,
     ) -> Result<Duration, Box<dyn Error>> {
         let fps_time = Duration::from_millis(u64::from(target_fps) * 10 / 3);
-        sensor.resume(
-            target_fps as usize / 12,
-            fps_time,
-        )?;
+        sensor.resume(target_fps as usize / 12, fps_time)?;
         controller.plug_in()?;
         Ok(fps_time)
     }

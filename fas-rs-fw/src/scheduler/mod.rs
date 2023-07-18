@@ -2,11 +2,7 @@
 
 mod frame;
 
-use std::{
-    error::Error,
-    sync::Arc,
-    thread,
-};
+use std::{error::Error, sync::Arc, thread};
 
 use atomic::{Atomic, Ordering};
 
@@ -36,6 +32,10 @@ impl Scheduler {
     /// # Errors
     ///
     /// 暂停控制器/传感器失败
+    ///
+    /// # Panics
+    ///
+    /// 创建线程失败
     pub fn new(
         sensor: Box<dyn VirtualFrameSensor>,
         controller: Box<dyn VirtualPerformanceController>,
@@ -55,7 +55,7 @@ impl Scheduler {
     }
 
     /// 卸载[`self::Scheduler`]
-    /// 
+    ///
     /// 用于临时暂停
     #[inline]
     pub fn unload(&self) {
@@ -63,7 +63,7 @@ impl Scheduler {
     }
 
     /// 载入[`self::Scheduler`]
-    /// 
+    ///
     /// 如果已经载入，再次调用会重载入(调用init)
     /// 每次载入/重载要指定新的[`crate::TargetFps`]
     #[inline]
@@ -78,7 +78,7 @@ impl Scheduler {
         controller: &dyn VirtualPerformanceController,
         command: &Arc<Atomic<Command>>,
     ) {
-        let mut target_fps = TargetFps::default();
+        let mut target_fps;
 
         loop {
             let sleep_time = match command.load(Ordering::Acquire) {
@@ -87,7 +87,7 @@ impl Scheduler {
                     Self::init_load(sensor, controller, target_fps).unwrap()
                 }
                 Command::Unload => {
-                    Self::process_unload(sensor, controller);
+                    Self::process_unload(sensor, controller).unwrap();
                     thread::park();
                     continue;
                 }

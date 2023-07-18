@@ -41,6 +41,10 @@ impl Drop for WritePool {
 
 impl WritePool {
     /// 构造一个写入线程池
+    ///
+    /// # Panics
+    ///
+    /// 创建线程失败
     #[must_use]
     pub fn new(worker_count: usize) -> Self {
         let mut workers = Vec::with_capacity(worker_count);
