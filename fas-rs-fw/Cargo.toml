@@ -11,4 +11,5 @@ categories = ["game", "api"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+atomic = "0.5.3"
 likely_stable = "0.1.2"

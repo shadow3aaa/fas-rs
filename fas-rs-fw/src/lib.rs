@@ -38,14 +38,8 @@ pub trait VirtualFrameSensor: Send {
     where
         Self: Sized;
     /// 获取指定数量的历史[`self::FrameTime`]
-    ///
-    /// 如果目前数据还没收集好就堵塞，[`self::Scheduler`]堵塞后会马上响应
-    ///
-    /// 避免极端情况，如果超时堵塞 targetfps + 3 帧的标准渲染时间就返回None
-    fn frametimes(&self, target_fps: TargetFps) -> Option<Vec<FrameTime>>;
-    /// 获取指定时间内的历史[`self::Fps`]的平均
-    ///
-    /// 不要堵塞
+    fn frametimes(&self, target_fps: TargetFps) -> Vec<FrameTime>;
+    /// 获取指定时间内的历史[`self::Fps`]的平均数
     fn fps(&self) -> Fps;
     /// 监视帧状态是开销较大的
     ///

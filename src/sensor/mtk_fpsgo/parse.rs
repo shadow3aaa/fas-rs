@@ -89,8 +89,6 @@ pub(super) fn fps_thread(
     time: &Arc<Atomic<Duration>>,
     pause: &Arc<AtomicBool>,
 ) {
-    thread::park();
-
     let mut buffer: VecDeque<(Instant, Fps)> = VecDeque::with_capacity(1024);
 
     #[allow(unused_variables)]

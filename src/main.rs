@@ -45,12 +45,12 @@ fn main() -> ! {
             temp = current;
             if_unlikely! {
                 let Some((ref game, fps)) = &temp => {
-                    scheduler.load(*fps).unwrap();
+                    scheduler.load(*fps);
                     debug! {
                         println!("Loaded {} {}", game, fps);
                     }
                 } else {
-                    scheduler.unload().unwrap();
+                    scheduler.unload();
                     debug! {
                         println!("Unloaded");
                     }

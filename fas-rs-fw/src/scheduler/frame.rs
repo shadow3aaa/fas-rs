@@ -19,13 +19,14 @@ impl Scheduler {
         sensor: &dyn VirtualFrameSensor,
         controller: &dyn VirtualPerformanceController,
         target_fps: TargetFps,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<Duration, Box<dyn Error>> {
+        let fps_time = Duration::from_millis(u64::from(target_fps) * 10 / 3);
         sensor.resume(
             target_fps as usize / 12,
-            Duration::from_millis(u64::from(target_fps) * 10 / 3),
+            fps_time,
         )?;
         controller.plug_in()?;
-        Ok(())
+        Ok(fps_time)
     }
 
     pub(super) fn process_load(
@@ -37,11 +38,7 @@ impl Scheduler {
             return Err("Target Fps should never be less than 12".into());
         }
 
-        let Some(frametimes) = sensor.frametimes(target_fps) else {
-            controller.release();
-            return Ok(());
-        };
-
+        let frametimes = sensor.frametimes(target_fps);
         let fps = sensor.fps();
 
         if unlikely(jank(&frametimes, fps, target_fps)) {

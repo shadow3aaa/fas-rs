@@ -90,15 +90,14 @@ impl VirtualFrameSensor for MtkFpsGo {
         })
     }
 
-    fn frametimes(&self, target_fps: TargetFps) -> Option<Vec<FrameTime>> {
-        let out = Duration::from_secs(1) / (target_fps + 3);
-        let data = self.frametime_receiver.recv_timeout(out).ok()?;
+    fn frametimes(&self, target_fps: TargetFps) -> Vec<FrameTime> {
+        let Some(data) = self.frametime_receiver.try_iter().last() else {
+            return Vec::default();
+        };
 
-        Some(
-            data.into_iter()
-                .map(|frametime| self.ignore.ign(frametime, target_fps))
-                .collect(),
-        )
+        data.into_iter()
+            .map(|frametime| self.ignore.ign(frametime, target_fps))
+            .collect()
     }
 
     fn fps(&self) -> Fps {

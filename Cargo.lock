@@ -95,6 +95,7 @@ dependencies = [
 name = "fas-rs-fw"
 version = "0.1.2"
 dependencies = [
+ "atomic",
  "likely_stable",
 ]
 
