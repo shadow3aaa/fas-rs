@@ -10,8 +10,6 @@ use std::{
 
 use fas_rs_fw::prelude::*;
 
-use crate::ThisResult;
-
 // 如果传感器实现实际读取的是帧vsync间隔而不是真正的帧渲染时间
 // 假如此时屏幕刷新率 ＞ 目标帧率
 // 设 目标渲染时间 = 1s / 目标帧率
@@ -77,7 +75,7 @@ impl IgnoreFrameTime {
                 .next()?
                 .trim()
                 .parse()
-                .this_unwrap(),
+                .unwrap(),
         )
     }
 }

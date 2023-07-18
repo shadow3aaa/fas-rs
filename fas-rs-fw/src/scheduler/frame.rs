@@ -3,9 +3,7 @@ use std::{error::Error, time::Duration};
 use likely_stable::unlikely;
 
 use super::Scheduler;
-use crate::debug;
-use crate::{Fps, FrameTime, TargetFps};
-use crate::{VirtualFrameSensor, VirtualPerformanceController};
+use crate::{debug, Fps, FrameTime, TargetFps, VirtualFrameSensor, VirtualPerformanceController};
 
 impl Scheduler {
     pub(super) fn process_unload(

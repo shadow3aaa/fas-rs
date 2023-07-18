@@ -22,7 +22,6 @@ use likely_stable::LikelyOption;
 use parking_lot::RwLock;
 use toml::Value;
 
-use crate::{ThisOption, ThisResult};
 use read::wait_and_read;
 
 pub type ConfData = RwLock<Value>;
@@ -39,8 +38,8 @@ impl Drop for Config {
 
 impl Config {
     pub fn new(path: &Path) -> Self {
-        let ori = fs::read_to_string(path).this_unwrap();
-        let toml = toml::from_str(&ori).this_unwrap();
+        let ori = fs::read_to_string(path).unwrap();
+        let toml = toml::from_str(&ori).unwrap();
         let toml = Arc::new(RwLock::new(toml));
         let toml_clone = toml.clone();
 
@@ -52,7 +51,7 @@ impl Config {
         thread::Builder::new()
             .name("ConfigThread".into())
             .spawn(move || wait_and_read(&path, &toml_clone, &exit_clone))
-            .this_unwrap();
+            .unwrap();
 
         Self { toml, exit }
     }
@@ -64,7 +63,7 @@ impl Config {
             .get("game_list")
             .and_then_likely(Value::as_table)
             .cloned()
-            .this_unwrap();
+            .unwrap();
 
         drop(toml); // early-drop
 
@@ -73,7 +72,7 @@ impl Config {
 
         let (game, fps) = (
             &pkg,
-            Fps::try_from(list.get(&pkg)?.as_integer().this_unwrap()).this_unwrap(),
+            Fps::try_from(list.get(&pkg)?.as_integer().unwrap()).unwrap(),
         );
 
         Some((game.clone(), fps.to_owned()))
@@ -82,7 +81,7 @@ impl Config {
     #[allow(unused)]
     pub fn get_conf(&self, label: &'static str) -> Option<Value> {
         let toml = self.toml.read();
-        toml.get("config").this_unwrap().get(label).cloned()
+        toml.get("config").unwrap().get(label).cloned()
     }
 
     fn get_top_pkgname() -> Option<HashSet<String>> {
@@ -99,7 +98,7 @@ impl Config {
                     p.split_whitespace()
                         .nth(2)
                         .and_then_unlikely(|p| p.split('=').nth(1))
-                        .this_unwrap()
+                        .unwrap()
                 })
                 .zip(
                     dump.lines()

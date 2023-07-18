@@ -4,7 +4,6 @@ pub mod debug;
 pub mod macros;
 pub mod prelude;
 mod scheduler;
-pub mod this_unwrap;
 pub mod write_pool;
 
 use std::{error::Error, time::Duration};

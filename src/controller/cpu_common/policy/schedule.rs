@@ -11,7 +11,7 @@ use atomic::{Atomic, Ordering};
 use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
 
-use crate::{config::CONFIG, debug, ThisOption, ThisResult};
+use crate::{config::CONFIG, debug};
 
 const BURST_DEFAULT: usize = 0;
 
@@ -32,21 +32,21 @@ impl Schedule {
         let target_diff_clone = target_diff.clone();
 
         let count = fs::read_to_string(path.join("affected_cpus"))
-            .this_unwrap()
+            .unwrap()
             .split_whitespace()
             .count();
         let pool = WritePool::new(cmp::max(count / 2, 2));
 
         let mut table: Vec<Cycles> = fs::read_to_string(path.join("scaling_available_frequencies"))
-            .this_unwrap()
+            .unwrap()
             .split_whitespace()
-            .map(|freq| Cycles::from_khz(freq.parse().this_unwrap()))
+            .map(|freq| Cycles::from_khz(freq.parse().unwrap()))
             .collect();
 
         table.sort_unstable();
         table_spec(&mut table);
 
-        let cur_cycles = Arc::new(Atomic::new(table.last().copied().this_unwrap()));
+        let cur_cycles = Arc::new(Atomic::new(table.last().copied().unwrap()));
         let cur_cycles_clone = cur_cycles.clone();
 
         debug! {
@@ -107,7 +107,7 @@ impl Schedule {
     pub fn reset(&mut self) {
         let _ = self.pool.write(
             &self.path.join("scaling_max_freq"),
-            &self.table.last().this_unwrap().as_khz().to_string(),
+            &self.table.last().unwrap().as_khz().to_string(),
         );
     }
 
@@ -123,7 +123,7 @@ fn table_spec(table: &mut Vec<Cycles>) {
     let save_count = CONFIG
         .get_conf("freq_count")
         .and_then_likely(|c| usize::try_from(c.as_integer()?).ok())
-        .this_unwrap();
+        .unwrap();
 
     let len = table.len();
 

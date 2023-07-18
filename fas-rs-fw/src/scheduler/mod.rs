@@ -15,7 +15,7 @@ use std::{
 
 use likely_stable::likely;
 
-use crate::{this_unwrap::ThisResult, TargetFps, VirtualFrameSensor, VirtualPerformanceController};
+use crate::{TargetFps, VirtualFrameSensor, VirtualPerformanceController};
 
 /// [`self::Scheduler`]通过[`crate::VirtualFrameSensor`]和[`crate::VirtualPerformanceController`]来进行调度
 pub struct Scheduler {
@@ -54,7 +54,7 @@ impl Scheduler {
         let _ = thread::Builder::new()
             .name("SchedulerThread".into())
             .spawn(move || Self::run(&*sensor, &*controller, &rx, &stop_clone))
-            .this_unwrap();
+            .unwrap();
 
         Ok(Self { sender: tx, stop })
     }

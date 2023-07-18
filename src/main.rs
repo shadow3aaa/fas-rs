@@ -7,7 +7,6 @@ mod sensor;
 use std::{env, process, thread};
 
 pub use fas_rs_fw::debug;
-pub use fas_rs_fw::this_unwrap::{ThisOption, ThisResult};
 
 use fas_rs_fw::{prelude::*, support_controller, support_sensor, Scheduler};
 
@@ -24,9 +23,9 @@ fn main() -> ! {
     // 搜索列表中第一个支持的控制器和传感器，并且构造
     // 没有支持的就退出程序
     #[allow(unused_variables)]
-    let controller = support_controller!(CpuCommon).this_unwrap();
+    let controller = support_controller!(CpuCommon).unwrap();
     #[allow(unused_variables)]
-    let sensor = support_sensor!(MtkFpsGo).this_unwrap();
+    let sensor = support_sensor!(MtkFpsGo).unwrap();
 
     // 如果是测试支持模式这里就退出
     let mut args = env::args();
@@ -35,7 +34,7 @@ fn main() -> ! {
         process::exit(0);
     }
 
-    let scheduler = Scheduler::new(sensor, controller).this_unwrap();
+    let scheduler = Scheduler::new(sensor, controller).unwrap();
 
     let mut temp = None;
     loop {
@@ -46,12 +45,12 @@ fn main() -> ! {
             temp = current;
             if_unlikely! {
                 let Some((ref game, fps)) = &temp => {
-                    scheduler.load(*fps).this_unwrap();
+                    scheduler.load(*fps).unwrap();
                     debug! {
                         println!("Loaded {} {}", game, fps);
                     }
                 } else {
-                    scheduler.unload().this_unwrap();
+                    scheduler.unload().unwrap();
                     debug! {
                         println!("Unloaded");
                     }

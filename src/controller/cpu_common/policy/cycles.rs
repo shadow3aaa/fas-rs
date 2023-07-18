@@ -12,7 +12,7 @@ use yata::{
     prelude::*,
 };
 
-use crate::{config::CONFIG, debug, ThisOption, ThisResult};
+use crate::{config::CONFIG, debug};
 
 enum SpecEma {
     Ema(EMA),
@@ -37,9 +37,9 @@ impl SpecEma {
 impl DiffReader {
     pub fn new(path: &Path) -> Self {
         let affected_cpus: Vec<i32> = fs::read_to_string(path.join("affected_cpus"))
-            .this_unwrap()
+            .unwrap()
             .split_whitespace()
-            .map(|cpu| cpu.parse::<i32>().this_unwrap())
+            .map(|cpu| cpu.parse::<i32>().unwrap())
             .collect();
 
         let window = CONFIG
@@ -54,9 +54,9 @@ impl DiffReader {
                 "DEMA" => Some(SpecEma::Dema(DEMA::new(window, &0.0).ok()?)),
                 _ => None,
             })
-            .this_unwrap();
+            .unwrap();
 
-        let reader = CyclesReader::new(affected_cpus.as_slice()).this_unwrap();
+        let reader = CyclesReader::new(affected_cpus.as_slice()).unwrap();
 
         Self {
             affected_cpus,
@@ -68,24 +68,24 @@ impl DiffReader {
     pub fn read_diff(&mut self, cur_freq: Cycles) -> Cycles {
         self.reader.enable();
         let time = Instant::now();
-        let cycles_former = self.reader.read().this_unwrap();
+        let cycles_former = self.reader.read().unwrap();
 
         thread::sleep(Duration::from_millis(50));
 
-        let cycles_later = self.reader.read().this_unwrap();
+        let cycles_later = self.reader.read().unwrap();
         let time = time.elapsed();
         self.reader.disable();
 
         let cycles = self
             .affected_cpus
             .iter()
-            .map(|cpu| *cycles_later.get(cpu).this_unwrap() - *cycles_former.get(cpu).this_unwrap())
+            .map(|cpu| *cycles_later.get(cpu).unwrap() - *cycles_former.get(cpu).unwrap())
             .max()
-            .this_unwrap();
+            .unwrap();
 
         let diff = cycles
             .as_diff(time, cur_freq)
-            .this_unwrap()
+            .unwrap()
             .max(Cycles::new(0));
 
         debug! {

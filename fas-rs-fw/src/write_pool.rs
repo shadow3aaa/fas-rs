@@ -19,7 +19,7 @@ use std::{
 
 use likely_stable::{if_likely, LikelyOption};
 
-use crate::{debug, this_unwrap::ThisResult};
+use crate::debug;
 
 pub struct WritePool {
     workers: Vec<(Sender<Command>, Arc<AtomicUsize>)>,
@@ -52,7 +52,7 @@ impl WritePool {
             thread::Builder::new()
                 .name("WritePoolThread".into())
                 .spawn(move || write_thread(&receiver, &heavy_clone))
-                .this_unwrap();
+                .unwrap();
 
             workers.push((sender, heavy));
         }

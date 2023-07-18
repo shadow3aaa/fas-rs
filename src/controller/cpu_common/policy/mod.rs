@@ -13,7 +13,6 @@ use std::{
 use atomic::Atomic;
 use cpu_cycles_reader::Cycles;
 
-use crate::ThisResult;
 use cycles::DiffReader;
 use schedule::Schedule;
 
@@ -57,7 +56,7 @@ impl Policy {
                 let diff = reader.read_diff(cur_freq);
                 schedule.run(diff);
             })
-            .this_unwrap();
+            .unwrap();
 
         Self {
             target_diff,

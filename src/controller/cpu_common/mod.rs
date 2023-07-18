@@ -11,7 +11,7 @@ use fas_rs_fw::prelude::*;
 use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
 
-use crate::{config::CONFIG, debug, ThisOption, ThisResult};
+use crate::{config::CONFIG, debug};
 use policy::Policy;
 
 pub struct CpuCommon {
@@ -26,7 +26,7 @@ impl CpuCommon {
             .iter()
             .map(|p| p.set_target_diff(c))
             .sum::<Cycles>()
-            / i64::try_from(self.policies.len()).this_unwrap();
+            / i64::try_from(self.policies.len()).unwrap();
 
         self.target_diff.set(updated_target);
         debug! {
@@ -50,24 +50,24 @@ impl VirtualPerformanceController for CpuCommon {
         let target_diff = CONFIG
             .get_conf("default_target_diff")
             .and_then_likely(|d| Some(Cycles::from_mhz(d.as_integer()?)))
-            .this_unwrap();
+            .unwrap();
         let target_diff = Cell::new(target_diff);
 
         let cpufreq = fs::read_dir("/sys/devices/system/cpu/cpufreq")?;
         let mut policies: Vec<PathBuf> = cpufreq
             .into_iter()
-            .map(|e| e.this_unwrap().path())
+            .map(|e| e.unwrap().path())
             .collect();
 
         policies.sort_by(|a, b| {
             let num_a: u8 = a
                 .file_name()
                 .and_then_likely(|f| f.to_str()?.split("policy").nth(1)?.parse().ok())
-                .this_unwrap();
+                .unwrap();
             let num_b: u8 = b
                 .file_name()
                 .and_then_likely(|f| f.to_str()?.split("policy").nth(1)?.parse().ok())
-                .this_unwrap();
+                .unwrap();
             num_b.cmp(&num_a)
         });
 
@@ -105,7 +105,7 @@ impl VirtualPerformanceController for CpuCommon {
         let target_diff = CONFIG
             .get_conf("default_target_diff_fas")
             .and_then_likely(|d| Some(Cycles::from_mhz(d.as_integer()?)))
-            .this_unwrap();
+            .unwrap();
         self.set_target_diff(target_diff);
         self.policies.iter().for_each(Policy::resume);
         Ok(())
@@ -115,7 +115,7 @@ impl VirtualPerformanceController for CpuCommon {
         let always_on = CONFIG
             .get_conf("always_on_gov")
             .and_then_likely(|b| b.as_bool())
-            .this_unwrap();
+            .unwrap();
 
         if !always_on {
             self.policies.iter().for_each(Policy::pause);
@@ -125,7 +125,7 @@ impl VirtualPerformanceController for CpuCommon {
         let target_diff = CONFIG
             .get_conf("default_target_diff")
             .and_then_likely(|d| Some(Cycles::from_mhz(d.as_integer()?)))
-            .this_unwrap();
+            .unwrap();
         self.set_target_diff(target_diff);
         Ok(())
     }
