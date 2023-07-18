@@ -66,11 +66,11 @@ impl WritePool {
     /// 异步写入一个值到指定路径
     ///
     /// # Errors
-    /// 
+    ///
     /// 向线程池发送写入请求失败
     ///
     /// # Panics
-    /// 
+    ///
     /// 线程池量为0
     pub fn write(&mut self, path: &Path, value: &str) -> Result<(), Box<dyn Error>> {
         debug! {

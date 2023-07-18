@@ -54,10 +54,7 @@ impl VirtualPerformanceController for CpuCommon {
         let target_diff = Cell::new(target_diff);
 
         let cpufreq = fs::read_dir("/sys/devices/system/cpu/cpufreq")?;
-        let mut policies: Vec<PathBuf> = cpufreq
-            .into_iter()
-            .map(|e| e.unwrap().path())
-            .collect();
+        let mut policies: Vec<PathBuf> = cpufreq.into_iter().map(|e| e.unwrap().path()).collect();
 
         policies.sort_by(|a, b| {
             let num_a: u8 = a

@@ -40,11 +40,7 @@ pub(super) fn frametime_thread(
         let count = count.load(Ordering::Acquire);
 
         if buffer.len() >= count {
-            let data = buffer.iter()
-                .rev()
-                .take(count)
-                .copied()
-                .collect();
+            let data = buffer.iter().rev().take(count).copied().collect();
 
             sender.send(data).unwrap();
         }
@@ -110,14 +106,19 @@ pub(super) fn fps_thread(
 
         let time = time.load(Ordering::Acquire);
 
-        let taked_data: Vec<_> = buffer.iter()
+        let taked_data: Vec<_> = buffer
+            .iter()
             .rev()
             .take_while(|(i, _)| i.elapsed() <= time)
             .map(|(_, f)| f)
             .copied()
             .collect();
 
-        let avg = taked_data.iter().sum::<Fps>() / Fps::try_from(taked_data.len()).unwrap();
+        let avg = taked_data
+            .iter()
+            .sum::<Fps>()
+            .checked_div(Fps::try_from(taked_data.len()).unwrap())
+            .unwrap_or_default();
 
         avg_fps.store(avg, Ordering::Release);
 

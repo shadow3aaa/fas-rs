@@ -51,10 +51,7 @@ pub(super) fn wait_and_read(path: &Path, toml: &Arc<ConfData>, exit: &Arc<Atomic
 
         // wait until file change
         let mut inotify = Inotify::init().unwrap();
-        inotify
-            .watches()
-            .add(path, WatchMask::CLOSE_WRITE)
-            .unwrap();
+        inotify.watches().add(path, WatchMask::CLOSE_WRITE).unwrap();
         let _ = inotify.read_events_blocking(&mut []);
     }
 }

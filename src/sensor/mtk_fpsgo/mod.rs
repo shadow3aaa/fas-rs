@@ -94,9 +94,11 @@ impl VirtualFrameSensor for MtkFpsGo {
         let out = Duration::from_secs(1) / (target_fps + 3);
         let data = self.frametime_receiver.recv_timeout(out).ok()?;
 
-        Some(data.into_iter()
-            .map(|frametime| self.ignore.ign(frametime, target_fps))
-            .collect())
+        Some(
+            data.into_iter()
+                .map(|frametime| self.ignore.ign(frametime, target_fps))
+                .collect(),
+        )
     }
 
     fn fps(&self) -> Fps {
@@ -116,10 +118,7 @@ impl VirtualFrameSensor for MtkFpsGo {
         self.pause.store(false, Ordering::Release);
         self.target_frametime_count
             .store(frametime_count, Ordering::Release);
-        self.fps_time.store(
-            fps_time,
-            Ordering::Release,
-        );
+        self.fps_time.store(fps_time, Ordering::Release);
 
         self.thread_handle
             .iter()

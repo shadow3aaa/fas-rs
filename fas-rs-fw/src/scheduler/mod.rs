@@ -38,7 +38,7 @@ impl Scheduler {
     /// 构造一个[`self::Scheduler`]并且初始化
     ///
     /// # Errors
-    /// 
+    ///
     /// 暂停控制器/传感器失败
     pub fn new(
         sensor: Box<dyn VirtualFrameSensor>,

@@ -83,10 +83,7 @@ impl DiffReader {
             .max()
             .unwrap();
 
-        let diff = cycles
-            .as_diff(time, cur_freq)
-            .unwrap()
-            .max(Cycles::new(0));
+        let diff = cycles.as_diff(time, cur_freq).unwrap().max(Cycles::new(0));
 
         debug! {
             println!("getted diff: {}", diff);

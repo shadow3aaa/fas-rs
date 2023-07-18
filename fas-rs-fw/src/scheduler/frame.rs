@@ -62,5 +62,7 @@ fn jank(frametime: &[FrameTime], avg_fps: Fps, target_fps: TargetFps) -> bool {
     }
 
     let target_frametime = Duration::from_secs(1) / target_fps;
-    frametime.is_empty() || avg_fps <= target_fps - 3 || frametime.iter().any(|ft| *ft > target_frametime)
+    frametime.is_empty()
+        || avg_fps <= target_fps - 3
+        || frametime.iter().any(|ft| *ft > target_frametime)
 }
