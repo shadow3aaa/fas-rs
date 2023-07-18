@@ -7,8 +7,6 @@ authors = ["shadow3"]
 license = "WTFPL"
 readme = "README.md"
 repository = "https://github.com/shadow3aaa/fas-rs"
-keywords = ["scheduling", "fas"]
-categories = ["game"]
 
 [workspace]
 members = ['fas-rs-fw']
