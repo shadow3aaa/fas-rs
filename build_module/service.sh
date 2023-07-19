@@ -7,7 +7,7 @@ until [ -d "/sdcard/Android" ]; do
 	sleep 1
 done
 
-if lsmod | grep -q perfmgr_mtk; then
+if lsmod | grep -qE "perfmgr_mtk|ged_novsync"; then
 	touch $MODDIR/disable
 	exit
 fi

@@ -5,7 +5,7 @@ if [ ! $($MODPATH/fas-rs "test") == "Supported" ]; then
 	abort
 fi
 
-if lsmod | grep -q perfmgr_mtk; then
+if lsmod | grep -qE "perfmgr_mtk|ged_novsync"; then
 	ui_print "Conflicting kernel module"
 	abort
 fi
