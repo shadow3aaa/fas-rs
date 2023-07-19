@@ -10,14 +10,8 @@ use std::{
 
 use fas_rs_fw::prelude::*;
 
-// 如果传感器实现实际读取的是帧vsync间隔而不是真正的帧渲染时间
-// 假如此时屏幕刷新率 ＞ 目标帧率
-// 设 目标渲染时间 = 1s / 目标帧率
-// 屏幕刷新间隔 = 1s / 屏幕刷新率
-// 那么vsync间隔就会变成
-// 屏幕刷新间隔，目标渲染时间 + 屏幕刷新间隔，目标渲染时间
-// 三者的随机组合
-// 此函数消去前两个，但是存在误判可能，酌情使用
+// 如果传感器实现实际读取的是帧vsync间隔而不是真正的帧渲染时间时需要用这个修正
+// 为了方便实现trait已经做了内部可变处理
 pub struct IgnoreFrameTime {
     refresh_rate: Cell<Option<Fps>>,
     timer: Cell<Instant>,
@@ -48,7 +42,8 @@ impl IgnoreFrameTime {
 
                 if frametime > total_ign_time {
                     return frametime - refresh_time;
-                }
+                } else if frametime < target_frametime {
+                    return frametime + refresh_time;              }
             }
         }
 
