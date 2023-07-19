@@ -61,7 +61,7 @@ impl Schedule {
                 burst: BURST_DEFAULT,
                 burst_max,
                 pool,
-                table: table.clone(),
+                table,
                 pos,
             },
             target_diff_clone,

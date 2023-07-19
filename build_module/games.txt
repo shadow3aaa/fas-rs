@@ -5,6 +5,7 @@ always_on_gov = false
 # 单位: Mhz，diff > 0Mhz
 default_target_diff = 450
 default_target_diff_fas = 600
+diff_move = 75
 
 [game_list]
 # 和平精英

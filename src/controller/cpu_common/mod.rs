@@ -33,6 +33,15 @@ impl CpuCommon {
             println!("taregt diff: {}", c);
         }
     }
+
+    fn get_diff_move() -> Cycles {
+        let mhz = CONFIG
+            .get_conf("diff_move")
+            .and_then_likely(|m| m.as_integer())
+            .unwrap();
+
+        Cycles::from_mhz(mhz)
+    }
 }
 
 impl VirtualPerformanceController for CpuCommon {
@@ -83,7 +92,7 @@ impl VirtualPerformanceController for CpuCommon {
         debug! {
             println!("limit");
         }
-        let target_diff = self.target_diff.get() - Cycles::from_mhz(50);
+        let target_diff = self.target_diff.get() - Self::get_diff_move();
         let target_diff = target_diff.max(Cycles::new(0));
 
         self.set_target_diff(target_diff);
@@ -93,7 +102,7 @@ impl VirtualPerformanceController for CpuCommon {
         debug! {
             println!("release");
         }
-        let target_diff = self.target_diff.get() + Cycles::from_mhz(50);
+        let target_diff = self.target_diff.get() + Self::get_diff_move();
 
         self.set_target_diff(target_diff);
     }
