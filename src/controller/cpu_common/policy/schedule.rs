@@ -9,9 +9,8 @@ use fas_rs_fw::write_pool::WritePool;
 
 use atomic::{Atomic, Ordering};
 use cpu_cycles_reader::Cycles;
-use likely_stable::LikelyOption;
 
-use crate::{config::CONFIG, debug};
+use crate::debug;
 
 const BURST_DEFAULT: usize = 0;
 
@@ -44,7 +43,6 @@ impl Schedule {
             .collect();
 
         table.sort_unstable();
-        table_spec(&mut table);
 
         let cur_cycles = Arc::new(Atomic::new(table.last().copied().unwrap()));
         let cur_cycles_clone = cur_cycles.clone();
@@ -100,8 +98,6 @@ impl Schedule {
             }
             CmpOrdering::Equal => self.burst = BURST_DEFAULT,
         }
-
-        table_spec(&mut self.table);
     }
 
     pub fn reset(&mut self) {
@@ -117,31 +113,4 @@ impl Schedule {
             &self.table[self.pos].as_khz().to_string(),
         );
     }
-}
-
-fn table_spec(table: &mut Vec<Cycles>) {
-    let save_count = CONFIG
-        .get_conf("freq_count")
-        .and_then_likely(|c| usize::try_from(c.as_integer()?).ok())
-        .unwrap();
-
-    let len = table.len();
-
-    if len <= save_count {
-        return;
-    }
-
-    *table = table
-        .iter()
-        .copied()
-        .filter(|f| *f >= Cycles::from_mhz(500))
-        .collect();
-
-    *table = table
-        .iter()
-        .rev()
-        .step_by(len / save_count)
-        .rev()
-        .copied()
-        .collect();
 }
