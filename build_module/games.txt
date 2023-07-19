@@ -2,9 +2,9 @@
 EMA_TYPE = "EMA"
 EMA_WIN = 4
 freq_count = 8
-always_on_gov = true
-# 单位: Mhz，0Mhz < diff < 1Ghz
-default_target_diff = 430
+always_on_gov = false
+# 单位: Mhz，diff > 0Mhz
+default_target_diff = 450
 default_target_diff_fas = 600
 
 [game_list]
@@ -12,8 +12,6 @@ default_target_diff_fas = 600
 "com.tencent.tmgp.pubgmhd" = 60
 # Freeblade(战锤40k: 自由之刃)
 "com.pixeltoys.freeblade" = 60
-# 明日方舟
-"com.hypergryph.arknights" = 60
 # 喵斯快跑
 "com.prpr.musedash.TapTap" = 60
 # Minecraft(我的世界)

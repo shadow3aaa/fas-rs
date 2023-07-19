@@ -43,7 +43,8 @@ impl IgnoreFrameTime {
                 if frametime > total_ign_time {
                     return frametime - refresh_time;
                 } else if frametime < target_frametime {
-                    return frametime + refresh_time;              }
+                    return frametime + refresh_time;
+                }
             }
         }
 
