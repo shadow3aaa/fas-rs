@@ -2,7 +2,11 @@
 
 mod frame;
 
-use std::{error::Error, sync::Arc, thread};
+use std::{
+    error::Error,
+    sync::Arc,
+    thread::{self, JoinHandle},
+};
 
 use atomic::{Atomic, Ordering};
 
@@ -11,6 +15,7 @@ use crate::{TargetFps, VirtualFrameSensor, VirtualPerformanceController};
 /// [`self::Scheduler`]通过[`crate::VirtualFrameSensor`]和[`crate::VirtualPerformanceController`]来进行调度
 pub struct Scheduler {
     command: Arc<Atomic<Command>>,
+    handle: JoinHandle<()>,
 }
 
 #[derive(Clone, Copy)]
@@ -23,6 +28,7 @@ enum Command {
 impl Drop for Scheduler {
     fn drop(&mut self) {
         self.command.store(Command::Exit, Ordering::Release);
+        self.handle.thread().unpark();
     }
 }
 
@@ -46,12 +52,12 @@ impl Scheduler {
         let command = Arc::new(Atomic::new(Command::Unload));
         let command_clone = command.clone();
 
-        let _ = thread::Builder::new()
+        let handle = thread::Builder::new()
             .name("SchedulerThread".into())
             .spawn(move || Self::run(&*sensor, &*controller, &command_clone))
             .unwrap();
 
-        Ok(Self { command })
+        Ok(Self { command, handle })
     }
 
     /// 卸载[`self::Scheduler`]
@@ -69,6 +75,7 @@ impl Scheduler {
     #[inline]
     pub fn load(&self, target: TargetFps) {
         self.command.store(Command::Load(target), Ordering::Release);
+        self.handle.thread().unpark();
     }
 }
 
