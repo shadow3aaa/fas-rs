@@ -1,7 +1,6 @@
 [config]
-EMA_TYPE = "EMA"
+EMA_TYPE = "None"
 EMA_WIN = 4
-freq_count = 8
 always_on_gov = false
 # 单位: Mhz，diff > 0Mhz
 default_target_diff = 450
