@@ -83,7 +83,7 @@ impl VirtualPerformanceController for CpuCommon {
         debug! {
             println!("limit");
         }
-        let target_diff = self.target_diff.get() - Cycles::from_mhz(100);
+        let target_diff = self.target_diff.get() - Cycles::from_mhz(50);
         let target_diff = target_diff.max(Cycles::new(0));
 
         self.set_target_diff(target_diff);
@@ -93,7 +93,7 @@ impl VirtualPerformanceController for CpuCommon {
         debug! {
             println!("release");
         }
-        let target_diff = self.target_diff.get() + Cycles::from_mhz(100);
+        let target_diff = self.target_diff.get() + Cycles::from_mhz(50);
 
         self.set_target_diff(target_diff);
     }

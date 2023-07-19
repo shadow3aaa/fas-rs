@@ -17,6 +17,7 @@ use crate::{config::CONFIG, debug};
 enum SpecEma {
     Ema(EMA),
     Dema(DEMA),
+    None,
 }
 
 pub struct DiffReader {
@@ -30,6 +31,7 @@ impl SpecEma {
         match self {
             Self::Ema(e) => e.next(&value),
             Self::Dema(e) => e.next(&value),
+            Self::None => value,
         }
     }
 }
@@ -52,6 +54,7 @@ impl DiffReader {
             .and_then_likely(|d| match d.as_str()? {
                 "EMA" => Some(SpecEma::Ema(EMA::new(window, &0.0).ok()?)),
                 "DEMA" => Some(SpecEma::Dema(DEMA::new(window, &0.0).ok()?)),
+                "None" => Some(SpecEma::None),
                 _ => None,
             })
             .unwrap();
