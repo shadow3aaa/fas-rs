@@ -60,7 +60,7 @@ fn main() -> ! {
             }
         }
 
-        thread::sleep(Duration::from_millis(100));
+        thread::sleep(Duration::from_secs(1));
     }
 }
 
