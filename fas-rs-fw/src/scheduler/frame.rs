@@ -18,10 +18,10 @@ impl Scheduler {
     pub(super) fn init_load(
         sensor: &dyn VirtualFrameSensor,
         controller: &dyn VirtualPerformanceController,
-        target_fps: TargetFps,
+        frame_windows: u32,
     ) -> Result<Duration, Box<dyn Error>> {
-        let fps_time = Duration::from_millis(u64::from(target_fps) * 10 / 3);
-        sensor.resume(target_fps as usize / 12, fps_time)?;
+        let fps_time = Duration::from_millis((frame_windows * 40).into());
+        sensor.resume(frame_windows, fps_time)?;
         controller.plug_in()?;
         Ok(fps_time)
     }
@@ -30,11 +30,7 @@ impl Scheduler {
         sensor: &dyn VirtualFrameSensor,
         controller: &dyn VirtualPerformanceController,
         target_fps: TargetFps,
-    ) -> Result<(), Box<dyn Error>> {
-        if target_fps <= 12 {
-            return Err("Target Fps should never be less than 12".into());
-        }
-
+    ) {
         let frametimes = sensor.frametimes(target_fps);
         let fps = sensor.fps();
 
@@ -43,8 +39,6 @@ impl Scheduler {
         } else {
             controller.limit();
         }
-
-        Ok(())
     }
 }
 

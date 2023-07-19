@@ -20,7 +20,7 @@ pub struct Scheduler {
 
 #[derive(Clone, Copy)]
 enum Command {
-    Load(TargetFps),
+    Load((TargetFps, u32)),
     Unload,
     Exit,
 }
@@ -73,8 +73,9 @@ impl Scheduler {
     /// 如果已经载入，再次调用会重载入(调用init)
     /// 每次载入/重载要指定新的[`crate::TargetFps`]
     #[inline]
-    pub fn load(&self, target: TargetFps) {
-        self.command.store(Command::Load(target), Ordering::Release);
+    pub fn load(&self, target: TargetFps, windows: u32) {
+        self.command
+            .store(Command::Load((target, windows)), Ordering::Release);
         self.handle.thread().unpark();
     }
 }
@@ -86,12 +87,13 @@ impl Scheduler {
         command: &Arc<Atomic<Command>>,
     ) {
         let mut target_fps;
+        let mut windows: u32;
 
         loop {
             let sleep_time = match command.load(Ordering::Acquire) {
                 Command::Load(t) => {
-                    target_fps = t;
-                    Self::init_load(sensor, controller, target_fps).unwrap()
+                    (target_fps, windows) = t;
+                    Self::init_load(sensor, controller, windows).unwrap()
                 }
                 Command::Unload => {
                     Self::process_unload(sensor, controller).unwrap();
@@ -101,7 +103,7 @@ impl Scheduler {
                 Command::Exit => return,
             };
 
-            Self::process_load(sensor, controller, target_fps).unwrap();
+            Self::process_load(sensor, controller, target_fps);
             thread::sleep(sleep_time);
         }
     }

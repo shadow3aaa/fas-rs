@@ -56,7 +56,7 @@ pub trait VirtualFrameSensor: Send {
     /// # Errors
     ///
     /// 恢复监视失败
-    fn resume(&self, frametime_count: usize, fps_time: Duration) -> Result<(), Box<dyn Error>>;
+    fn resume(&self, frame_windows: u32, fps_time: Duration) -> Result<(), Box<dyn Error>>;
 }
 
 /// 性能控制器接口

@@ -5,7 +5,7 @@ use std::{
     os::unix::fs::PermissionsExt,
     path::Path,
     sync::{
-        atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicU32, Ordering},
         mpsc::{self, Receiver},
         Arc,
     },
@@ -23,7 +23,7 @@ pub const FPSGO: &str = "/sys/kernel/fpsgo";
 
 pub struct MtkFpsGo {
     // 数据量
-    target_frametime_count: Arc<AtomicUsize>,
+    target_frametime_count: Arc<AtomicU32>,
     fps_time: Arc<Atomic<Duration>>,
     // 数据
     frametime_receiver: Receiver<Vec<FrameTime>>,
@@ -59,7 +59,7 @@ impl VirtualFrameSensor for MtkFpsGo {
         let avg_fps = Arc::new(AtomicU32::new(0));
 
         // 数据量
-        let target_frametime_count = Arc::new(AtomicUsize::new(0));
+        let target_frametime_count = Arc::new(AtomicU32::new(0));
         let fps_time = Arc::new(Atomic::new(Duration::default()));
 
         let count_clone = target_frametime_count.clone();
@@ -111,7 +111,7 @@ impl VirtualFrameSensor for MtkFpsGo {
         Ok(())
     }
 
-    fn resume(&self, frametime_count: usize, fps_time: Duration) -> Result<(), Box<dyn Error>> {
+    fn resume(&self, frametime_count: u32, fps_time: Duration) -> Result<(), Box<dyn Error>> {
         enable_fpsgo()?;
 
         self.pause.store(false, Ordering::Release);

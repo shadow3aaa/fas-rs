@@ -3,7 +3,7 @@ use std::{
     fs,
     path::Path,
     sync::{
-        atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicU32, Ordering},
         mpsc::SyncSender,
         Arc,
     },
@@ -22,7 +22,7 @@ const BUFFER_SIZE: usize = 1024;
 
 pub(super) fn frametime_thread(
     sender: &SyncSender<Vec<FrameTime>>,
-    count: &Arc<AtomicUsize>,
+    count: &Arc<AtomicU32>,
     pause: &Arc<AtomicBool>,
 ) {
     let mut buffer = VecDeque::with_capacity(BUFFER_SIZE);
@@ -37,7 +37,7 @@ pub(super) fn frametime_thread(
             buffer.pop_front();
         }
 
-        let count = count.load(Ordering::Acquire);
+        let count = usize::try_from(count.load(Ordering::Acquire)).unwrap();
 
         if buffer.len() >= count {
             let data = buffer.iter().rev().take(count).copied().collect();

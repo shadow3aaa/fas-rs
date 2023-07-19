@@ -16,8 +16,6 @@ use std::{
     thread,
 };
 
-use fas_rs_fw::Fps;
-
 use likely_stable::LikelyOption;
 use parking_lot::RwLock;
 use toml::Value;
@@ -56,7 +54,7 @@ impl Config {
         Self { toml, exit }
     }
 
-    pub fn cur_game_fps(&self) -> Option<(String, Fps)> {
+    pub fn cur_game_fps(&self) -> Option<(String, [u32; 2])> {
         let toml = self.toml.read();
         #[allow(unused)]
         let list = toml
@@ -70,12 +68,14 @@ impl Config {
         let pkgs = Self::get_top_pkgname()?;
         let pkg = pkgs.into_iter().find(|key| list.contains_key(key))?;
 
-        let (game, fps) = (
-            &pkg,
-            Fps::try_from(list.get(&pkg)?.as_integer().unwrap()).unwrap(),
-        );
+        let (game, fps_windows) = (&pkg, list.get(&pkg)?.as_array().unwrap());
 
-        Some((game.clone(), fps.to_owned()))
+        let fps_windows: Vec<_> = fps_windows
+            .iter()
+            .map(|v| u32::try_from(v.as_integer().unwrap()).unwrap())
+            .collect();
+
+        Some((game.clone(), fps_windows.as_slice().try_into().unwrap()))
     }
 
     #[allow(unused)]
