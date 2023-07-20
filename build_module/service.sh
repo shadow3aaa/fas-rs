@@ -13,4 +13,4 @@ if lsmod | grep -qE "perfmgr_mtk|ged_novsync"; then
 fi
 
 killall fas-rs
-nohup $MODDIR/fas-rs >/dev/null 2>&1 &
+nohup $MODDIR/fas-rs > $MODDIR/fas_log.txt &
