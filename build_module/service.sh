@@ -12,5 +12,7 @@ if lsmod | grep -qE "perfmgr_mtk|ged_novsync"; then
 	exit
 fi
 
+dir=/sdcard/Android/fas-rs
+
 killall fas-rs
-nohup env FAS_LOG=info $MODDIR/fas-rs > $MODDIR/fas_log.txt 2>&1 &
+nohup env FAS_LOG=info $MODDIR/fas-rs > $dir/fas_log.txt 2>&1 &
