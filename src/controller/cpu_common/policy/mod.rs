@@ -39,24 +39,26 @@ impl Policy {
         let pause = Arc::new(AtomicBool::new(true));
         let exit = Arc::new(AtomicBool::new(false));
 
-        let pause_clone = pause.clone();
-        let exit_clone = exit.clone();
-        let handle = thread::Builder::new()
-            .name("CpuPolicyThread".into())
-            .spawn(move || loop {
-                if pause_clone.load(Ordering::Acquire) {
-                    schedule.reset();
-                    thread::park();
-                } else if exit_clone.load(Ordering::Acquire) {
-                    schedule.reset();
-                    return;
-                }
+        let handle = {
+            let pause = pause.clone();
+            let exit = exit.clone();
+            thread::Builder::new()
+                .name("CpuPolicyThread".into())
+                .spawn(move || loop {
+                    if pause.load(Ordering::Acquire) {
+                        schedule.reset();
+                        thread::park();
+                    } else if exit.load(Ordering::Acquire) {
+                        schedule.reset();
+                        return;
+                    }
 
-                let cur_freq = schedule.cur_cycles.load(Ordering::Acquire);
-                let diff = reader.read_diff(cur_freq);
-                schedule.run(diff);
-            })
-            .unwrap();
+                    let cur_freq = schedule.cur_cycles.load(Ordering::Acquire);
+                    let diff = reader.read_diff(cur_freq);
+                    schedule.run(diff);
+                })
+                .unwrap()
+        };
 
         Self {
             target_diff,

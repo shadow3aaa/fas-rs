@@ -1,9 +1,10 @@
 use std::{error::Error, time::Duration};
 
 use likely_stable::unlikely;
+use log::debug;
 
 use super::Scheduler;
-use crate::{debug, Fps, FrameTime, TargetFps, VirtualFrameSensor, VirtualPerformanceController};
+use crate::{Fps, FrameTime, TargetFps, VirtualFrameSensor, VirtualPerformanceController};
 
 impl Scheduler {
     pub(super) fn process_unload(
@@ -44,10 +45,8 @@ impl Scheduler {
 
 // 判断是否出现卡顿
 fn jank(frametime: &[FrameTime], avg_fps: Fps, target_fps: TargetFps) -> bool {
-    debug! {
-        println!("avg fps: {}", avg_fps);
-        println!("frametime: {:?}", frametime.iter().max());
-    }
+    debug!("Got avg fps: {}", avg_fps);
+    debug!("Got max frametime: {:?}", frametime.iter().max());
 
     let target_frametime = Duration::from_secs(1) / target_fps;
     frametime.is_empty()

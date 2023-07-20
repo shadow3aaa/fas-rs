@@ -17,6 +17,7 @@ use std::{
 };
 
 use likely_stable::LikelyOption;
+use log::info;
 use parking_lot::RwLock;
 use toml::Value;
 
@@ -39,17 +40,19 @@ impl Config {
         let ori = fs::read_to_string(path).unwrap();
         let toml = toml::from_str(&ori).unwrap();
         let toml = Arc::new(RwLock::new(toml));
-        let toml_clone = toml.clone();
-
         let exit = Arc::new(AtomicBool::new(false));
-        let exit_clone = exit.clone();
 
-        let path = path.to_owned();
+        {
+            let path = path.to_owned();
+            let toml = toml.clone();
+            let exit = exit.clone();
 
-        thread::Builder::new()
-            .name("ConfigThread".into())
-            .spawn(move || wait_and_read(&path, &toml_clone, &exit_clone))
-            .unwrap();
+            thread::Builder::new()
+                .name("ConfigThread".into())
+                .spawn(move || wait_and_read(&path, &toml, &exit))
+                .unwrap();
+        }
+        info!("Config watcher started");
 
         Self { toml, exit }
     }

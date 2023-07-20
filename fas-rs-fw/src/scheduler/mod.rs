@@ -50,12 +50,15 @@ impl Scheduler {
         controller.plug_out()?;
 
         let command = Arc::new(Atomic::new(Command::Unload));
-        let command_clone = command.clone();
 
-        let handle = thread::Builder::new()
-            .name("SchedulerThread".into())
-            .spawn(move || Self::run(&*sensor, &*controller, &command_clone))
-            .unwrap();
+        let handle = {
+            let command = command.clone();
+
+            thread::Builder::new()
+                .name("SchedulerThread".into())
+                .spawn(move || Self::run(&*sensor, &*controller, &command))
+                .unwrap()
+        };
 
         Ok(Self { command, handle })
     }

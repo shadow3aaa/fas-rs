@@ -18,8 +18,7 @@ use std::{
 };
 
 use likely_stable::{if_likely, LikelyOption};
-
-use crate::debug;
+use log::{debug, info};
 
 pub struct WritePool {
     workers: Vec<(Sender<Command>, Arc<AtomicUsize>)>,
@@ -51,12 +50,15 @@ impl WritePool {
         for _ in 0..worker_count {
             let (sender, receiver) = mpsc::channel();
             let heavy = Arc::new(AtomicUsize::new(0));
-            let heavy_clone = heavy.clone();
+            {
+                let heavy = heavy.clone();
 
-            thread::Builder::new()
-                .name("WritePoolThread".into())
-                .spawn(move || write_thread(&receiver, &heavy_clone))
-                .unwrap();
+                thread::Builder::new()
+                    .name("WritePoolThread".into())
+                    .spawn(move || write_thread(&receiver, &heavy))
+                    .unwrap();
+            }
+            info!("Write threads pool created");
 
             workers.push((sender, heavy));
         }
@@ -77,9 +79,7 @@ impl WritePool {
     ///
     /// 线程池量为0
     pub fn write(&mut self, path: &Path, value: &str) -> Result<(), Box<dyn Error>> {
-        debug! {
-            println!("WritePool: write {} to {}", &value, &path.display());
-        }
+        debug!("WritePool: write {} to {}", &value, &path.display());
 
         if Some(value) == self.cache_map.get(path).map_likely(|(x, _)| x.as_str()) {
             return Ok(());

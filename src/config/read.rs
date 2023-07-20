@@ -11,9 +11,9 @@ use std::{
 };
 
 use inotify::{Inotify, WatchMask};
+use log::{debug, error};
 
 use super::ConfData;
-use crate::debug;
 
 pub(super) fn wait_and_read(path: &Path, toml: &Arc<ConfData>, exit: &Arc<AtomicBool>) {
     let mut retry_count = 0;
@@ -23,9 +23,7 @@ pub(super) fn wait_and_read(path: &Path, toml: &Arc<ConfData>, exit: &Arc<Atomic
         }
 
         if retry_count > 10 {
-            debug! {
-                eprintln!("Too many read config retries");
-            }
+            error!("Too many read config retries");
             process::exit(1);
         }
 
@@ -36,18 +34,13 @@ pub(super) fn wait_and_read(path: &Path, toml: &Arc<ConfData>, exit: &Arc<Atomic
             }
             #[allow(unused_variables)]
             Err(e) => {
-                debug! {
-                    println!("Failed to read file '{}': {}", path.display(), e);
-                }
+                debug!("Failed to read file '{}': {}", path.display(), e);
                 retry_count += 1;
                 thread::sleep(Duration::from_secs(1));
                 continue;
             }
         };
         *toml.write() = toml::from_str(&ori).unwrap();
-        debug! {
-            println!("{:#?}", *toml.read());
-        }
 
         // wait until file change
         let mut inotify = Inotify::init().unwrap();

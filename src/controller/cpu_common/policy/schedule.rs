@@ -9,8 +9,7 @@ use fas_rs_fw::write_pool::WritePool;
 
 use atomic::{Atomic, Ordering};
 use cpu_cycles_reader::Cycles;
-
-use crate::debug;
+use log::debug;
 
 const BURST_DEFAULT: usize = 0;
 
@@ -47,9 +46,7 @@ impl Schedule {
         let cur_cycles = Arc::new(Atomic::new(table.last().copied().unwrap()));
         let cur_cycles_clone = cur_cycles.clone();
 
-        debug! {
-            println!("{:#?}", &table);
-        }
+        debug!("Got cpu freq table: {:#?}", &table);
 
         let pos = table.len() - 1;
 

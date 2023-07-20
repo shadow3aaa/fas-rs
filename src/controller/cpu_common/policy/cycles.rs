@@ -12,7 +12,7 @@ use yata::{
     prelude::*,
 };
 
-use crate::{config::CONFIG, debug};
+use crate::config::CONFIG;
 
 enum SpecEma {
     Ema(EMA),
@@ -88,18 +88,8 @@ impl DiffReader {
 
         let diff = cycles.as_diff(time, cur_freq).unwrap().max(Cycles::new(0));
 
-        debug! {
-            println!("getted diff: {}", diff);
-        }
-
         #[allow(clippy::cast_possible_truncation)]
         #[allow(clippy::cast_precision_loss)]
-        let diff = Cycles::from_hz(self.ema.next(diff.as_hz() as f64).max(0.0) as i64);
-
-        debug! {
-            println!("emaed diff: {}", diff);
-        }
-
-        diff
+        Cycles::from_hz(self.ema.next(diff.as_hz() as f64).max(0.0) as i64)
     }
 }

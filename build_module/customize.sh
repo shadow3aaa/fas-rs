@@ -1,8 +1,10 @@
 SKIPUNZIP=0
 
 chmod a+x $MODPATH/fas-rs
-if [ ! $($MODPATH/fas-rs "test") == "Supported" ]; then
-	abort
+if $MODPATH/fas-rs "test"; then
+	ui_print "Supported"
+else
+    ui_print "Unsupported"
 fi
 
 if lsmod | grep -qE "perfmgr_mtk|ged_novsync"; then

@@ -51,9 +51,6 @@ impl VirtualFrameSensor for MtkFpsGo {
         // 控制启停的原子bool
         let pause = Arc::new(AtomicBool::new(false));
 
-        let pause_frametime = pause.clone();
-        let pause_fps = pause.clone();
-
         // 数据
         let (frametime_sender, frametime_receiver) = mpsc::sync_channel(1);
         let avg_fps = Arc::new(AtomicU32::new(0));
@@ -62,22 +59,27 @@ impl VirtualFrameSensor for MtkFpsGo {
         let target_frametime_count = Arc::new(AtomicU32::new(0));
         let fps_time = Arc::new(Atomic::new(Duration::default()));
 
-        let count_clone = target_frametime_count.clone();
-        let time_clone = fps_time.clone();
-        let avg_fps_clone = avg_fps.clone();
+        let thread_handle = {
+            let count = target_frametime_count.clone();
+            let time = fps_time.clone();
+            let avg_fps = avg_fps.clone();
 
-        let thread_handle = [
-            thread::Builder::new()
-                .name("FrameTimeListenerThread".into())
-                .spawn(move || {
-                    frametime_thread(&frametime_sender, &count_clone, &pause_frametime);
-                })
-                .unwrap(),
-            thread::Builder::new()
-                .name("FpsListenerThread".into())
-                .spawn(move || fps_thread(&avg_fps_clone, &time_clone, &pause_fps))
-                .unwrap(),
-        ];
+            let pause_frametime = pause.clone();
+            let pause_fps = pause.clone();
+
+            [
+                thread::Builder::new()
+                    .name("FrameTimeListenerThread".into())
+                    .spawn(move || {
+                        frametime_thread(&frametime_sender, &count, &pause_frametime);
+                    })
+                    .unwrap(),
+                thread::Builder::new()
+                    .name("FpsListenerThread".into())
+                    .spawn(move || fps_thread(&avg_fps, &time, &pause_fps))
+                    .unwrap(),
+            ]
+        };
 
         Ok(Self {
             frametime_receiver,

@@ -13,3 +13,4 @@ categories = ["game", "api"]
 [dependencies]
 atomic = "0.5.3"
 likely_stable = "0.1.2"
+log = "0.4.19"

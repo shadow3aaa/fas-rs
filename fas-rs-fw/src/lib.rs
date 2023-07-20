@@ -1,6 +1,5 @@
 #![deny(clippy::all, clippy::pedantic)]
 #![warn(clippy::nursery)]
-pub mod debug;
 pub mod macros;
 pub mod prelude;
 mod scheduler;

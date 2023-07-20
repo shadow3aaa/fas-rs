@@ -10,8 +10,9 @@ use fas_rs_fw::prelude::*;
 
 use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
+use log::debug;
 
-use crate::{config::CONFIG, debug};
+use crate::config::CONFIG;
 use policy::Policy;
 
 pub struct CpuCommon {
@@ -29,9 +30,7 @@ impl CpuCommon {
             / i64::try_from(self.policies.len()).unwrap();
 
         self.target_diff.set(updated_target);
-        debug! {
-            println!("taregt diff: {}", c);
-        }
+        debug!("Got taregt diff: {}", c);
     }
 
     fn get_diff_move() -> Cycles {
@@ -89,9 +88,7 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn limit(&self) {
-        debug! {
-            println!("limit");
-        }
+        debug!("Cpu controller performance limit");
         let target_diff = self.target_diff.get() - Self::get_diff_move();
         let target_diff = target_diff.max(Cycles::new(0));
 
@@ -99,9 +96,7 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn release(&self) {
-        debug! {
-            println!("release");
-        }
+        debug!("Cpu controller performance release");
         let target_diff = self.target_diff.get() + Self::get_diff_move();
 
         self.set_target_diff(target_diff);
