@@ -13,5 +13,4 @@ if lsmod | grep -qE "perfmgr_mtk|ged_novsync"; then
 fi
 
 killall fas-rs
-export FAS_LOG=info
-nohup $MODDIR/fas-rs > $MODDIR/fas_log.txt &
+nohup env FAS_LOG=info $MODDIR/fas-rs > $MODDIR/fas_log.txt 2>&1 &
