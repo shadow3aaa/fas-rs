@@ -41,6 +41,13 @@ impl CpuCommon {
 
         Cycles::from_mhz(mhz)
     }
+
+    pub(crate) fn always_on() -> bool {
+        CONFIG
+            .get_conf("always_on_gov")
+            .and_then_likely(|b| b.as_bool())
+            .unwrap()
+    }
 }
 
 impl VirtualPerformanceController for CpuCommon {
@@ -113,12 +120,7 @@ impl VirtualPerformanceController for CpuCommon {
     }
 
     fn plug_out(&self) -> Result<(), Box<dyn Error>> {
-        let always_on = CONFIG
-            .get_conf("always_on_gov")
-            .and_then_likely(|b| b.as_bool())
-            .unwrap();
-
-        if !always_on {
+        if !Self::always_on() {
             self.policies.iter().for_each(Policy::pause);
             return Ok(());
         }

@@ -13,6 +13,7 @@ use std::{
 use atomic::Atomic;
 use cpu_cycles_reader::Cycles;
 
+use super::CpuCommon;
 use cycles::DiffReader;
 use schedule::Schedule;
 
@@ -36,7 +37,7 @@ impl Policy {
         let mut reader = DiffReader::new(policy_path);
         let (mut schedule, target_diff, cur_cycles) = Schedule::new(policy_path, burst_max);
 
-        let pause = Arc::new(AtomicBool::new(true));
+        let pause = Arc::new(AtomicBool::new(CpuCommon::always_on()));
         let exit = Arc::new(AtomicBool::new(false));
 
         let handle = {
