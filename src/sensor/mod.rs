@@ -1,6 +1,7 @@
 //! 放置[`fas_rs_fw::VirtualFrameSensor`]的实现
 //! 还有一些用于这些实现的实用函数
 
+pub mod dumpsys;
 pub mod mtk_fpsgo;
 
 use std::{
@@ -40,9 +41,9 @@ impl IgnoreFrameTime {
                 let refresh_time = Duration::from_secs(1) / refresh_rate;
                 let total_ign_time = target_frametime.saturating_add(refresh_time);
 
-                if frametime > total_ign_time {
+                if frametime.as_millis() >= total_ign_time.as_millis() {
                     return frametime - refresh_time;
-                } else if frametime < target_frametime {
+                } else if frametime.as_millis() < target_frametime.as_millis() {
                     return frametime + refresh_time;
                 }
             }

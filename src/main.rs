@@ -14,7 +14,7 @@ use pretty_env_logger::init_custom_env;
 
 use config::CONFIG;
 use controller::cpu_common::CpuCommon;
-use sensor::mtk_fpsgo::MtkFpsGo;
+use sensor::{dumpsys::DumpSys, mtk_fpsgo::MtkFpsGo};
 
 fn main() -> ! {
     // 初始化Log
@@ -31,7 +31,7 @@ fn main() -> ! {
     let controller = support_controller!(CpuCommon).unwrap();
     info!("Got supported controller");
     #[allow(unused_variables)]
-    let sensor = support_sensor!(MtkFpsGo).unwrap();
+    let sensor = support_sensor!(MtkFpsGo, DumpSys).unwrap();
     info!("Got supported sensor");
 
     // 如果是测试支持模式这里就退出

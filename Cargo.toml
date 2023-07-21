@@ -31,9 +31,6 @@ toml = "0.7.5"
 serde = "1.0.167"
 serde_derive = "1.0.167"
 
-[profile.dev]
-panic = 'abort'
-
 [profile.release]
 codegen-units = 1
 lto = 'fat'

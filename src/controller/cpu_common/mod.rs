@@ -26,8 +26,8 @@ impl CpuCommon {
             .policies
             .iter()
             .map(|p| p.set_target_diff(c))
-            .sum::<Cycles>()
-            / i64::try_from(self.policies.len()).unwrap();
+            .min()
+            .unwrap();
 
         self.target_diff.set(updated_target);
         debug!("Got taregt diff: {}", c);
