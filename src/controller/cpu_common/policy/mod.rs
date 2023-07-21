@@ -37,7 +37,7 @@ impl Policy {
         let mut reader = DiffReader::new(policy_path);
         let (mut schedule, target_diff, cur_cycles) = Schedule::new(policy_path, burst_max);
 
-        let pause = Arc::new(AtomicBool::new(CpuCommon::always_on()));
+        let pause = Arc::new(AtomicBool::new(!CpuCommon::always_on()));
         let exit = Arc::new(AtomicBool::new(false));
 
         let handle = {
