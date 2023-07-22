@@ -19,6 +19,7 @@ impl DumpSys {
             let time = match command.load(Ordering::Acquire) {
                 ThreadCommand::Time(d) => d,
                 ThreadCommand::Pause => {
+                    let _ = sync.try_recv();
                     thread::park();
                     continue;
                 }

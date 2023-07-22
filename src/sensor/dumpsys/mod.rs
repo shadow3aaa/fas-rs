@@ -2,7 +2,7 @@ mod dump;
 mod fps;
 
 use std::{
-    cell::Cell,
+    cell::{Cell, RefCell},
     path::Path,
     sync::{
         atomic::AtomicU32,
@@ -10,7 +10,7 @@ use std::{
         Arc,
     },
     thread::{self, JoinHandle},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use fas_rs_fw::prelude::*;
@@ -29,6 +29,8 @@ pub enum ThreadCommand {
 pub struct DumpSys {
     command: Arc<Atomic<ThreadCommand>>,
     count: Cell<u32>,
+    view: RefCell<Option<String>>,
+    timer: RefCell<Instant>,
     avg_fps: Arc<AtomicU32>,
     handle: JoinHandle<()>,
     sync: SyncSender<()>,
@@ -70,6 +72,8 @@ impl VirtualFrameSensor for DumpSys {
         Ok(Self {
             command,
             count: Cell::new(0),
+            timer: RefCell::new(Instant::now()),
+            view: RefCell::new(None),
             avg_fps,
             handle,
             sync: sx,
@@ -88,6 +92,7 @@ impl VirtualFrameSensor for DumpSys {
 
     fn pause(&self) -> Result<(), Box<dyn Error>> {
         self.command.store(ThreadCommand::Pause, Ordering::Release);
+        self.view.replace(None);
         Ok(())
     }
 

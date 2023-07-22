@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::{process::Command, time::Instant};
 
 use fas_rs_fw::prelude::*;
 
@@ -28,14 +28,20 @@ impl DumpSys {
     }
 
     pub fn dump_frametimes(&self, target_fps: TargetFps) -> Vec<FrameTime> {
-        let Some(view) = Self::get_cur_view() else {
+        if self.timer.borrow().elapsed() >= Duration::from_secs(5) {
+            self.view.replace(Self::get_cur_view());
+            self.timer.replace(Instant::now());
+        }
+
+        let view = self.view.borrow();
+        let Some(view) = view.as_ref() else {
             return Vec::new();
         };
 
         let take_count = self.count.get();
 
         let ori_data = Command::new("dumpsys")
-            .args(["SurfaceFlinger", "--latency", &view])
+            .args(["SurfaceFlinger", "--latency", view])
             .output()
             .unwrap();
         let ori_data = String::from_utf8_lossy(&ori_data.stdout).into_owned();
