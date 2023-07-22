@@ -51,6 +51,7 @@ impl DumpSys {
         frametimes
             .windows(2)
             .map(|ft| Duration::from_nanos(ft[1] - ft[0]))
+            .rev()
             .take(take_count as usize)
             .map(|f| self.ignore.ign(f, target_fps))
             .map(|f| f + Duration::from_micros(100))
