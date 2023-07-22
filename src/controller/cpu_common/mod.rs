@@ -1,10 +1,6 @@
 mod policy;
 
-use std::{
-    cell::Cell,
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{cell::Cell, fs, path::Path};
 
 use fas_rs_fw::prelude::*;
 
@@ -69,9 +65,14 @@ impl VirtualPerformanceController for CpuCommon {
         let target_diff = Cell::new(target_diff);
 
         let cpufreq = fs::read_dir("/sys/devices/system/cpu/cpufreq")?;
-        let mut policies: Vec<PathBuf> = cpufreq.into_iter().map(|e| e.unwrap().path()).collect();
+        let policies: Vec<_> = cpufreq
+            .into_iter()
+            .map(|e| e.unwrap().path())
+            .filter(|p| p.is_dir())
+            .map(|p| Policy::new(&p, 1))
+            .collect();
 
-        policies.sort_by(|a, b| {
+        /* policies.sort_by(|a, b| {
             let num_a: u8 = a
                 .file_name()
                 .and_then_likely(|f| f.to_str()?.split("policy").nth(1)?.parse().ok())
@@ -82,12 +83,13 @@ impl VirtualPerformanceController for CpuCommon {
                 .unwrap();
             num_b.cmp(&num_a)
         });
-
         policies.truncate(2); // 保留后两个集群
+
         let policies = policies
             .into_iter()
             .map(|path| Policy::new(&path, 1))
-            .collect();
+            .collect(); */
+
         Ok(Self {
             target_diff,
             policies,

@@ -29,7 +29,7 @@ impl DumpSys {
                 let dump = Command::new("service")
                     .args(["call", "SurfaceFlinger", "1013"])
                     .output()
-                    .unwrap();
+                    .ok()?;
 
                 let dump = String::from_utf8_lossy(&dump.stdout).into_owned();
                 let dump = dump
@@ -39,12 +39,16 @@ impl DumpSys {
                     .unwrap();
 
                 let dump = i32::from_str_radix(dump, 16).unwrap();
-                (Instant::now(), dump)
+                Some((Instant::now(), dump))
             };
 
-            let (time_a, stamp_a) = dump_and_stamp();
+            let Some((time_a, stamp_a)) = dump_and_stamp() else {
+                continue;
+            };
             thread::sleep(time);
-            let (time_b, stamp_b) = dump_and_stamp();
+            let Some((time_b, stamp_b)) = dump_and_stamp() else {
+                continue;
+            };
 
             let time = time_b - time_a;
             let count = stamp_b - stamp_a;
