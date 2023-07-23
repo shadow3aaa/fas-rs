@@ -163,11 +163,7 @@ dfps_ceiling:60 */
 fn parse_fps(fpsgo_status: &str) -> Option<Fps> {
     fpsgo_status
         .lines()
-        .collect::<Vec<_>>()
-        .into_iter()
         .skip(1)
-        .rev()
-        .skip(3)
         .filter_map(|line| line.split_whitespace().nth(3)?.parse().ok())
         .max()
 }
