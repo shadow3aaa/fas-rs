@@ -61,9 +61,9 @@ checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 
 [[package]]
 name = "cpu_cycles_reader"
-version = "0.1.40"
+version = "0.1.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "029c4adc2bd851d45f35a2a30e914b78a315a5b9df6c3c5a022ff162c2015501"
+checksum = "f9df7f2e6eb74cf5fad4f325294d68cca9914def9e0e98bd60fa49a4f7f0946f"
 dependencies = [
  "cc",
  "derive_more",

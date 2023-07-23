@@ -14,7 +14,7 @@ members = ['fas-rs-fw']
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cpu_cycles_reader = "0.1.4"
+cpu_cycles_reader = "0.1.41"
 lazy_static = "1.4.0"
 likely_stable = "0.1.2"
 parking_lot = "0.12.1"
