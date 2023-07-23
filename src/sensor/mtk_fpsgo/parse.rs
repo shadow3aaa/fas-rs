@@ -137,7 +137,11 @@ pub(super) fn fps_thread(
 /* 解析第9行:
 1(状态)	0		37	19533	0x4c2e00000021	60(屏幕刷新率)	24029340996131(最新帧的vsync时间戳) */
 fn parse_frametime(fbt_info: &str) -> Option<u64> {
-    let mut parse_line = fbt_info.lines().nth(8)?.split_whitespace();
+    let take_line = fbt_info
+        .lines()
+        .skip_while(|f| !f.contains("vsync"))
+        .nth(1)?;
+    let mut parse_line = take_line.split_whitespace();
 
     let enabled = parse_line.next()?.trim().parse::<u64>().ok()? == 1;
 
@@ -146,7 +150,7 @@ fn parse_frametime(fbt_info: &str) -> Option<u64> {
         return None; // 需要重新读取
     }
 
-    parse_line.nth(5)?.trim().parse().ok()
+    parse_line.last()?.trim().parse().ok()
 }
 
 /* 解析需跳过第0行和最后3行，提取第3个元素
