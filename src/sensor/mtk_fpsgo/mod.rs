@@ -144,7 +144,7 @@ impl VirtualFrameSensor for MtkFpsGo {
 
 pub fn enable_fpsgo() -> Result<(), std::io::Error> {
     let path = Path::new(FPSGO).join("common/fpsgo_enable");
-    set_permissions(&path, PermissionsExt::from_mode(0o644))?;
+    let _ = set_permissions(&path, PermissionsExt::from_mode(0o644));
     fs::write(&path, "1")
 }
 

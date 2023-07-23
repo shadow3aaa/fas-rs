@@ -25,22 +25,21 @@ use cpu_cycles_reader::Cycles;
 use log::debug;
 
 const BURST_DEFAULT: usize = 0;
+const BURST_MAX: usize = 2;
 
 pub struct Schedule {
     path: PathBuf,
-    target_diff: Arc<Atomic<Cycles>>,
+    pub target_diff: Arc<Atomic<Cycles>>,
     pub cur_cycles: Arc<Atomic<Cycles>>,
     burst: usize,
-    burst_max: usize,
     pool: WritePool,
     table: Vec<Cycles>,
     pos: usize,
 }
 
 impl Schedule {
-    pub fn new(path: &Path, burst_max: usize) -> (Self, Arc<Atomic<Cycles>>, Arc<Atomic<Cycles>>) {
+    pub fn new(path: &Path) -> Self {
         let target_diff = Arc::new(Atomic::new(Cycles::from_mhz(200)));
-        let target_diff_clone = target_diff.clone();
 
         let count = fs::read_to_string(path.join("affected_cpus"))
             .unwrap()
@@ -57,26 +56,20 @@ impl Schedule {
         table.sort_unstable();
 
         let cur_cycles = Arc::new(Atomic::new(table.last().copied().unwrap()));
-        let cur_cycles_clone = cur_cycles.clone();
 
         debug!("Got cpu freq table: {:#?}", &table);
 
         let pos = table.len() - 1;
 
-        (
-            Self {
-                path: path.to_owned(),
-                target_diff,
-                cur_cycles,
-                burst: BURST_DEFAULT,
-                burst_max,
-                pool,
-                table,
-                pos,
-            },
-            target_diff_clone,
-            cur_cycles_clone,
-        )
+        Self {
+            path: path.to_owned(),
+            target_diff,
+            cur_cycles,
+            burst: BURST_DEFAULT,
+            pool,
+            table,
+            pos,
+        }
     }
 
     pub fn run(&mut self, diff: Cycles) {
@@ -98,23 +91,22 @@ impl Schedule {
         match target_diff.cmp(&diff) {
             CmpOrdering::Less => {
                 self.pos = self.pos.saturating_sub(1);
-                self.write();
                 self.burst = BURST_DEFAULT;
             }
             CmpOrdering::Greater => {
-                self.pos = cmp::min(self.pos + 1 + self.burst, self.table.len() - 1);
-                self.write();
-                self.burst = cmp::min(self.burst_max, self.burst + 1);
+                self.pos = cmp::min(self.pos + self.burst, self.table.len() - 1);
+                self.burst = cmp::min(BURST_MAX, self.burst + 1);
             }
             CmpOrdering::Equal => self.burst = BURST_DEFAULT,
         }
+
+        self.write();
     }
 
     pub fn reset(&mut self) {
-        let _ = self.pool.write(
-            &self.path.join("scaling_max_freq"),
-            &self.table.last().unwrap().as_khz().to_string(),
-        );
+        self.burst = 0;
+        self.pos = self.table.len() - 1;
+        self.write();
     }
 
     fn write(&mut self) {

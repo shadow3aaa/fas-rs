@@ -32,7 +32,7 @@ use schedule::Schedule;
 
 pub struct Policy {
     target_diff: Arc<Atomic<Cycles>>,
-    cur_cycles: Arc<Atomic<Cycles>>,
+    pub cur_cycles: Arc<Atomic<Cycles>>,
     pause: Arc<AtomicBool>,
     exit: Arc<AtomicBool>,
     handle: JoinHandle<()>,
@@ -40,15 +40,17 @@ pub struct Policy {
 
 impl Drop for Policy {
     fn drop(&mut self) {
-        self.resume();
         self.exit.store(true, Ordering::Release);
+        self.resume();
     }
 }
 
 impl Policy {
-    pub fn new(policy_path: &Path, burst_max: usize) -> Self {
+    pub fn new(policy_path: &Path) -> Self {
         let mut reader = DiffReader::new(policy_path);
-        let (mut schedule, target_diff, cur_cycles) = Schedule::new(policy_path, burst_max);
+        let mut schedule = Schedule::new(policy_path);
+        let target_diff = schedule.target_diff.clone();
+        let cur_cycles = schedule.cur_cycles.clone();
 
         let pause = Arc::new(AtomicBool::new(!CpuCommon::always_on()));
         let exit = Arc::new(AtomicBool::new(false));
@@ -92,10 +94,14 @@ impl Policy {
         self.pause.store(true, Ordering::Release);
     }
 
-    // 返回最大可设置cycles
-    pub fn set_target_diff(&self, c: Cycles) -> Cycles {
-        let c = c.min(self.cur_cycles.load(Ordering::Acquire));
+    pub fn move_target_diff(&self, c: Cycles) {
+        let target_diff = self.target_diff.load(Ordering::Acquire) + c;
+        let target_diff =
+            target_diff.clamp(Cycles::new(0), self.cur_cycles.load(Ordering::Acquire));
+        self.target_diff.store(target_diff, Ordering::Release);
+    }
+
+    pub fn set_target_diff(&self, c: Cycles) {
         self.target_diff.store(c, Ordering::Release);
-        c
     }
 }

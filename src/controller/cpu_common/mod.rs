@@ -25,21 +25,16 @@ use crate::config::CONFIG;
 use policy::Policy;
 
 pub struct CpuCommon {
-    target_diff: Cell<Cycles>,
     policies: Vec<Policy>,
 }
 
 impl CpuCommon {
-    fn set_target_diff(&self, c: Cycles) {
-        let updated_target: Cycles = self
-            .policies
-            .iter()
-            .map(|p| p.set_target_diff(c))
-            .min()
-            .unwrap();
+    fn move_target_diff(&self, c: Cycles) {
+        self.policies.iter().for_each(|p| p.move_target_diff(c));
+    }
 
-        self.target_diff.set(updated_target);
-        debug!("Got taregt diff: {}", c);
+    fn set_target_diff(&self, c: Cycles) {
+        self.policies.iter().for_each(|p| p.set_target_diff(c));
     }
 
     fn get_diff_move() -> Cycles {
@@ -82,7 +77,7 @@ impl VirtualPerformanceController for CpuCommon {
             .into_iter()
             .map(|e| e.unwrap().path())
             .filter(|p| p.is_dir())
-            .map(|p| Policy::new(&p, 1))
+            .map(|p| Policy::new(&p))
             .collect();
 
         /* policies.sort_by(|a, b| {
@@ -103,25 +98,21 @@ impl VirtualPerformanceController for CpuCommon {
             .map(|path| Policy::new(&path, 1))
             .collect(); */
 
-        Ok(Self {
-            target_diff,
-            policies,
-        })
+        Ok(Self { policies })
     }
 
     fn limit(&self) {
         debug!("Cpu controller performance limit");
-        let target_diff = self.target_diff.get() - Self::get_diff_move();
-        let target_diff = target_diff.max(Cycles::new(0));
+        let diff_move = Self::get_diff_move();
 
-        self.set_target_diff(target_diff);
+        self.move_target_diff(-diff_move);
     }
 
     fn release(&self) {
         debug!("Cpu controller performance release");
-        let target_diff = self.target_diff.get() + Self::get_diff_move();
+        let diff_move = Self::get_diff_move();
 
-        self.set_target_diff(target_diff);
+        self.move_target_diff(diff_move);
     }
 
     fn plug_in(&self) -> Result<(), Box<dyn Error>> {
@@ -129,7 +120,9 @@ impl VirtualPerformanceController for CpuCommon {
             .get_conf("default_target_diff_fas")
             .and_then_likely(|d| Some(Cycles::from_mhz(d.as_integer()?)))
             .unwrap();
+
         self.set_target_diff(target_diff);
+
         self.policies.iter().for_each(Policy::resume);
         Ok(())
     }
@@ -144,7 +137,9 @@ impl VirtualPerformanceController for CpuCommon {
             .get_conf("default_target_diff")
             .and_then_likely(|d| Some(Cycles::from_mhz(d.as_integer()?)))
             .unwrap();
+
         self.set_target_diff(target_diff);
+
         Ok(())
     }
 }
