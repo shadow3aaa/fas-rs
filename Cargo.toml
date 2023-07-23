@@ -4,7 +4,7 @@ version = "0.1.2"
 edition = "2021"
 description = "Frame-aware scheduling binary"
 authors = ["shadow3"]
-license = "WTFPL"
+license = "Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/shadow3aaa/fas-rs"
 
