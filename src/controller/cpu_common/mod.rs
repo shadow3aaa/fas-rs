@@ -13,7 +13,7 @@
 * limitations under the License. */
 mod policy;
 
-use std::{cell::Cell, fs, path::Path};
+use std::{fs, path::Path};
 
 use fas_rs_fw::prelude::*;
 
@@ -66,12 +66,6 @@ impl VirtualPerformanceController for CpuCommon {
     where
         Self: Sized,
     {
-        let target_diff = CONFIG
-            .get_conf("default_target_diff")
-            .and_then_likely(|d| Some(Cycles::from_mhz(d.as_integer()?)))
-            .unwrap();
-        let target_diff = Cell::new(target_diff);
-
         let cpufreq = fs::read_dir("/sys/devices/system/cpu/cpufreq")?;
         let policies: Vec<_> = cpufreq
             .into_iter()
