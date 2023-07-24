@@ -2,6 +2,8 @@
 EMA_TYPE = "None"
 EMA_WIN = 4
 always_on_gov = false
+touch_boost = 1
+slide_boost = 2
 # 单位: Mhz，diff > 0Mhz
 default_target_diff = 450
 default_target_diff_fas = 600

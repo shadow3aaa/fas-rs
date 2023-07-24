@@ -20,6 +20,16 @@
     - 可用值: true false
     - true: 总是开启Cycles调速器，即使不处于Fas开启状态
     - false: 只在Fas时使用Cycles调速器 *
+### touch_boost
+    - 类型: 整数
+    - 可用值: 任意正整数
+    - 作用: 触摸屏幕时提高频率，优先级小于slide_boost
+    - 1 *
+### slide_boost
+    - 类型: 整数
+    - 可用值: 任意正整数
+    - 作用: 触摸屏幕时提高频率，优先级大于touch_boost
+    - 2 *
 ### default_target_diff
     - 类型: 整数
     - 可用值: 任意正整数

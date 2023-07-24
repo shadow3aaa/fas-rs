@@ -22,7 +22,12 @@ use fas_rs_fw::write_pool::WritePool;
 
 use atomic::{Atomic, Ordering};
 use cpu_cycles_reader::Cycles;
+use likely_stable::LikelyOption;
+
+use touch_event::TouchListener;
 use log::debug;
+
+use crate::config::CONFIG;
 
 const BURST_DEFAULT: usize = 0;
 const BURST_MAX: usize = 2;
@@ -31,6 +36,7 @@ pub struct Schedule {
     path: PathBuf,
     pub target_diff: Arc<Atomic<Cycles>>,
     pub cur_cycles: Arc<Atomic<Cycles>>,
+    touch_listener: TouchListener, 
     burst: usize,
     pool: WritePool,
     table: Vec<Cycles>,
@@ -65,6 +71,7 @@ impl Schedule {
             path: path.to_owned(),
             target_diff,
             cur_cycles,
+            touch_listener: TouchListener::new().unwrap(),
             burst: BURST_DEFAULT,
             pool,
             table,
@@ -110,9 +117,30 @@ impl Schedule {
     }
 
     fn write(&mut self) {
+        let touch_boost = CONFIG.get_conf("touch_boost")
+            .and_then_likely(|b| b.as_integer())
+            .unwrap();
+        let touch_boost = usize::try_from(touch_boost).unwrap();
+
+        let slide_boost = CONFIG.get_conf("slide_boost")
+            .and_then_likely(|b| b.as_integer())
+            .unwrap();
+        let slide_boost = usize::try_from(slide_boost).unwrap();
+
+        let status = self.touch_listener.status();
+        let pos = if status.0 {
+            self.pos + slide_boost
+        } else if status.1 {
+            self.pos + touch_boost
+        } else {
+            self.pos
+        };
+        let pos = pos.min(self.table.len() - 1);
+
         let _ = self.pool.write(
             &self.path.join("scaling_max_freq"),
-            &self.table[self.pos].as_khz().to_string(),
+            &self.table[pos].as_khz().to_string(),
         );
     }
+
 }

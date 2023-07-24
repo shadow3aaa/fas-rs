@@ -73,6 +73,7 @@ impl DiffReader {
             .unwrap();
 
         let reader = CyclesReader::new(affected_cpus.as_slice()).unwrap();
+        reader.enable();
 
         Self {
             affected_cpus,
@@ -82,7 +83,6 @@ impl DiffReader {
     }
 
     pub fn read_diff(&mut self, cur_freq: Cycles) -> Cycles {
-        self.reader.enable();
         let time = Instant::now();
         let cycles_former = self.reader.read().unwrap();
 
@@ -90,7 +90,6 @@ impl DiffReader {
 
         let cycles_later = self.reader.read().unwrap();
         let time = time.elapsed();
-        self.reader.disable();
 
         let cycles = self
             .affected_cpus

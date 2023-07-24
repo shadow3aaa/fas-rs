@@ -25,6 +25,7 @@ yata = { version = "0.6.1", default_features = false }
 atomic = "0.5.3"
 pretty_env_logger = "0.5.0"
 log = "0.4.19"
+touch_event = "0.1.0"
 
 [build-dependencies]
 toml = "0.7.6"

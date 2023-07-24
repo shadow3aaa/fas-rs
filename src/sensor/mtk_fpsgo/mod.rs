@@ -62,7 +62,7 @@ impl VirtualFrameSensor for MtkFpsGo {
         Self: Sized,
     {
         // 控制启停的原子bool
-        let pause = Arc::new(AtomicBool::new(false));
+        let pause = Arc::new(AtomicBool::new(true));
 
         // 数据
         let (frametime_sender, frametime_receiver) = mpsc::sync_channel(1);
