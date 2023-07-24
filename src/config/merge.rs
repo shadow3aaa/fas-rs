@@ -26,15 +26,20 @@ pub fn merge(local_conf: &str, std_conf: &str) -> Result<String, Box<dyn Error>>
     let std_conf: Config = toml::from_str(std_conf)?;
     let local_conf: Config = toml::from_str(local_conf)?;
 
-    let mut old_config = local_conf.config;
+    let old_config = local_conf.config;
     let std_config = std_conf.config;
 
-    old_config.extend(std_config.clone().into_iter());
-
-    let new_config = old_config
+    let mut new_config: Table = old_config
+        .clone()
         .into_iter()
         .filter(|(k, _)| std_config.contains_key(k))
         .collect();
+
+    new_config.extend(
+        std_config
+            .into_iter()
+            .filter(|(k, _)| !old_config.contains_key(k)),
+    );
 
     let new_conf = Config {
         config: new_config,
