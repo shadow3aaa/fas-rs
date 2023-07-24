@@ -24,8 +24,8 @@ use atomic::{Atomic, Ordering};
 use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
 
-use touch_event::TouchListener;
 use log::debug;
+use touch_event::TouchListener;
 
 use crate::config::CONFIG;
 
@@ -36,7 +36,7 @@ pub struct Schedule {
     path: PathBuf,
     pub target_diff: Arc<Atomic<Cycles>>,
     pub cur_cycles: Arc<Atomic<Cycles>>,
-    touch_listener: TouchListener, 
+    touch_listener: TouchListener,
     burst: usize,
     pool: WritePool,
     table: Vec<Cycles>,
@@ -117,12 +117,14 @@ impl Schedule {
     }
 
     fn write(&mut self) {
-        let touch_boost = CONFIG.get_conf("touch_boost")
+        let touch_boost = CONFIG
+            .get_conf("touch_boost")
             .and_then_likely(|b| b.as_integer())
             .unwrap();
         let touch_boost = usize::try_from(touch_boost).unwrap();
 
-        let slide_boost = CONFIG.get_conf("slide_boost")
+        let slide_boost = CONFIG
+            .get_conf("slide_boost")
             .and_then_likely(|b| b.as_integer())
             .unwrap();
         let slide_boost = usize::try_from(slide_boost).unwrap();
@@ -142,5 +144,4 @@ impl Schedule {
             &self.table[pos].as_khz().to_string(),
         );
     }
-
 }
