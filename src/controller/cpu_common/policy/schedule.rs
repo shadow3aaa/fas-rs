@@ -118,6 +118,13 @@ impl Schedule {
         self.write();
     }
 
+    pub fn init(&mut self) {
+        self.reset();
+        self.pool
+            .write(&self.path.join("scaling_governors"), "performance")
+            .unwrap();
+    }
+
     fn write(&mut self) {
         let touch_boost = CONFIG
             .get_conf("touch_boost")

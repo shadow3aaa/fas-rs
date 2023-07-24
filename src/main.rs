@@ -43,11 +43,11 @@ fn main() -> ! {
         info!("Merging config");
 
         let (Some(conf_local_path), Some(conf_std_path)) = (args.next(), args.next()) else {
-        error!("Missing configuration path parameter");
-        error!("Example: fas-rs merge local_config_path std_config_path");
+            error!("Missing configuration path parameter");
+            error!("Example: fas-rs merge local_config_path std_config_path");
 
-        process::exit(1);
-    };
+            process::exit(1);
+        };
 
         let conf_local = fs::read_to_string(&conf_local_path).unwrap();
         let conf_std = fs::read_to_string(conf_std_path).unwrap();

@@ -60,18 +60,22 @@ impl Policy {
             let exit = exit.clone();
             thread::Builder::new()
                 .name("CpuPolicyThread".into())
-                .spawn(move || loop {
-                    if pause.load(Ordering::Acquire) {
-                        schedule.reset();
-                        thread::park();
-                    } else if exit.load(Ordering::Acquire) {
-                        schedule.reset();
-                        return;
-                    }
+                .spawn(move || {
+                    schedule.init();
+                    loop {
+                        if pause.load(Ordering::Acquire) {
+                            schedule.reset();
+                            thread::park();
+                            schedule.init();
+                        } else if exit.load(Ordering::Acquire) {
+                            schedule.reset();
+                            return;
+                        }
 
-                    let cur_freq = schedule.cur_cycles.load(Ordering::Acquire);
-                    let diff = reader.read_diff(cur_freq);
-                    schedule.run(diff);
+                        let cur_freq = schedule.cur_cycles.load(Ordering::Acquire);
+                        let diff = reader.read_diff(cur_freq);
+                        schedule.run(diff);
+                    }
                 })
                 .unwrap()
         };
