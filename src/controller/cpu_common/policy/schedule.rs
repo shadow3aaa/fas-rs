@@ -16,6 +16,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     sync::Arc,
+    time::{Duration, Instant},
 };
 
 use fas_rs_fw::write_pool::WritePool;
@@ -36,6 +37,7 @@ pub struct Schedule {
     pub target_diff: Arc<Atomic<Cycles>>,
     pub cur_cycles: Arc<Atomic<Cycles>>,
     touch_listener: TouchListener,
+    touch_timer: Instant,
     burst: usize,
     pool: WritePool,
     table: Vec<Cycles>,
@@ -71,6 +73,7 @@ impl Schedule {
             target_diff,
             cur_cycles,
             touch_listener: TouchListener::new().unwrap(),
+            touch_timer: Instant::now(),
             burst: BURST_DEFAULT,
             pool,
             table,
@@ -128,8 +131,15 @@ impl Schedule {
             .unwrap();
         let slide_boost = usize::try_from(slide_boost).unwrap();
 
+        let slide_timer = CONFIG
+            .get_conf("slide_timer")
+            .and_then_likely(|t| t.as_integer())
+            .unwrap();
+        let slide_timer = Duration::from_millis(slide_timer.try_into().unwrap());
+
         let status = self.touch_listener.status();
-        let pos = if status.0 {
+        let pos = if status.0 || self.touch_timer.elapsed() <= slide_timer {
+            self.touch_timer = Instant::now();
             self.pos + slide_boost
         } else if status.1 {
             self.pos + touch_boost
