@@ -118,7 +118,7 @@ impl WritePool {
 
     fn map_gc(&mut self) {
         self.cache_map
-            .retain(|_, (_, time)| (*time).elapsed() <= Duration::from_secs(5));
+            .retain(|_, (_, time)| (*time).elapsed() <= Duration::from_secs(3));
     }
 }
 
@@ -131,6 +131,7 @@ fn write_thread(receiver: &Receiver<Command>, heavy: &Arc<AtomicUsize>) {
                     Command::Write(path, value) => {
                         let _ = set_permissions(&path, PermissionsExt::from_mode(0o644)).unwrap();
                         let _ = fs::write(&path, value);
+                        let _ = set_permissions(&path, PermissionsExt::from_mode(0o444)).unwrap();
                     }
                     Command::Exit => return,
                 }
