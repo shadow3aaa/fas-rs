@@ -121,7 +121,7 @@ impl Schedule {
     pub fn init(&mut self) {
         self.reset();
         self.pool
-            .write(&self.path.join("scaling_governors"), "performance")
+            .write(&self.path.join("scaling_governor"), "performance")
             .unwrap();
     }
 
