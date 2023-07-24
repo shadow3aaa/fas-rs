@@ -39,7 +39,7 @@ macro_rules! support_controller {
         {
             let result: Result<Box<dyn VirtualPerformanceController>, Box<dyn Error>>;
             $(if <$controller>::support() {
-                result = match  <$controller>::new() {
+                result = match <$controller>::new() {
                     Ok(o) => Ok(Box::new(o)),
                     Err(e) => Err(e)
                 };

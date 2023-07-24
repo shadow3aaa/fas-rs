@@ -23,7 +23,6 @@ use fas_rs_fw::write_pool::WritePool;
 use atomic::{Atomic, Ordering};
 use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
-
 use log::debug;
 use touch_event::TouchListener;
 

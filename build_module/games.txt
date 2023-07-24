@@ -2,29 +2,19 @@
 EMA_TYPE = "None"
 EMA_WIN = 4
 always_on_gov = false
-touch_boost = 1
-slide_boost = 2
-# 单位: Mhz，diff > 0Mhz
 default_target_diff = 450
 default_target_diff_fas = 600
 diff_move = 75
+slide_boost = 2
+touch_boost = 1
 
 [game_list]
-# 和平精英
-"com.tencent.tmgp.pubgmhd" = [60, 10]
-# Freeblade(战锤40k: 自由之刃)
-"com.pixeltoys.freeblade" = [60, 10]
-# 喵斯快跑
-"com.prpr.musedash.TapTap" = [60, 10]
-# Minecraft(我的世界)
-"com.mojang.minecraftpe" = [120, 10]
-# 我的世界(网易答辩版)
-"com.netease.x19" = [120, 10]
-# 崩坏3
-"com.miHoYo.enterprise.NGHSoD" = [60, 10]
-# 星穹铁道
-"com.miHoYo.hkrpg" = [60, 10]
-# 原神
 "com.miHoYo.Yuanshen" = [60, 10]
-# 王者荣耀
+"com.miHoYo.enterprise.NGHSoD" = [60, 10]
+"com.miHoYo.hkrpg" = [60, 10]
+"com.mojang.minecraftpe" = [120, 10]
+"com.netease.x19" = [120, 10]
+"com.pixeltoys.freeblade" = [60, 10]
+"com.prpr.musedash.TapTap" = [60, 10]
+"com.tencent.tmgp.pubgmhd" = [60, 10]
 "com.tencent.tmgp.sgame" = [120, 10]

@@ -17,12 +17,12 @@ mod config;
 mod controller;
 mod sensor;
 
-use std::{env, process, thread};
+use std::{env, fs, process, thread};
 
 use fas_rs_fw::{prelude::*, support_controller, support_sensor, Scheduler};
 
 use likely_stable::if_unlikely;
-use log::{debug, info};
+use log::{debug, error, info, warn};
 use pretty_env_logger::init_custom_env;
 
 use config::CONFIG;
@@ -38,18 +38,35 @@ fn main() -> ! {
     set_self_sched();
     info!("Self sched setted");
 
-    // 搜索列表中第一个支持的控制器和传感器，并且构造
-    // 没有支持的就退出程序
-    #[allow(unused_variables)]
+    let mut args = env::args();
+    if args.nth(1).as_deref() == Some("merge") {
+        info!("Merging config");
+
+        let (Some(conf_local_path), Some(conf_std_path)) = (args.next(), args.next()) else {
+        error!("Missing configuration path parameter");
+        error!("Example: fas-rs merge local_config_path std_config_path");
+
+        process::exit(1);
+    };
+
+        let conf_local = fs::read_to_string(&conf_local_path).unwrap();
+        let conf_std = fs::read_to_string(conf_std_path).unwrap();
+
+        let new_conf = config::merge(&conf_local, &conf_std).unwrap();
+
+        fs::write(&conf_local_path, new_conf).unwrap();
+        process::exit(0);
+    }
+
+    // 搜索列表中第一个支持的控制器和传感器
     let controller = support_controller!(CpuCommon).unwrap();
     info!("Got supported controller");
-    #[allow(unused_variables)]
+
     let sensor = support_sensor!(MtkFpsGo, DumpSys).unwrap();
     info!("Got supported sensor");
 
-    // 如果是测试支持模式这里就退出
-    let mut args = env::args();
-    if Some("test") == args.nth(1).as_deref() {
+    // Test mode
+    if env::args().nth(1).as_deref() == Some("test") {
         info!("On test mod, supported");
         process::exit(0);
     }

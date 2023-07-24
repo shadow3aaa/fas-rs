@@ -1,7 +1,8 @@
+mod merge;
 mod read;
 mod single;
 
-// 全局配置，可以在任何地方线程安全的访问toml
+pub use merge::merge;
 pub use single::CONFIG;
 
 use std::{
