@@ -64,11 +64,11 @@ impl Policy {
                     schedule.init();
                     loop {
                         if pause.load(Ordering::Acquire) {
-                            schedule.reset();
+                            schedule.deinit();
                             thread::park();
                             schedule.init();
                         } else if exit.load(Ordering::Acquire) {
-                            schedule.reset();
+                            schedule.deinit();
                             return;
                         }
 
