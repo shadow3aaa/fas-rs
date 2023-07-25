@@ -13,6 +13,7 @@
 * limitations under the License. */
 use std::{
     cmp::{self, Ordering as CmpOrdering},
+    collections::VecDeque,
     fs,
     path::{Path, PathBuf},
     sync::Arc,
@@ -31,6 +32,7 @@ use crate::config::CONFIG;
 
 const BURST_DEFAULT: usize = 0;
 const BURST_MAX: usize = 2;
+const SMOOTH_COUNT: usize = 2;
 
 pub struct Schedule {
     path: PathBuf,
@@ -40,6 +42,7 @@ pub struct Schedule {
     touch_timer: Instant,
     burst: usize,
     pool: WritePool,
+    smooth_pos: VecDeque<usize>, // 均值平滑频率索引
     table: Vec<Cycles>,
     pos: usize,
 }
@@ -67,6 +70,8 @@ impl Schedule {
         debug!("Got cpu freq table: {:#?}", &table);
 
         let pos = table.len() - 1;
+        let mut smooth_pos = VecDeque::with_capacity(SMOOTH_COUNT);
+        smooth_pos.push_back(pos);
 
         Self {
             path: path.to_owned(),
@@ -76,6 +81,7 @@ impl Schedule {
             touch_timer: Instant::now(),
             burst: BURST_DEFAULT,
             pool,
+            smooth_pos,
             table,
             pos,
         }
@@ -85,9 +91,6 @@ impl Schedule {
         if diff < Cycles::new(0) {
             return;
         }
-
-        let max = self.table[self.pos];
-        self.cur_cycles.store(max, Ordering::Release);
 
         let target_diff = self.target_diff.load(Ordering::Acquire);
         let target_diff = target_diff.min(self.cur_cycles.load(Ordering::Acquire));
@@ -109,6 +112,7 @@ impl Schedule {
             CmpOrdering::Equal => self.burst = BURST_DEFAULT,
         }
 
+        self.smooth_pos(); // 更新pos窗口数据
         self.write();
     }
 
@@ -121,17 +125,32 @@ impl Schedule {
 
     pub fn deinit(&mut self) {
         let default = fs::read_to_string("/sys/module/cpufreq/parameters/default_governor")
-            .unwrap_or_else(|_| "schedutil".into());
+            .unwrap_or_else(|_| "schedutil".into()); // 获取默认调速器
         let default = default.trim();
+
         self.pool
             .write(&self.path.join("scaling_governor"), default)
             .unwrap();
+
         self.reset();
+    }
+
+    fn smooth_pos(&mut self) {
+        if self.smooth_pos.len() >= SMOOTH_COUNT {
+            self.smooth_pos.pop_front();
+        }
+        self.smooth_pos.push_back(self.pos);
+    }
+
+    fn smoothed_pos(&self) -> usize {
+        self.smooth_pos.iter().sum::<usize>() / self.smooth_pos.len() // 窗口平均值
     }
 
     fn reset(&mut self) {
         self.burst = 0;
         self.pos = self.table.len() - 1;
+        self.smooth_pos.clear();
+        self.smooth_pos(); // 此时调用smoothed_pos等价于pos
         self.write();
     }
 
@@ -154,20 +173,26 @@ impl Schedule {
             .unwrap();
         let slide_timer = Duration::from_millis(slide_timer.try_into().unwrap());
 
-        let status = self.touch_listener.status();
+        let status = self.touch_listener.status(); // 触摸屏状态
+        let ori_pos = self.smoothed_pos();
+
         let pos = if status.0 || self.touch_timer.elapsed() <= slide_timer {
             self.touch_timer = Instant::now();
-            self.pos + slide_boost
+            ori_pos + slide_boost // on slide
         } else if status.1 {
-            self.pos + touch_boost
+            ori_pos + touch_boost // on touch
         } else {
-            self.pos
+            ori_pos // none
         };
-        let pos = pos.min(self.table.len() - 1);
+
+        let pos = pos.min(self.table.len() - 1); // 边界检查
 
         let _ = self.pool.write(
             &self.path.join("scaling_max_freq"),
             &self.table[pos].as_khz().to_string(),
         );
+
+        let freq = self.table[pos];
+        self.cur_cycles.store(freq, Ordering::Release); // 更新此集群diff余量上限
     }
 }
