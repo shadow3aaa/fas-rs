@@ -11,7 +11,7 @@
   - 插入本地配置缺少，标准配置存在的配置键值对
   - 保留标准配置和本地配置都存在的配置键的值
 
-    **Note: 以上行为是未开启keep_std模式的行为(keep_std默认开启)**
+    **Note: 以上行为是未开启[keep_std](#keep_std)模式的行为(默认开启)，开启后合并行为详见[keep_std](#keep_std)**
 
 - ### 已知缺陷
 
@@ -36,12 +36,13 @@ ___
 
 - 类型: 布尔
 - 可用值: true false
-- true: 永远在配置合并时保持标准配置的profile，保留本地配置的应用列表
+- true: 永远在配置合并时保持标准配置的profile，保留本地配置的应用列表 *
+- false: 详见[配置合并](#配置合并)
 
 ### **EMA_TYPE**
 
 - 类型: 字符串
-- 可用值: EMA DEMA None
+- 可用值: EMA DEMA SMA None
 - 作用: 指定为Cycles调速器获取的Cycles进行指数平滑处理的算法
 - EMA: 指数移动平滑
 - DEMA: 双重指数移动平滑，比EMA更加变化敏感
@@ -74,28 +75,28 @@ ___
 
 - 类型: 整数
 - 可用值: 任意正整数
-- 作用: 触摸屏幕时提高频率，优先级小于slide_boost
+- 作用: 触摸屏幕时提高频率，优先级小于[slide_boost](#slide_boost)
 - 1 *
 
 ### **slide_boost**
 
 - 类型: 整数
 - 可用值: 任意正整数
-- 作用: 触摸屏幕时提高频率，优先级大于touch_boost
+- 作用: 触摸屏幕时提高频率，优先级大于[touch_boost](#touch_boost)
 - 2 *
 
 ### **slide_timer**
 
 - 类型: 整数
 - 可用值: 任意正整数
-- 作用: 停止滑动时保持的升频时间长度，单位ms
+- 作用: 停止滑动时保持[slide_boost](#slide_boost)状态的时间长度，单位ms
 - 200 *
 
 ### **default_target_diff**
 
 - 类型: 整数
 - 可用值: 任意正整数
-- 作用: 作为always_on_gov开启时，非Fas状态下的Cycles调速器的余量，单位是Mhz
+- 作用: 作为[always_on_gov](#always_on_gov)开启时，非Fas状态下的Cycles调速器的余量，单位是Mhz
 - 450 *
 
 ### **default_target_diff_fas**
@@ -128,7 +129,8 @@ ___
 
 ```toml
 [config]
-EMA_TYPE = "None"
+keep_std = true
+EMA_TYPE = "SMA"
 EMA_WIN = 4
 always_on_gov = false
 default_target_diff = 450
