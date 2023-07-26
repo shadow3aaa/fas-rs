@@ -6,5 +6,5 @@ use super::Config;
 
 lazy_static! {
     pub static ref CONFIG: Arc<Config> =
-        Arc::new(Config::new(Path::new("/sdcard/Android/fas-rs/games.txt")));
+        Arc::new(Config::new(Path::new("/sdcard/Android/fas-rs/games.toml")));
 }

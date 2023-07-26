@@ -67,14 +67,18 @@ impl VirtualPerformanceController for CpuCommon {
         Self: Sized,
     {
         let cpufreq = fs::read_dir("/sys/devices/system/cpu/cpufreq")?;
-        let policies: Vec<_> = cpufreq
+        let mut policies: Vec<_> = cpufreq
             .into_iter()
             .map(|e| e.unwrap().path())
             .filter(|p| p.is_dir())
-            .map(|p| Policy::new(&p))
             .collect();
 
-        /* policies.sort_by(|a, b| {
+        let ignore = CONFIG
+            .get_conf("ignore_little")
+            .and_then_likely(|b| b.as_bool())
+            .unwrap();
+
+        policies.sort_by(|a, b| {
             let num_a: u8 = a
                 .file_name()
                 .and_then_likely(|f| f.to_str()?.split("policy").nth(1)?.parse().ok())
@@ -85,12 +89,15 @@ impl VirtualPerformanceController for CpuCommon {
                 .unwrap();
             num_b.cmp(&num_a)
         });
-        policies.truncate(2); // 保留后两个集群
+
+        if ignore {
+            policies.truncate(2); // 保留后两个集群
+        }
 
         let policies = policies
             .into_iter()
-            .map(|path| Policy::new(&path, 1))
-            .collect(); */
+            .map(|path| Policy::new(&path))
+            .collect();
 
         Ok(Self { policies })
     }

@@ -4,6 +4,7 @@ EMA_WIN = 4
 always_on_gov = false
 default_target_diff = 450
 default_target_diff_fas = 600
+ignore_little = true
 diff_move = 75
 slide_boost = 2
 touch_boost = 1
