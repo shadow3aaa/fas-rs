@@ -13,6 +13,7 @@
 * limitations under the License. */
 use std::error::Error;
 
+use likely_stable::LikelyOption;
 use serde_derive::{Deserialize, Serialize};
 use toml::Table;
 
@@ -25,6 +26,19 @@ struct Config {
 pub fn merge(local_conf: &str, std_conf: &str) -> Result<String, Box<dyn Error>> {
     let std_conf: Config = toml::from_str(std_conf)?;
     let local_conf: Config = toml::from_str(local_conf)?;
+
+    if local_conf
+        .config
+        .get("keep_std")
+        .and_then_likely(|b| b.as_bool())
+        .unwrap_or(false)
+    {
+        let new_conf = Config {
+            config: std_conf.config,
+            game_list: local_conf.game_list,
+        };
+        return Ok(toml::to_string(&new_conf)?);
+    }
 
     let old_config = local_conf.config;
     let std_config = std_conf.config;

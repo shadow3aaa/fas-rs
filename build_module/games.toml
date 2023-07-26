@@ -1,4 +1,5 @@
 [config]
+keep_std = true
 EMA_TYPE = "SMA"
 EMA_WIN = 4
 always_on_gov = false
