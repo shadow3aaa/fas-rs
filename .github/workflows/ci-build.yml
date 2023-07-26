@@ -19,7 +19,7 @@ jobs:
     - name: Setup rust
       uses: actions-rust-lang/setup-rust-toolchain@v1.5.0
       with:
-        toolchain: stable
+        toolchain: nightly
         target: aarch64-linux-android
     - name: Setup ndk
       run: |
