@@ -20,6 +20,7 @@ use std::{
 
 use cpu_cycles_reader::{Cycles, CyclesReader};
 use likely_stable::LikelyOption;
+use log::debug;
 use yata::{
     methods::{DEMA, EMA, SMA},
     prelude::*,
@@ -105,6 +106,9 @@ impl DiffReader {
 
         #[allow(clippy::cast_possible_truncation)]
         #[allow(clippy::cast_precision_loss)]
-        Cycles::from_hz(self.ema.next(diff.as_hz() as f64).round() as i64)
+        let diff = Cycles::from_hz(self.ema.next(diff.as_hz() as f64).round() as i64);
+
+        debug!("Got diff {diff}");
+        diff
     }
 }

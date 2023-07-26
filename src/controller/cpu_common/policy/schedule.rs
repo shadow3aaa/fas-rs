@@ -141,7 +141,7 @@ impl Schedule {
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_sign_loss)]
     fn smoothed_pos(&self) -> usize {
-        self.smooth.peek().round().min(0.0) as usize
+        self.smooth.peek().round().max(0.0) as usize
     }
 
     fn reset(&mut self) {
