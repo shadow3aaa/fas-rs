@@ -13,7 +13,6 @@
 * limitations under the License. */
 use std::{
     cmp::{self, Ordering as CmpOrdering},
-    collections::VecDeque,
     fs,
     path::{Path, PathBuf},
     sync::Arc,
@@ -27,12 +26,13 @@ use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
 use log::debug;
 use touch_event::TouchListener;
+use yata::{methods::SMA, prelude::*};
 
 use crate::config::CONFIG;
 
 const BURST_DEFAULT: usize = 0;
 const BURST_MAX: usize = 2;
-const SMOOTH_COUNT: usize = 2;
+const SMOOTH_COUNT: u8 = 2;
 
 pub struct Schedule {
     path: PathBuf,
@@ -42,7 +42,7 @@ pub struct Schedule {
     touch_timer: Instant,
     burst: usize,
     pool: WritePool,
-    smooth_pos: VecDeque<usize>, // 均值平滑频率索引
+    smooth: SMA, // 均值平滑频率索引
     table: Vec<Cycles>,
     pos: usize,
 }
@@ -70,8 +70,6 @@ impl Schedule {
         debug!("Got cpu freq table: {:#?}", &table);
 
         let pos = table.len() - 1;
-        let mut smooth_pos = VecDeque::with_capacity(SMOOTH_COUNT);
-        smooth_pos.push_back(pos);
 
         Self {
             path: path.to_owned(),
@@ -81,7 +79,7 @@ impl Schedule {
             touch_timer: Instant::now(),
             burst: BURST_DEFAULT,
             pool,
-            smooth_pos,
+            smooth: SMA::new(SMOOTH_COUNT, &0.0).unwrap(),
             table,
             pos,
         }
@@ -136,21 +134,20 @@ impl Schedule {
     }
 
     fn smooth_pos(&mut self) {
-        if self.smooth_pos.len() >= SMOOTH_COUNT {
-            self.smooth_pos.pop_front();
-        }
-        self.smooth_pos.push_back(self.pos);
+        #[allow(clippy::cast_precision_loss)]
+        self.smooth.next(&(self.pos as f64));
     }
 
+    #[allow(clippy::cast_possible_truncation)]
+    #[allow(clippy::cast_sign_loss)]
     fn smoothed_pos(&self) -> usize {
-        self.smooth_pos.iter().sum::<usize>() / self.smooth_pos.len() // 窗口平均值
+        self.smooth.peek().round().min(0.0) as usize
     }
 
     fn reset(&mut self) {
         self.burst = 0;
         self.pos = self.table.len() - 1;
-        self.smooth_pos.clear();
-        self.smooth_pos(); // 此时调用smoothed_pos等价于pos
+        self.smooth = SMA::new(SMOOTH_COUNT, &0.0).unwrap();
         self.write();
     }
 

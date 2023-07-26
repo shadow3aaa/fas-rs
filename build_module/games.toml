@@ -1,5 +1,5 @@
 [config]
-EMA_TYPE = "None"
+EMA_TYPE = "SMA"
 EMA_WIN = 4
 always_on_gov = false
 default_target_diff = 450

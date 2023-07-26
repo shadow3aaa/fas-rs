@@ -21,7 +21,7 @@ use std::{
 use cpu_cycles_reader::{Cycles, CyclesReader};
 use likely_stable::LikelyOption;
 use yata::{
-    methods::{DEMA, EMA},
+    methods::{DEMA, EMA, SMA},
     prelude::*,
 };
 
@@ -30,6 +30,7 @@ use crate::config::CONFIG;
 enum SpecEma {
     Ema(EMA),
     Dema(DEMA),
+    Sma(SMA),
     None,
 }
 
@@ -44,6 +45,7 @@ impl SpecEma {
         match self {
             Self::Ema(e) => e.next(&value),
             Self::Dema(e) => e.next(&value),
+            Self::Sma(e) => e.next(&value),
             Self::None => value,
         }
     }
@@ -67,6 +69,7 @@ impl DiffReader {
             .and_then_likely(|d| match d.as_str()? {
                 "EMA" => Some(SpecEma::Ema(EMA::new(window, &0.0).ok()?)),
                 "DEMA" => Some(SpecEma::Dema(DEMA::new(window, &0.0).ok()?)),
+                "SMA" => Some(SpecEma::Sma(SMA::new(window, &0.0).ok()?)),
                 "None" => Some(SpecEma::None),
                 _ => None,
             })
@@ -102,6 +105,6 @@ impl DiffReader {
 
         #[allow(clippy::cast_possible_truncation)]
         #[allow(clippy::cast_precision_loss)]
-        Cycles::from_hz(self.ema.next(diff.as_hz() as f64).max(0.0) as i64)
+        Cycles::from_hz(self.ema.next(diff.as_hz() as f64).round() as i64)
     }
 }
