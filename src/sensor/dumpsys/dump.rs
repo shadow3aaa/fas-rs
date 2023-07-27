@@ -13,7 +13,8 @@
 *  limitations under the License. */
 use std::{process::Command, time::Instant};
 
-use fas_rs_fw::prelude::*;
+use fas_rs_fw::{config::CONFIG, prelude::*};
+use likely_stable::LikelyOption;
 
 use super::DumpSys;
 
@@ -67,13 +68,18 @@ impl DumpSys {
             .filter(|v| v != &0 && v <= &10_000_000_000_000_000)
             .collect();
 
+        let prefix = CONFIG
+            .get_conf("dumpsys_prefix")
+            .and_then_likely(|p| p.as_integer())
+            .unwrap();
+
         frametimes
             .windows(2)
             .map(|ft| Duration::from_nanos(ft[1] - ft[0]))
             .rev()
             .take(take_count as usize)
             .map(|f| self.ignore.ign(f, target_fps))
-            .map(|f| f + Duration::from_micros(100))
+            .map(|f| f + Duration::from_micros(prefix.try_into().unwrap())) // prefix
             .collect()
     }
 }

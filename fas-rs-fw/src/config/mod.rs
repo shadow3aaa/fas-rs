@@ -11,6 +11,16 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+//! # Quick Start
+//!
+//! ```
+//! use fas_rs_fw::config::CONFIG;
+//!
+//! let (game, fps, windows) = CONFIG.cur_game_fps();
+//! let foo = CONFIG.get_conf("foo")
+//!     .and_then(|f| f.as_str());
+//!     .unwrap();
+//! ```
 mod merge;
 mod read;
 mod single;
@@ -37,7 +47,7 @@ use toml::Value;
 
 use read::wait_and_read;
 
-pub type ConfData = RwLock<Value>;
+type ConfData = RwLock<Value>;
 pub struct Config {
     toml: Arc<ConfData>,
     exit: Arc<AtomicBool>,
@@ -51,7 +61,7 @@ impl Drop for Config {
 
 impl Config {
     #[must_use]
-    pub fn new(path: &Path) -> Self {
+    pub(crate) fn new(path: &Path) -> Self {
         let ori = fs::read_to_string(path).unwrap();
         let toml = toml::from_str(&ori).unwrap();
         let toml = Arc::new(RwLock::new(toml));
@@ -72,7 +82,8 @@ impl Config {
         Self { toml, exit }
     }
 
-    pub fn cur_game_fps(&self) -> Option<(String, [u32; 2])> {
+    /// 从配置中读取现在的游戏和目标fps、帧窗口大小
+    pub fn cur_game_fps(&self) -> Option<(String, u32, u32)> {
         let toml = self.toml.read();
         #[allow(unused)]
         let list = toml
@@ -93,9 +104,12 @@ impl Config {
             .map(|v| u32::try_from(v.as_integer().unwrap()).unwrap())
             .collect();
 
-        Some((game.clone(), fps_windows.as_slice().try_into().unwrap()))
+        let fps_windows: [u32; 2] = fps_windows.as_slice().try_into().unwrap();
+
+        Some((game.clone(), fps_windows[0], fps_windows[1]))
     }
 
+    /// 从配置中读取一个配置参数的值
     #[allow(unused)]
     #[must_use]
     pub fn get_conf(&self, label: &'static str) -> Option<Value> {

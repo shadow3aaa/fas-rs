@@ -92,6 +92,20 @@ ___
 - 作用: 停止滑动时保持[slide_boost](#slide_boost)状态的时间长度，单位ms
 - 200 *
 
+### **jank_diff**
+
+- 类型: 整数
+- 可用值: 任意正整数
+- 作用: 提高判定为卡顿的frametime长度，越大越宽松，单位ns
+- 150 *
+
+### **dumpsys_prefix**
+
+- 类型: 整数
+- 可用值: 任意正整数
+- 作用: dumpsys方法获取的frametime基本都略短，这里直接加上一定的值来修正，单位us
+- 100 *
+
 ### **default_target_diff**
 
 - 类型: 整数
@@ -136,19 +150,21 @@ always_on_gov = false
 default_target_diff = 450
 default_target_diff_fas = 600
 ignore_little = true
+jank_diff = 150
+dumpsys_prefix = 100
 diff_move = 75
 slide_boost = 2
 touch_boost = 1
 slide_timer = 200
 
 [game_list]
-"com.miHoYo.Yuanshen" = [60, 10]
-"com.miHoYo.enterprise.NGHSoD" = [60, 10]
-"com.miHoYo.hkrpg" = [60, 10]
-"com.mojang.minecraftpe" = [120, 10]
-"com.netease.x19" = [120, 10]
-"com.pixeltoys.freeblade" = [60, 10]
-"com.prpr.musedash.TapTap" = [60, 10]
-"com.tencent.tmgp.pubgmhd" = [60, 10]
-"com.tencent.tmgp.sgame" = [120, 10]
+com.miHoYo.Yuanshen = [60, 10]
+com.miHoYo.enterprise.NGHSoD = [60, 10]
+com.miHoYo.hkrpg = [60, 10]
+com.mojang.minecraftpe = [120, 10]
+com.netease.x19 = [120, 10]
+com.pixeltoys.freeblade = [60, 10]
+com.prpr.musedash.TapTap = [60, 10]
+com.tencent.tmgp.pubgmhd = [60, 10]
+com.tencent.tmgp.sgame = [120, 10]
 ```

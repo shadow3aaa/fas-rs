@@ -11,7 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-/// 返回第一个当前设备支持的[`self::VirtualFrameSensor`]
+/// 返回第一个当前设备支持的[`super::VirtualFrameSensor`]
 #[macro_export]
 macro_rules! support_sensor {
     ($($sensor: ty),*) => {
@@ -31,7 +31,7 @@ macro_rules! support_sensor {
     };
 }
 
-/// 返回第一个当前设备支持的[`self::VirtualPerformanceController`]
+/// 返回第一个当前设备支持的[`super::VirtualPerformanceController`]
 #[macro_export]
 macro_rules! support_controller {
     ($($controller: ty),*) => {

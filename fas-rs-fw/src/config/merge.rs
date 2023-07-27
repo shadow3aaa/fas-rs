@@ -17,12 +17,18 @@ use likely_stable::LikelyOption;
 use serde_derive::{Deserialize, Serialize};
 use toml::Table;
 
+/// fas配置
 #[derive(Deserialize, Serialize)]
 struct Config {
     pub config: Table,
     pub game_list: Table,
 }
 
+/// 合并标准配置和本地配置
+///
+/// # Errors
+///
+/// 无法读取配置
 pub fn merge(local_conf: &str, std_conf: &str) -> Result<String, Box<dyn Error>> {
     let std_conf: Config = toml::from_str(std_conf)?;
     let local_conf: Config = toml::from_str(local_conf)?;

@@ -81,10 +81,8 @@ fn main() -> ! {
         if temp != current {
             temp = current;
             if_unlikely! {
-                let Some((ref game, fps_frame_windows)) = &temp => {
-                    let fps = fps_frame_windows[0];
-                    let frame_windows = fps_frame_windows[1];
-                    scheduler.load(fps, frame_windows);
+                let Some((ref game, fps, frame_windows)) = &temp => {
+                    scheduler.load(*fps, *frame_windows);
                     debug!("Loaded {} {}", game, fps);
                 } else {
                     scheduler.unload();

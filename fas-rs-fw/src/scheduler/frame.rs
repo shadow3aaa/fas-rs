@@ -13,11 +13,13 @@
 *  limitations under the License. */
 use std::{error::Error, time::Duration};
 
-use likely_stable::likely;
+use likely_stable::{likely, LikelyOption};
 use log::debug;
 
 use super::Scheduler;
-use crate::{Fps, FrameTime, TargetFps, VirtualFrameSensor, VirtualPerformanceController};
+use crate::{
+    config::CONFIG, Fps, FrameTime, TargetFps, VirtualFrameSensor, VirtualPerformanceController,
+};
 
 impl Scheduler {
     pub(super) fn process_unload(
@@ -61,10 +63,15 @@ fn jank(frametime: &[FrameTime], avg_fps: Fps, target_fps: TargetFps) -> bool {
     debug!("Got avg fps: {}", avg_fps);
     debug!("Got max frametime: {:?}", frametime.iter().max());
 
+    let jank_diff = CONFIG
+        .get_conf("jank_diff")
+        .and_then_likely(|d| d.as_integer())
+        .unwrap();
+
     let target_frametime = Duration::from_secs(1) / target_fps;
     frametime.is_empty()
         || avg_fps <= target_fps - 3
         || frametime
             .iter()
-            .any(|ft| *ft > target_frametime + Duration::from_nanos(100))
+            .any(|ft| *ft > target_frametime + Duration::from_nanos(jank_diff.try_into().unwrap()))
 }
