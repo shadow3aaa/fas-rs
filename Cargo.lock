@@ -155,8 +155,6 @@ dependencies = [
  "atomic",
  "cpu_cycles_reader",
  "fas-rs-fw",
- "inotify",
- "lazy_static",
  "likely_stable",
  "log",
  "parking_lot",
@@ -173,8 +171,14 @@ name = "fas-rs-fw"
 version = "0.1.2"
 dependencies = [
  "atomic",
+ "inotify",
+ "lazy_static",
  "likely_stable",
  "log",
+ "parking_lot",
+ "serde",
+ "serde_derive",
+ "toml",
 ]
 
 [[package]]

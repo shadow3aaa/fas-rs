@@ -28,7 +28,7 @@ use log::debug;
 use touch_event::TouchListener;
 use yata::{methods::SMA, prelude::*};
 
-use crate::config::CONFIG;
+use fas_rs_fw::config::CONFIG;
 
 const BURST_DEFAULT: usize = 0;
 const BURST_MAX: usize = 2;
@@ -100,7 +100,10 @@ impl Schedule {
 
         debug!(
             "Schedutiling {} with target diff: {target_diff}",
-            self.path.file_name().and_then(std::ffi::OsStr::to_str).unwrap()
+            self.path
+                .file_name()
+                .and_then(std::ffi::OsStr::to_str)
+                .unwrap()
         );
 
         match target_diff.cmp(&diff) {

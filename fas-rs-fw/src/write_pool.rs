@@ -129,9 +129,9 @@ fn write_thread(receiver: &Receiver<Command>, heavy: &Arc<AtomicUsize>) {
             let Ok(command) = receiver.recv() => {
                 match command {
                     Command::Write(path, value) => {
-                        let _ = set_permissions(&path, PermissionsExt::from_mode(0o644)).unwrap();
+                        set_permissions(&path, PermissionsExt::from_mode(0o644)).unwrap();
                         let _ = fs::write(&path, value);
-                        let _ = set_permissions(&path, PermissionsExt::from_mode(0o444)).unwrap();
+                        set_permissions(&path, PermissionsExt::from_mode(0o444)).unwrap();
                     }
                     Command::Exit => return,
                 }

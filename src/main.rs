@@ -13,7 +13,6 @@
 *  limitations under the License. */
 #![deny(clippy::all, clippy::pedantic)]
 #![warn(clippy::nursery)]
-mod config;
 mod controller;
 mod sensor;
 
@@ -25,8 +24,8 @@ use likely_stable::if_unlikely;
 use log::{debug, error, info, warn};
 use pretty_env_logger::init_custom_env;
 
-use config::CONFIG;
 use controller::cpu_common::CpuCommon;
+use fas_rs_fw::config::{self, CONFIG};
 use sensor::{dumpsys::DumpSys, mtk_fpsgo::MtkFpsGo};
 
 fn main() -> ! {

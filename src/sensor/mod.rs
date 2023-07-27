@@ -24,6 +24,8 @@ use std::{
 
 use fas_rs_fw::prelude::*;
 
+use log::debug;
+
 // 如果传感器实现实际读取的是帧vsync间隔而不是真正的帧渲染时间时需要用这个修正
 // 为了方便实现trait已经做了内部可变处理
 pub struct IgnoreFrameTime {
@@ -41,12 +43,18 @@ impl IgnoreFrameTime {
         }
     }
 
-    fn ign(&self, frametime: FrameTime, target_fps: TargetFps) -> FrameTime {
+    fn ign(&self, mut frametime: FrameTime, target_fps: TargetFps) -> FrameTime {
         let now = Instant::now();
         if now - self.timer.get() >= Duration::from_secs(5) {
             self.timer.set(now);
             self.refresh_rate.set(Self::get_refresh_rate());
+
+            if let Some(rate) = self.refresh_rate.get() {
+                debug!("Got screen refresh rate: {rate}");
+            }
         }
+
+        debug!("Frametime before fix: {frametime:?}");
 
         if let Some(refresh_rate) = self.refresh_rate.get() {
             if refresh_rate != target_fps {
@@ -55,12 +63,14 @@ impl IgnoreFrameTime {
                 let total_ign_time = target_frametime.saturating_add(refresh_time);
 
                 if frametime.as_millis() >= total_ign_time.as_millis() {
-                    return frametime - refresh_time;
+                    frametime -= refresh_time;
                 } else if frametime.as_millis() < target_frametime.as_millis() {
-                    return frametime + refresh_time;
+                    frametime += refresh_time;
                 }
             }
         }
+
+        debug!("Frametime after fix: {frametime:?}");
 
         frametime
     }

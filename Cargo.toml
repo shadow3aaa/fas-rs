@@ -15,19 +15,14 @@ members = ['fas-rs-fw']
 
 [dependencies]
 cpu_cycles_reader = "0.1.41"
-lazy_static = "1.4.0"
 likely_stable = "0.1.2"
 parking_lot = "0.12.1"
-toml = "0.7.6"
 fas-rs-fw = { path = "./fas-rs-fw" }
-inotify = { version = "0.10.1", default_features = false }
 yata = { version = "0.6.1", default_features = false }
 atomic = "0.5.3"
 pretty_env_logger = "0.5.0"
 log = "0.4.19"
 touch_event = "0.1.0"
-serde = "1.0.175"
-serde_derive = "1.0.175"
 
 [build-dependencies]
 toml = "0.7.6"

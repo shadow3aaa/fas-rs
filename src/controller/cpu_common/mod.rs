@@ -21,7 +21,7 @@ use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
 use log::debug;
 
-use crate::config::CONFIG;
+use fas_rs_fw::config::CONFIG;
 use policy::Policy;
 
 pub struct CpuCommon {

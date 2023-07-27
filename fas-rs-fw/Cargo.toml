@@ -12,5 +12,11 @@ categories = ["game", "api"]
 
 [dependencies]
 atomic = "0.5.3"
+inotify = { version = "0.10.1", default_features = false }
+lazy_static = "1.4.0"
 likely_stable = "0.1.2"
 log = "0.4.19"
+parking_lot = "0.12.1"
+serde = "1.0.175"
+serde_derive = "1.0.175"
+toml = "0.7.6"

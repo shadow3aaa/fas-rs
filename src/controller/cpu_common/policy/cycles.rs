@@ -26,7 +26,7 @@ use yata::{
     prelude::*,
 };
 
-use crate::config::CONFIG;
+use fas_rs_fw::config::CONFIG;
 
 enum SpecEma {
     Ema(EMA),
