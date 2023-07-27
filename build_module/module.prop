@@ -1,6 +1,6 @@
 id=fas_rs
 name=fas-rs
-version=v0.1.2
-versionCode=12
+version=v0.1.3
+versionCode=13
 author=shadow3
 description=Frame-aware scheduling binary https://github.com/shadow3aaa/fas-rs
