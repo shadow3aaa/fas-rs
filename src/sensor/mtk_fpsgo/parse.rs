@@ -1,16 +1,16 @@
 /* Copyright 2023 shadow3aaa@gitbub.com
 *
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
 *
-*     http://www.apache.org/licenses/LICENSE-2.0
+*      http://www.apache.org/licenses/LICENSE-2.0
 *
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License. */
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License. */
 use std::{
     collections::VecDeque,
     fs,
@@ -54,7 +54,6 @@ pub(super) fn frametime_thread(
 
         if buffer.len() >= count {
             let data = buffer.iter().rev().take(count).copied().collect();
-
             sender.send(data).unwrap();
         }
 
@@ -148,7 +147,7 @@ pub(super) fn fps_thread(
 }
 
 /* 解析第9行:
-1(状态)	0		37	19533	0x4c2e00000021	60(屏幕刷新率)	24029340996131(最新帧的vsync时间戳) */
+* 1(状态)	0		37	19533	0x4c2e00000021	60(屏幕刷新率)	24029340996131(最新帧的vsync时间戳) */
 fn parse_frametime(fbt_info: &str) -> Option<u64> {
     let take_line = fbt_info
         .lines()
@@ -166,13 +165,12 @@ fn parse_frametime(fbt_info: &str) -> Option<u64> {
     parse_line.last()?.trim().parse().ok()
 }
 
-/* 解析需跳过第0行和最后3行，提取第3个元素
-tid	bufID		name		currentFPS	targetFPS	FPS_margin	FPS_margin_GPU	FPS_margin_thrs	sbe_state	HWUI
-23480	0x5b9800000038	bin.mt.plus	60		60		0		0		0		0		1
-8606	0x136d0000000d	curitycenter:ui	60		60		0		0		0		0		1
-fstb_self_ctrl_fps_enable:1
-fstb_is_cam_active:0
-dfps_ceiling:60 */
+/* tid	bufID		name		currentFPS	targetFPS	FPS_margin	FPS_margin_GPU	FPS_margin_thrs	sbe_state	HWUI
+*  23480	0x5b9800000038	bin.mt.plus	60		60		0		0		0		0		1
+*  8606	0x136d0000000d	curitycenter:ui	60		60		0		0		0		0		1
+*  fstb_self_ctrl_fps_enable:1
+*  fstb_is_cam_active:0
+*  dfps_ceiling:60 */
 fn parse_fps(fpsgo_status: &str) -> Option<Fps> {
     fpsgo_status
         .lines()

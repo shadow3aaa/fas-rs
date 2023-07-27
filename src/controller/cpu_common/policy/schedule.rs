@@ -1,16 +1,16 @@
 /* Copyright 2023 shadow3aaa@gitbub.com
 *
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
 *
-*     http://www.apache.org/licenses/LICENSE-2.0
+*      http://www.apache.org/licenses/LICENSE-2.0
 *
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License. */
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License. */
 use std::{
     cmp::{self, Ordering as CmpOrdering},
     fs,
@@ -96,6 +96,11 @@ impl Schedule {
         assert!(
             target_diff.as_hz() >= 0,
             "Target diff should never be less than zero, but got {target_diff}"
+        );
+
+        debug!(
+            "Schedutiling {} with target diff: {target_diff}",
+            self.path.file_name().and_then(std::ffi::OsStr::to_str).unwrap()
         );
 
         match target_diff.cmp(&diff) {
