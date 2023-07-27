@@ -5,14 +5,6 @@ old_conf=/sdcard/Android/fas-rs/games.txt
 # permission
 chmod a+x $MODPATH/fas-rs
 
-# test support
-if $MODPATH/fas-rs "test"; then
-	ui_print "Supported"
-else
-	ui_print "Unsupported"
-	abort
-fi
-
 # detect conflicting kernel modules
 if lsmod | grep -qE "perfmgr_mtk|ged_novsync"; then
 	ui_print "Conflicting kernel module"
@@ -31,6 +23,15 @@ else
 	# creat new config
 	mkdir -p /sdcard/Android/fas-rs
 	cp $MODPATH/games.toml $conf
+fi
+
+# test support
+if $MODPATH/fas-rs "test"; then
+	ui_print "Supported"
+else
+	ui_print "Unsupported"
+	source $MODPATH/uninstall.sh
+	abort
 fi
 
 # remove std config
