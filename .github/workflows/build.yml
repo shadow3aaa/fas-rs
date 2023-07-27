@@ -21,6 +21,7 @@ jobs:
       with:
         toolchain: nightly
         target: aarch64-linux-android
+
     - name: Setup ndk
       run: |
         ndk_url=$(wget -qO- https://github.com/android/ndk/releases/latest | grep -e 'https://dl.google.com/android/repository/android-ndk-.*-linux.zip' | sed -n 's/.*<a href="\([^"]*\)".*/\1/p')
@@ -34,15 +35,23 @@ jobs:
         cp $bin_dir/llvm-ar $bin_dir/aarch64-linux-android-ar
         echo -e "[target.aarch64-linux-android]\nlinker = '$clang'\nar = 'llvm-ar'" > ~/.cargo/config.toml
         cat ~/.cargo/config.toml
+
     - name: Build modules
       run: |
         ndk_dir=$(realpath ./ndk_temp)
         export PATH=$PATH:$ndk_dir
         export PATH=$PATH:$ndk_dir/toolchains/llvm/prebuilt/linux-x86_64/bin
         source ./make.sh
+
     - name: Upload ci
       uses: actions/upload-artifact@v3.1.2
       with:
         name: fas-rs(ci_build)
         path: ./build_module
+        
+    - name: Upload release
+      uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: fas-rs.zip
         
