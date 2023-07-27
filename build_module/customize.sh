@@ -7,7 +7,8 @@ chmod a+x $MODPATH/fas-rs
 if $MODPATH/fas-rs "test"; then
 	ui_print "Supported"
 else
-	ui_print "Unsupported"
+    ui_print "Unsupported"
+    abort
 fi
 
 if lsmod | grep -qE "perfmgr_mtk|ged_novsync"; then

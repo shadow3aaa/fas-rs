@@ -99,5 +99,5 @@ fn main() -> ! {
 
 fn set_self_sched() {
     let self_pid = std::process::id();
-    let _ = std::fs::write("/dev/cpuset/background/tasks", self_pid.to_string());
+    let _ = fs::write("/dev/cpuset/background/tasks", self_pid.to_string());
 }
