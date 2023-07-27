@@ -30,7 +30,7 @@ ___
 
 ## **参数**
 
-配置文件位于/sdcard/Android/fas-rs/games.toml
+配置文件位于`/sdcard/Android/fas-rs/games.toml`
 
 ### **keep_std**
 
