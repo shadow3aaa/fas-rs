@@ -26,8 +26,8 @@ touch_event = "0.1.0"
 
 [build-dependencies]
 toml = "0.7.6"
-serde = "1.0.175"
-serde_derive = "1.0.175"
+serde = "1.0.177"
+serde_derive = "1.0.177"
 
 [profile.release]
 codegen-units = 1
