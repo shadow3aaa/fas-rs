@@ -79,7 +79,8 @@ impl Schedule {
             touch_timer: Instant::now(),
             burst: BURST_DEFAULT,
             pool,
-            smooth: SMA::new(SMOOTH_COUNT, &0.0).unwrap(),
+            #[allow(clippy::cast_precision_loss)]
+            smooth: SMA::new(SMOOTH_COUNT, &(pos as f64)).unwrap(),
             table,
             pos,
         }
