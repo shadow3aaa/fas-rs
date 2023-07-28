@@ -48,10 +48,3 @@ jobs:
       with:
         name: fas-rs(ci_build)
         path: ./build_module
-        
-    - name: Upload release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-          files: fas-rs.zip
-        
