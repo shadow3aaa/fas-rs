@@ -96,15 +96,6 @@ impl VirtualPerformanceController for CpuCommon {
             num_b.cmp(&num_a)
         });
 
-        #[test]
-        fn test_parse() {
-            let p = "policy0";
-            let num : u8 = p.replace("policy", "")
-                .trim()
-                .parse();
-            assert_eq!(num, 0);
-        }
-
         if ignore {
             policies.truncate(2); // 保留后两个集群
         }
