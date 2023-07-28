@@ -42,11 +42,12 @@ jobs:
         export PATH=$PATH:$ndk_dir
         export PATH=$PATH:$ndk_dir/toolchains/llvm/prebuilt/linux-x86_64/bin
         source ./make.sh
-        
-    - uses: ncipollo/release-action@v1
-        with:
-          artifacts: "fas-rs.zip"
-          name: "FAS-RS"
-          allowUpdates: true
-          makeLatest: true
-          artifactErrorsFailBuild: true
+    
+    - name: Release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "fas-rs.zip"
+        name: "FAS-RS"
+        allowUpdates: true
+        makeLatest: true
+        artifactErrorsFailBuild: true
