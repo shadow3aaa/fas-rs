@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "release" ]
       tags:
-        - '*'
+      - '*'
 
 env:
   CARGO_TERM_COLOR: always
