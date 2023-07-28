@@ -87,11 +87,11 @@ impl VirtualPerformanceController for CpuCommon {
         policies.sort_by(|a, b| {
             let num_a: u8 = a
                 .file_name()
-                .and_then_likely(|f| f.to_str()?.replace("policy", "").trim().parse().ok())
+                .and_then_likely(|f| parse_policy(f.to_str()?))
                 .unwrap_or_default();
             let num_b: u8 = b
                 .file_name()
-                .and_then_likely(|f| f.to_str()?.replace("policy", "").trim().parse().ok())
+                .and_then_likely(|f| parse_policy(f.to_str()?))
                 .unwrap_or_default();
             num_b.cmp(&num_a)
         });
@@ -149,4 +149,14 @@ impl VirtualPerformanceController for CpuCommon {
 
         Ok(())
     }
+}
+
+fn parse_policy(p: &str) -> Option<u8> {
+    p.replace("policy", "").trim().parse().ok()
+}
+
+#[test]
+fn test_policy_parse() {
+    let p = "policy0";
+    assert_eq!(parse_policy(p), Some(0));
 }
