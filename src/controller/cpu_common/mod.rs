@@ -13,7 +13,7 @@
 *  limitations under the License. */
 mod policy;
 
-use std::{fs, path::Path};
+use std::{ffi::OsStr, fs, path::Path};
 
 use fas_rs_fw::prelude::*;
 
@@ -70,7 +70,13 @@ impl VirtualPerformanceController for CpuCommon {
         let mut policies: Vec<_> = cpufreq
             .into_iter()
             .map(|e| e.unwrap().path())
-            .filter(|p| p.is_dir())
+            .filter(|p| {
+                p.is_dir()
+                    && p.file_name()
+                        .and_then(OsStr::to_str)
+                        .unwrap()
+                        .contains("policy")
+            })
             .collect();
 
         let ignore = CONFIG

@@ -13,6 +13,7 @@
 *  limitations under the License. */
 use std::{
     cmp::{self, Ordering as CmpOrdering},
+    ffi::OsStr,
     fs,
     path::{Path, PathBuf},
     sync::Arc,
@@ -101,10 +102,7 @@ impl Schedule {
 
         debug!(
             "Schedutiling {} with target diff: {target_diff}",
-            self.path
-                .file_name()
-                .and_then(std::ffi::OsStr::to_str)
-                .unwrap()
+            self.path.file_name().and_then(OsStr::to_str).unwrap()
         );
 
         match target_diff.cmp(&diff) {
