@@ -3,8 +3,8 @@ name: Release Build
 on:
   push:
     branches: [ "release" ]
-  pull_request:
-    branches: [ "release" ]
+      tags:
+        - '*'
 
 env:
   CARGO_TERM_COLOR: always
