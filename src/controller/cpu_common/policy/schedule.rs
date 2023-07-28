@@ -152,10 +152,11 @@ impl Schedule {
         self.smooth.peek().round().max(0.0) as usize
     }
 
+    #[allow(clippy::cast_precision_loss)]
     fn reset(&mut self) {
         self.burst = 0;
         self.pos = self.table.len() - 1;
-        self.smooth = SMA::new(SMOOTH_COUNT, &0.0).unwrap();
+        self.smooth = SMA::new(SMOOTH_COUNT, &(self.pos as f64)).unwrap();
         self.write();
     }
 
