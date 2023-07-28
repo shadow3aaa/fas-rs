@@ -44,7 +44,7 @@ jobs:
         source ./make.sh
     
     - name: Release
-    - uses: ncipollo/release-action@v1
+      uses: ncipollo/release-action@v1
       with:
         artifacts: "fas-rs.zip"
         name: "FAS-RS"
