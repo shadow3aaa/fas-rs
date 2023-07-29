@@ -39,7 +39,7 @@ pub struct Schedule {
     path: PathBuf,
     pub target_diff: Arc<Atomic<Cycles>>,
     pub cur_cycles: Arc<Atomic<Cycles>>,
-    touch_listener: TouchListener,
+    touch_listener: Option<TouchListener>,
     touch_timer: Instant,
     burst: usize,
     pool: WritePool,
@@ -76,7 +76,7 @@ impl Schedule {
             path: path.to_owned(),
             target_diff,
             cur_cycles,
-            touch_listener: TouchListener::new().unwrap(),
+            touch_listener: TouchListener::new().ok(),
             touch_timer: Instant::now(),
             burst: BURST_DEFAULT,
             pool,
@@ -148,7 +148,7 @@ impl Schedule {
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_sign_loss)]
     fn smoothed_pos(&self) -> usize {
-        self.smooth.peek().round().max(0.0) as usize
+        (self.smooth.peek().round().max(0.0) as usize).min(self.table.len() - 1)
     }
 
     #[allow(clippy::cast_precision_loss)]
@@ -178,16 +178,20 @@ impl Schedule {
             .unwrap();
         let slide_timer = Duration::from_millis(slide_timer.try_into().unwrap());
 
-        let status = self.touch_listener.status(); // 触摸屏状态
         let ori_pos = self.smoothed_pos();
+        let pos = if let Some(touch_listener) = &self.touch_listener {
+            let status = touch_listener.status(); // 触摸屏状态
 
-        let pos = if status.0 || self.touch_timer.elapsed() <= slide_timer {
-            self.touch_timer = Instant::now();
-            ori_pos + slide_boost // on slide
-        } else if status.1 {
-            ori_pos + touch_boost // on touch
+            if status.0 || self.touch_timer.elapsed() <= slide_timer {
+                self.touch_timer = Instant::now();
+                ori_pos + slide_boost // on slide
+            } else if status.1 {
+                ori_pos + touch_boost // on touch
+            } else {
+                ori_pos // none
+            }
         } else {
-            ori_pos // none
+            ori_pos
         };
 
         let pos = pos.min(self.table.len() - 1); // 边界检查
