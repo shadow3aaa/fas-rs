@@ -83,6 +83,10 @@ impl Config {
     }
 
     /// 从配置中读取现在的游戏和目标fps、帧窗口大小
+    ///
+    /// # Panics
+    ///
+    /// 读取/解析配置失败
     pub fn cur_game_fps(&self) -> Option<(String, u32, u32)> {
         let toml = self.toml.read();
         #[allow(unused)]
@@ -110,6 +114,10 @@ impl Config {
     }
 
     /// 从配置中读取一个配置参数的值
+    ///
+    /// # Panics
+    ///
+    /// 读取配置不存在config table
     #[allow(unused)]
     #[must_use]
     pub fn get_conf(&self, label: &'static str) -> Option<Value> {

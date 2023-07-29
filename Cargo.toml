@@ -1,33 +1,36 @@
 [package]
-name = "fas-rs"
-version = "0.1.5"
-edition = "2021"
-description = "Frame-aware scheduling binary"
-authors = ["shadow3"]
-license = "Apache-2.0"
-readme = "README.md"
-repository = "https://github.com/shadow3aaa/fas-rs"
+name = 'fas-rs'
+version = '0.1.5'
+edition = '2021'
+description = 'Frame-aware scheduling binary'
+authors = ['shadow3']
+license = 'Apache-2.0'
+readme = 'README.md'
+repository = 'https://github.com/shadow3aaa/fas-rs'
 
 [workspace]
 members = ['fas-rs-fw']
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-cpu_cycles_reader = "0.1.41"
-likely_stable = "0.1.2"
-parking_lot = "0.12.1"
-fas-rs-fw = { path = "./fas-rs-fw" }
-yata = { version = "0.6.1", default_features = false }
-atomic = "0.5.3"
-pretty_env_logger = "0.5.0"
-log = "0.4.19"
-touch_event = "0.1.1"
+cpu_cycles_reader = '0.1.41'
+likely_stable = '0.1.2'
+parking_lot = '0.12.1'
+atomic = '0.5.3'
+pretty_env_logger = '0.5.0'
+log = '0.4.19'
+touch_event = '0.1.1'
+
+[dependencies.fas-rs-fw]
+path = './fas-rs-fw'
+
+[dependencies.yata]
+version = '0.6.1'
+default_features = false
 
 [build-dependencies]
-toml = "0.7.6"
-serde = "1.0.177"
-serde_derive = "1.0.177"
+toml = '0.7.6'
+serde = '1.0.178'
+serde_derive = '1.0.178'
 
 [profile.release]
 codegen-units = 1
