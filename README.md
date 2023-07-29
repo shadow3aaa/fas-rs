@@ -5,9 +5,9 @@
 
 ## **一些效果图**
 
-| Pixel4XL | RedmiNote10Pro |
-| --- | --- |
-| [qcom855](sample/qcom855.jpg) | [mtk1100](sample/mtk1100.jpg)
+| Pixel4XL | RedmiNote10Pro | RedmiK50Pro |
+| --- | --- | --- |
+| [qcom855](sample/qcom855.jpg) | [mtk1100](sample/mtk1100.jpg) | [mtk9000](sample/mtk9000.jpg)
 
 ## **配置合并**
 
