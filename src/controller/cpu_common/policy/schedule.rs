@@ -26,10 +26,11 @@ use atomic::{Atomic, Ordering};
 use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
 use log::debug;
+
 use touch_event::TouchListener;
 use yata::{methods::SMA, prelude::*};
 
-use fas_rs_fw::config::CONFIG;
+use fas_rs_fw::{config::CONFIG, node::NODE};
 
 const BURST_DEFAULT: usize = 0;
 const BURST_MAX: usize = 2;
@@ -159,6 +160,22 @@ impl Schedule {
         self.write();
     }
 
+    #[allow(clippy::cast_possible_truncation)]
+    #[allow(clippy::cast_sign_loss)]
+    #[allow(clippy::cast_precision_loss)]
+    fn pos_clamp(&self, pos: usize) -> usize {
+        let max_pos_per: u8 = NODE
+            .read_node("max_freq_per")
+            .ok()
+            .and_then_likely(|p| p.trim().parse().ok())
+            .unwrap();
+        let len = (self.table.len() - 1) as f64;
+        let max_pos = (len * f64::from(max_pos_per) / 100.0)
+            .round()
+            .clamp(0.0, len) as usize;
+        pos.clamp(0, max_pos)
+    }
+
     fn write(&mut self) {
         let touch_boost = CONFIG
             .get_conf("touch_boost")
@@ -194,7 +211,7 @@ impl Schedule {
             ori_pos
         };
 
-        let pos = pos.min(self.table.len() - 1); // 边界检查
+        let pos = self.pos_clamp(pos);
 
         let _ = self.pool.write(
             &self.path.join("scaling_max_freq"),

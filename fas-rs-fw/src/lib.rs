@@ -15,6 +15,7 @@
 #![warn(clippy::nursery)]
 pub mod config;
 pub mod macros;
+pub mod node;
 pub mod prelude;
 mod scheduler;
 pub mod write_pool;

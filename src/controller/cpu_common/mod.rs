@@ -11,17 +11,17 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+//! 通用的cpu控制器
 mod policy;
 
 use std::{ffi::OsStr, fs, path::Path};
 
-use fas_rs_fw::prelude::*;
+use fas_rs_fw::{config::CONFIG, node::NODE, prelude::*};
 
 use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
 use log::debug;
 
-use fas_rs_fw::config::CONFIG;
 use policy::Policy;
 
 pub struct CpuCommon {
@@ -99,6 +99,8 @@ impl VirtualPerformanceController for CpuCommon {
         if ignore {
             policies.truncate(2); // 保留后两个集群
         }
+
+        NODE.create_node("max_freq_per", "100").unwrap();
 
         let policies = policies
             .into_iter()

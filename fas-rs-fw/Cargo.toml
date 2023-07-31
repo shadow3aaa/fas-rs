@@ -24,6 +24,7 @@ parking_lot = '0.12.1'
 serde = '1.0.178'
 serde_derive = '1.0.178'
 toml = '0.7.6'
+unix-named-pipe = "0.2.0"
 
 [dependencies.inotify]
 version = '0.10.2'
