@@ -31,7 +31,7 @@ use inotify::{Inotify, WatchMask};
 
 use unix_named_pipe::{self, open_read, open_write};
 
-const NODE_PATH: &str = "/sdcard/Android/fas-rs";
+const NODE_PATH: &str = "/sdcard/Android/fas-rs/nodes";
 
 pub struct Node(RwLock<HashMap<&'static str, Arc<RwLock<String>>>>);
 
