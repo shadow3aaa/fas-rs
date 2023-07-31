@@ -68,5 +68,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           allowUpdate: true
+          artifactErrorsFailBuild: true
+          makeLatest: true
           artifacts: "fas-rs.zip"
           bodyFile: "changelog.md"
