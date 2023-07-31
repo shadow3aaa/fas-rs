@@ -48,3 +48,19 @@ jobs:
       with:
         name: fas-rs(ci_build)
         path: ./build_module
+        
+    - name: Update magisk version
+      run: |
+        versionCode=$(cat build_module/module.prop | grep versionCode= | cut -d '=' -f 2)
+        version=$(cat build_module/module.prop | grep version= | cut -d '=' -f 2)
+        zipUrl="https://github.com/shadow3aaa/fas-rs/releases/download/version/fas-rs.zip"
+        changelog="https://github.com/shadow3aaa/fas-rs/changelog.md"
+        apt install jq
+        echo "{ \"versionCode\": ${versionCode}, \"version\": \"${version}\", \"zipUrl\": \"${zipUrl}\", \"changelog\": \"${changelog}\"}" | jq . > FasRs.json
+        git add FasRs.json
+        git commit -m "Auto update magisk json"
+        
+    - name: Push json
+      uses: ad-m/github-push-action@master
+      with: 
+        github_token: ${{ secrets.GITHUB_TOKEN }}
