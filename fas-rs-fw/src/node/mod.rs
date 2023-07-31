@@ -19,28 +19,26 @@ pub use single::NODE;
 
 use std::{
     collections::HashMap,
-    fs::{self},
-    io::{self, prelude::*, Write},
+    fs::{self, File},
+    io::{self, prelude::*},
     path::Path,
     process,
     sync::Arc,
     thread,
 };
 
-use inotify::{Inotify, WatchMask};
+use log::debug;
+use unix_named_pipe;
 
-use unix_named_pipe::{self, open_read, open_write};
-
-const NODE_PATH: &str = "/sdcard/Android/fas-rs/nodes";
+const NODE_PATH: &str = "/data/adb/modules/fas_rs/nodes";
 
 pub struct Node(RwLock<HashMap<&'static str, Arc<RwLock<String>>>>);
 
 impl Node {
     pub(crate) fn init() -> Result<Self, io::Error> {
+        fs::remove_dir_all(NODE_PATH)?;
         fs::create_dir(NODE_PATH)?;
-
         let id_value = HashMap::new();
-
         Ok(Self(id_value.into()))
     }
 
@@ -59,12 +57,10 @@ impl Node {
         }
 
         let path = Path::new(NODE_PATH).join(id);
-        unix_named_pipe::create(&path, None)?; // default 0o644
 
-        let mut file = open_write(&path)?;
-        writeln!(file, "{default}")?;
+        unix_named_pipe::create(&path, Some(0o644))?;
 
-        let value = Arc::new(RwLock::new(String::new()));
+        let value = Arc::new(RwLock::new(default.to_string()));
         self.0.write().insert(id, value.clone());
 
         thread::Builder::new()
@@ -77,22 +73,24 @@ impl Node {
                         process::exit(1);
                     }
 
-                    let Ok(mut file) = open_read(&path) else {
+                    let Ok(mut file) = File::open(&path) else {
                         retry_count += 1;
                         continue;
                     };
 
-                    if file.read_to_string(&mut value.write()).is_err() {
+                    let mut buffer = String::new();
+                    if file.read_to_string(&mut buffer).is_err() {
                         retry_count += 1;
                         continue;
                     }
 
-                    let mut inotify = Inotify::init().unwrap();
-                    inotify
-                        .watches()
-                        .add(&path, WatchMask::CLOSE_WRITE)
-                        .unwrap();
-                    let _ = inotify.read_events_blocking(&mut []);
+                    let buffer = buffer.trim().lines().last().unwrap_or_default();
+
+                    debug!("Recv node value update: {} {buffer}", path.display());
+
+                    *value.write() = buffer.to_string();
+
+                    retry_count = 0;
                 }
             })
             .unwrap();
