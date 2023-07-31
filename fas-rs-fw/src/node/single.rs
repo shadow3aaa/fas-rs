@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 /* Copyright 2023 shadow3aaa@gitbub.com
 *
 *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +11,7 @@ use std::sync::Arc;
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+use std::sync::Arc;
 use lazy_static::lazy_static;
 
 use super::Node;
