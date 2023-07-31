@@ -23,7 +23,7 @@ old_conf=/sdcard/Android/fas-rs/games.txt
 chmod a+x $MODPATH/fas-rs
 
 # detect conflicting kernel modules
-if lsmod | grep -qE "perfmgr_mtk|ged_novsync"; then
+if lsmod | grep -q "ged_novsync"; then
 	ui_print "Conflicting kernel module"
 	abort
 fi

@@ -23,7 +23,7 @@ until [ -d "/sdcard/Android" ]; do
 done
 
 # detect conflicting kernel modules
-if lsmod | grep -qE "perfmgr_mtk|ged_novsync"; then
+if lsmod | grep -q "ged_novsync"; then
 	touch $MODDIR/disable
 	exit
 fi
