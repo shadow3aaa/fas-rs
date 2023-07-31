@@ -67,5 +67,6 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
+          allowUpdate: true
           artifacts: "fas-rs.zip"
           bodyFile: "changelog.md"
