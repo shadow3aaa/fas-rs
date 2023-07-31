@@ -18,7 +18,7 @@ max_freq_per=/cache/fas_rs_nodes/max_freq_per
 
 case "$1" in
 "init" | "fast" | "pedestal") echo 100 >$max_freq_per ;;
-"standby") echo 40 >$max_freq_per ;;
+"standby") echo 25 >$max_freq_per ;;
 "powersave") echo 75 >$max_freq_per ;;
 "balance") echo 85 >$max_freq_per ;;
 "performance") echo 90 >$max_freq_per ;;
