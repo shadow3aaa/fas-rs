@@ -60,8 +60,10 @@ jobs:
         cat FasRs.json
         git config --global user.email "shadow3aaa@qq.com"
         git config --global user.name "shadow3aaa"
-        git add FasRs.json
-        git commit -m "Auto update magisk json"
+        if [ ! "$(git diff --name-only)" = "" ]; then
+          git add FasRs.json
+          git commit -m "Auto update magisk json"
+        fi
         
     - name: Push json
       uses: ad-m/github-push-action@master
