@@ -14,22 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-MODDIR=${0%/*}
-dir=/sdcard/Android/fas-rs
+max_freq_per=/cache/fas_rs_nodes/max_freq_per
 
-# wait until the sdcard is decrypted
-until [ -d "/sdcard/Android" ]; do
-	sleep 1
-done
-
-# detect conflicting kernel modules
-if lsmod | grep -qE "perfmgr_mtk|ged_novsync"; then
-	touch $MODDIR/disable
-	exit
-fi
-
-killall fas-rs
-nohup env FAS_LOG=info $MODDIR/fas-rs >$dir/fas_log.txt 2>&1 &
-
-# vtools support
-sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
+case "$1" in
+"init" | "fast" | "pedestal") echo 100 >$max_freq_per ;;
+"standby") echo 40 >$max_freq_per ;;
+"powersave") echo 75 >$max_freq_per ;;
+"balance") echo 85 >$max_freq_per ;;
+"performance") echo 90 >$max_freq_per ;;
+esac

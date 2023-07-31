@@ -14,22 +14,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-MODDIR=${0%/*}
-dir=/sdcard/Android/fas-rs
+propPath=$1
+version=$(cat $propPath | grep "version=" | cut -d "=" -f2)
+versionCode=$(cat $propPath | grep "versionCode=" | cut -d "=" -f2)
 
-# wait until the sdcard is decrypted
-until [ -d "/sdcard/Android" ]; do
-	sleep 1
-done
-
-# detect conflicting kernel modules
-if lsmod | grep -qE "perfmgr_mtk|ged_novsync"; then
-	touch $MODDIR/disable
-	exit
-fi
-
-killall fas-rs
-nohup env FAS_LOG=info $MODDIR/fas-rs >$dir/fas_log.txt 2>&1 &
-
-# vtools support
-sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
+json=$(
+	cat <<EOF
+{
+    "name": "FAS-RS",
+    "author": "shadow3",
+    "version": "$version",
+    "versionCode": ${versionCode},
+    "features": {
+        "strict": true,
+        "pedestal": true
+    },
+    "module": "fas_rs",
+    "entry": "/data/powercfg.sh",
+    "projectUrl": "https://github.com/shadow3aaa/fas-rs"
+}
+EOF
+)

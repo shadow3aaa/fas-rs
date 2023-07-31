@@ -14,22 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-MODDIR=${0%/*}
-dir=/sdcard/Android/fas-rs
+BASEDIR="$(dirname $(readlink -f "$0"))"
 
-# wait until the sdcard is decrypted
-until [ -d "/sdcard/Android" ]; do
-	sleep 1
-done
+source $BASEDIR/gen_json.sh $1
+echo "$json" >/data/powercfg.json
 
-# detect conflicting kernel modules
-if lsmod | grep -qE "perfmgr_mtk|ged_novsync"; then
-	touch $MODDIR/disable
-	exit
-fi
-
-killall fas-rs
-nohup env FAS_LOG=info $MODDIR/fas-rs >$dir/fas_log.txt 2>&1 &
-
-# vtools support
-sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
+cp -af $BASEDIR/powercfg.sh /data/powercfg.sh
+chmod 755 /data/powercfg.sh

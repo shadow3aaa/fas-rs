@@ -169,6 +169,8 @@ impl Schedule {
             .ok()
             .and_then_likely(|p| p.trim().parse().ok())
             .unwrap();
+        assert!(max_pos_per <= 100, "The percentage must be less than 100%");
+
         let len = (self.table.len() - 1) as f64;
         let max_pos = (len * f64::from(max_pos_per) / 100.0)
             .round()

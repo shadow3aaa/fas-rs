@@ -30,13 +30,13 @@ use std::{
 use log::debug;
 use unix_named_pipe;
 
-const NODE_PATH: &str = "/data/adb/modules/fas_rs/nodes";
+const NODE_PATH: &str = "/cache/fas_rs_nodes";
 
 pub struct Node(RwLock<HashMap<&'static str, Arc<RwLock<String>>>>);
 
 impl Node {
     pub(crate) fn init() -> Result<Self, io::Error> {
-        fs::remove_dir_all(NODE_PATH)?;
+        let _ = fs::remove_dir_all(NODE_PATH);
         fs::create_dir(NODE_PATH)?;
         let id_value = HashMap::new();
         Ok(Self(id_value.into()))
