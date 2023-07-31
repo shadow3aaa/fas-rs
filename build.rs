@@ -64,7 +64,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     writeln!(
         file,
         "updateJson=https://github.com/shadow3aaa/fas-rs/raw/master/FasRs.json"
-    );
+    )?;
 
     Ok(())
 }
