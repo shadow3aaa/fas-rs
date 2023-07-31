@@ -54,6 +54,10 @@ impl Node {
     ///
     /// 创建线程错误/节点被删除
     pub fn create_node(&self, id: &'static str, default: &str) -> Result<(), io::Error> {
+        if self.0.read().contains_key(id) {
+            return Ok(());
+        }
+
         let path = Path::new(NODE_PATH).join(id);
         unix_named_pipe::create(&path, None)?; // default 0o644
 
