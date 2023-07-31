@@ -55,9 +55,7 @@ jobs:
         
         git add FasRs.json
         git add build_module
-        if [ ! "$(git diff FasRs.json build_module)" = "" ]; then
-          git commit -m "Auto update magisk json"
-        fi
+        git commit -m "Auto update magisk json" --allow-empty
 
     - name: Push json
       uses: ad-m/github-push-action@master
