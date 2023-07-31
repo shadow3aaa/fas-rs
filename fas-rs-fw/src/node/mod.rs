@@ -36,7 +36,7 @@ const NODE_PATH: &str = "/sdcard/Android/fas-rs";
 pub struct Node(RwLock<HashMap<&'static str, Arc<RwLock<String>>>>);
 
 impl Node {
-    pub fn init() -> Result<Self, io::Error> {
+    pub(crate) fn init() -> Result<Self, io::Error> {
         fs::create_dir(NODE_PATH)?;
 
         let id_value = HashMap::new();
@@ -44,6 +44,15 @@ impl Node {
         Ok(Self(id_value.into()))
     }
 
+    /// 创建一个新节点
+    ///
+    /// # Errors
+    ///
+    /// 创建错误
+    ///
+    /// # Panics
+    ///
+    /// 创建线程错误/节点被删除
     pub fn create_node(&self, id: &'static str, default: &str) -> Result<(), io::Error> {
         let path = Path::new(NODE_PATH).join(id);
         unix_named_pipe::create(&path, None)?; // default 0o644
@@ -64,12 +73,9 @@ impl Node {
                         process::exit(1);
                     }
 
-                    let mut file = match open_read(&path) {
-                        Ok(o) => o,
-                        Err(_) => {
-                            retry_count += 1;
-                            continue;
-                        }
+                    let Ok(mut file) = open_read(&path) else {
+                        retry_count += 1;
+                        continue;
                     };
 
                     if file.read_to_string(&mut value.write()).is_err() {
@@ -90,6 +96,12 @@ impl Node {
         Ok(())
     }
 
+    /// 读取指定的节点
+    ///
+    /// # Errors
+    ///
+    /// 节点未创建/不存在
+    #[inline]
     pub fn read_node(&self, id: &'static str) -> Result<String, &'static str> {
         Ok((*self.0.read().get(id).ok_or("No such a node")?.read()).clone())
     }
