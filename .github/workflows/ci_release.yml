@@ -55,7 +55,7 @@ jobs:
         
         git add FasRs.json
         git add build_module
-        if [ ! "$(git diff --name-only)" = "" ]; then
+        if [ ! "$(git diff FasRs.json build_module)" = "" ]; then
           git commit -m "Auto update magisk json"
         fi
 
@@ -67,7 +67,7 @@ jobs:
     - name: Create Release
       uses: ncipollo/release-action@v1
       with:
-        allowUpdate: true
+        allowUpdates: true
         artifactErrorsFailBuild: true
         makeLatest: true
         artifacts: "fas-rs.zip"
