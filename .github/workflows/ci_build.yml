@@ -55,8 +55,10 @@ jobs:
         version=$(cat build_module/module.prop | grep version= | cut -d '=' -f 2)
         zipUrl="https://github.com/shadow3aaa/fas-rs/releases/download/version/fas-rs.zip"
         changelog="https://github.com/shadow3aaa/fas-rs/changelog.md"
-        apt install jq
+        sudo apt install jq -y
         echo "{ \"versionCode\": ${versionCode}, \"version\": \"${version}\", \"zipUrl\": \"${zipUrl}\", \"changelog\": \"${changelog}\"}" | jq . > FasRs.json
+        git config --local user.email "shadow3aaa@qq.com
+        git config --local user.name "shadow3aaa
         git add FasRs.json
         git commit -m "Auto update magisk json"
         
