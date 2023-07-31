@@ -1,14 +1,9 @@
-name: Ci Build
+name: CI Release
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
-
-env:
-  CARGO_TERM_COLOR: always
-
+    tags:
+      - 'v*'
 jobs:
   build:
 
@@ -42,9 +37,35 @@ jobs:
         export PATH=$PATH:$ndk_dir
         export PATH=$PATH:$ndk_dir/toolchains/llvm/prebuilt/linux-x86_64/bin
         source ./make.sh
+        
+    - name: Update magisk version
+      run: |
+        versionCode=$(cat build_module/module.prop | grep versionCode= | cut -d '=' -f 2)
+        version=$(cat build_module/module.prop | grep version= | cut -d '=' -f 2)
+        zipUrl="https://github.com/shadow3aaa/fas-rs/releases/download/${version}/fas-rs.zip"
+        changelog="https://github.com/shadow3aaa/fas-rs/changelog.md"
+        
+        sudo apt install jq -y
+        
+        echo "{ \"versionCode\": ${versionCode}, \"version\": \"${version}\", \"zipUrl\": \"${zipUrl}\", \"changelog\": \"${changelog}\"}" | jq . > FasRs.json
+        cat FasRs.json
+        
+        git config --global user.email "shadow3aaa@qq.com"
+        git config --global user.name "shadow3aaa"
+        
+        git add FasRs.json
+        git add build_module
+        if [ ! "$(git diff --name-only)" = "" ]; then
+          git commit -m "Auto update magisk json"
+        fi
+        
+    - name: Push json
+      uses: ad-m/github-push-action@master
+      with: 
+        github_token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Upload ci
-      uses: actions/upload-artifact@v3.1.2
-      with:
-        name: fas-rs(ci_build)
-        path: ./build_module
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "fas-rs.zip"
+          bodyFile: "changelog.md"
