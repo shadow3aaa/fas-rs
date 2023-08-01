@@ -175,7 +175,10 @@ impl Schedule {
         let max_pos = (len * f64::from(max_pos_per) / 100.0)
             .round()
             .clamp(0.0, len) as usize;
-        debug!("Available frequency: {max_pos_per}% max freq: {}", self.table[max_pos]);
+        debug!(
+            "Available frequency: {max_pos_per}% max freq: {}",
+            self.table[max_pos]
+        );
 
         pos.clamp(0, max_pos)
     }

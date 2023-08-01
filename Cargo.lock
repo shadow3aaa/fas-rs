@@ -161,7 +161,7 @@ dependencies = [
 
 [[package]]
 name = "fas-rs"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "atomic",
  "cpu_cycles_reader",
@@ -180,7 +180,7 @@ dependencies = [
 
 [[package]]
 name = "fas-rs-fw"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "atomic",
  "inotify",

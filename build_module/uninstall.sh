@@ -25,4 +25,4 @@
 
 	# remove vtools powercfg
 	rm -f /data/powercfg*
-} &
+} & # do not block boot

@@ -13,12 +13,14 @@
 *  limitations under the License. */
 //! # Quick Start
 //!
-//! ```
+//! ```ignore
 //! use fas_rs_fw::config::CONFIG;
 //!
-//! let (game, fps, windows) = CONFIG.cur_game_fps();
+//! if let Some((game, fps, windows)) = CONFIG.cur_game_fps() {
+//!     // do something
+//! }
 //! let foo = CONFIG.get_conf("foo")
-//!     .and_then(|f| f.as_str());
+//!     .and_then(|f| Some(f.as_str()?.to_string()))
 //!     .unwrap();
 //! ```
 mod merge;
@@ -29,7 +31,6 @@ pub use merge::merge;
 pub use single::CONFIG;
 
 use std::{
-    collections::HashSet,
     fs,
     path::Path,
     process::Command,
@@ -125,30 +126,51 @@ impl Config {
         toml.get("config").unwrap().get(label).cloned()
     }
 
-    fn get_top_pkgname() -> Option<HashSet<String>> {
+    fn get_top_pkgname() -> Option<Vec<String>> {
         let dump = Command::new("dumpsys")
             .args(["window", "visible-apps"])
             .output()
             .ok()?;
         let dump = String::from_utf8_lossy(&dump.stdout).into_owned();
 
-        Some(
-            dump.lines()
-                .filter(|l| l.contains("package="))
-                .map(|p| {
-                    p.split_whitespace()
-                        .nth(2)
-                        .and_then_unlikely(|p| p.split('=').nth(1))
-                        .unwrap()
-                })
-                .zip(
-                    dump.lines()
-                        .filter(|l| l.contains("canReceiveKeys()"))
-                        .map(|k| k.contains("canReceiveKeys()=true")),
-                )
-                .filter(|(_, k)| *k)
-                .map(|(p, _)| p.to_owned())
-                .collect(),
-        )
+        let result = parse_top_app(&dump);
+
+        if result.is_empty() {
+            return None;
+        }
+
+        Some(result)
     }
+}
+
+fn parse_top_app(dump: &str) -> Vec<String> {
+    let mut result = Vec::new();
+    for l in dump.lines() {
+        if l.contains("package=") {
+            if let Some(p) = l
+                .split_whitespace()
+                .nth(2)
+                .and_then_likely(|p| p.split('=').nth(1))
+            {
+                result.push(p.to_string());
+            }
+        } else if l.contains("canReceiveKeys()=false") {
+            result.pop();
+        }
+    }
+
+    result
+}
+
+#[test]
+fn test_topapp_parse() {
+    let test1 = r"#* ActivityRecord{2cd21f8 u0 com.lbe.security.miui/com.android.packageinstaller.permission.ui.GrantPermissionsActivity} t105}
+    mOwnerUid=10248 showForAllUsers=false package=bin.mt.plus appop=NONE
+    mHasSurface=true isReadyForDisplay()=true canReceiveKeys()=true mWindowRemovalAllowed=false
+    #";
+
+    let test2 = "mOwnerUid=10248 showForAllUsers=false package=bin.mt.plus appop=NONE";
+
+    assert!(parse_top_app(test1).contains(&"bin.mt.plus".to_string()));
+    assert!(parse_top_app(test2).contains(&"bin.mt.plus".to_string()));
 }
