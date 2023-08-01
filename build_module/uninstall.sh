@@ -15,12 +15,14 @@
 # limitations under the License.
 
 # wait until the sdcard is decrypted
-until [ -d "/sdcard/Android" ]; do
-	sleep 1
-done
+{
+	until [ -d "/sdcard/Android" ]; do
+		sleep 1
+	done
 
-# remove config & log dir
-rm -rf /sdcard/Android/fas-rs/
+	# remove config & log dir
+	rm -rf /sdcard/Android/fas-rs/
 
-# remove vtools powercfg
-rm -f /data/powercfg*
+	# remove vtools powercfg
+	rm -f /data/powercfg*
+} &
