@@ -3,12 +3,6 @@
 - fas-rs程序在安卓平台运行
 - fas-rs通过某种方式在监听帧变化，并且将此数据用于性能调度
 
-## **一些效果图**
-
-| Pixel4XL | RedmiNote10Pro | RedmiK50Pro |
-| --- | --- | --- |
-| [qcom855](sample/qcom855.jpg) | [mtk1100](sample/mtk1100.jpg) | [mtk9000](sample/mtk9000.jpg)
-
 ## **配置合并**
 
 - ### fas-rs内置配置合并系统，来解决未来的配置功能变动问题。它的行为如下
