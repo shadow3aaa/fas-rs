@@ -47,24 +47,14 @@ pub fn merge(local_conf: &str, std_conf: &str) -> Result<String, Box<dyn Error>>
     }
 
     let old_config = local_conf.config;
-    let std_config = std_conf.config;
-
-    let mut new_config: Table = old_config
-        .clone()
-        .into_iter()
+    let mut std_config = std_conf.config;
+    
+    let old_config: Table = old_config.into_iter()
         .filter(|(k, _)| std_config.contains_key(k))
         .collect();
 
-    new_config.extend(
-        std_config
-            .into_iter()
-            .filter(|(k, _)| !old_config.contains_key(k)),
-    );
+    std_config
+        .extend(old_config.into_iter());
 
-    let new_conf = Config {
-        config: new_config,
-        game_list: local_conf.game_list,
-    };
-
-    Ok(toml::to_string(&new_conf)?)
+    Ok(toml::to_string_pretty(&std_config)?)
 }

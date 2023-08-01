@@ -64,13 +64,6 @@ ___
 - true: Cycles调速器只调度后两个集群 *
 - false: Cycles调速器调度所有集群
 
-### **always_on_gov**
-
-- 类型: 布尔
-- 可用值: true false
-- true: 总是开启Cycles调速器，即使不处于Fas开启状态
-- false: 只在Fas时使用Cycles调速器 *
-
 ### **touch_boost**
 
 - 类型: 整数

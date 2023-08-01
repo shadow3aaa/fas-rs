@@ -45,13 +45,6 @@ impl CpuCommon {
 
         Cycles::from_mhz(mhz)
     }
-
-    pub(crate) fn always_on() -> bool {
-        CONFIG
-            .get_conf("always_on_gov")
-            .and_then_likely(|b| b.as_bool())
-            .unwrap()
-    }
 }
 
 impl VirtualPerformanceController for CpuCommon {
@@ -132,16 +125,10 @@ impl VirtualPerformanceController for CpuCommon {
 
         self.set_target_diff(target_diff);
 
-        self.policies.iter().for_each(Policy::resume);
         Ok(())
     }
 
     fn plug_out(&self) -> Result<(), Box<dyn Error>> {
-        if !Self::always_on() {
-            self.policies.iter().for_each(Policy::pause);
-            return Ok(());
-        }
-
         let target_diff = CONFIG
             .get_conf("default_target_diff")
             .and_then_likely(|d| Some(Cycles::from_mhz(d.as_integer()?)))

@@ -20,28 +20,25 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread::{self, JoinHandle},
+    thread::{self},
 };
 
 use atomic::Atomic;
 use cpu_cycles_reader::Cycles;
 
-use super::CpuCommon;
+
 use cycles::DiffReader;
 use schedule::Schedule;
 
 pub struct Policy {
     target_diff: Arc<Atomic<Cycles>>,
-    pub cur_cycles: Arc<Atomic<Cycles>>,
-    pause: Arc<AtomicBool>,
+    cur_cycles: Arc<Atomic<Cycles>>,
     exit: Arc<AtomicBool>,
-    handle: JoinHandle<()>,
 }
 
 impl Drop for Policy {
     fn drop(&mut self) {
         self.exit.store(true, Ordering::Release);
-        self.resume();
     }
 }
 
@@ -52,23 +49,16 @@ impl Policy {
         let target_diff = schedule.target_diff.clone();
         let cur_cycles = schedule.cur_cycles.clone();
 
-        let pause = Arc::new(AtomicBool::new(!CpuCommon::always_on()));
         let exit = Arc::new(AtomicBool::new(false));
 
-        let handle = {
-            let pause = pause.clone();
+        {
             let exit = exit.clone();
             thread::Builder::new()
                 .name("CpuPolicyThread".into())
                 .spawn(move || {
                     schedule.init();
                     loop {
-                        if pause.load(Ordering::Acquire) {
-                            schedule.deinit();
-                            thread::park();
-                            schedule.init();
-                        } else if exit.load(Ordering::Acquire) {
-                            schedule.deinit();
+                        if exit.load(Ordering::Acquire) {
                             return;
                         }
 
@@ -83,19 +73,8 @@ impl Policy {
         Self {
             target_diff,
             cur_cycles,
-            pause,
             exit,
-            handle,
         }
-    }
-
-    pub fn resume(&self) {
-        self.pause.store(false, Ordering::Release);
-        self.handle.thread().unpark();
-    }
-
-    pub fn pause(&self) {
-        self.pause.store(true, Ordering::Release);
     }
 
     pub fn move_target_diff(&self, c: Cycles) {
@@ -106,6 +85,7 @@ impl Policy {
     }
 
     pub fn set_target_diff(&self, c: Cycles) {
+        let c = c.clamp(Cycles::new(0), self.cur_cycles.load(Ordering::Acquire));
         self.target_diff.store(c, Ordering::Release);
     }
 }

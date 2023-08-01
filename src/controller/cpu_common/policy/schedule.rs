@@ -129,18 +129,6 @@ impl Schedule {
         self.reset();
     }
 
-    pub fn deinit(&mut self) {
-        let default = fs::read_to_string("/sys/module/cpufreq/parameters/default_governor")
-            .unwrap_or_else(|_| "schedutil".into()); // 获取默认调速器
-        let default = default.trim();
-
-        self.pool
-            .write(&self.path.join("scaling_governor"), default)
-            .unwrap();
-
-        self.reset();
-    }
-
     fn smooth_pos(&mut self) {
         #[allow(clippy::cast_precision_loss)]
         self.smooth.next(&(self.pos as f64));
