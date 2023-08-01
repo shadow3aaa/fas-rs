@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# wait until the sdcard is decrypted
 {
+    # wait until the sdcard is decrypted
 	until [ -d "/sdcard/Android" ]; do
 		sleep 1
 	done
