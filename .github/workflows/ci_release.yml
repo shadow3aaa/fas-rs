@@ -56,12 +56,7 @@ jobs:
         git add FasRs.json
         git add build_module
         git commit -m "Auto update magisk json" --allow-empty
-
-    - name: Push json
-      uses: ad-m/github-push-action@master
-      with: 
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-
+        
     - name: Create Release
       uses: ncipollo/release-action@v1
       with:
@@ -70,3 +65,8 @@ jobs:
         makeLatest: true
         artifacts: "fas-rs.zip"
         bodyFile: "changelog.md"
+
+    - name: Push json
+      uses: ad-m/github-push-action@master
+      with: 
+        github_token: ${{ secrets.GITHUB_TOKEN }}
