@@ -103,7 +103,7 @@ ___
 
 - 类型: 整数
 - 可用值: 任意正整数
-- 作用: 作为[always_on_gov](#always_on_gov)开启时，非Fas状态下的Cycles调速器的余量，单位是Mhz
+- 作用: 非Fas状态下的Cycles调速器的余量，单位是Mhz
 - 450 *
 
 ### **default_target_diff_fas**
@@ -136,19 +136,18 @@ ___
 
 ```toml
 [config]
-keep_std = true
 EMA_TYPE = "SMA"
 EMA_WIN = 4
-always_on_gov = false
 default_target_diff = 450
 default_target_diff_fas = 600
-ignore_little = true
-jank_diff = 150
-dumpsys_prefix = 125
 diff_move = 75
+dumpsys_prefix = 125
+ignore_little = true
+jank_diff = 135
+keep_std = true
 slide_boost = 2
-touch_boost = 1
 slide_timer = 200
+touch_boost = 1
 
 [game_list]
 "com.miHoYo.Yuanshen" = [60, 10]
