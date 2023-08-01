@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-BASEDIR="$(dirname $(readlink -f "$0"))"
+BASEDIR="$(pwd)"
 BIN=${BASEDIR}/target/aarch64-linux-android/release/fas-rs
 
 set -e
