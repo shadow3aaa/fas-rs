@@ -61,5 +61,5 @@ pub fn merge(local_conf: &str, std_conf: &str) -> Result<String, Box<dyn Error>>
         game_list: local_conf.game_list,
     };
 
-    Ok(toml::to_string_pretty(&new_conf)?)
+    Ok(toml::to_string(&new_conf)?)
 }
