@@ -77,7 +77,7 @@ impl Schedule {
             path: path.to_owned(),
             target_diff,
             cur_cycles,
-            touch_listener: TouchListener::new().ok(),
+            touch_listener: TouchListener::new(5).ok(),
             touch_timer: Instant::now(),
             burst: BURST_DEFAULT,
             pool,

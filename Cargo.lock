@@ -622,9 +622,9 @@ dependencies = [
 
 [[package]]
 name = "touch_event"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "807d80f6bcf1b8ffac95aaa463eacf72355d54e53fe3daf4095b78f681252b18"
+checksum = "76c90302eaf4e425218a12c7d88c85a436c9dde688a6ddded75e04ef6a47c6ac"
 dependencies = [
  "atomic",
  "evdev",
