@@ -26,7 +26,6 @@ use std::{
 use atomic::Atomic;
 use cpu_cycles_reader::Cycles;
 
-
 use cycles::DiffReader;
 use schedule::Schedule;
 
