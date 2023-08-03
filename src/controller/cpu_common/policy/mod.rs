@@ -61,7 +61,7 @@ impl Policy {
                             return;
                         }
 
-                        let cur_freq = schedule.max_diff.load(Ordering::Acquire);
+                        let cur_freq = schedule.cur_freq.load(Ordering::Acquire);
                         let diff = reader.read_diff(cur_freq);
                         schedule.run(diff);
                     }

@@ -40,6 +40,7 @@ pub struct Schedule {
     path: PathBuf,
     pub target_diff: Arc<Atomic<Cycles>>,
     pub max_diff: Arc<Atomic<Cycles>>,
+    pub cur_freq: Arc<Atomic<Cycles>>,
     touch_listener: Option<TouchListener>,
     touch_timer: Instant,
     burst: usize,
@@ -68,6 +69,7 @@ impl Schedule {
         table.sort_unstable();
 
         let max_diff = Arc::new(Atomic::new(table.last().copied().unwrap()));
+        let cur_freq = Arc::new(Atomic::new(table.last().copied().unwrap()));
 
         debug!("Got cpu freq table: {:#?}", &table);
 
@@ -77,6 +79,7 @@ impl Schedule {
             path: path.to_owned(),
             target_diff,
             max_diff,
+            cur_freq,
             touch_listener: TouchListener::new(5).ok(),
             touch_timer: Instant::now(),
             burst: BURST_DEFAULT,
@@ -161,8 +164,8 @@ impl Schedule {
 
         let len = (self.table.len() - 1) as f64;
         let max_pos = (len * f64::from(max_pos_per) / 100.0)
-            .round()
-            .clamp(0.0, len) as usize;
+            .clamp(0.0, len)
+            .round() as usize;
         let max_freq = self.table[max_pos];
 
         self.max_diff.store(max_freq, Ordering::Release);
@@ -206,10 +209,12 @@ impl Schedule {
         } else {
             ori_pos
         };
-        
+
         let pos = pos.min(self.table.len() - 1);
         let freq = self.table[pos];
         let freq = self.freq_clamp(freq);
+
+        self.cur_freq.store(freq, Ordering::Release);
 
         let _ = self.pool.write(
             &self.path.join("scaling_max_freq"),
