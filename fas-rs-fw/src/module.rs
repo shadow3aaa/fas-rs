@@ -11,14 +11,24 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-//! 实现[`crate::VirtualFrameSensor`]或者[`crate::VirtualPerformanceController`]必须使用Api的重导出
+pub mod prelude {
+    pub use super::Module;
+    pub use crate::{config::Config, node::Node, Scheduler};
+}
 
-// std
-pub use std::error::Error;
-pub use std::time::Duration;
-// sensor
-pub use crate::{Fps, FrameTime, TargetFps, VirtualFrameSensor};
-// controller
-pub use crate::VirtualPerformanceController;
-// Staic
-pub use crate::{config::CONFIG, node::NODE};
+use prelude::*;
+
+/// 模块
+/// 把其它功能解耦为模块，通过[`macros::run_modules`]宏统一调用
+pub trait Module {
+    const NAME: &'static str;
+
+    /// 构造
+    fn new() -> Self;
+
+    /// 设备是否支持此模块
+    fn support() -> bool;
+
+    /// 守护进程执行内容
+    fn run(&mut self, config: &Config, node: &Node);
+}

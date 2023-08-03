@@ -14,6 +14,7 @@
 #![deny(clippy::all, clippy::pedantic)]
 #![warn(clippy::nursery)]
 pub mod config;
+pub mod module;
 pub mod node;
 pub mod prelude;
 mod scheduler;
@@ -107,16 +108,4 @@ pub trait VirtualPerformanceController: Send {
     ///
     /// 还原失败
     fn plug_out(&self) -> Result<(), Box<dyn Error>>;
-}
-
-/// 模块
-/// 把其它功能解耦为模块，通过[`macros::run_modules`]宏统一调用
-pub trait Module {
-    const NAME: &'static str;
-
-    /// 设备是否支持此模块
-    fn support() -> bool;
-
-    /// 守护进程执行内容
-    fn run(scheduitler: &Scheduler, config: &config::Config, node: &node::Node);
 }

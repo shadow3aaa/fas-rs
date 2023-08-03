@@ -8,9 +8,9 @@ dumpsys_prefix = 125
 ignore_little = true
 jank_diff = 135
 keep_std = true
-slide_boost = 2
+slide_boost = 3
 slide_timer = 200
-touch_boost = 1
+touch_boost = 2
 
 [game_list]
 "com.miHoYo.Yuanshen" = [60, 10]

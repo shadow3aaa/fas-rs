@@ -110,7 +110,7 @@ impl Schedule {
         );
 
         match target_diff.cmp(&diff) {
-            CmpOrdering::Less => {
+            CmpOrdering::Less | CmpOrdering::Equal => {
                 self.pos = self.pos.saturating_sub(1);
                 self.burst = BURST_DEFAULT;
             }
@@ -118,7 +118,6 @@ impl Schedule {
                 self.pos = cmp::min(self.pos + self.burst, self.table.len() - 1);
                 self.burst = cmp::min(BURST_MAX, self.burst + 1);
             }
-            CmpOrdering::Equal => self.burst = BURST_DEFAULT,
         }
 
         self.smooth_pos(); // 更新pos窗口数据

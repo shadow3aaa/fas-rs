@@ -13,14 +13,16 @@
 *  limitations under the License. */
 #![deny(clippy::all, clippy::pedantic)]
 #![warn(clippy::nursery)]
+mod cleaner;
 mod controller;
 mod sensor;
 
 use std::{env, fs, path::Path, process};
 
 use fas_rs_fw::{
-    config::{self},
+    config,
     macros::{get_scheduler, run_modules, support},
+    module::prelude::*,
     prelude::*,
     Scheduler,
 };
@@ -71,11 +73,12 @@ fn main() -> ! {
 
     run_modules!(
         scheduler;
+        cleaner::Cleaner
     )
 }
 
 fn set_self_sched() {
-    let self_pid = std::process::id();
+    let self_pid = process::id();
     let _ = fs::write("/dev/cpuset/background/tasks", self_pid.to_string());
 }
 

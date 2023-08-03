@@ -62,9 +62,13 @@ macro_rules! run_modules {
             use std::thread;
 
             $(if <$module>::support() {
+                let mut module = <$module>::new();
                 thread::Builder::new()
                     .name(<$module>::NAME.into())
-                    .spawn(move || <$module>::run(&scheduler, &CONFIG, &NODE));
+                    .spawn(move || loop {
+                        module.run(&CONFIG, &NODE)
+                    })
+                    .unwrap();
             })*
 
             $scheduler.load_loop()
