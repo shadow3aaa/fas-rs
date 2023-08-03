@@ -14,6 +14,7 @@
 //! 提供一个帧感知调度基本逻辑和一些api
 
 mod frame;
+pub mod load_loop;
 
 use std::{
     error::Error,

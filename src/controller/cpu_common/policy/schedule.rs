@@ -39,7 +39,7 @@ const SMOOTH_COUNT: u8 = 2;
 pub struct Schedule {
     path: PathBuf,
     pub target_diff: Arc<Atomic<Cycles>>,
-    pub cur_cycles: Arc<Atomic<Cycles>>,
+    pub max_diff: Arc<Atomic<Cycles>>,
     touch_listener: Option<TouchListener>,
     touch_timer: Instant,
     burst: usize,
@@ -67,7 +67,7 @@ impl Schedule {
 
         table.sort_unstable();
 
-        let cur_cycles = Arc::new(Atomic::new(table.last().copied().unwrap()));
+        let max_diff = Arc::new(Atomic::new(table.last().copied().unwrap()));
 
         debug!("Got cpu freq table: {:#?}", &table);
 
@@ -76,7 +76,7 @@ impl Schedule {
         Self {
             path: path.to_owned(),
             target_diff,
-            cur_cycles,
+            max_diff,
             touch_listener: TouchListener::new(5).ok(),
             touch_timer: Instant::now(),
             burst: BURST_DEFAULT,
@@ -94,7 +94,7 @@ impl Schedule {
         }
 
         let target_diff = self.target_diff.load(Ordering::Acquire);
-        let target_diff = target_diff.min(self.cur_cycles.load(Ordering::Acquire));
+        let target_diff = target_diff.min(self.max_diff.load(Ordering::Acquire));
 
         assert!(
             target_diff.as_hz() >= 0,
@@ -151,7 +151,7 @@ impl Schedule {
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_sign_loss)]
     #[allow(clippy::cast_precision_loss)]
-    fn pos_clamp(&self, pos: usize) -> usize {
+    fn freq_clamp(&self, freq: Cycles) -> Cycles {
         let max_pos_per: u8 = NODE
             .read_node("max_freq_per")
             .ok()
@@ -163,12 +163,13 @@ impl Schedule {
         let max_pos = (len * f64::from(max_pos_per) / 100.0)
             .round()
             .clamp(0.0, len) as usize;
-        debug!(
-            "Available frequency: {max_pos_per}% max freq: {}",
-            self.table[max_pos]
-        );
+        let max_freq = self.table[max_pos];
 
-        pos.clamp(0, max_pos)
+        self.max_diff.store(max_freq, Ordering::Release);
+
+        debug!("Available frequency: {max_pos_per}% max freq: {max_freq}");
+
+        freq.clamp(0.into(), max_freq)
     }
 
     fn write(&mut self) {
@@ -206,14 +207,12 @@ impl Schedule {
             ori_pos
         };
 
-        let pos = self.pos_clamp(pos);
+        let freq = self.table[pos];
+        let freq = self.freq_clamp(freq);
 
         let _ = self.pool.write(
             &self.path.join("scaling_max_freq"),
-            &self.table[pos].as_khz().to_string(),
+            &freq.as_khz().to_string(),
         );
-
-        let freq = self.table[pos];
-        self.cur_cycles.store(freq, Ordering::Release); // 更新此集群diff余量上限
     }
 }

@@ -16,16 +16,19 @@
 mod controller;
 mod sensor;
 
-use std::{env, fs, process, thread};
+use std::{env, fs, path::Path, process};
 
-use fas_rs_fw::{prelude::*, support_controller, support_sensor, Scheduler};
+use fas_rs_fw::{
+    config::{self},
+    macros::{get_scheduler, run_modules, support},
+    prelude::*,
+    Scheduler,
+};
 
-use likely_stable::if_unlikely;
-use log::{debug, error, info, warn};
+use log::{error, info, warn};
 use pretty_env_logger::init_custom_env;
 
 use controller::cpu_common::CpuCommon;
-use fas_rs_fw::config::{self, CONFIG};
 use sensor::{dumpsys::DumpSys, mtk_fpsgo::MtkFpsGo};
 
 fn main() -> ! {
@@ -38,64 +41,51 @@ fn main() -> ! {
     info!("Self sched setted");
 
     let mut args = env::args();
-    if args.nth(1).as_deref() == Some("merge") {
-        info!("Merging config");
+    match args.nth(1).as_deref() {
+        Some("merge") => {
+            info!("Merging config");
 
-        let (Some(conf_local_path), Some(conf_std_path)) = (args.next(), args.next()) else {
-            error!("Missing configuration path parameter");
-            error!("Example: fas-rs merge local_config_path std_config_path");
+            let (Some(local_path), Some(std_path)) = (args.next(), args.next()) else {
+                error!("Missing configuration path parameter");
+                error!("Example: fas-rs merge local_config_path std_config_path");
 
-            process::exit(1);
-        };
+                process::exit(1);
+            };
 
-        let conf_local = fs::read_to_string(&conf_local_path).unwrap();
-        let conf_std = fs::read_to_string(conf_std_path).unwrap();
-
-        let new_conf = config::merge(&conf_local, &conf_std).unwrap();
-
-        fs::write(&conf_local_path, new_conf).unwrap();
-        process::exit(0);
-    }
-
-    // 搜索列表中第一个支持的控制器和传感器
-    let controller = support_controller!(CpuCommon).unwrap();
-    info!("Got supported controller");
-
-    let sensor = support_sensor!(MtkFpsGo, DumpSys).unwrap();
-    info!("Got supported sensor");
-
-    // Test mode
-    if env::args().nth(1).as_deref() == Some("test") {
-        info!("On test mod, supported");
-        process::exit(0);
-    }
-
-    let scheduler = Scheduler::new(sensor, controller).unwrap();
-    info!("Scheduler started");
-
-    let mut temp = None;
-    loop {
-        let current = CONFIG.cur_game_fps();
-
-        #[allow(unused_variables)]
-        if temp != current {
-            temp = current;
-            if_unlikely! {
-                let Some((ref game, fps, frame_windows)) = &temp => {
-                    scheduler.load(*fps, *frame_windows);
-                    debug!("Loaded {} {}", game, fps);
-                } else {
-                    scheduler.unload();
-                    debug!("Unloaded");
-                }
+            merge_config(Path::new(&local_path), Path::new(&std_path)); // exited 0 here
+        }
+        Some("test") => {
+            if support!(CpuCommon; MtkFpsGo, DumpSys) {
+                info!("On test mod, supported");
+                process::exit(0);
+            } else {
+                error!("Not supported");
+                process::exit(1);
             }
         }
-
-        thread::sleep(Duration::from_secs(1));
+        _ => (),
     }
+
+    info!("Starting scheduler");
+    let scheduler = get_scheduler!(MtkFpsGo, DumpSys; CpuCommon);
+
+    run_modules!(
+        scheduler;
+    )
 }
 
 fn set_self_sched() {
     let self_pid = std::process::id();
     let _ = fs::write("/dev/cpuset/background/tasks", self_pid.to_string());
+}
+
+fn merge_config(local: &Path, std: &Path) -> ! {
+    let conf_local = fs::read_to_string(local).unwrap();
+    let conf_std = fs::read_to_string(std).unwrap();
+
+    let new_conf = config::merge(&conf_local, &conf_std).unwrap();
+
+    fs::write(local, new_conf).unwrap();
+
+    process::exit(0);
 }

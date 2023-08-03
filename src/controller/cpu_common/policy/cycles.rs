@@ -102,7 +102,7 @@ impl DiffReader {
             .max()
             .unwrap();
 
-        let diff = cycles.as_diff(time, cur_freq).unwrap().max(Cycles::new(0));
+        let diff = cycles.as_diff(time, cur_freq).unwrap().max(0.into());
 
         #[allow(clippy::cast_possible_truncation)]
         #[allow(clippy::cast_precision_loss)]

@@ -25,6 +25,7 @@ serde = '1.0.178'
 serde_derive = '1.0.178'
 toml = '0.7.6'
 unix-named-pipe = "0.2.0"
+fas-rs-macro = { path = '../fas-rs-macro' }
 
 [dependencies.inotify]
 version = '0.10.2'

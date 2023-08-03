@@ -14,15 +14,15 @@
 #![deny(clippy::all, clippy::pedantic)]
 #![warn(clippy::nursery)]
 pub mod config;
-pub mod macros;
 pub mod node;
 pub mod prelude;
 mod scheduler;
 pub mod write_pool;
 
-use std::{error::Error, time::Duration};
-
+pub use fas_rs_macro as macros;
 pub use scheduler::Scheduler;
+
+use std::{error::Error, time::Duration};
 
 /// 这里的[`self::FrameTime`]可能是 `帧渲染间隔` 或 `帧渲染时间`
 ///
@@ -107,4 +107,16 @@ pub trait VirtualPerformanceController: Send {
     ///
     /// 还原失败
     fn plug_out(&self) -> Result<(), Box<dyn Error>>;
+}
+
+/// 模块
+/// 把其它功能解耦为模块，通过[`macros::run_modules`]宏统一调用
+pub trait Module {
+    const NAME: &'static str;
+
+    /// 设备是否支持此模块
+    fn support() -> bool;
+
+    /// 守护进程执行内容
+    fn run(scheduitler: &Scheduler, config: &config::Config, node: &node::Node);
 }

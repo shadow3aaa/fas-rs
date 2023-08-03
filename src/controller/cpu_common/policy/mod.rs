@@ -31,7 +31,7 @@ use schedule::Schedule;
 
 pub struct Policy {
     target_diff: Arc<Atomic<Cycles>>,
-    cur_cycles: Arc<Atomic<Cycles>>,
+    max_diff: Arc<Atomic<Cycles>>,
     exit: Arc<AtomicBool>,
 }
 
@@ -46,7 +46,7 @@ impl Policy {
         let mut reader = DiffReader::new(policy_path);
         let mut schedule = Schedule::new(policy_path);
         let target_diff = schedule.target_diff.clone();
-        let cur_cycles = schedule.cur_cycles.clone();
+        let max_diff = schedule.max_diff.clone();
 
         let exit = Arc::new(AtomicBool::new(false));
 
@@ -61,7 +61,7 @@ impl Policy {
                             return;
                         }
 
-                        let cur_freq = schedule.cur_cycles.load(Ordering::Acquire);
+                        let cur_freq = schedule.max_diff.load(Ordering::Acquire);
                         let diff = reader.read_diff(cur_freq);
                         schedule.run(diff);
                     }
@@ -71,20 +71,19 @@ impl Policy {
 
         Self {
             target_diff,
-            cur_cycles,
+            max_diff,
             exit,
         }
     }
 
     pub fn move_target_diff(&self, c: Cycles) {
         let target_diff = self.target_diff.load(Ordering::Acquire) + c;
-        let target_diff =
-            target_diff.clamp(Cycles::new(0), self.cur_cycles.load(Ordering::Acquire));
+        let target_diff = target_diff.max(Cycles::new(0));
         self.target_diff.store(target_diff, Ordering::Release);
     }
 
     pub fn set_target_diff(&self, c: Cycles) {
-        let c = c.clamp(Cycles::new(0), self.cur_cycles.load(Ordering::Acquire));
+        let c = c.clamp(Cycles::new(0), self.max_diff.load(Ordering::Acquire));
         self.target_diff.store(c, Ordering::Release);
     }
 }
