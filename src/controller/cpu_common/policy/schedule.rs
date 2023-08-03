@@ -207,7 +207,7 @@ impl Schedule {
             ori_pos
         };
         
-        let pos = pos.max(0);
+        let pos = pos.min(self.table.len() - 1);
         let freq = self.table[pos];
         let freq = self.freq_clamp(freq);
 
