@@ -26,8 +26,6 @@
     fas-rs merge /path/to/local/config /path/to/std/config
     ```
 
-___
-
 ## **参数**
 
 配置文件位于`/sdcard/Android/fas-rs/games.toml`
@@ -68,15 +66,15 @@ ___
 
 - 类型: 整数
 - 可用值: 任意正整数
-- 作用: 触摸屏幕时提高频率，优先级小于[slide_boost](#slide_boost)
-- 1 *
+- 作用: 触摸屏幕时提高频率，优先级小于[slide_boost](#slide_boost)，值越大提高越大
+- 2 *
 
 ### **slide_boost**
 
 - 类型: 整数
 - 可用值: 任意正整数
-- 作用: 触摸屏幕时提高频率，优先级大于[touch_boost](#touch_boost)
-- 2 *
+- 作用: 触摸屏幕时提高频率，优先级大于[touch_boost](#touch_boost)，值越大提高越大
+- 3 *
 
 ### **slide_timer**
 
@@ -122,8 +120,6 @@ ___
 
 #### **\* : 默认配置**
 
-___
-
 ## **应用列表配置**
 
 ### **Package = \[target_fps, frame_widow_len\]**
@@ -132,7 +128,7 @@ ___
 - target_fps: 正整数，表示应用运行的目标fps
 - frame_widow_len: 整数，表示帧监视器分析历史帧时间的帧的窗口大小，越大越保守
 
-### 示例
+### **示例**
 
 ```toml
 [config]
@@ -145,9 +141,9 @@ dumpsys_prefix = 125
 ignore_little = true
 jank_diff = 135
 keep_std = true
-slide_boost = 2
+slide_boost = 3
 slide_timer = 200
-touch_boost = 1
+touch_boost = 2
 
 [game_list]
 "com.miHoYo.Yuanshen" = [60, 10]
@@ -160,3 +156,8 @@ touch_boost = 1
 "com.tencent.tmgp.pubgmhd" = [60, 10]
 "com.tencent.tmgp.sgame" = [120, 10]
 ```
+
+## **独立lib，但是因此项目产生**
+
+* [touch_event](https://github.com/shadow3aaa/touch_event): 通过/dev/input/设备分析触摸屏幕状态
+* [cpu-cycles-reader](https://github.com/shadow3aaa/cpu-cycles-reader):通过linux内核api读取Cpu Cycles的包装
