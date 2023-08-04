@@ -11,139 +11,33 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{
-    cmp::{self, Ordering as CmpOrdering},
-    ffi::OsStr,
-    fs,
-    path::{Path, PathBuf},
-    sync::Arc,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
-use fas_rs_fw::write_pool::WritePool;
+use fas_rs_fw::{config::CONFIG, node::NODE};
 
-use atomic::{Atomic, Ordering};
+use atomic::Ordering;
 use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
 use log::debug;
 
-use touch_event::TouchListener;
 use yata::{methods::SMA, prelude::*};
 
-use fas_rs_fw::{config::CONFIG, node::NODE};
-
-const BURST_DEFAULT: usize = 0;
-const BURST_MAX: usize = 2;
-const SMOOTH_COUNT: u8 = 2;
-
-pub struct Schedule {
-    path: PathBuf,
-    pub target_diff: Arc<Atomic<Cycles>>,
-    pub max_diff: Arc<Atomic<Cycles>>,
-    pub cur_freq: Arc<Atomic<Cycles>>,
-    touch_listener: Option<TouchListener>,
-    touch_timer: Instant,
-    burst: usize,
-    pool: WritePool,
-    smooth: SMA, // 均值平滑频率索引
-    table: Vec<Cycles>,
-    pos: usize,
-}
+use super::{Schedule, SMOOTH_COUNT};
 
 impl Schedule {
-    pub fn new(path: &Path) -> Self {
-        let target_diff = Arc::new(Atomic::new(Cycles::from_mhz(200)));
-
-        let count = fs::read_to_string(path.join("affected_cpus"))
-            .unwrap()
-            .split_whitespace()
-            .count();
-        let pool = WritePool::new(cmp::max(count / 2, 2));
-
-        let mut table: Vec<Cycles> = fs::read_to_string(path.join("scaling_available_frequencies"))
-            .unwrap()
-            .split_whitespace()
-            .map(|freq| Cycles::from_khz(freq.parse().unwrap()))
-            .collect();
-
-        table.sort_unstable();
-
-        let max_diff = Arc::new(Atomic::new(table.last().copied().unwrap()));
-        let cur_freq = Arc::new(Atomic::new(table.last().copied().unwrap()));
-
-        debug!("Got cpu freq table: {:#?}", &table);
-
-        let pos = table.len() - 1;
-
-        Self {
-            path: path.to_owned(),
-            target_diff,
-            max_diff,
-            cur_freq,
-            touch_listener: TouchListener::new(5).ok(),
-            touch_timer: Instant::now(),
-            burst: BURST_DEFAULT,
-            pool,
-            #[allow(clippy::cast_precision_loss)]
-            smooth: SMA::new(SMOOTH_COUNT, &(pos as f64)).unwrap(),
-            table,
-            pos,
-        }
-    }
-
-    pub fn run(&mut self, diff: Cycles) {
-        if diff < Cycles::new(0) {
-            return;
-        }
-
-        let target_diff = self.target_diff.load(Ordering::Acquire);
-        let target_diff = target_diff.min(self.max_diff.load(Ordering::Acquire));
-
-        assert!(
-            target_diff.as_hz() >= 0,
-            "Target diff should never be less than zero, but got {target_diff}"
-        );
-
-        debug!(
-            "Schedutiling {} with target diff: {target_diff}",
-            self.path.file_name().and_then(OsStr::to_str).unwrap()
-        );
-
-        match target_diff.cmp(&diff) {
-            CmpOrdering::Less | CmpOrdering::Equal => {
-                self.pos = self.pos.saturating_sub(1);
-                self.burst = BURST_DEFAULT;
-            }
-            CmpOrdering::Greater => {
-                self.pos = cmp::min(self.pos + self.burst, self.table.len() - 1);
-                self.burst = cmp::min(BURST_MAX, self.burst + 1);
-            }
-        }
-
-        self.smooth_pos(); // 更新pos窗口数据
-        self.write();
-    }
-
-    pub fn init(&mut self) {
-        self.pool
-            .write(&self.path.join("scaling_governor"), "performance")
-            .unwrap();
-        self.reset();
-    }
-
-    fn smooth_pos(&mut self) {
+    pub fn smooth_pos(&mut self) {
         #[allow(clippy::cast_precision_loss)]
         self.smooth.next(&(self.pos as f64));
     }
 
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_sign_loss)]
-    fn smoothed_pos(&self) -> usize {
+    pub fn smoothed_pos(&self) -> usize {
         (self.smooth.peek().round().max(0.0) as usize).min(self.table.len() - 1)
     }
 
     #[allow(clippy::cast_precision_loss)]
-    fn reset(&mut self) {
+    pub fn reset(&mut self) {
         self.burst = 0;
         self.pos = self.table.len() - 1;
         self.smooth = SMA::new(SMOOTH_COUNT, &(self.pos as f64)).unwrap();
@@ -153,7 +47,7 @@ impl Schedule {
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_sign_loss)]
     #[allow(clippy::cast_precision_loss)]
-    fn freq_clamp(&self, freq: Cycles) -> Cycles {
+    pub fn freq_clamp(&self, freq: Cycles) -> Cycles {
         let max_pos_per: u8 = NODE
             .read_node("max_freq_per")
             .ok()
@@ -171,10 +65,10 @@ impl Schedule {
 
         debug!("Available frequency: {max_pos_per}% max freq: {max_freq}");
 
-        freq.clamp(0.into(), max_freq)
+        freq.clamp(self.min_freq, max_freq)
     }
 
-    fn write(&mut self) {
+    pub fn write(&mut self) {
         let touch_boost = CONFIG
             .get_conf("touch_boost")
             .and_then_likely(|b| b.as_integer())
