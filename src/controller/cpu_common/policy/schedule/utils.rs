@@ -25,15 +25,12 @@ use yata::{methods::SMA, prelude::*};
 use super::{Schedule, SMOOTH_COUNT};
 
 impl Schedule {
-    pub fn smooth_pos(&mut self) {
-        #[allow(clippy::cast_precision_loss)]
-        self.smooth.next(&(self.pos as f64));
-    }
-
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_sign_loss)]
-    pub fn smoothed_pos(&self) -> usize {
-        (self.smooth.peek().round().max(0.0) as usize).min(self.table.len() - 1)
+    #[allow(clippy::cast_precision_loss)]
+    pub fn smooth_pos(&mut self) {
+        self.smoothed_pos =
+            (self.smooth.next(&(self.pos as f64)).round() as usize).min(self.table.len() - 1);
     }
 
     #[allow(clippy::cast_precision_loss)]
@@ -47,7 +44,7 @@ impl Schedule {
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_sign_loss)]
     #[allow(clippy::cast_precision_loss)]
-    pub fn freq_clamp(&self, freq: Cycles) -> Cycles {
+    fn freq_clamp(&self, freq: Cycles) -> Cycles {
         let max_pos_per: u8 = NODE
             .read_node("max_freq_per")
             .ok()
@@ -87,7 +84,7 @@ impl Schedule {
             .unwrap();
         let slide_timer = Duration::from_millis(slide_timer.try_into().unwrap());
 
-        let ori_pos = self.smoothed_pos();
+        let ori_pos = self.smoothed_pos;
         let pos = if let Some(touch_listener) = &self.touch_listener {
             let status = touch_listener.status(); // 触摸屏状态
 

@@ -48,6 +48,7 @@ pub struct Schedule {
     smooth: SMA, // 均值平滑频率索引
     table: Vec<Cycles>,
     pos: usize,
+    smoothed_pos: usize,
 }
 
 impl Schedule {
@@ -88,6 +89,7 @@ impl Schedule {
             #[allow(clippy::cast_precision_loss)]
             smooth: SMA::new(SMOOTH_COUNT, &(pos as f64)).unwrap(),
             table,
+            smoothed_pos: pos,
             pos,
         }
     }
@@ -129,7 +131,7 @@ impl Schedule {
             }
         }
 
-        self.smooth_pos(); // 更新pos窗口数据
+        self.smooth_pos(); // 更新SMA窗口
         self.write();
     }
 
