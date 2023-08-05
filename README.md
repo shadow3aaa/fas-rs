@@ -88,7 +88,7 @@
 - 类型: 整数
 - 可用值: 任意正整数
 - 作用: 提高判定为卡顿的frametime长度，越大越宽松，单位ns
-- 135 *
+- 145 *
 
 ### **dumpsys_prefix**
 
@@ -139,7 +139,7 @@ default_target_diff_fas = 600
 diff_move = 75
 dumpsys_prefix = 115
 ignore_little = true
-jank_diff = 135
+jank_diff = 145
 keep_std = true
 slide_boost = 3
 slide_timer = 200
