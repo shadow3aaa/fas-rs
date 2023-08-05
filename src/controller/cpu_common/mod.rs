@@ -140,7 +140,7 @@ impl VirtualPerformanceController for CpuCommon {
     }
 }
 
-fn parse_policy(p: &str) -> Option<u8> {
+pub fn parse_policy(p: &str) -> Option<u8> {
     p.replace("policy", "").trim().parse().ok()
 }
 

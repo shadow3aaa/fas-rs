@@ -11,18 +11,18 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
-use fas_rs_fw::{config::CONFIG, node::NODE};
+use fas_rs_fw::node::NODE;
 
 use atomic::Ordering;
 use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
 use log::debug;
 
-use yata::{methods::SMA, prelude::*};
+use yata::prelude::*;
 
-use super::{Schedule, SMOOTH_COUNT};
+use super::{super::super::parse_policy, Schedule};
 
 impl Schedule {
     #[allow(clippy::cast_possible_truncation)]
@@ -31,14 +31,6 @@ impl Schedule {
     pub fn smooth_pos(&mut self) {
         self.smoothed_pos =
             (self.smooth.next(&(self.pos as f64)).round() as usize).min(self.table.len() - 1);
-    }
-
-    #[allow(clippy::cast_precision_loss)]
-    pub fn reset(&mut self) {
-        self.burst = 0;
-        self.pos = self.table.len() - 1;
-        self.smooth = SMA::new(SMOOTH_COUNT, &(self.pos as f64)).unwrap();
-        self.write();
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -66,25 +58,15 @@ impl Schedule {
     }
 
     pub fn write(&mut self) {
-        let touch_boost = CONFIG
-            .get_conf("touch_boost")
-            .and_then_likely(|b| b.as_integer())
-            .unwrap();
-        let touch_boost = usize::try_from(touch_boost).unwrap();
-
-        let slide_boost = CONFIG
-            .get_conf("slide_boost")
-            .and_then_likely(|b| b.as_integer())
-            .unwrap();
-        let slide_boost = usize::try_from(slide_boost).unwrap();
-
-        let slide_timer = CONFIG
-            .get_conf("slide_timer")
-            .and_then_likely(|t| t.as_integer())
-            .unwrap();
-        let slide_timer = Duration::from_millis(slide_timer.try_into().unwrap());
+        let touch_boost = Self::touch_boost();
+        let slide_boost = Self::slide_boost();
+        let slide_timer = Self::slide_timer();
 
         let ori_pos = self.smoothed_pos;
+        let ori_freq = self.table[ori_pos];
+        let ori_freq = self.freq_clamp(ori_freq);
+        self.cur_freq.store(ori_freq, Ordering::Release);
+
         let pos = if let Some(touch_listener) = &self.touch_listener {
             let status = touch_listener.status(); // 触摸屏状态
 
@@ -104,11 +86,38 @@ impl Schedule {
         let freq = self.table[pos];
         let freq = self.freq_clamp(freq);
 
-        self.cur_freq.store(freq, Ordering::Release);
+        if let Some(path) = &self.lock_path {
+            let policy = self
+                .path
+                .file_name()
+                .and_then_likely(|f| parse_policy(f.to_str()?))
+                .unwrap();
+            let lock_message = format!(
+                "{policy} {} {}",
+                self.table.first().unwrap().as_khz(),
+                freq.as_khz()
+            );
+
+            let _ = self.pool.write(path, &lock_message);
+        }
 
         let _ = self.pool.write(
             &self.path.join("scaling_max_freq"),
             &freq.as_khz().to_string(),
         );
+    }
+
+    // 考虑到当余量过大时，如果某个核心的Cycles小，这个核心会被迫跑高频率
+    // 因此当余量 > 当前Cycles的时候，切换调速器为默认调速器
+    pub fn auto_change_gov(&mut self, target_diff: Cycles, cur_cycles: Cycles) {
+        let gov = if target_diff >= cur_cycles {
+            &self.default_gov
+        } else {
+            "performance"
+        };
+
+        self.pool
+            .write(&self.path.join("scaling_governor"), gov)
+            .unwrap();
     }
 }
