@@ -95,7 +95,7 @@
 - 类型: 整数
 - 可用值: 任意正整数
 - 作用: dumpsys方法获取的frametime基本都略短，这里直接加上一定的值来修正，单位us
-- 125 *
+- 115 *
 
 ### **default_target_diff**
 
@@ -137,7 +137,7 @@ EMA_WIN = 4
 default_target_diff = 450
 default_target_diff_fas = 600
 diff_move = 75
-dumpsys_prefix = 125
+dumpsys_prefix = 115
 ignore_little = true
 jank_diff = 135
 keep_std = true
