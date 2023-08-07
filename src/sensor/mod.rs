@@ -28,12 +28,12 @@ use log::debug;
 
 // 如果传感器实现实际读取的是帧vsync间隔而不是真正的帧渲染时间时需要用这个修正
 // 为了方便实现trait已经做了内部可变处理
-pub struct IgnoreFrameTime {
+pub struct FrameTimeFixer {
     refresh_rate: Cell<Option<Fps>>,
     timer: Cell<Instant>,
 }
 
-impl IgnoreFrameTime {
+impl FrameTimeFixer {
     fn new() -> Self {
         let timer = Cell::new(Instant::now());
         let refresh_rate = Cell::new(Self::get_refresh_rate());
@@ -43,7 +43,7 @@ impl IgnoreFrameTime {
         }
     }
 
-    fn ign(&self, mut frametime: FrameTime, target_fps: TargetFps) -> FrameTime {
+    fn fix(&self, mut frametime: FrameTime, target_fps: TargetFps) -> FrameTime {
         let now = Instant::now();
         if now - self.timer.get() >= Duration::from_secs(5) {
             self.timer.set(now);
@@ -58,15 +58,7 @@ impl IgnoreFrameTime {
 
         if let Some(refresh_rate) = self.refresh_rate.get() {
             if refresh_rate != target_fps {
-                let target_frametime = Duration::from_secs(1) / target_fps;
-                let refresh_time = Duration::from_secs(1) / refresh_rate;
-                let total_ign_time = target_frametime.saturating_add(refresh_time);
-
-                if frametime.as_millis() >= total_ign_time.as_millis() {
-                    frametime -= refresh_time;
-                } else if frametime.as_millis() < target_frametime.as_millis() {
-                    frametime += refresh_time;
-                }
+                frametime = Self::do_fix(frametime, target_fps, refresh_rate).unwrap_or(frametime);
             }
         }
 
@@ -97,5 +89,18 @@ impl IgnoreFrameTime {
                 .parse()
                 .unwrap(),
         )
+    }
+
+    fn do_fix(f: FrameTime, t: TargetFps, r: Fps) -> Option<FrameTime> {
+        let target_frametime = Duration::from_secs(1) / t;
+        let _refresh_time = Duration::from_secs(1) / r;
+
+        let unfixed_ms = u32::try_from(f.as_millis()).ok()?;
+        let target_ms = u32::try_from(target_frametime.as_millis()).ok()?;
+
+        // 缩放ms部分为目标ms，记录缩放比例，应用到ms小数部分
+        let f = f - Duration::from_millis(unfixed_ms.into());
+        let f = (f * target_ms).checked_div(unfixed_ms)?;
+        Some(f + Duration::from_millis(target_ms.into()))
     }
 }

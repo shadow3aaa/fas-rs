@@ -90,13 +90,6 @@
 - 作用: 提高判定为卡顿的frametime长度，越大越宽松，单位ns
 - 145 *
 
-### **dumpsys_prefix**
-
-- 类型: 整数
-- 可用值: 任意正整数
-- 作用: dumpsys方法获取的frametime基本都略短，这里直接加上一定的值来修正，单位us
-- 115 *
-
 ### **default_target_diff**
 
 - 类型: 整数

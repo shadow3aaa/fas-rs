@@ -30,7 +30,7 @@ use fas_rs_fw::prelude::*;
 
 use atomic::{Atomic, Ordering};
 
-use super::IgnoreFrameTime;
+use super::FrameTimeFixer;
 
 #[derive(Clone, Copy)]
 pub enum ThreadCommand {
@@ -47,7 +47,7 @@ pub struct DumpSys {
     avg_fps: Arc<AtomicU32>,
     handle: JoinHandle<()>,
     sync: SyncSender<()>,
-    ignore: IgnoreFrameTime,
+    fixer: FrameTimeFixer,
 }
 
 impl Drop for DumpSys {
@@ -90,7 +90,7 @@ impl VirtualFrameSensor for DumpSys {
             avg_fps,
             handle,
             sync: sx,
-            ignore: IgnoreFrameTime::new(),
+            fixer: FrameTimeFixer::new(),
         })
     }
 

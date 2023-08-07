@@ -29,7 +29,7 @@ use fas_rs_fw::prelude::*;
 
 use atomic::Atomic;
 
-use super::IgnoreFrameTime;
+use super::FrameTimeFixer;
 use parse::{fps_thread, frametime_thread};
 
 pub const FPSGO: &str = "/sys/kernel/fpsgo";
@@ -41,8 +41,8 @@ pub struct MtkFpsGo {
     // 数据
     frametime_receiver: Receiver<Vec<FrameTime>>,
     avg_fps: Arc<AtomicU32>,
-    // 异常FrameTime忽略器
-    ignore: IgnoreFrameTime,
+    // FrameTime修正
+    fixer: FrameTimeFixer,
     // 控制启停
     thread_handle: [JoinHandle<()>; 2],
     pause: Arc<AtomicBool>,
@@ -99,7 +99,7 @@ impl VirtualFrameSensor for MtkFpsGo {
             avg_fps,
             target_frametime_count,
             fps_time,
-            ignore: IgnoreFrameTime::new(),
+            fixer: FrameTimeFixer::new(),
             pause,
             thread_handle,
         })
@@ -111,7 +111,7 @@ impl VirtualFrameSensor for MtkFpsGo {
         };
 
         data.into_iter()
-            .map(|frametime| self.ignore.ign(frametime, target_fps))
+            .map(|frametime| self.fixer.fix(frametime, target_fps))
             .collect()
     }
 

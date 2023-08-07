@@ -73,13 +73,15 @@ impl DumpSys {
             .and_then_likely(|p| p.as_integer())
             .unwrap();
 
-        frametimes
+        let frametimes = frametimes
             .windows(2)
             .map(|ft| Duration::from_nanos(ft[1] - ft[0]))
             .rev()
             .take(take_count as usize)
-            .map(|f| self.ignore.ign(f, target_fps))
             .map(|f| f + Duration::from_micros(prefix.try_into().unwrap())) // prefix
-            .collect()
+            .map(|f| self.fixer.fix(f, target_fps))
+            .collect();
+
+        frametimes
     }
 }
