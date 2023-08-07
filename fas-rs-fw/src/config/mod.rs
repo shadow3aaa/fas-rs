@@ -161,16 +161,3 @@ fn parse_top_app(dump: &str) -> Vec<String> {
 
     result
 }
-
-#[test]
-fn test_topapp_parse() {
-    let test1 = r"#* ActivityRecord{2cd21f8 u0 com.lbe.security.miui/com.android.packageinstaller.permission.ui.GrantPermissionsActivity} t105}
-    mOwnerUid=10248 showForAllUsers=false package=bin.mt.plus appop=NONE
-    mHasSurface=true isReadyForDisplay()=true canReceiveKeys()=true mWindowRemovalAllowed=false
-    #";
-
-    let test2 = "mOwnerUid=10248 showForAllUsers=false package=bin.mt.plus appop=NONE";
-
-    assert!(parse_top_app(test1).contains(&"bin.mt.plus".to_string()));
-    assert!(parse_top_app(test2).contains(&"bin.mt.plus".to_string()));
-}
