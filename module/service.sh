@@ -22,14 +22,7 @@ until [ -d "/sdcard/Android" ]; do
 	sleep 1
 done
 
-# detect conflicting kernel modules
-if lsmod | grep -q "ged_novsync"; then
-	touch $MODDIR/disable
-	exit
-fi
-
-killall fas-rs
-nohup env FAS_LOG=info $MODDIR/fas-rs >$dir/fas_log.txt 2>&1 &
+nohup env FAS_LOG=info $MODDIR/fas-rs run --local_profile $dir/games.toml >$dir/fas_log.txt 2>&1 &
 
 # vtools support
 sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
