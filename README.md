@@ -148,6 +148,18 @@ touch_boost = 2
 "com.tencent.tmgp.sgame" = 120
 ```
 
+## 编译
+
+```bash
+# clone
+git clone https://github.com/shadow3aaa/fas-rs
+git submodule init
+# 同步子项目
+git submodule update --init --recursive
+# 编译
+make -j2
+```
+
 ## **独立lib，但是因此项目产生**
 
 - [touch_event](https://github.com/shadow3aaa/touch_event): 通过/dev/input/设备分析触摸屏幕状态
