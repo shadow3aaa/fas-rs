@@ -30,23 +30,18 @@ impl Node {
     /// # Errors
     ///
     /// 创建节点文件夹失败
-    pub fn new() -> Result<Self> {
+    pub fn init() -> Result<()> {
         let _ = fs::remove_dir_all(NODE_PATH);
         fs::create_dir(NODE_PATH)?;
-
-        Ok(Self)
+        Ok(())
     }
 
     /// 创建一个新节点
     ///
     /// # Errors
     ///
-    /// 创建错误
-    ///
-    /// # Panics
-    ///
-    /// 创建线程错误/节点被删除
-    pub fn create_node<S: AsRef<str>>(&mut self, i: S, d: S) -> Result<()> {
+    /// 创建失败
+    pub fn create_node<S: AsRef<str>>(i: S, d: S) -> Result<()> {
         let id = i.as_ref();
         let default = d.as_ref();
 
@@ -62,7 +57,7 @@ impl Node {
     ///
     /// 节点未创建/不存在
     #[inline]
-    pub fn read_node<S: AsRef<str>>(&self, i: S) -> Result<String> {
+    pub fn read_node<S: AsRef<str>>(i: S) -> Result<String> {
         let id = i.as_ref();
 
         let path = Path::new(NODE_PATH).join(id);

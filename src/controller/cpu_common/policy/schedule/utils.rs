@@ -13,7 +13,7 @@
 *  limitations under the License. */
 use std::time::Instant;
 
-use fas_rs_fw::node::NODE;
+use fas_rs_fw::prelude::*;
 
 use atomic::Ordering;
 use cpu_cycles_reader::Cycles;
@@ -37,8 +37,7 @@ impl Schedule {
     #[allow(clippy::cast_sign_loss)]
     #[allow(clippy::cast_precision_loss)]
     fn freq_clamp(&self, freq: Cycles) -> Cycles {
-        let max_pos_per: u8 = NODE
-            .read_node("max_freq_per")
+        let max_pos_per: u8 = Node::read_node("max_freq_per")
             .ok()
             .and_then_likely(|p| p.trim().parse().ok())
             .unwrap();
@@ -58,9 +57,7 @@ impl Schedule {
     }
 
     pub fn write(&mut self) {
-        let touch_boost = Self::touch_boost();
-        let slide_boost = Self::slide_boost();
-        let slide_timer = Self::slide_timer();
+        let (touch_boost, slide_boost, slide_timer) = self.touch_conf;
 
         let ori_pos = self.smoothed_pos;
         let ori_freq = self.table[ori_pos];

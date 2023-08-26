@@ -19,14 +19,16 @@ use std::{
 };
 
 use cpu_cycles_reader::{Cycles, CyclesReader};
-use likely_stable::LikelyOption;
+
+use anyhow::Result;
+use fas_rs_fw::prelude::*;
 use log::debug;
 use yata::{
     methods::{DEMA, EMA, SMA},
     prelude::*,
 };
 
-use fas_rs_fw::config::CONFIG;
+use crate::error::Error;
 
 enum SpecEma {
     Ema(EMA),
@@ -53,37 +55,36 @@ impl SpecEma {
 }
 
 impl DiffReader {
-    pub fn new(path: &Path) -> Self {
+    pub fn new(path: &Path, config: &Config) -> Result<Self> {
         let affected_cpus: Vec<i32> = fs::read_to_string(path.join("affected_cpus"))
             .unwrap()
             .split_whitespace()
             .map(|cpu| cpu.parse::<i32>().unwrap())
             .collect();
 
-        let window = CONFIG
-            .get_conf("EMA_WIN")
-            .and_then_likely(|d| u8::try_from(d.as_integer()?).ok())
-            .unwrap_or(4);
+        let window = config
+            .get_conf("EMA_WIN")?
+            .as_integer()
+            .ok_or(Error::ParseConfig)?;
 
-        let ema = CONFIG
-            .get_conf("EMA_TYPE")
-            .and_then_likely(|d| match d.as_str()? {
-                "EMA" => Some(SpecEma::Ema(EMA::new(window, &0.0).ok()?)),
-                "DEMA" => Some(SpecEma::Dema(DEMA::new(window, &0.0).ok()?)),
-                "SMA" => Some(SpecEma::Sma(SMA::new(window, &0.0).ok()?)),
-                "None" => Some(SpecEma::None),
-                _ => None,
-            })
-            .unwrap();
+        let ema = config.get_conf("EMA_TYPE")?;
+        let ema = ema.as_str().ok_or(Error::ParseConfig)?;
+        let ema = match ema {
+            "EMA" => SpecEma::Ema(EMA::new(window.try_into()?, &0.0)?),
+            "DEMA" => SpecEma::Dema(DEMA::new(window.try_into()?, &0.0)?),
+            "SMA" => SpecEma::Sma(SMA::new(window.try_into()?, &0.0)?),
+            "None" => SpecEma::None,
+            _ => return Err(Error::ParseConfig.into()),
+        };
 
         let reader = CyclesReader::new(affected_cpus.as_slice()).unwrap();
         reader.enable();
 
-        Self {
+        Ok(Self {
             affected_cpus,
             ema,
             reader,
-        }
+        })
     }
 
     pub fn read_diff(&mut self, cur_freq: Cycles) -> Cycles {

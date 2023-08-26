@@ -20,11 +20,13 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread::{self},
+    thread,
 };
 
+use anyhow::Result;
 use atomic::Atomic;
 use cpu_cycles_reader::Cycles;
+use fas_rs_fw::prelude::*;
 
 use cycles::DiffReader;
 use schedule::Schedule;
@@ -42,9 +44,9 @@ impl Drop for Policy {
 }
 
 impl Policy {
-    pub fn new(policy_path: &Path) -> Self {
-        let mut reader = DiffReader::new(policy_path);
-        let mut schedule = Schedule::new(policy_path);
+    pub fn new(policy_path: &Path, config: &Config) -> Result<Self> {
+        let mut reader = DiffReader::new(policy_path, config)?;
+        let mut schedule = Schedule::new(policy_path, config)?;
         let target_diff = schedule.target_diff.clone();
         let max_diff = schedule.max_diff.clone();
 
@@ -69,11 +71,11 @@ impl Policy {
                 .unwrap()
         };
 
-        Self {
+        Ok(Self {
             target_diff,
             max_diff,
             exit,
-        }
+        })
     }
 
     pub fn move_target_diff(&self, c: Cycles) {

@@ -20,13 +20,13 @@ use std::{
     fs,
     path::{Path, PathBuf},
     sync::Arc,
-    time::Instant,
+    time::{Duration, Instant},
 };
 
-use fas_rs_fw::write_pool::WritePool;
-
+use anyhow::Result;
 use atomic::{Atomic, Ordering};
 use cpu_cycles_reader::Cycles;
+use fas_rs_fw::{prelude::*, write_pool::WritePool};
 
 use log::{debug, info};
 
@@ -39,29 +39,33 @@ const SMOOTH_COUNT: u8 = 2;
 
 pub struct Schedule {
     path: PathBuf,
-    lock_path: Option<PathBuf>, // mtk有个节点可以锁定频率上限和下限，优先级高
+    lock_path: Option<PathBuf>, // 此方案可以锁定频率上限和下限，优先级高
     pub target_diff: Arc<Atomic<Cycles>>,
     pub max_diff: Arc<Atomic<Cycles>>,
     pub cur_freq: Arc<Atomic<Cycles>>,
     default_gov: String,
     min_freq: Cycles,
+    pool: WritePool,
+    // touch boost
     touch_listener: Option<TouchListener>,
     touch_timer: Instant,
-    burst: usize,
-    pool: WritePool,
-    smooth: SMA, // 均值平滑频率索引，缓解抖动
-    table: Vec<Cycles>,
+    touch_conf: (usize, usize, Duration),
+    // freq pos
     pos: usize,
+    smooth: SMA, // 均值平滑频率索引，缓解抖动
     smoothed_pos: usize,
+    burst: usize,
+    table: Vec<Cycles>,
 }
 
 impl Schedule {
-    pub fn new(path: &Path) -> Self {
+    #[allow(clippy::cast_precision_loss)]
+    pub fn new(path: &Path, config: &Config) -> Result<Self> {
         let target_diff = Arc::new(Atomic::new(Cycles::from_mhz(200)));
 
         let lock_path = Path::new("/proc/cpudvfs/cpufreq_debug");
         let lock_path = if lock_path.exists() {
-            info!("Mtk freq force bound supported");
+            info!("Freq force bound is supported");
             Some(lock_path.to_owned())
         } else {
             None
@@ -97,7 +101,7 @@ impl Schedule {
             .unwrap_or_else(|| avai_govs.first().unwrap()))
         .to_string();
 
-        Self {
+        Ok(Self {
             path: path.to_owned(),
             lock_path,
             target_diff,
@@ -109,12 +113,12 @@ impl Schedule {
             touch_timer: Instant::now(),
             burst: BURST_DEFAULT,
             pool,
-            #[allow(clippy::cast_precision_loss)]
             smooth: SMA::new(SMOOTH_COUNT, &(pos as f64)).unwrap(),
             table,
             smoothed_pos: pos,
             pos,
-        }
+            touch_conf: Self::touch_boost_conf(config)?,
+        })
     }
 
     pub fn run(&mut self, diff: Cycles) {

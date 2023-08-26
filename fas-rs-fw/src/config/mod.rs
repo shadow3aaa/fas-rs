@@ -15,8 +15,6 @@ mod merge;
 mod read;
 mod topapp;
 
-pub use merge::merge;
-
 use std::{
     convert::AsRef,
     fs,
@@ -131,15 +129,16 @@ impl Config {
 
     /// 从配置中读取一个配置参数的值
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// 读取配置不存在config table
+    /// 读取目标配置失败
     #[allow(unused)]
-    #[must_use]
-    pub fn get_conf<S: AsRef<str>>(&self, l: S) -> Option<Value> {
+    pub fn get_conf<S: AsRef<str>>(&self, l: S) -> Result<Value> {
         let label = l.as_ref();
 
         let toml = self.toml.read();
-        toml.get("config").unwrap().get(label).cloned()
+        toml.get("config")
+            .and_then_likely(|t| t.get(label).cloned())
+            .ok_or(Error::ConfigValueNotFound)
     }
 }

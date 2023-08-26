@@ -19,6 +19,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(ThisError, Debug)]
 pub enum Error {
+    #[error("No such a config")]
+    ConfigValueNotFound,
     #[error("No such a node")]
     NodeNotFound,
     #[error("Got an error when parsing config: {source:?}")]

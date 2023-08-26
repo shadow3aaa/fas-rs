@@ -35,17 +35,17 @@ pub trait PerformanceController: Send {
     /// 根据jank-level调整性能
     ///
     /// jank-level: 0: 无jank 1~[`u32::max`]: 越大jank越严重
-    fn perf(&self, l: u32);
-    /// 初始化(插入)控制器
+    fn perf(&self, l: u32, c: &Config);
+    /// 游戏状态初始化
     ///
     /// # Errors
     ///
     /// 初始化失败
-    fn plug_in(&self, c: &Config, n: &Node) -> Result<()>;
-    /// 还原(拔出)控制器
+    fn init_game(&self, c: &Config) -> Result<()>;
+    /// 默认状态初始化
     ///
     /// # Errors
     ///
     /// 还原失败
-    fn plug_out(&self, c: &Config, n: &Node) -> Result<()>;
+    fn init_default(&self, c: &Config) -> Result<()>;
 }

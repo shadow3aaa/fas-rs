@@ -11,51 +11,28 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-//! 通用的cpu控制器
+//! 通用cpu控制器
 mod policy;
 
-use std::{ffi::OsStr, fs, path::Path};
+use std::{ffi::OsStr, fs};
 
-use fas_rs_fw::{config::CONFIG, node::NODE, prelude::*};
+use fas_rs_fw::prelude::*;
 
+use anyhow::Result;
 use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
 use log::debug;
 
 use policy::Policy;
 
+use crate::error::Error;
+
 pub struct CpuCommon {
     policies: Vec<Policy>,
 }
 
 impl CpuCommon {
-    fn move_target_diff(&self, c: Cycles) {
-        self.policies.iter().for_each(|p| p.move_target_diff(c));
-    }
-
-    fn set_target_diff(&self, c: Cycles) {
-        self.policies.iter().for_each(|p| p.set_target_diff(c));
-    }
-
-    fn get_diff_move() -> Cycles {
-        let mhz = CONFIG
-            .get_conf("diff_move")
-            .and_then_likely(|m| m.as_integer())
-            .unwrap();
-
-        Cycles::from_mhz(mhz)
-    }
-}
-
-impl VirtualPerformanceController for CpuCommon {
-    fn support() -> bool
-    where
-        Self: Sized,
-    {
-        Path::new("/sys/devices/system/cpu/cpufreq").exists()
-    }
-
-    fn new() -> Result<Self, Box<dyn Error>>
+    pub fn new(config: &Config) -> Result<Self>
     where
         Self: Sized,
     {
@@ -72,10 +49,10 @@ impl VirtualPerformanceController for CpuCommon {
             })
             .collect();
 
-        let ignore = CONFIG
-            .get_conf("ignore_little")
-            .and_then_likely(|b| b.as_bool())
-            .unwrap();
+        let ignore = config
+            .get_conf("ignore_little")?
+            .as_bool()
+            .ok_or(Error::ParseConfig)?;
 
         policies.sort_by(|a, b| {
             let num_a: u8 = a
@@ -93,46 +70,66 @@ impl VirtualPerformanceController for CpuCommon {
             policies.truncate(2); // 保留后两个集群
         }
 
-        NODE.create_node("max_freq_per", "100").unwrap();
+        Node::create_node("max_freq_per", "100").unwrap();
 
         let policies = policies
             .into_iter()
-            .map(|path| Policy::new(&path))
+            .map(|path| Policy::new(&path, config).unwrap())
             .collect();
 
         Ok(Self { policies })
     }
 
-    fn limit(&self) {
-        debug!("Cpu controller performance limit");
-        let diff_move = Self::get_diff_move();
-
-        self.move_target_diff(-diff_move);
+    fn move_target_diff(&self, c: Cycles) {
+        self.policies.iter().for_each(|p| p.move_target_diff(c));
     }
 
-    fn release(&self) {
-        debug!("Cpu controller performance release");
-        let diff_move = Self::get_diff_move();
+    fn set_target_diff(&self, c: Cycles) {
+        self.policies.iter().for_each(|p| p.set_target_diff(c));
+    }
+
+    fn get_diff_move(config: &Config) -> Result<Cycles> {
+        let mhz = config
+            .get_conf("diff_move")?
+            .as_integer()
+            .ok_or(Error::ParseConfig)?;
+
+        Ok(Cycles::from_mhz(mhz))
+    }
+}
+
+impl PerformanceController for CpuCommon {
+    fn perf(&self, l: u32, config: &Config) {
+        let diff_move = Self::get_diff_move(config).unwrap();
+        let diff_move = if l > 0 {
+            diff_move * i64::from(l)
+        } else {
+            -diff_move
+        };
 
         self.move_target_diff(diff_move);
+
+        debug!("Move margin: {diff_move}");
     }
 
-    fn plug_in(&self) -> Result<(), Box<dyn Error>> {
-        let target_diff = CONFIG
-            .get_conf("default_target_diff_fas")
-            .and_then_likely(|d| Some(Cycles::from_mhz(d.as_integer()?)))
-            .unwrap();
+    fn init_game(&self, config: &Config) -> Result<(), fas_rs_fw::Error> {
+        let target_diff = config
+            .get_conf("default_target_diff_fas")?
+            .as_integer()
+            .ok_or(fas_rs_fw::Error::Other("Failed to parse config"))?;
+        let target_diff = Cycles::from_mhz(target_diff);
 
         self.set_target_diff(target_diff);
 
         Ok(())
     }
 
-    fn plug_out(&self) -> Result<(), Box<dyn Error>> {
-        let target_diff = CONFIG
-            .get_conf("default_target_diff")
-            .and_then_likely(|d| Some(Cycles::from_mhz(d.as_integer()?)))
-            .unwrap();
+    fn init_default(&self, config: &Config) -> Result<(), fas_rs_fw::Error> {
+        let target_diff = config
+            .get_conf("default_target_diff")?
+            .as_integer()
+            .ok_or(fas_rs_fw::Error::Other("Failed to parse config"))?;
+        let target_diff = Cycles::from_mhz(target_diff);
 
         self.set_target_diff(target_diff);
 
@@ -142,10 +139,4 @@ impl VirtualPerformanceController for CpuCommon {
 
 pub fn parse_policy(p: &str) -> Option<u8> {
     p.replace("policy", "").trim().parse().ok()
-}
-
-#[test]
-fn test_policy_parse() {
-    let p = "policy0";
-    assert_eq!(parse_policy(p), Some(0));
 }

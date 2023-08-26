@@ -13,81 +13,71 @@
 *  limitations under the License. */
 #![deny(clippy::all, clippy::pedantic)]
 #![warn(clippy::nursery)]
-mod cleaner;
+
+#[cfg(not(target_os = "android"))]
+#[cfg(not(target_arch = "aarch64"))]
+compile_error!("Only for aarch64 android");
+
 mod controller;
+mod error;
 
-use std::{env, fs, path::Path, process};
+use std::{env, fs, process};
 
-use fas_rs_fw::{
-    config,
-    macros::{get_scheduler, run_modules, support},
-    module::prelude::*,
-    prelude::*,
-    Scheduler,
-};
+use fas_rs_fw::prelude::*;
 
-use log::{error, info, warn};
+use anyhow::Result;
+use clap::Parser;
+use log::warn;
 use pretty_env_logger::init_custom_env;
 
 use controller::cpu_common::CpuCommon;
-use sensor::{dumpsys::DumpSys, mtk_fpsgo::MtkFpsGo};
 
-fn main() -> ! {
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    #[arg(short, long)]
+    local_profile: String,
+
+    #[arg(short, long)]
+    std_profile: String,
+}
+
+fn main() -> Result<()> {
     // 初始化Log
     init_custom_env("FAS_LOG");
-    info!("Log initialized");
 
     // 绑定到小核
-    set_self_sched();
-    info!("Self sched setted");
-
-    let mut args = env::args();
-    match args.nth(1).as_deref() {
-        Some("merge") => {
-            info!("Merging config");
-
-            let (Some(local_path), Some(std_path)) = (args.next(), args.next()) else {
-                error!("Missing configuration path parameter");
-                error!("Example: fas-rs merge local_config_path std_config_path");
-
-                process::exit(1);
-            };
-
-            merge_config(Path::new(&local_path), Path::new(&std_path)); // exited 0 here
-        }
-        Some("test") => {
-            if support!(CpuCommon; MtkFpsGo, DumpSys) {
-                info!("On test mod, supported");
-                process::exit(0);
-            } else {
-                error!("Not supported");
-                process::exit(1);
-            }
-        }
-        _ => (),
-    }
-
-    info!("Starting scheduler");
-    let scheduler = get_scheduler!(MtkFpsGo, DumpSys; CpuCommon);
-
-    run_modules!(
-        scheduler;
-        cleaner::Cleaner
-    )
-}
-
-fn set_self_sched() {
     let self_pid = process::id();
     let _ = fs::write("/dev/cpuset/background/tasks", self_pid.to_string());
-}
 
-fn merge_config(local: &Path, std: &Path) -> ! {
-    let conf_local = fs::read_to_string(local).unwrap();
-    let conf_std = fs::read_to_string(std).unwrap();
+    let args = Args::parse();
 
-    let new_conf = config::merge(&conf_local, &conf_std).unwrap();
+    for arg in env::args().skip(1) {
+        match arg.as_str() {
+            "merge" => {
+                let local_path = args.local_profile.clone();
+                let std_path = args.std_profile.clone();
 
-    fs::write(local, new_conf).unwrap();
+                let local = fs::read_to_string(&local_path)?;
+                let std = fs::read_to_string(&std_path)?;
 
-    process::exit(0);
+                let new = Config::merge(&local, &std)?;
+
+                fs::write(local, new)?;
+            }
+            "run" => {
+                let conf_path = args.local_profile.clone();
+                let config = Config::new(conf_path)?;
+                let cpu = CpuCommon::new(&config)?;
+
+                Scheduler::new()
+                    .config(config)
+                    .controller(cpu)
+                    .start_run()?;
+            }
+            _ => continue,
+        }
+    }
+
+    Ok(())
 }

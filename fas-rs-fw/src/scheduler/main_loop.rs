@@ -15,12 +15,11 @@ use log::info;
 use surfaceflinger_hook_api::{Connection, JankLevel, JankType};
 
 use super::Scheduler;
-use crate::{config::Config, error::Result, node::Node, PerformanceController};
+use crate::{config::Config, error::Result, PerformanceController};
 
 impl<P: PerformanceController> Scheduler<P> {
     pub(super) fn main_loop(
         config: &mut Config,
-        node: &Node,
         controller: &P,
         connection: &Connection,
     ) -> Result<()> {
@@ -33,16 +32,16 @@ impl<P: PerformanceController> Scheduler<P> {
                 status = update_config;
                 if let Some((game, target_fps)) = &status {
                     info!("Loaded on game: {game}");
-                    Self::init_load_game(*target_fps, connection, controller, config, node)?;
+                    Self::init_load_game(*target_fps, connection, controller, config)?;
                 } else {
-                    Self::init_load_default(connection, controller, config, node)?;
+                    Self::init_load_default(connection, controller, config)?;
                 }
 
                 continue;
             }
 
             let JankLevel(level) = connection.recv()?;
-            controller.perf(level);
+            controller.perf(level, config);
         }
     }
 
@@ -51,21 +50,13 @@ impl<P: PerformanceController> Scheduler<P> {
         connection: &Connection,
         controller: &P,
         config: &Config,
-        node: &Node,
     ) -> Result<()> {
         connection.set_input(Some(target_fps), JankType::Vsync)?;
-        controller.plug_out(config, node)?;
-        controller.plug_in(config, node)
+        controller.init_game(config)
     }
 
-    fn init_load_default(
-        connection: &Connection,
-        controller: &P,
-        config: &Config,
-        node: &Node,
-    ) -> Result<()> {
+    fn init_load_default(connection: &Connection, controller: &P, config: &Config) -> Result<()> {
         connection.set_input(None, JankType::Soft)?;
-        controller.plug_out(config, node)?;
-        controller.plug_in(config, node)
+        controller.init_default(config)
     }
 }

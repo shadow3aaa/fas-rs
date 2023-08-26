@@ -18,7 +18,6 @@ use surfaceflinger_hook_api::Connection;
 use crate::{
     config::Config,
     error::{Error, Result},
-    node::Node,
     PerformanceController,
 };
 
@@ -26,7 +25,6 @@ use crate::{
 pub struct Scheduler<P: PerformanceController> {
     controller: Option<P>,
     config: Option<Config>,
-    node: Option<Node>,
 }
 
 impl<P: PerformanceController> Scheduler<P> {
@@ -36,7 +34,6 @@ impl<P: PerformanceController> Scheduler<P> {
         Self {
             controller: None,
             config: None,
-            node: None,
         }
     }
 
@@ -56,14 +53,6 @@ impl<P: PerformanceController> Scheduler<P> {
         self
     }
 
-    /// 控制节点
-    #[must_use]
-    #[allow(clippy::missing_const_for_fn)]
-    pub fn node(mut self, n: Node) -> Self {
-        self.node = Some(n);
-        self
-    }
-
     /// 运行
     ///
     /// # Errors
@@ -71,12 +60,11 @@ impl<P: PerformanceController> Scheduler<P> {
     /// 缺少必要参数构建失败
     pub fn start_run(self) -> Result<()> {
         let mut config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
-        let node = self.node.ok_or(Error::SchedulerMissing("Node"))?;
         let controller = self
             .controller
             .ok_or(Error::SchedulerMissing("Controller"))?;
         let connection = Connection::init_and_wait()?;
 
-        Self::main_loop(&mut config, &node, &controller, &connection)
+        Self::main_loop(&mut config, &controller, &connection)
     }
 }

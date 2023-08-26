@@ -13,34 +13,35 @@
 *  limitations under the License. */
 use std::time::Duration;
 
-use fas_rs_fw::config::CONFIG;
+use anyhow::Result;
+use fas_rs_fw::prelude::*;
 
-use likely_stable::LikelyOption;
+use crate::error::Error;
 
 use super::Schedule;
 
 impl Schedule {
-    pub fn touch_boost() -> usize {
-        let touch_boost = CONFIG
-            .get_conf("touch_boost")
-            .and_then_likely(|b| b.as_integer())
-            .unwrap();
-        usize::try_from(touch_boost).unwrap()
-    }
+    pub fn touch_boost_conf(config: &Config) -> Result<(usize, usize, Duration)> {
+        let touch_boost = config
+            .get_conf("touch_boost")?
+            .as_integer()
+            .ok_or(Error::ParseConfig)?;
 
-    pub fn slide_boost() -> usize {
-        let slide_boost = CONFIG
-            .get_conf("slide_boost")
-            .and_then_likely(|b| b.as_integer())
-            .unwrap();
-        usize::try_from(slide_boost).unwrap()
-    }
+        let slide_boost = config
+            .get_conf("slide_boost")?
+            .as_integer()
+            .ok_or(Error::ParseConfig)?;
 
-    pub fn slide_timer() -> Duration {
-        let slide_timer = CONFIG
-            .get_conf("slide_timer")
-            .and_then_likely(|t| t.as_integer())
-            .unwrap();
-        Duration::from_millis(slide_timer.try_into().unwrap())
+        let slide_timer = config
+            .get_conf("slide_timer")?
+            .as_integer()
+            .ok_or(Error::ParseConfig)?;
+        let slide_timer = Duration::from_millis(slide_timer.try_into()?);
+
+        Ok((
+            touch_boost.try_into()?,
+            slide_boost.try_into()?,
+            slide_timer,
+        ))
     }
 }
