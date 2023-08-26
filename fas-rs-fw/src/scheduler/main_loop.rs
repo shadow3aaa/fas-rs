@@ -21,7 +21,7 @@ impl<P: PerformanceController> Scheduler<P> {
     pub(super) fn main_loop(
         config: &mut Config,
         controller: &P,
-        connection: &Connection,
+        connection: &mut Connection,
     ) -> Result<()> {
         let mut status = None;
 

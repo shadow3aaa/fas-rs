@@ -1,5 +1,11 @@
 .DEFAULT_GOAL := package
 
+.PHONY: clean
+clean:
+	@cargo clean
+	@cd surfaceflinger_hook && \
+    make clean
+
 .PHONY: fas-rs
 fas-rs:
 	@echo "Building fas-rs(bin)…"
@@ -7,7 +13,7 @@ fas-rs:
 
 .PHONY: hook
 hook:
-	cd surfaceflinger_hook && \
+	@cd surfaceflinger_hook && \
 	make
 
 .PHONY: package

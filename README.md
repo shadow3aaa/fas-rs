@@ -23,7 +23,7 @@
   - 手动调用
 
     ```bash
-    fas-rs merge --local_profile /path/to/local/config --std_profile /path/to/std/config
+    fas-rs --merge --local_profile /path/to/local/config --std_profile /path/to/std/config
     ```
 
 ## **参数**
@@ -59,8 +59,8 @@
 
 - 类型: 布尔
 - 可用值: true false
-- true: Cycles调速器只调度后两个集群 *
-- false: Cycles调速器调度所有集群
+- true: Cycles调速器只调度后两个集群
+- false: Cycles调速器调度所有集群 *
 
 ### **touch_boost**
 

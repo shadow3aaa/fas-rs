@@ -13,6 +13,7 @@
 *  limitations under the License. */
 mod main_loop;
 
+use log::info;
 use surfaceflinger_hook_api::Connection;
 
 use crate::{
@@ -63,8 +64,10 @@ impl<P: PerformanceController> Scheduler<P> {
         let controller = self
             .controller
             .ok_or(Error::SchedulerMissing("Controller"))?;
-        let connection = Connection::init_and_wait()?;
+        info!("Connecting to hook");
+        let mut connection = Connection::init_and_wait()?;
+        info!("Connected to hook");
 
-        Self::main_loop(&mut config, &controller, &connection)
+        Self::main_loop(&mut config, &controller, &mut connection)
     }
 }

@@ -29,15 +29,12 @@ fi
 
 if [ -f $conf ]; then
 	# merge local std
-	$MODPATH/fas-rs merge --local_profile $conf --std_profile $MODPATH/games.toml
+	$MODPATH/fas-rs --merge --local_profile $conf --std_profile $MODPATH/games.toml
 else
 	# creat new config
 	mkdir -p /sdcard/Android/fas-rs
 	cp $MODPATH/games.toml $conf
 fi
-
-# remove std config
-rm $MODPATH/games.toml
 
 # vtools support
 sh $MODPATH/vtools/init_vtools.sh $(realpath $MODPATH/module.prop)

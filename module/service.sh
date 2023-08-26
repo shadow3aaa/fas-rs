@@ -17,12 +17,14 @@
 MODDIR=${0%/*}
 dir=/sdcard/Android/fas-rs
 
+sh $MODDIR/hook/install_hook.sh
+
 # wait until the sdcard is decrypted
 until [ -d "/sdcard/Android" ]; do
 	sleep 1
 done
 
-nohup env FAS_LOG=info $MODDIR/fas-rs run --local_profile $dir/games.toml >$dir/fas_log.txt 2>&1 &
+nohup env FAS_LOG=info $MODDIR/fas-rs --run --local_profile $dir/games.toml --std-profile $MODDIR/games.toml >$dir/fas_log.txt 2>&1 &
 
 # vtools support
 sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)

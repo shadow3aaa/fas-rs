@@ -16,7 +16,6 @@ mod read;
 mod topapp;
 
 use std::{
-    convert::AsRef,
     fs,
     path::Path,
     sync::{

@@ -12,11 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 
-use std::{
-    convert::AsRef,
-    fs::{self},
-    path::Path,
-};
+use std::{fs, path::Path};
 
 use crate::error::{Error, Result};
 

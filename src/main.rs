@@ -59,15 +59,16 @@ fn main() -> Result<()> {
         let local_path = args.local_profile.clone();
         let std_path = args.std_profile.clone();
 
-        let local = fs::read_to_string(local_path)?;
+        let local = fs::read_to_string(&local_path)?;
         let std = fs::read_to_string(std_path)?;
 
         let new = Config::merge(&local, &std)?;
 
-        fs::write(local, new)?;
+        fs::write(local_path, new)?;
     }
 
     if args.run {
+        Node::init()?;
         let conf_path = args.local_profile;
         let config = Config::new(conf_path)?;
         let cpu = CpuCommon::new(&config)?;
