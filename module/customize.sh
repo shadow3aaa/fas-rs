@@ -19,6 +19,16 @@ dir=/sdcard/Android/fas-rs
 conf=/sdcard/Android/fas-rs/games.toml
 old_conf=/sdcard/Android/fas-rs/games.txt
 
+if [ "$ARCH" != "arm64" ]; then
+	ui_print "Platform not supported"
+	abort
+fi
+
+if [ $API -lt 33 ]; then
+	ui_print "Required android version 13+"
+	abort
+fi
+
 # permission
 chmod a+x $MODPATH/fas-rs
 
