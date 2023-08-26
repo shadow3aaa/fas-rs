@@ -11,14 +11,6 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-//! 实现[`crate::VirtualFrameSensor`]或者[`crate::VirtualPerformanceController`]必须使用Api的重导出
+//! Api重导出
 
-// std
-pub use std::error::Error;
-pub use std::time::Duration;
-// sensor
-pub use crate::{Fps, FrameTime, TargetFps, VirtualFrameSensor};
-// controller
-pub use crate::VirtualPerformanceController;
-// Staic
-pub use crate::{config::CONFIG, node::NODE};
+pub use crate::{config::*, node::Node, PerformanceController, Scheduler};

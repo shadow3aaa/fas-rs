@@ -12,12 +12,10 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 //! 并发写入池
-//! 采用简化的线程池和负载设计，并且缓存重复路径
-//! 适合控制器用来向节点写入频率
+//! 适合控制器写入节点
 
 use std::{
     collections::HashMap,
-    error::Error,
     fs::{self, set_permissions},
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
@@ -32,6 +30,8 @@ use std::{
 
 use likely_stable::{if_likely, LikelyOption};
 use log::{debug, info};
+
+use crate::error::{Error, Result};
 
 pub struct WritePool {
     workers: Vec<(Sender<Command>, Arc<AtomicUsize>)>,
@@ -52,7 +52,7 @@ impl Drop for WritePool {
 }
 
 impl WritePool {
-    /// 构造一个写入线程池
+    /// 构造写入线程池
     ///
     /// # Panics
     ///
@@ -90,8 +90,8 @@ impl WritePool {
     ///
     /// # Panics
     ///
-    /// 线程池量为0
-    pub fn write(&mut self, path: &Path, value: &str) -> Result<(), Box<dyn Error>> {
+    /// 线程池大小为0
+    pub fn write(&mut self, path: &Path, value: &str) -> Result<()> {
         debug!("WritePool: write {} to {}", &value, &path.display());
 
         if Some(value) == self.cache_map.get(path).map_likely(|(x, _)| x.as_str()) {
@@ -107,7 +107,9 @@ impl WritePool {
         let new_heavy = heavy.load(Ordering::Acquire) + 1;
         heavy.store(new_heavy, Ordering::Release); // 完成一个任务负载计数加一
 
-        best_worker.send(Command::Write(path.to_owned(), value.to_owned()))?;
+        best_worker
+            .send(Command::Write(path.to_owned(), value.to_owned()))
+            .map_err(|_| Error::Other("Thread error"))?;
 
         self.cache_map
             .insert(path.to_owned(), (value.to_owned(), Instant::now()));
@@ -118,7 +120,7 @@ impl WritePool {
 
     fn map_gc(&mut self) {
         self.cache_map
-            .retain(|_, (_, time)| (*time).elapsed() <= Duration::from_secs(3));
+            .retain(|_, (_, time)| (*time).elapsed() <= Duration::from_secs(5));
     }
 }
 

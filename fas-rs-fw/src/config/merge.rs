@@ -11,11 +11,12 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::error::Error;
 
 use likely_stable::LikelyOption;
 use serde_derive::{Deserialize, Serialize};
 use toml::Table;
+
+use crate::error::Result;
 
 /// fas配置
 #[derive(Deserialize, Serialize)]
@@ -28,8 +29,8 @@ struct Config {
 ///
 /// # Errors
 ///
-/// 无法读取配置
-pub fn merge(local_conf: &str, std_conf: &str) -> Result<String, Box<dyn Error>> {
+/// 解析错误
+pub fn merge(local_conf: &str, std_conf: &str) -> Result<String> {
     let std_conf: Config = toml::from_str(std_conf)?;
     let local_conf: Config = toml::from_str(local_conf)?;
 
@@ -61,5 +62,5 @@ pub fn merge(local_conf: &str, std_conf: &str) -> Result<String, Box<dyn Error>>
         game_list: local_conf.game_list,
     };
 
-    Ok(toml::to_string(&new_conf)?)
+    Ok(toml::to_string_pretty(&new_conf)?)
 }

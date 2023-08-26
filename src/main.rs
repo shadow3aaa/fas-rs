@@ -15,7 +15,6 @@
 #![warn(clippy::nursery)]
 mod cleaner;
 mod controller;
-mod sensor;
 
 use std::{env, fs, path::Path, process};
 

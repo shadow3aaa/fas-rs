@@ -30,8 +30,6 @@ struct TomlData {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    println!("cargo:rerun-if-changed=make.sh");
-
     let toml = fs::read_to_string("Cargo.toml")?;
     let data: TomlData = toml::from_str(&toml)?;
 
@@ -49,7 +47,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .create(true)
         .truncate(true)
         .write(true)
-        .open("build_module/module.prop")?;
+        .open("module/module.prop")?;
 
     writeln!(file, "id={id}")?;
     writeln!(file, "name={}", package.name)?;

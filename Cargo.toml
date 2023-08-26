@@ -9,7 +9,8 @@ readme = 'README.md'
 repository = 'https://github.com/shadow3aaa/fas-rs'
 
 [workspace]
-members = ['fas-rs-fw', 'fas-rs-macro']
+members = ['fas-rs-fw']
+exclude = ['surfaceflinger_hook']
 
 [dependencies]
 cpu_cycles_reader = '0.1.41'

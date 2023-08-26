@@ -11,31 +11,19 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-//! # Quick Start
-//!
-//! ```ignore
-//! use fas_rs_fw::config::CONFIG;
-//!
-//! if let Some((game, fps, windows)) = CONFIG.cur_game_fps() {
-//!     // do something
-//! }
-//! let foo = CONFIG.get_conf("foo")
-//!     .and_then(|f| Some(f.as_str()?.to_string()))
-//!     .unwrap();
-//! ```
 mod merge;
 mod read;
-mod single;
+mod topapp;
 
 pub use merge::merge;
-pub use single::CONFIG;
 
 use std::{
+    convert::AsRef,
     fs,
     path::Path,
-    process::Command,
     sync::{
         atomic::{AtomicBool, Ordering},
+        mpsc::{self, Receiver},
         Arc,
     },
     thread,
@@ -46,12 +34,16 @@ use log::info;
 use parking_lot::RwLock;
 use toml::Value;
 
+use crate::error::{Error, Result};
+
 use read::wait_and_read;
 
 type ConfData = RwLock<Value>;
 pub struct Config {
     toml: Arc<ConfData>,
     exit: Arc<AtomicBool>,
+    topapp: Option<Vec<String>>,
+    topapp_rx: Receiver<Option<Vec<String>>>,
 }
 
 impl Drop for Config {
@@ -61,11 +53,18 @@ impl Drop for Config {
 }
 
 impl Config {
-    #[must_use]
-    pub(crate) fn new(path: &Path) -> Self {
-        let ori = fs::read_to_string(path).unwrap();
-        let toml = toml::from_str(&ori).unwrap();
+    /// 读取配置
+    ///
+    /// # Errors
+    ///
+    /// 解析配置失败/路径不存在
+    pub fn new<P: AsRef<Path>>(p: P) -> Result<Self> {
+        let path = p.as_ref();
+        let ori = fs::read_to_string(path)?;
+
+        let toml = toml::from_str(&ori)?;
         let toml = Arc::new(RwLock::new(toml));
+
         let exit = Arc::new(AtomicBool::new(false));
 
         {
@@ -75,12 +74,27 @@ impl Config {
 
             thread::Builder::new()
                 .name("ConfigThread".into())
-                .spawn(move || wait_and_read(&path, &toml, &exit))
-                .unwrap();
+                .spawn(move || wait_and_read(&path, &toml, &exit))?;
         }
+
+        let (sx, rx) = mpsc::channel();
+
+        {
+            let exit = exit.clone();
+
+            thread::Builder::new()
+                .name("TopappThread".into())
+                .spawn(move || Self::topapp_updater(&sx, &exit))?;
+        }
+
         info!("Config watcher started");
 
-        Self { toml, exit }
+        Ok(Self {
+            toml,
+            exit,
+            topapp: None,
+            topapp_rx: rx,
+        })
     }
 
     /// 从配置中读取现在的游戏和目标fps、帧窗口大小
@@ -88,9 +102,14 @@ impl Config {
     /// # Panics
     ///
     /// 读取/解析配置失败
-    pub fn cur_game_fps(&self) -> Option<(String, u32, u32)> {
+    pub fn cur_game_fps(&mut self) -> Option<(String, u32)> {
+        if let Ok(t) = self.topapp_rx.try_recv() {
+            self.topapp = t;
+        }
+
+        let pkgs = self.topapp.clone()?;
+
         let toml = self.toml.read();
-        #[allow(unused)]
         let list = toml
             .get("game_list")
             .and_then_likely(Value::as_table)
@@ -99,19 +118,15 @@ impl Config {
 
         drop(toml); // early-drop
 
-        let pkgs = Self::get_top_pkgname()?;
         let pkg = pkgs.into_iter().find(|key| list.contains_key(key))?;
 
-        let (game, fps_windows) = (&pkg, list.get(&pkg)?.as_array().unwrap());
+        let target_fps = list
+            .get(&pkg)?
+            .as_integer()
+            .ok_or(Error::Other("Failed to parse target_fps"))
+            .unwrap();
 
-        let fps_windows: Vec<_> = fps_windows
-            .iter()
-            .map(|v| u32::try_from(v.as_integer().unwrap()).unwrap())
-            .collect();
-
-        let fps_windows: [u32; 2] = fps_windows.as_slice().try_into().unwrap();
-
-        Some((game.clone(), fps_windows[0], fps_windows[1]))
+        Some((pkg, target_fps.try_into().unwrap()))
     }
 
     /// 从配置中读取一个配置参数的值
@@ -121,43 +136,10 @@ impl Config {
     /// 读取配置不存在config table
     #[allow(unused)]
     #[must_use]
-    pub fn get_conf(&self, label: &'static str) -> Option<Value> {
+    pub fn get_conf<S: AsRef<str>>(&self, l: S) -> Option<Value> {
+        let label = l.as_ref();
+
         let toml = self.toml.read();
         toml.get("config").unwrap().get(label).cloned()
     }
-
-    fn get_top_pkgname() -> Option<Vec<String>> {
-        let dump = Command::new("dumpsys")
-            .args(["window", "visible-apps"])
-            .output()
-            .ok()?;
-        let dump = String::from_utf8_lossy(&dump.stdout).into_owned();
-
-        let result = parse_top_app(&dump);
-
-        if result.is_empty() {
-            return None;
-        }
-
-        Some(result)
-    }
-}
-
-fn parse_top_app(dump: &str) -> Vec<String> {
-    let mut result = Vec::new();
-    for l in dump.lines() {
-        if l.contains("package=") {
-            if let Some(p) = l
-                .split_whitespace()
-                .nth(2)
-                .and_then_likely(|p| p.split('=').nth(1))
-            {
-                result.push(p.to_string());
-            }
-        } else if l.contains("canReceiveKeys()=false") {
-            result.pop();
-        }
-    }
-
-    result
 }
