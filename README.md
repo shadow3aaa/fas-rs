@@ -23,7 +23,7 @@
   - 手动调用
 
     ```bash
-    fas-rs merge /path/to/local/config /path/to/std/config
+    fas-rs merge --local_profile /path/to/local/config --std_profile /path/to/std/config
     ```
 
 ## **参数**
@@ -115,11 +115,10 @@
 
 ## **应用列表配置**
 
-### **Package = \[target_fps, frame_widow_len\]**
+### **Package = target_fps**
 
 - Package: 字符串，应用包名
 - target_fps: 正整数，表示应用运行的目标fps
-- frame_widow_len: 整数，表示帧监视器分析历史帧时间的帧的窗口大小，越大越保守
 
 ### **示例**
 
@@ -130,7 +129,6 @@ EMA_WIN = 4
 default_target_diff = 450
 default_target_diff_fas = 600
 diff_move = 75
-dumpsys_prefix = 115
 ignore_little = true
 jank_diff = 145
 keep_std = true
@@ -139,18 +137,19 @@ slide_timer = 200
 touch_boost = 2
 
 [game_list]
-"com.miHoYo.Yuanshen" = [60, 10]
-"com.miHoYo.enterprise.NGHSoD" = [60, 10]
-"com.miHoYo.hkrpg" = [60, 10]
-"com.mojang.minecraftpe" = [120, 10]
-"com.netease.x19" = [120, 10]
-"com.pixeltoys.freeblade" = [60, 10]
-"com.prpr.musedash.TapTap" = [60, 10]
-"com.tencent.tmgp.pubgmhd" = [60, 10]
-"com.tencent.tmgp.sgame" = [120, 10]
+"com.miHoYo.Yuanshen" = 60
+"com.miHoYo.enterprise.NGHSoD" = 60
+"com.miHoYo.hkrpg" = 60
+"com.mojang.minecraftpe" = 120
+"com.netease.x19" = 120
+"com.pixeltoys.freeblade" = 60
+"com.prpr.musedash.TapTap" = 60
+"com.tencent.tmgp.pubgmhd" = 60
+"com.tencent.tmgp.sgame" = 120
 ```
 
 ## **独立lib，但是因此项目产生**
 
-* [touch_event](https://github.com/shadow3aaa/touch_event): 通过/dev/input/设备分析触摸屏幕状态
-* [cpu-cycles-reader](https://github.com/shadow3aaa/cpu-cycles-reader):通过linux内核api读取Cpu Cycles的包装
+- [touch_event](https://github.com/shadow3aaa/touch_event): 通过/dev/input/设备分析触摸屏幕状态
+
+- [cpu-cycles-reader](https://github.com/shadow3aaa/cpu-cycles-reader):通过linux内核api读取Cpu Cycles的包装
