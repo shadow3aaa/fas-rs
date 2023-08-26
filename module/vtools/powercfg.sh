@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-max_freq_per=/cache/fas_rs_nodes/max_freq_per
+max_freq_per=/dev/fas_rs/max_freq_per
 
 case "$1" in
 "init" | "fast" | "pedestal") echo 100 >$max_freq_per ;;
