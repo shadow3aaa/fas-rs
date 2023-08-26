@@ -21,7 +21,7 @@ compile_error!("Only for aarch64 android");
 mod controller;
 mod error;
 
-use std::{env, fs, process};
+use std::{fs, process};
 
 use fas_rs_fw::prelude::*;
 
@@ -37,9 +37,12 @@ use controller::cpu_common::CpuCommon;
 struct Args {
     #[arg(short, long)]
     local_profile: String,
-
     #[arg(short, long)]
     std_profile: String,
+    #[arg(short, long)]
+    run: bool,
+    #[arg(short, long)]
+    merge: bool,
 }
 
 fn main() -> Result<()> {
@@ -52,32 +55,27 @@ fn main() -> Result<()> {
 
     let args = Args::parse();
 
-    for arg in env::args().skip(1) {
-        match arg.as_str() {
-            "merge" => {
-                let local_path = args.local_profile.clone();
-                let std_path = args.std_profile.clone();
+    if args.merge {
+        let local_path = args.local_profile.clone();
+        let std_path = args.std_profile.clone();
 
-                let local = fs::read_to_string(&local_path)?;
-                let std = fs::read_to_string(&std_path)?;
+        let local = fs::read_to_string(local_path)?;
+        let std = fs::read_to_string(std_path)?;
 
-                let new = Config::merge(&local, &std)?;
+        let new = Config::merge(&local, &std)?;
 
-                fs::write(local, new)?;
-            }
-            "run" => {
-                let conf_path = args.local_profile.clone();
-                let config = Config::new(conf_path)?;
-                let cpu = CpuCommon::new(&config)?;
-
-                Scheduler::new()
-                    .config(config)
-                    .controller(cpu)
-                    .start_run()?;
-            }
-            _ => continue,
-        }
+        fs::write(local, new)?;
     }
 
+    if args.run {
+        let conf_path = args.local_profile;
+        let config = Config::new(conf_path)?;
+        let cpu = CpuCommon::new(&config)?;
+
+        Scheduler::new()
+            .config(config)
+            .controller(cpu)
+            .start_run()?;
+    }
     Ok(())
 }
