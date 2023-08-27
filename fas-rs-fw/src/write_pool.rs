@@ -91,7 +91,10 @@ impl WritePool {
     /// # Panics
     ///
     /// 线程池大小为0
-    pub fn write(&mut self, path: &Path, value: &str) -> Result<()> {
+    pub fn write<P: AsRef<Path>, S: AsRef<str>>(&mut self, p: P, v: S) -> Result<()> {
+        let path = p.as_ref();
+        let value = v.as_ref();
+
         trace!("WritePool: write {} to {}", &value, &path.display());
 
         if Some(value) == self.cache_map.get(path).map_likely(|(x, _)| x.as_str()) {

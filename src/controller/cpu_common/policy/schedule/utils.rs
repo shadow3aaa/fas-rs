@@ -103,18 +103,4 @@ impl Schedule {
             &freq.as_khz().to_string(),
         );
     }
-
-    // 考虑到当余量过大时，如果某个核心的Cycles小，这个核心会被迫跑高频率
-    // 因此当余量 > 当前Cycles的时候，切换调速器为默认调速器
-    pub fn auto_change_gov(&mut self, target_diff: Cycles, cur_cycles: Cycles) {
-        let gov = if target_diff >= cur_cycles {
-            &self.default_gov
-        } else {
-            "performance"
-        };
-
-        self.pool
-            .write(&self.path.join("scaling_governor"), gov)
-            .unwrap();
-    }
 }

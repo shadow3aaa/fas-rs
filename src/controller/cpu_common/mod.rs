@@ -67,8 +67,8 @@ impl CpuCommon {
             num_b.cmp(&num_a)
         });
 
-        if ignore {
-            policies.truncate(2); // 保留后两个集群
+        if ignore && policies.len() > 2 {
+            policies.pop(); // 删掉小核
         }
 
         Node::create_node("max_freq_per", "100").unwrap();

@@ -43,7 +43,6 @@ pub struct Schedule {
     pub target_diff: Arc<Atomic<Cycles>>,
     pub max_diff: Arc<Atomic<Cycles>>,
     pub cur_freq: Arc<Atomic<Cycles>>,
-    default_gov: String,
     pool: WritePool,
     // touch boost
     touch_listener: Option<TouchListener>,
@@ -91,22 +90,12 @@ impl Schedule {
 
         let pos = table.len() - 1;
 
-        let avai_govs = fs::read_to_string(path.join("scaling_available_governors")).unwrap();
-        let avai_govs: Vec<_> = avai_govs.split_whitespace().collect();
-
-        let default_gov = (*avai_govs
-            .iter()
-            .find(|g| **g == "schedutil" || **g == "walt")
-            .unwrap_or_else(|| avai_govs.first().unwrap()))
-        .to_string();
-
         Ok(Self {
             path: path.to_owned(),
             lock_path,
             target_diff,
             max_diff,
             cur_freq,
-            default_gov,
             touch_listener: TouchListener::new(5).ok(),
             touch_timer: Instant::now(),
             burst: BURST_DEFAULT,
@@ -126,8 +115,6 @@ impl Schedule {
 
         let target_diff = self.target_diff.load(Ordering::Acquire);
         let target_diff = target_diff.min(self.max_diff.load(Ordering::Acquire));
-
-        self.auto_change_gov(target_diff, self.cur_freq.load(Ordering::Acquire) - diff);
 
         assert!(
             target_diff.as_hz() >= 0,
@@ -159,6 +146,9 @@ impl Schedule {
         self.burst = 0;
         self.pos = self.table.len() - 1;
         self.smooth = SMA::new(SMOOTH_COUNT, &(self.pos as f64)).unwrap();
+        let _ = self
+            .pool
+            .write(self.path.join("scaling_governor"), "performance");
         self.write();
     }
 }
