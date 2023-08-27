@@ -2,6 +2,7 @@
 
 .PHONY: clean
 clean:
+	@rm -rf output/*
 	@cargo clean
 	@cd surfaceflinger_hook && \
     make clean
