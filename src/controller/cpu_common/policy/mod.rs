@@ -80,7 +80,7 @@ impl Policy {
 
     pub fn move_target_diff(&self, c: Cycles) {
         let target_diff = self.target_diff.load(Ordering::Acquire) + c;
-        let target_diff = target_diff.max(Cycles::new(0));
+        let target_diff = target_diff.clamp(Cycles::new(0), self.max_diff.load(Ordering::Acquire));
         self.target_diff.store(target_diff, Ordering::Release);
     }
 

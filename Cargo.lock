@@ -654,7 +654,7 @@ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 [[package]]
 name = "surfaceflinger_hook_api"
 version = "0.1.0"
-source = "git+https://github.com/shadow3aaa/surfaceflinger_hook_api#d9167e6293ff02141843de85250f6a797fec90c0"
+source = "git+https://github.com/shadow3aaa/surfaceflinger_hook_api#0f21b0c66b7d2673ae680720af4f723c90301741"
 dependencies = [
  "thiserror",
  "unix-named-pipe",
@@ -753,9 +753,9 @@ dependencies = [
 
 [[package]]
 name = "touch_event"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76c90302eaf4e425218a12c7d88c85a436c9dde688a6ddded75e04ef6a47c6ac"
+checksum = "14f01779b1f0a1b257ee61b41b279fddeb755f71bd2a4b5b5bd92b793e3b278a"
 dependencies = [
  "atomic",
  "evdev",

@@ -14,7 +14,7 @@
 //! 通用cpu控制器
 mod policy;
 
-use std::{ffi::OsStr, fs};
+use std::{cell::Cell, ffi::OsStr, fs};
 
 use fas_rs_fw::prelude::*;
 
@@ -29,6 +29,7 @@ use crate::error::Error;
 
 pub struct CpuCommon {
     policies: Vec<Policy>,
+    on_game: Cell<bool>,
 }
 
 impl CpuCommon {
@@ -77,7 +78,10 @@ impl CpuCommon {
             .map(|path| Policy::new(&path, config).unwrap())
             .collect();
 
-        Ok(Self { policies })
+        Ok(Self {
+            policies,
+            on_game: Cell::new(false),
+        })
     }
 
     fn move_target_diff(&self, c: Cycles) {
@@ -100,6 +104,10 @@ impl CpuCommon {
 
 impl PerformanceController for CpuCommon {
     fn perf(&self, l: u32, config: &Config) {
+        if !self.on_game.get() {
+            return;
+        }
+
         let diff_move = Self::get_diff_move(config).unwrap();
         let diff_move = if l > 0 {
             diff_move * i64::from(l)
@@ -120,6 +128,7 @@ impl PerformanceController for CpuCommon {
         let target_diff = Cycles::from_mhz(target_diff);
 
         self.set_target_diff(target_diff);
+        self.on_game.set(true);
 
         Ok(())
     }
@@ -132,6 +141,7 @@ impl PerformanceController for CpuCommon {
         let target_diff = Cycles::from_mhz(target_diff);
 
         self.set_target_diff(target_diff);
+        self.on_game.set(false);
 
         Ok(())
     }

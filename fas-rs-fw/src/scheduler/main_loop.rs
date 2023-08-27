@@ -24,6 +24,7 @@ impl<P: PerformanceController> Scheduler<P> {
         connection: &mut Connection,
     ) -> Result<()> {
         let mut status = None;
+        let mut buffer = Vec::with_capacity(10);
 
         loop {
             let update_config = config.cur_game_fps();
@@ -43,8 +44,16 @@ impl<P: PerformanceController> Scheduler<P> {
             let Ok(JankLevel(level)) = connection.recv() else {
                 continue;
             };
+
             trace!("Recv jank: {level}");
-            controller.perf(level, config);
+
+            if buffer.len() < 10 {
+                buffer.push(level);
+            } else {
+                let jank = buffer.iter().max().unwrap();
+                controller.perf(*jank, config);
+                buffer.clear();
+            }
         }
     }
 

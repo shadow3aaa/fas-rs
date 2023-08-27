@@ -44,7 +44,6 @@ pub struct Schedule {
     pub max_diff: Arc<Atomic<Cycles>>,
     pub cur_freq: Arc<Atomic<Cycles>>,
     default_gov: String,
-    min_freq: Cycles,
     pool: WritePool,
     // touch boost
     touch_listener: Option<TouchListener>,
@@ -107,7 +106,6 @@ impl Schedule {
             target_diff,
             max_diff,
             cur_freq,
-            min_freq: Cycles::new(0),
             default_gov,
             touch_listener: TouchListener::new(5).ok(),
             touch_timer: Instant::now(),
@@ -140,14 +138,6 @@ impl Schedule {
             "Schedutiling {} with target diff: {target_diff}",
             self.path.file_name().and_then(OsStr::to_str).unwrap()
         );
-
-        self.min_freq = self
-            .table
-            .iter()
-            .rev()
-            .find(|c| *c < &target_diff)
-            .copied()
-            .unwrap_or_else(|| Cycles::new(0));
 
         match target_diff.cmp(&diff) {
             CmpOrdering::Less | CmpOrdering::Equal => {
