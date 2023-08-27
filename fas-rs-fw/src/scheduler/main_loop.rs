@@ -11,7 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use log::info;
+use log::{info, trace};
 use surfaceflinger_hook_api::{Connection, JankLevel, JankType};
 
 use super::Scheduler;
@@ -40,7 +40,10 @@ impl<P: PerformanceController> Scheduler<P> {
                 continue;
             }
 
-            let JankLevel(level) = connection.recv()?;
+            let Ok(JankLevel(level)) = connection.recv() else {
+                continue;
+            };
+            trace!("Recv jank: {level}");
             controller.perf(level, config);
         }
     }

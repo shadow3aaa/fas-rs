@@ -29,7 +29,7 @@ use std::{
 };
 
 use likely_stable::{if_likely, LikelyOption};
-use log::{debug, info};
+use log::{info, trace};
 
 use crate::error::{Error, Result};
 
@@ -92,7 +92,7 @@ impl WritePool {
     ///
     /// 线程池大小为0
     pub fn write(&mut self, path: &Path, value: &str) -> Result<()> {
-        debug!("WritePool: write {} to {}", &value, &path.display());
+        trace!("WritePool: write {} to {}", &value, &path.display());
 
         if Some(value) == self.cache_map.get(path).map_likely(|(x, _)| x.as_str()) {
             return Ok(());

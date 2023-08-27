@@ -22,7 +22,7 @@ use cpu_cycles_reader::{Cycles, CyclesReader};
 
 use anyhow::Result;
 use fas_rs_fw::prelude::*;
-use log::debug;
+use log::trace;
 use yata::{
     methods::{DEMA, EMA, SMA},
     prelude::*,
@@ -109,7 +109,7 @@ impl DiffReader {
         #[allow(clippy::cast_precision_loss)]
         let diff = Cycles::from_hz(self.ema.next(diff.as_hz() as f64).round() as i64);
 
-        debug!("Got diff {diff}");
+        trace!("Got diff {diff}");
         diff
     }
 }

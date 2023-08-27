@@ -28,7 +28,7 @@ use atomic::{Atomic, Ordering};
 use cpu_cycles_reader::Cycles;
 use fas_rs_fw::{prelude::*, write_pool::WritePool};
 
-use log::{debug, info};
+use log::{debug, info, trace};
 
 use touch_event::TouchListener;
 use yata::{methods::SMA, prelude::*};
@@ -136,7 +136,7 @@ impl Schedule {
             "Target diff should never be less than zero, but got {target_diff}"
         );
 
-        debug!(
+        trace!(
             "Schedutiling {} with target diff: {target_diff}",
             self.path.file_name().and_then(OsStr::to_str).unwrap()
         );

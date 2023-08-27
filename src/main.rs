@@ -37,7 +37,7 @@ use controller::cpu_common::CpuCommon;
 struct Args {
     #[arg(short, long)]
     local_profile: String,
-    #[arg(short, long)]
+    #[arg(short, long, default_value = "")]
     std_profile: String,
     #[arg(short, long)]
     run: bool,

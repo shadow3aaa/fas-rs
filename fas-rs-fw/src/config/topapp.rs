@@ -25,26 +25,25 @@ use std::{
 use likely_stable::LikelyOption;
 
 use super::Config;
-use crate::error::{Error, Result};
+use crate::error::Error;
 
 impl Config {
-    pub(super) fn topapp_updater(
-        sx: &Sender<Option<Vec<String>>>,
-        exit: &Arc<AtomicBool>,
-    ) -> Result<()> {
+    pub(super) fn topapp_updater(sx: &Sender<Option<Vec<String>>>, exit: &Arc<AtomicBool>) {
         let mut temp = None;
 
         loop {
             if exit.load(Ordering::Acquire) {
-                return Ok(());
+                return;
             }
 
             let cur = Self::get_top_pkgname();
+            // println!("{cur:?}");
 
             if temp != cur {
                 temp = cur.clone();
                 sx.send(cur)
-                    .map_err(|_| Error::Other("Failed to send topapp"))?;
+                    .map_err(|_| Error::Other("Failed to send topapp"))
+                    .unwrap();
             }
             thread::sleep(Duration::from_secs(1));
         }

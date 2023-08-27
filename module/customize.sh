@@ -17,7 +17,6 @@
 SKIPUNZIP=0
 dir=/sdcard/Android/fas-rs
 conf=/sdcard/Android/fas-rs/games.toml
-old_conf=/sdcard/Android/fas-rs/games.txt
 
 if [ "$ARCH" != "arm64" ]; then
 	ui_print "Platform not supported"
@@ -32,14 +31,9 @@ fi
 # permission
 chmod a+x $MODPATH/fas-rs
 
-if [ -f $old_conf ]; then
-	# rename as .toml
-	mv $old_conf $conf
-fi
-
 if [ -f $conf ]; then
 	# merge local std
-	$MODPATH/fas-rs --merge --local_profile $conf --std_profile $MODPATH/games.toml
+	$MODPATH/fas-rs --merge --local-profile $conf --std_profile $MODPATH/games.toml
 else
 	# creat new config
 	mkdir -p /sdcard/Android/fas-rs

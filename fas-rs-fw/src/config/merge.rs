@@ -18,7 +18,7 @@ use serde_derive::{Deserialize, Serialize};
 use toml::Table;
 
 use super::Config;
-use crate::error::Result;
+use crate::error::{Error, Result};
 
 /// fas配置
 #[derive(Deserialize, Serialize)]
@@ -44,7 +44,7 @@ impl Config {
             .config
             .get("keep_std")
             .and_then_likely(toml::Value::as_bool)
-            .unwrap_or(false)
+            .ok_or(Error::ParseConfig)?
         {
             let new_conf = ConfigData {
                 config: std_conf.config,

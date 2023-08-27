@@ -18,7 +18,7 @@ use fas_rs_fw::prelude::*;
 use atomic::Ordering;
 use cpu_cycles_reader::Cycles;
 use likely_stable::LikelyOption;
-use log::debug;
+use log::trace;
 
 use yata::prelude::*;
 
@@ -40,7 +40,7 @@ impl Schedule {
         let max_pos_per: u8 = Node::read_node("max_freq_per")
             .ok()
             .and_then_likely(|p| p.trim().parse().ok())
-            .unwrap();
+            .unwrap_or(100);
         assert!(max_pos_per <= 100, "The percentage must be less than 100%");
 
         let len = (self.table.len() - 1) as f64;
@@ -51,7 +51,7 @@ impl Schedule {
 
         self.max_diff.store(max_freq, Ordering::Release);
 
-        debug!("Available frequency: {max_pos_per}% max freq: {max_freq}");
+        trace!("Available frequency: {max_pos_per}% max freq: {max_freq}");
 
         freq.clamp(self.min_freq, max_freq)
     }

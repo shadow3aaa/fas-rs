@@ -27,7 +27,7 @@ use std::{
 };
 
 use likely_stable::LikelyOption;
-use log::info;
+use log::{info, trace};
 use parking_lot::RwLock;
 use toml::Value;
 
@@ -100,7 +100,8 @@ impl Config {
     ///
     /// 读取/解析配置失败
     pub fn cur_game_fps(&mut self) -> Option<(String, u32)> {
-        if let Ok(t) = self.topapp_rx.try_recv() {
+        if let Some(t) = self.topapp_rx.try_iter().last() {
+            trace!("topapp: {t:?}");
             self.topapp = t;
         }
 
