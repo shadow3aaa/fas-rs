@@ -53,7 +53,8 @@ impl Schedule {
 
         trace!("Available frequency: {max_pos_per}% max freq: {max_freq}");
 
-        freq.clamp(self.min_freq, max_freq)
+        let min_freq = self.min_freq.min(max_freq);
+        freq.clamp(min_freq, max_freq)
     }
 
     pub fn write(&mut self) {
