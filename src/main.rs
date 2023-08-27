@@ -18,10 +18,11 @@
 #[cfg(not(target_arch = "aarch64"))]
 compile_error!("Only for aarch64 android");
 
+mod clean;
 mod controller;
 mod error;
 
-use std::{fs, process};
+use std::{fs, process, thread};
 
 use fas_rs_fw::prelude::*;
 
@@ -35,9 +36,9 @@ use controller::cpu_common::CpuCommon;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    #[arg(short, long)]
+    #[arg(short, long, default_value = "/sdcard/Android/fas-rs/games.toml")]
     local_profile: String,
-    #[arg(short, long, default_value = "")]
+    #[arg(short, long, default_value = "games.toml")]
     std_profile: String,
     #[arg(short, long)]
     run: bool,
@@ -72,6 +73,10 @@ fn main() -> Result<()> {
         let conf_path = args.local_profile;
         let config = Config::new(conf_path)?;
         let cpu = CpuCommon::new(&config)?;
+
+        thread::Builder::new()
+            .name("Cleaner".into())
+            .spawn(|| clean::cleaner)?;
 
         Scheduler::new()
             .config(config)
