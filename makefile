@@ -25,6 +25,7 @@ package: fas-rs hook
 	@cp -rf module/* output/
 	@cp -f target/aarch64-linux-android/release/fas-rs output/
 	@cp -rf surfaceflinger_hook/output output/hook
+	@mv output/hook/sepolicy.rule output/
 
 	@cd output && \
 	zip -9 -rq fas-rs.zip .
