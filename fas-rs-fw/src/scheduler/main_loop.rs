@@ -15,13 +15,18 @@ use log::{info, trace};
 use surfaceflinger_hook_api::{Connection, JankLevel, JankType};
 
 use super::Scheduler;
-use crate::{config::Config, error::Result, PerformanceController};
+use crate::{
+    config::Config,
+    error::{Error, Result},
+    PerformanceController,
+};
 
 impl<P: PerformanceController> Scheduler<P> {
     pub(super) fn main_loop(
         config: &mut Config,
         controller: &P,
         connection: &mut Connection,
+        jank_level_max: Option<u32>,
     ) -> Result<()> {
         let mut status = None;
         let mut buffer_size: usize = 15;
@@ -36,8 +41,10 @@ impl<P: PerformanceController> Scheduler<P> {
                     info!("Loaded on game: {game}");
                     buffer_size = *target_fps as usize / 4;
                     buffer_size = buffer_size.max(5);
-                    buffer_size =
-                        (buffer_size as u32 * connection.display_fps() / target_fps) as usize;
+                    buffer_size = (u32::try_from(buffer_size)
+                        .map_err(|_| Error::Other("Failed to trans usize to usize"))?
+                        * connection.display_fps()
+                        / target_fps) as usize;
 
                     Self::init_load_game(*target_fps, connection, controller, config)?;
                 } else {
@@ -56,16 +63,10 @@ impl<P: PerformanceController> Scheduler<P> {
             if buffer.len() < buffer_size {
                 buffer.push(level);
             } else {
-                let jank_max = buffer.iter().max().copied().unwrap_or_default();
-                let jank_min = buffer.iter().min().copied().unwrap_or_default();
-
-                let jank = if jank_min != 0 {
-                    (jank_max + jank_min) / 2
-                } else {
-                    jank_max
-                };
+                let jank = jank_level_max.map_or(level, |max| level.min(max));
 
                 controller.perf(jank, config);
+
                 buffer.clear();
             }
         }

@@ -26,6 +26,7 @@ use crate::{
 pub struct Scheduler<P: PerformanceController> {
     controller: Option<P>,
     config: Option<Config>,
+    jank_level_max: Option<u32>,
 }
 
 impl<P: PerformanceController> Scheduler<P> {
@@ -35,6 +36,7 @@ impl<P: PerformanceController> Scheduler<P> {
         Self {
             controller: None,
             config: None,
+            jank_level_max: None,
         }
     }
 
@@ -54,6 +56,14 @@ impl<P: PerformanceController> Scheduler<P> {
         self
     }
 
+    /// jank-level上限，超过的视为上限
+    #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn jank_level_max(mut self, l: u32) -> Self {
+        self.jank_level_max = Some(l);
+        self
+    }
+
     /// 运行
     ///
     /// # Errors
@@ -68,6 +78,11 @@ impl<P: PerformanceController> Scheduler<P> {
         let mut connection = Connection::init_and_wait()?;
         info!("Connected to hook");
 
-        Self::main_loop(&mut config, &controller, &mut connection)
+        Self::main_loop(
+            &mut config,
+            &controller,
+            &mut connection,
+            self.jank_level_max,
+        )
     }
 }
