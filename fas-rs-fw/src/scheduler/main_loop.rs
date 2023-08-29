@@ -36,6 +36,9 @@ impl<P: PerformanceController> Scheduler<P> {
                     info!("Loaded on game: {game}");
                     buffer_size = *target_fps as usize / 4;
                     buffer_size = buffer_size.max(5);
+                    buffer_size =
+                        (buffer_size as u32 * connection.display_fps() / target_fps) as usize;
+
                     Self::init_load_game(*target_fps, connection, controller, config)?;
                 } else {
                     Self::init_load_default(connection, controller, config)?;
@@ -53,8 +56,16 @@ impl<P: PerformanceController> Scheduler<P> {
             if buffer.len() < buffer_size {
                 buffer.push(level);
             } else {
-                let jank = buffer.iter().max().unwrap();
-                controller.perf(*jank, config);
+                let jank_max = buffer.iter().max().copied().unwrap_or_default();
+                let jank_min = buffer.iter().min().copied().unwrap_or_default();
+
+                let jank = if jank_min != 0 {
+                    (jank_max + jank_min) / 2
+                } else {
+                    jank_max
+                };
+
+                controller.perf(jank, config);
                 buffer.clear();
             }
         }
