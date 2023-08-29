@@ -154,14 +154,10 @@ touch_boost = 2
 # clone
 git clone https://github.com/shadow3aaa/fas-rs
 git submodule init
-# 同步子项目
+# Synchronize subprojects
 git submodule update --init --recursive
-# 编译
-make -j2
+# make debug
+make
+# make release
+make RELEASE=true
 ```
-
-## **独立lib，但是因此项目产生**
-
-- [touch_event](https://github.com/shadow3aaa/touch_event): 通过/dev/input/设备分析触摸屏幕状态
-
-- [cpu-cycles-reader](https://github.com/shadow3aaa/cpu-cycles-reader):通过linux内核api读取Cpu Cycles的包装

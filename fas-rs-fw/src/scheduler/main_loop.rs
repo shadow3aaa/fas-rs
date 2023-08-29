@@ -24,8 +24,8 @@ impl<P: PerformanceController> Scheduler<P> {
         connection: &mut Connection,
     ) -> Result<()> {
         let mut status = None;
-        let buffer_size = 17;
-        let mut buffer = Vec::with_capacity(buffer_size);
+        let mut buffer_size: usize = 15;
+        let mut buffer = Vec::with_capacity(144);
 
         loop {
             let update_config = config.cur_game_fps();
@@ -34,6 +34,8 @@ impl<P: PerformanceController> Scheduler<P> {
                 status = update_config;
                 if let Some((game, target_fps)) = &status {
                     info!("Loaded on game: {game}");
+                    buffer_size = *target_fps as usize / 4;
+                    buffer_size = buffer_size.max(5);
                     Self::init_load_game(*target_fps, connection, controller, config)?;
                 } else {
                     Self::init_load_default(connection, controller, config)?;

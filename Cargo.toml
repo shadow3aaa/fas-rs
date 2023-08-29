@@ -3,14 +3,14 @@ name = 'fas-rs'
 version = '0.3.0'
 edition = '2021'
 description = 'Frame-aware scheduling binary'
-authors = ['shadow3']
+authors = [ 'shadow3' ]
 license = 'Apache-2.0'
 readme = 'README.md'
 repository = 'https://github.com/shadow3aaa/fas-rs'
 
 [workspace]
-members = ['fas-rs-fw']
-exclude = ['surfaceflinger_hook']
+members = [ 'fas-rs-fw' ]
+exclude = [ 'surfaceflinger_hook' ]
 
 [dependencies]
 cpu_cycles_reader = '0.1.41'
@@ -22,7 +22,7 @@ log = '0.4.19'
 touch_event = '0.1.3'
 anyhow = "1.0.75"
 thiserror = "1.0.47"
-clap = { version = "4.4.0", features = ["derive"] }
+clap = { version = "4.4.0", features = [ "derive" ] }
 
 [dependencies.fas-rs-fw]
 path = './fas-rs-fw'

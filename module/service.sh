@@ -24,7 +24,7 @@ until [ -d "/sdcard/Android" ]; do
 	sleep 1
 done
 
-nohup env FAS_LOG=info $MODDIR/fas-rs --run --local-profile $dir/games.toml --std-profile $MODDIR/games.toml >$dir/fas_log.txt 2>&1 &
+nohup env FAS_LOG=info $MODDIR/fas-rs --run >$dir/fas_log.txt 2>&1 &
 
 # vtools support
 sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)

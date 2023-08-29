@@ -3,5 +3,5 @@ name=fas-rs
 version=v0.3.0
 versionCode=30
 author=shadow3
-description=Frame-aware scheduling binary https://github.com/shadow3aaa/fas-rs
-updateJson=https://github.com/shadow3aaa/fas-rs/raw/master/magisk_update.json
+description=Frame-aware scheduling binary
+updateJson=https://github.com/shadow3aaa/fas-rs/raw/master/update.json

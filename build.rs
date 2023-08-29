@@ -21,7 +21,6 @@ struct Package {
     pub name: String,
     pub version: String,
     pub description: String,
-    pub repository: String,
 }
 
 #[derive(Deserialize)]
@@ -54,14 +53,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     writeln!(file, "version=v{}", package.version)?;
     writeln!(file, "versionCode={version_code}")?;
     writeln!(file, "author={author}")?;
+    writeln!(file, "description={}", package.description)?;
     writeln!(
         file,
-        "description={} {}",
-        package.description, package.repository
-    )?;
-    writeln!(
-        file,
-        "updateJson=https://github.com/shadow3aaa/fas-rs/raw/master/magisk_update.json"
+        "updateJson=https://github.com/shadow3aaa/fas-rs/raw/master/update.json"
     )?;
 
     Ok(())
