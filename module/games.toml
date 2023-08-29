@@ -3,13 +3,13 @@ EMA_TYPE = "SMA"
 EMA_WIN = 4
 default_target_diff = 450
 default_target_diff_fas = 600
-diff_move = 75
-ignore_little = false
+diff_move = 50
+ignore_little = true
 jank_diff = 145
 keep_std = true
-slide_boost = 3
-slide_timer = 200
-touch_boost = 2
+slide_boost = 2
+slide_timer = 175
+touch_boost = 1
 
 [game_list]
 "com.miHoYo.Yuanshen" = 60
