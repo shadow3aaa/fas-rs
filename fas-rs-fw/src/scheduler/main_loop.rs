@@ -39,10 +39,11 @@ impl<P: PerformanceController> Scheduler<P> {
                 status = update_config;
                 if let Some((game, target_fps)) = &status {
                     info!("Loaded on game: {game}");
+
                     buffer_size = *target_fps as usize / 4;
                     buffer_size = buffer_size.max(5);
                     buffer_size = (u32::try_from(buffer_size)
-                        .map_err(|_| Error::Other("Failed to trans usize to usize"))?
+                        .map_err(|_| Error::Other("Failed to trans usize to u32"))?
                         * connection.display_fps()
                         / target_fps) as usize;
 
@@ -63,7 +64,8 @@ impl<P: PerformanceController> Scheduler<P> {
             if buffer.len() < buffer_size {
                 buffer.push(level);
             } else {
-                let jank = jank_level_max.map_or(level, |max| level.min(max));
+                let max_level = buffer.iter().copied().max().unwrap_or_default();
+                let jank = jank_level_max.map_or(max_level, |max| max_level.min(max));
 
                 controller.perf(jank, config);
 
