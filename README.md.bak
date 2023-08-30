@@ -148,7 +148,7 @@ touch_boost = 2
 "com.tencent.tmgp.sgame" = 120
 ```
 
-## 编译(termux为例)
+## 编译
 
 ```bash
 # clone
@@ -156,8 +156,6 @@ git clone https://github.com/shadow3aaa/fas-rs
 git submodule init
 # Synchronize subprojects
 git submodule update --init --recursive
-# install deps
-apt install zip ndk* clang binutils-is-llvm
 # make debug
 make
 # make release
