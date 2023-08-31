@@ -19,7 +19,7 @@
 compile_error!("Only for aarch64 android");
 
 mod clean;
-mod controller;
+mod cpu_common;
 mod error;
 
 use std::{fs, process, thread};
@@ -31,7 +31,7 @@ use clap::Parser;
 use log::warn;
 use pretty_env_logger::init_custom_env;
 
-use controller::cpu_common::CpuCommon;
+use cpu_common::CpuCommon;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -69,7 +69,6 @@ fn main() -> Result<()> {
     }
 
     if args.run {
-        Node::init()?;
         let conf_path = args.local_profile;
         let config = Config::new(conf_path)?;
         let cpu = CpuCommon::new(&config)?;
@@ -81,8 +80,9 @@ fn main() -> Result<()> {
         Scheduler::new()
             .config(config)
             .controller(cpu)
-            .jank_level_max(3)
+            .jank_level_max(5)
             .start_run()?;
     }
+
     Ok(())
 }

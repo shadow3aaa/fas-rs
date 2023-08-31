@@ -19,6 +19,7 @@ use surfaceflinger_hook_api::Connection;
 use crate::{
     config::Config,
     error::{Error, Result},
+    node::Node,
     PerformanceController,
 };
 
@@ -70,12 +71,18 @@ impl<P: PerformanceController> Scheduler<P> {
     ///
     /// 缺少必要参数构建失败
     pub fn start_run(self) -> Result<()> {
+        Node::init()?;
+
         let mut config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
+
         let controller = self
             .controller
             .ok_or(Error::SchedulerMissing("Controller"))?;
+
         info!("Connecting to hook");
+
         let mut connection = Connection::init_and_wait()?;
+
         info!("Connected to hook");
 
         Self::main_loop(

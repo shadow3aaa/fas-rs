@@ -23,7 +23,6 @@ mod error;
 mod node;
 pub mod prelude;
 mod scheduler;
-pub mod write_pool;
 
 pub use config::Config;
 pub use error::{Error, Result};

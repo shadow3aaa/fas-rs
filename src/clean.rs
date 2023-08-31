@@ -37,7 +37,7 @@ pub fn cleaner() {
             "/sys/module/perfmgr_policy/parameters/perfmgr_enable"
         );
 
-        thread::sleep(Duration::from_secs(5));
+        thread::sleep(Duration::from_secs(10));
     }
 }
 

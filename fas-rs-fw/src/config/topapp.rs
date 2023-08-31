@@ -45,7 +45,7 @@ impl Config {
                     .map_err(|_| Error::Other("Failed to send topapp"))
                     .unwrap();
             }
-            thread::sleep(Duration::from_secs(1));
+            thread::sleep(Duration::from_secs(2));
         }
     }
 

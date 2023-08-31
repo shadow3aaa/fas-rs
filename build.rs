@@ -59,5 +59,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         "updateJson=https://github.com/shadow3aaa/fas-rs/raw/master/update.json"
     )?;
 
+    let _ = fs::remove_file("module/README.md");
+    fs::copy("README.md", "module/README.md")?;
+
     Ok(())
 }

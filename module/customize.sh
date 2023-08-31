@@ -29,16 +29,18 @@ if [ $API -lt 33 ]; then
 fi
 
 # permission
-chmod a+x $MODPATH/fas-rs
+chmod +x $MODPATH/fas-rs
 
 if [ -f $conf ]; then
 	# merge local std
-	$MODPATH/fas-rs --merge --local-profile $conf --std_profile $MODPATH/games.toml
+	$MODPATH/fas-rs --merge --local-profile $conf --std-profile $MODPATH/games.toml
 else
 	# creat new config
-	mkdir -p /sdcard/Android/fas-rs
+	mkdir -p $dir
 	cp $MODPATH/games.toml $conf
 fi
+
+cp -f $MODPATH/README.md $dir/doc.md
 
 # vtools support
 sh $MODPATH/vtools/init_vtools.sh $(realpath $MODPATH/module.prop)
