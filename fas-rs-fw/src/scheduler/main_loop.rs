@@ -11,8 +11,10 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+use std::process::Command;
+
 use log::{info, trace};
-use surfaceflinger_hook_api::{Connection, JankLevel, JankType};
+use surfaceflinger_hook_api::Connection;
 
 use super::Scheduler;
 use crate::{
@@ -31,7 +33,7 @@ impl<P: PerformanceController> Scheduler<P> {
         let mut status = None;
         let mut buffer_size: usize = 15;
         let mut buffer = Vec::with_capacity(144);
-        
+
         Self::init_load_default(connection, controller, config)?;
 
         loop {
@@ -46,7 +48,7 @@ impl<P: PerformanceController> Scheduler<P> {
                     buffer_size = buffer_size.max(5);
                     buffer_size = (u32::try_from(buffer_size)
                         .map_err(|_| Error::Other("Failed to trans usize to u32"))?
-                        * connection.display_fps()
+                        * get_refresh_rate().unwrap_or_default()
                         / target_fps) as usize;
 
                     Self::init_load_game(*target_fps, connection, controller, config)?;
@@ -57,16 +59,16 @@ impl<P: PerformanceController> Scheduler<P> {
                 continue;
             }
 
-            let Ok(JankLevel(level)) = connection.recv() else {
+            let Ok(level) = connection.recv() else {
                 continue;
             };
 
-            trace!("Recv jank: {level}");
-            
-            controller.perf(level, config);
+            trace!("Recv jank: {level:?}");
+
+            controller.perf(*level, config);
 
             if buffer.len() < buffer_size {
-                buffer.push(level);
+                buffer.push(*level);
             } else {
                 let max_level = buffer.iter().copied().max().unwrap_or_default();
                 let jank = jank_level_max.map_or(max_level, |max| max_level.min(max));
@@ -84,12 +86,34 @@ impl<P: PerformanceController> Scheduler<P> {
         controller: &P,
         config: &Config,
     ) -> Result<()> {
-        connection.set_input(Some(target_fps), JankType::Soft)?;
+        connection.set_input(Some(target_fps))?;
         controller.init_game(config)
     }
 
     fn init_load_default(connection: &Connection, controller: &P, config: &Config) -> Result<()> {
-        connection.set_input(None, JankType::Vsync)?;
+        connection.set_input(None)?;
         controller.init_default(config)
     }
+}
+
+fn get_refresh_rate() -> Option<u32> {
+    let dumpsys_data = Command::new("dumpsys")
+        .arg("SurfaceFlinger")
+        .output()
+        .ok()?;
+    let dumpsys_data = String::from_utf8_lossy(&dumpsys_data.stdout);
+
+    let parse_line = dumpsys_data
+        .lines()
+        .find(|line| line.contains("refresh-rate"))?;
+    Some(
+        parse_line
+            .split(':')
+            .nth(1)?
+            .split('.')
+            .next()?
+            .trim()
+            .parse()
+            .unwrap(),
+    )
 }
