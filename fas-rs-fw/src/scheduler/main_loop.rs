@@ -31,6 +31,8 @@ impl<P: PerformanceController> Scheduler<P> {
         let mut status = None;
         let mut buffer_size: usize = 15;
         let mut buffer = Vec::with_capacity(144);
+        
+        Self::init_load_default(connection, controller, config)?;
 
         loop {
             let update_config = config.cur_game_fps();
@@ -60,6 +62,8 @@ impl<P: PerformanceController> Scheduler<P> {
             };
 
             trace!("Recv jank: {level}");
+            
+            controller.perf(level, config);
 
             if buffer.len() < buffer_size {
                 buffer.push(level);
@@ -85,7 +89,7 @@ impl<P: PerformanceController> Scheduler<P> {
     }
 
     fn init_load_default(connection: &Connection, controller: &P, config: &Config) -> Result<()> {
-        connection.set_input(None, JankType::Soft)?;
+        connection.set_input(None, JankType::Vsync)?;
         controller.init_default(config)
     }
 }

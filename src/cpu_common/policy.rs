@@ -98,12 +98,12 @@ impl Ord for Policy {
             .file_name()
             .and_then_likely(|f| Self::parse_policy(f.to_str()?))
             .unwrap();
-        let _num_b: u8 = other
+        let num_b: u8 = other
             .path
             .file_name()
             .and_then_likely(|f| Self::parse_policy(f.to_str()?))
             .unwrap();
-        num_a.cmp(&num_a)
+        num_a.cmp(&num_b)
     }
 }
 

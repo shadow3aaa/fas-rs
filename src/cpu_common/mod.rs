@@ -83,7 +83,7 @@ impl PerformanceController for CpuCommon {
         } else {
             self.policies
                 .iter()
-                .for_each(|p| p.release(self.step.saturating_mul(l)).unwrap());
+                .for_each(|p| p.release(self.step * l).unwrap());
         }
     }
 
