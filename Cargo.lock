@@ -535,7 +535,7 @@ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 [[package]]
 name = "surfaceflinger_hook_api"
 version = "0.1.0"
-source = "git+https://github.com/shadow3aaa/surfaceflinger_hook_api#c003da6dfba82f9386169912c9437bc9821554c2"
+source = "git+https://github.com/shadow3aaa/surfaceflinger_hook_api#2ab5a07c7c91f11adf105521c5d3abcb4121a34e"
 dependencies = [
  "thiserror",
  "unix-named-pipe",
