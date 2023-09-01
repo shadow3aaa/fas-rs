@@ -80,7 +80,7 @@ fn main() -> Result<()> {
         Scheduler::new()
             .config(config)
             .controller(cpu)
-            .jank_level_max(5)
+            .jank_level_max(3)
             .start_run()?;
     }
 
