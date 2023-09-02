@@ -19,7 +19,7 @@ use crate::{
 };
 
 const POWERSAVE_DUR_MAX: Duration = Duration::from_nanos(1_000_000);
-const BALANCE_DUR_MAX: Duration = Duration::from_nanos(500_000);
+const BALANCE_DUR_MAX: Duration = Duration::from_nanos(750_000);
 const PERFORMANCE_DUR_MAX: Duration = Duration::from_nanos(250_000);
 const FAST_DUR_MAX: Duration = Duration::from_nanos(100_000);
 
