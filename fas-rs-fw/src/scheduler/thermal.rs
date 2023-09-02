@@ -97,10 +97,7 @@ impl Thermal {
             Err(e) => match e.kind() {
                 IntErrorKind::PosOverflow => Temp::MAX,
                 IntErrorKind::NegOverflow => Temp::MIN,
-                _ => {
-                    log::error!("Failed to parse temp: {temp}");
-                    return Err(Error::Other("Failed to parse temp"));
-                }
+                _ => return Err(Error::Other("Failed to parse temp")),
             },
         };
 
