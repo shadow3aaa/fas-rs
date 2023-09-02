@@ -11,6 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+use std::time::Duration;
 
 use log::{info, trace};
 use surfaceflinger_hook_api::Connection;
@@ -73,7 +74,7 @@ impl<P: PerformanceController> Scheduler<P> {
         controller: &P,
         config: &Config,
     ) -> Result<()> {
-        connection.set_input(Some(target_fps))?;
+        connection.set_input(Some((target_fps, Duration::new(0, 0))))?;
         controller.init_game(config)
     }
 

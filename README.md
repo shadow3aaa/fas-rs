@@ -64,17 +64,9 @@
 
 ```toml
 [config]
-EMA_TYPE = "SMA"
-EMA_WIN = 4
-default_target_diff = 450
-default_target_diff_fas = 600
-diff_move = 75
 ignore_little = true
-jank_diff = 145
 keep_std = true
-slide_boost = 3
-slide_timer = 200
-touch_boost = 2
+min_step = 20
 
 [game_list]
 "com.miHoYo.Yuanshen" = 60
@@ -84,6 +76,7 @@ touch_boost = 2
 "com.netease.x19" = 120
 "com.pixeltoys.freeblade" = 60
 "com.prpr.musedash.TapTap" = 60
+"com.shangyoo.neon" = 60
 "com.tencent.tmgp.pubgmhd" = 60
 "com.tencent.tmgp.sgame" = 120
 ```
