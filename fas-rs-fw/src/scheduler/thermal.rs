@@ -31,7 +31,7 @@ pub struct Thermal {
 impl Thermal {
     pub fn new(config: &Config) -> Result<Self> {
         let temp_path = fs::read_dir("/sys/devices/virtual/thermal")?
-            .filter_map(|t| t.ok())
+            .filter_map(std::result::Result::ok)
             .find_map(|t| {
                 let theraml_type = t.path().join("type");
                 let thermal_type = fs::read_to_string(theraml_type).ok()?;

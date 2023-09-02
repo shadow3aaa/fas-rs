@@ -16,7 +16,7 @@ use std::time::Duration;
 use log::{info, trace};
 use surfaceflinger_hook_api::Connection;
 
-use super::{Scheduler, thermal::Thermal};
+use super::{thermal::Thermal, Scheduler};
 use crate::{config::Config, error::Result, PerformanceController};
 
 const BIG_JANK_REC_COUNT: u8 = 3;
