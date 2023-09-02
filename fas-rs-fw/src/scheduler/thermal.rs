@@ -97,7 +97,11 @@ impl Thermal {
                 POWERSAVE_DUR_MAX.mul_f32(rhs)
             }
             "balance" => {
-                let rhs = Self::rhs(temp as f32, self.balance as f32 + 500.0, self.balance as f32);
+                let rhs = Self::rhs(
+                    temp as f32,
+                    self.balance as f32 + 500.0,
+                    self.balance as f32,
+                );
                 BALANCE_DUR_MAX.mul_f32(rhs)
             }
             "performance" => {
