@@ -38,7 +38,11 @@ toml = '0.7.6'
 serde = '1.0.178'
 serde_derive = '1.0.178'
 
+[profile.dev]
+overflow-checks = false
+
 [profile.release]
+overflow-checks = false
 codegen-units = 1
 lto = 'fat'
 opt-level = 3
