@@ -14,7 +14,8 @@
 use std::{
     cell::Cell,
     cmp::Ordering,
-    fs::{self},
+    fs,
+    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
 
@@ -80,6 +81,9 @@ impl Policy {
 
     fn write_freq(&self) -> Result<()> {
         let path = self.path.join("scaling_max_freq");
+
+        let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
+
         fs::write(path, format!("{}\n", self.cur_freq.get()))?;
 
         Ok(())
