@@ -55,7 +55,7 @@
 
 - 类型: 整数
 - 可用值: 任意正整数
-- 作用: 对应模式触发温控限制的电池温度，默认为`balance`单位是`摄氏度 * 10`，比如25摄氏度就是250
+- 作用: 对应模式触发温控限制的电池温度，默认为`balance`单位是`摄氏度 * 100`，比如25.5摄氏度就是25500
 
 #### **\* : 默认配置**
 
@@ -73,10 +73,10 @@
 ignore_little = true
 keep_std = true
 min_step = 20
-powersave_thermal = 36
-balance_thermal = 38
-performance_thermal = 42
-fast_thermal = 46
+powersave_thermal = 36000
+balance_thermal = 38000
+performance_thermal = 42000
+fast_thermal = 46000
 
 [game_list]
 "com.miHoYo.Yuanshen" = 60
