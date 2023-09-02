@@ -16,10 +16,11 @@ use std::time::Duration;
 use log::{info, trace};
 use surfaceflinger_hook_api::Connection;
 
-use super::Scheduler;
+use super::{Scheduler, thermal::Thermal};
 use crate::{config::Config, error::Result, PerformanceController};
 
 const BIG_JANK_REC_COUNT: u8 = 3;
+const FIX_TIME_STEP: Duration = Duration::from_nanos(10000);
 
 impl<P: PerformanceController> Scheduler<P> {
     pub(super) fn main_loop(
@@ -28,19 +29,34 @@ impl<P: PerformanceController> Scheduler<P> {
         connection: &mut Connection,
         jank_level_max: Option<u32>,
     ) -> Result<()> {
+        let thermal = Thermal::new(config)?;
+
         Self::init_load_default(connection, controller, config)?;
 
         let mut status = None;
         let mut big_jank_counter = 0;
+        let mut fix_time = Duration::ZERO;
+        let mut target_fps = 0;
 
         loop {
             let update_config = config.cur_game_fps();
 
+            if thermal.need_theraml()? {
+                fix_time = fix_time.saturating_add(FIX_TIME_STEP);
+            } else {
+                fix_time = fix_time.saturating_sub(FIX_TIME_STEP);
+            }
+
+            connection.set_input(Some((target_fps, fix_time)))?;
+
             if status != update_config {
                 status = update_config;
-                if let Some((game, target_fps)) = &status {
+                if let Some((game, fps)) = &status {
                     info!("Loaded on game: {game}");
-                    Self::init_load_game(*target_fps, connection, controller, config)?;
+                    info!("Loaded on target_fps: {fps}");
+
+                    target_fps = *fps;
+                    Self::init_load_game(target_fps, connection, controller, config, fix_time)?;
                 } else {
                     Self::init_load_default(connection, controller, config)?;
                 }
@@ -73,8 +89,9 @@ impl<P: PerformanceController> Scheduler<P> {
         connection: &Connection,
         controller: &P,
         config: &Config,
+        fix_time: Duration,
     ) -> Result<()> {
-        connection.set_input(Some((target_fps, Duration::new(0, 0))))?;
+        connection.set_input(Some((target_fps, fix_time)))?;
         controller.init_game(config)
     }
 

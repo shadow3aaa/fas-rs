@@ -21,6 +21,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[error("Got an error when parsing config")]
     ParseConfig,
+    #[error("Got an error when parsing node")]
+    ParseNode,
     #[error("No such a config")]
     ConfigValueNotFound,
     #[error("No such a node")]

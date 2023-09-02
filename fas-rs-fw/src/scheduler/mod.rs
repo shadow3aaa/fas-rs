@@ -12,6 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 mod main_loop;
+mod thermal;
 
 use log::info;
 use surfaceflinger_hook_api::Connection;
@@ -72,6 +73,7 @@ impl<P: PerformanceController> Scheduler<P> {
     /// 缺少必要参数构建失败
     pub fn start_run(self) -> Result<()> {
         Node::init()?;
+        Node::create_node("mode", "balance")?;
 
         let mut config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
 
