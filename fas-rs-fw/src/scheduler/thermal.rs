@@ -91,25 +91,25 @@ impl Thermal {
             "powersave" => {
                 let rhs = Self::rhs(
                     temp as f32,
-                    self.powersave as f32 + 5.0,
+                    self.powersave as f32 + 500.0,
                     self.powersave as f32,
                 );
                 POWERSAVE_DUR_MAX.mul_f32(rhs)
             }
             "balance" => {
-                let rhs = Self::rhs(temp as f32, self.balance as f32 + 5.0, self.balance as f32);
+                let rhs = Self::rhs(temp as f32, self.balance as f32 + 500.0, self.balance as f32);
                 BALANCE_DUR_MAX.mul_f32(rhs)
             }
             "performance" => {
                 let rhs = Self::rhs(
                     temp as f32,
-                    self.performance as f32 + 5.0,
+                    self.performance as f32 + 500.0,
                     self.performance as f32,
                 );
                 PERFORMANCE_DUR_MAX.mul_f32(rhs)
             }
             "fast" => {
-                let rhs = Self::rhs(temp as f32, self.fast as f32 + 5.0, self.fast as f32);
+                let rhs = Self::rhs(temp as f32, self.fast as f32 + 500.0, self.fast as f32);
                 FAST_DUR_MAX.mul_f32(rhs)
             }
             _ => return Err(Error::ParseNode),
