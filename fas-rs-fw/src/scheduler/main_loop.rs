@@ -19,7 +19,7 @@ use surfaceflinger_hook_api::Connection;
 use super::{thermal::Thermal, Scheduler};
 use crate::{config::Config, error::Result, PerformanceController};
 
-const BIG_JANK_REC_COUNT: u8 = 3;
+const BIG_JANK_REC_COUNT: u8 = 5;
 
 impl<P: PerformanceController> Scheduler<P> {
     pub(super) fn main_loop(
@@ -64,13 +64,11 @@ impl<P: PerformanceController> Scheduler<P> {
 
             trace!("Recv jank: {level:?}");
 
-            if level >= 3 {
+            if level >= 2 {
                 big_jank_counter = BIG_JANK_REC_COUNT; // big jank
-            } else if big_jank_counter > 0 {
+            } else if big_jank_counter > 0 && level == 0 {
                 big_jank_counter -= 1;
-                if level == 0 {
-                    continue; // 等待BIG_JANK_REC_COUNT帧后才能降频
-                }
+                continue; // 等待BIG_JANK_REC_COUNT帧后才能降频
             }
 
             controller.perf(level, config);

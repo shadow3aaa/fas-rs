@@ -18,10 +18,10 @@ use crate::{
     Config, Node,
 };
 
-const POWERSAVE_DUR_MAX: Duration = Duration::from_nanos(200_000);
-const BALANCE_DUR_MAX: Duration = Duration::from_nanos(150_000);
-const PERFORMANCE_DUR_MAX: Duration = Duration::from_nanos(100_000);
-const FAST_DUR_MAX: Duration = Duration::from_nanos(50_000);
+const POWERSAVE_DUR_MAX: Duration = Duration::from_nanos(1_000_000);
+const BALANCE_DUR_MAX: Duration = Duration::from_nanos(500_000);
+const PERFORMANCE_DUR_MAX: Duration = Duration::from_nanos(250_000);
+const FAST_DUR_MAX: Duration = Duration::from_nanos(100_000);
 
 pub type Temp = i32;
 
