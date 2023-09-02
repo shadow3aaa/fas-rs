@@ -18,6 +18,8 @@ use surfaceflinger_hook_api::Connection;
 use super::Scheduler;
 use crate::{config::Config, error::Result, PerformanceController};
 
+const BIG_JANK_REC_COUNT: u8 = 3;
+
 impl<P: PerformanceController> Scheduler<P> {
     pub(super) fn main_loop(
         config: &mut Config,
@@ -25,9 +27,10 @@ impl<P: PerformanceController> Scheduler<P> {
         connection: &mut Connection,
         jank_level_max: Option<u32>,
     ) -> Result<()> {
-        let mut status = None;
-
         Self::init_load_default(connection, controller, config)?;
+
+        let mut status = None;
+        let mut big_jank_counter = 0;
 
         loop {
             let update_config = config.cur_game_fps();
@@ -50,6 +53,16 @@ impl<P: PerformanceController> Scheduler<P> {
             let level = jank_level_max.map_or(*level, |max| level.min(max));
 
             trace!("Recv jank: {level:?}");
+
+            if level >= 3 {
+                big_jank_counter = BIG_JANK_REC_COUNT; // big jank
+            } else if big_jank_counter > 0 {
+                big_jank_counter -= 1;
+                if level == 0 {
+                    continue; // 等待BIG_JANK_REC_COUNT帧后才能降频
+                }
+            }
+
             controller.perf(level, config);
         }
     }
