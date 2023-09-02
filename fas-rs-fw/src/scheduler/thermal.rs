@@ -36,7 +36,12 @@ impl Thermal {
                 let thermal_type = t.path().join("type");
                 let thermal_type = fs::read_to_string(thermal_type).ok()?;
                 if thermal_type.trim() == "battery" {
-                    Some(t.path().join("temp"))
+                    let path = t.path().join("temp");
+                    if path.exists() {
+                        Some(path)
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 }
@@ -87,12 +92,15 @@ impl Thermal {
 
     fn temp(&self) -> Result<Temp> {
         let temp = fs::read_to_string(&self.temp_path)?;
-        let temp: Temp = match temp.parse() {
+        let temp: Temp = match temp.trim().parse() {
             Ok(o) => o,
             Err(e) => match e.kind() {
                 IntErrorKind::PosOverflow => Temp::MAX,
                 IntErrorKind::NegOverflow => Temp::MIN,
-                _ => return Err(Error::Other("Failed to parse temp")),
+                _ => {
+                    log::error!("Failed to parse temp: {temp}");
+                    return Err(Error::Other("Failed to parse temp"));
+                }
             },
         };
 

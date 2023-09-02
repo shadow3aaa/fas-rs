@@ -75,7 +75,7 @@ keep_std = true
 min_step = 20
 powersave_thermal = 36
 balance_thermal = 38
-performace_thermal = 42
+performance_thermal = 42
 fast_thermal = 46
 
 [game_list]
