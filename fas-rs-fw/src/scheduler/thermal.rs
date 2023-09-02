@@ -11,12 +11,17 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{fs, num::IntErrorKind, path::PathBuf};
+use std::{fs, num::IntErrorKind, path::PathBuf, time::Duration};
 
 use crate::{
     error::{Error, Result},
     Config, Node,
 };
+
+const POWERSAVE_DUR_MAX: Duration = Duration::from_nanos(200_000);
+const BALANCE_DUR_MAX: Duration = Duration::from_nanos(150_000);
+const PERFORMANCE_DUR_MAX: Duration = Duration::from_nanos(100_000);
+const FAST_DUR_MAX: Duration = Duration::from_nanos(50_000);
 
 pub type Temp = i32;
 
@@ -77,15 +82,36 @@ impl Thermal {
         })
     }
 
-    pub fn need_thermal(&self) -> Result<bool> {
+    #[allow(clippy::cast_precision_loss)]
+    pub fn thermal(&self) -> Result<Duration> {
         let temp = self.temp()?;
         let mode = Node::read_node("mode")?;
 
         Ok(match mode.trim() {
-            "powersave" => temp >= self.powersave,
-            "balance" => temp >= self.balance,
-            "performance" => temp >= self.performance,
-            "fast" => temp >= self.fast,
+            "powersave" => {
+                let rhs = Self::rhs(
+                    temp as f32,
+                    self.powersave as f32 + 5.0,
+                    self.powersave as f32,
+                );
+                POWERSAVE_DUR_MAX.mul_f32(rhs)
+            }
+            "balance" => {
+                let rhs = Self::rhs(temp as f32, self.balance as f32 + 5.0, self.balance as f32);
+                BALANCE_DUR_MAX.mul_f32(rhs)
+            }
+            "performance" => {
+                let rhs = Self::rhs(
+                    temp as f32,
+                    self.performance as f32 + 5.0,
+                    self.performance as f32,
+                );
+                PERFORMANCE_DUR_MAX.mul_f32(rhs)
+            }
+            "fast" => {
+                let rhs = Self::rhs(temp as f32, self.fast as f32 + 5.0, self.fast as f32);
+                FAST_DUR_MAX.mul_f32(rhs)
+            }
             _ => return Err(Error::ParseNode),
         })
     }
@@ -102,5 +128,16 @@ impl Thermal {
         };
 
         Ok(temp)
+    }
+
+    fn rhs(cur: f32, max: f32, min: f32) -> f32 {
+        if cur > max {
+            return 1.0;
+        } else if cur < min {
+            return 0.0;
+        }
+
+        let per = (cur - min) / (max - min);
+        1.0 - (per * -2.8).exp()
     }
 }
