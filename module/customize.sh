@@ -17,14 +17,17 @@
 SKIPUNZIP=0
 dir=/sdcard/Android/fas-rs
 conf=/sdcard/Android/fas-rs/games.toml
+lib=/system/lib64/libsurfaceflinger.so
 
-if [ "$ARCH" != "arm64" ]; then
-	ui_print "Platform not supported"
-	abort
-fi
-
-if [ $API -lt 33 ]; then
-	ui_print "Required android version 13+"
+if [ -f $lib ]; then
+	if readelf -s $lib | grep postComposition | grep -q SurfaceFlinger; then
+		ui_print "Passed support test"
+	else
+		ui_print "Could not find the required hook point"
+		abort
+	fi
+else
+	ui_print "$lib does not exists"
 	abort
 fi
 
