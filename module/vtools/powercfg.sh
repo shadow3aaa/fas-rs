@@ -14,12 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-max_freq_per=/dev/fas_rs/max_freq_per
+mode=/dev/fas_rs/mode
 
 case "$1" in
-"init" | "fast" | "pedestal") echo 100 >$max_freq_per ;;
-"standby") echo 25 >$max_freq_per ;;
-"powersave") echo 70 >$max_freq_per ;;
-"balance") echo 80 >$max_freq_per ;;
-"performance") echo 90 >$max_freq_per ;;
+"init" | "fast" | "pedestal") echo fast >$mode ;;
+"powersave" | "standby") echo powersave >$mode ;;
+"balance") echo balance >$mode ;;
+"performance") echo performance >$mode ;;
 esac

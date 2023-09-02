@@ -18,7 +18,7 @@ use crate::{
     Config, Node,
 };
 
-pub type Temp = i8;
+pub type Temp = i16;
 
 pub struct Thermal {
     temp_path: PathBuf,
