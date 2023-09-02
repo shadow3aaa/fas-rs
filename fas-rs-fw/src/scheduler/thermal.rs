@@ -33,15 +33,15 @@ impl Thermal {
         let temp_path = fs::read_dir("/sys/devices/virtual/thermal")?
             .filter_map(std::result::Result::ok)
             .find_map(|t| {
-                let theraml_type = t.path().join("type");
-                let thermal_type = fs::read_to_string(theraml_type).ok()?;
+                let thermal_type = t.path().join("type");
+                let thermal_type = fs::read_to_string(thermal_type).ok()?;
                 if thermal_type.trim() == "battery" {
                     Some(t.path().join("temp"))
                 } else {
                     None
                 }
             })
-            .ok_or(Error::Other("No battery theraml device found"))?;
+            .ok_or(Error::Other("No battery thermal device found"))?;
 
         Ok(Self {
             temp_path,
@@ -72,7 +72,7 @@ impl Thermal {
         })
     }
 
-    pub fn need_theraml(&self) -> Result<bool> {
+    pub fn need_thermal(&self) -> Result<bool> {
         let temp = self.temp()?;
         let mode = Node::read_node("mode")?;
 

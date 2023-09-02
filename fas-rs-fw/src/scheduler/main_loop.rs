@@ -41,7 +41,7 @@ impl<P: PerformanceController> Scheduler<P> {
         loop {
             let update_config = config.cur_game_fps();
 
-            if thermal.need_theraml()? {
+            if thermal.need_thermal()? {
                 fix_time = fix_time.saturating_add(FIX_TIME_STEP);
             } else {
                 fix_time = fix_time.saturating_sub(FIX_TIME_STEP);
