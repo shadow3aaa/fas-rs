@@ -34,7 +34,8 @@ pub fn cleaner() {
         disable!(
             "/sys/module/mtk_fpsgo/parameters/perfmgr_enable",
             "/sys/module/perfmgr/parameters/perfmgr_enable",
-            "/sys/module/perfmgr_policy/parameters/perfmgr_enable"
+            "/sys/module/perfmgr_policy/parameters/perfmgr_enable",
+            "/sys/module/perfmgr_mtk/perfmgr_enable"
         );
 
         thread::sleep(Duration::from_secs(10));
