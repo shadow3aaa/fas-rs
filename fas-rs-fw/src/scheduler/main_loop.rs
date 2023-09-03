@@ -20,6 +20,7 @@ use super::{thermal::Thermal, Scheduler};
 use crate::{config::Config, error::Result, PerformanceController};
 
 const BIG_JANK_REC_COUNT: u8 = 5;
+const RELEASE_START_COUNT: u8 = 2;
 
 impl<P: PerformanceController> Scheduler<P> {
     pub(super) fn main_loop(
@@ -34,6 +35,7 @@ impl<P: PerformanceController> Scheduler<P> {
 
         let mut status = None;
         let mut big_jank_counter = 0;
+        let mut no_jank_counter = 0;
         let mut target_fps = 0;
 
         loop {
@@ -69,6 +71,15 @@ impl<P: PerformanceController> Scheduler<P> {
             } else if big_jank_counter > 0 && level == 0 {
                 big_jank_counter -= 1;
                 continue; // 等待BIG_JANK_REC_COUNT帧后才能降频
+            }
+
+            if level == 0 {
+                if no_jank_counter < RELEASE_START_COUNT {
+                    no_jank_counter += 1;
+                    continue;
+                }
+            } else {
+                no_jank_counter = 0;
             }
 
             controller.perf(level, config);
