@@ -17,6 +17,7 @@ use std::{cell::Cell, ffi::OsStr, fs};
 
 use anyhow::Result;
 use fas_rs_fw::prelude::*;
+use log::error;
 
 use crate::error::Error;
 use policy::Policy;
@@ -79,22 +80,26 @@ impl PerformanceController for CpuCommon {
         if l == 0 {
             self.policies
                 .iter()
-                .for_each(|p| p.limit(self.step).unwrap());
+                .for_each(|p| p.limit(self.step).unwrap_or_else(|e| error!("{e:?}")));
         } else {
             self.policies
                 .iter()
-                .for_each(|p| p.release(self.step * l).unwrap());
+                .for_each(|p| p.release(self.step * l).unwrap_or_else(|e| error!("{e:?}")));
         }
     }
 
     fn init_game(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
-        self.policies.iter().for_each(|p| p.reset().unwrap());
+        self.policies
+            .iter()
+            .for_each(|p| p.reset().unwrap_or_else(|e| error!("{e:?}")));
         self.enable.set(true);
         Ok(())
     }
 
     fn init_default(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
-        self.policies.iter().for_each(|p| p.reset().unwrap());
+        self.policies
+            .iter()
+            .for_each(|p| p.reset().unwrap_or_else(|e| error!("{e:?}")));
         self.enable.set(false);
         Ok(())
     }
