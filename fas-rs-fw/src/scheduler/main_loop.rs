@@ -13,7 +13,7 @@
 *  limitations under the License. */
 use std::time::Duration;
 
-use log::{info, trace};
+use log::{error, info, trace};
 use surfaceflinger_hook_api::Connection;
 
 use super::{thermal::Thermal, Scheduler};
@@ -40,15 +40,17 @@ impl<P: PerformanceController> Scheduler<P> {
 
         loop {
             let update_config = config.cur_game_fps();
-            let fix_time = thermal.thermal()?;
+            let fix_time = thermal.thermal().unwrap_or_else(|e| {
+                error!("{e:?}");
+                Duration::ZERO
+            });
 
             connection.set_input(Some((target_fps, fix_time)))?;
 
             if status != update_config {
                 status = update_config;
                 if let Some((game, fps)) = &status {
-                    info!("Loaded on game: {game}");
-                    info!("Loaded on target_fps: {fps}");
+                    info!("Loaded on game: {game}, target_fps: {fps}");
 
                     target_fps = *fps;
                     Self::init_load_game(target_fps, connection, controller, config, fix_time)?;
