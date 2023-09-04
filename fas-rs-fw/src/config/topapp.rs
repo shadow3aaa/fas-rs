@@ -37,7 +37,6 @@ impl Config {
             }
 
             let cur = Self::get_top_pkgname();
-            // println!("{cur:?}");
 
             if temp != cur {
                 temp = cur.clone();

@@ -114,7 +114,7 @@ impl Config {
             .cloned()
             .unwrap();
 
-        drop(toml); // early-drop
+        drop(toml); // early-drop Rwlock
 
         let pkg = pkgs.into_iter().find(|key| list.contains_key(key))?;
 
@@ -132,7 +132,6 @@ impl Config {
     /// # Errors
     ///
     /// 读取目标配置失败
-    #[allow(unused)]
     pub fn get_conf<S: AsRef<str>>(&self, l: S) -> Result<Value> {
         let label = l.as_ref();
 
