@@ -20,7 +20,7 @@ use super::{thermal::Thermal, Scheduler};
 use crate::{config::Config, error::Result, PerformanceController};
 
 const BIG_JANK_REC_COUNT: u8 = 5;
-const RELEASE_START_COUNT: u8 = 2;
+const SIMP_JANK_REC_COUNT: u8 = 3;
 
 impl<P: PerformanceController> Scheduler<P> {
     pub(super) fn main_loop(
@@ -34,8 +34,11 @@ impl<P: PerformanceController> Scheduler<P> {
         Self::init_load_default(connection, controller, config)?;
 
         let mut status = None;
-        let mut big_jank_counter = 0;
+
+        let mut big_jank = false;
+        let mut simp_jank = false;
         let mut no_jank_counter = 0;
+
         let mut target_fps = 0;
 
         loop {
@@ -67,20 +70,21 @@ impl<P: PerformanceController> Scheduler<P> {
             let level = jank_level_max.map_or(*level, |max| level.min(max));
 
             trace!("Recv jank: {level:?}");
-
-            if level >= 2 {
-                big_jank_counter = BIG_JANK_REC_COUNT; // big jank
-            } else if big_jank_counter > 0 && level == 0 {
-                big_jank_counter -= 1;
-                continue; // 等待BIG_JANK_REC_COUNT帧后才能降频
-            }
-
-            if level == 0 {
-                if no_jank_counter < RELEASE_START_COUNT {
-                    no_jank_counter += 1;
-                    continue;
+            if level > 0 {
+                if level > 2 {
+                    big_jank = true;
                 }
+                simp_jank = true;
+
+                no_jank_counter = 0;
+            } else if (big_jank && no_jank_counter < BIG_JANK_REC_COUNT)
+                || (simp_jank && no_jank_counter < SIMP_JANK_REC_COUNT)
+            {
+                no_jank_counter += 1;
+                continue;
             } else {
+                big_jank = false;
+                simp_jank = false;
                 no_jank_counter = 0;
             }
 
