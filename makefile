@@ -34,6 +34,7 @@ else
 	cp -f target/aarch64-linux-android/debug/fas-rs output/
 endif
 
+	mkdir output/zygisk
 	cp -f libgui-analyze/build/arm64-v8a.so output/zygisk
 
 	cd output && \

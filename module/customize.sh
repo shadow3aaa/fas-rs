@@ -17,17 +17,12 @@
 SKIPUNZIP=0
 dir=/sdcard/Android/fas-rs
 conf=/sdcard/Android/fas-rs/games.toml
-lib=/system/lib64/libsurfaceflinger.so
+lib=/system/lib64/libgui.so
 
 if [ -f $lib ]; then
-	if readelf -s $lib | grep postComposition | grep -q SurfaceFlinger; then
-		ui_print "Passed support test"
-	else
-		ui_print "Could not find the required hook point"
-		abort
-	fi
+	ui_print "Supported device"
 else
-	ui_print "$lib does not exists"
+	ui_print "$lib does not exists, fas-rs won't work"
 	abort
 fi
 

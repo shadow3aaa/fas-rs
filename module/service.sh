@@ -17,9 +17,6 @@
 MODDIR=${0%/*}
 dir=/sdcard/Android/fas-rs
 
-chmod +x $MODDIR/hook/install_hook.sh
-$MODDIR/hook/install_hook.sh
-
 # wait until the sdcard is decrypted
 until [ -d "/sdcard/Android" ]; do
 	sleep 1
