@@ -3,9 +3,9 @@ RELEASE ?= false
 
 .PHONY: clean
 clean:
-	@rm -rf output/*
-	@cargo clean
-	@cd surfaceflinger_hook && \
+	rm -rf output/*
+	cargo clean
+	cd surfaceflinger_hook && \
     make clean
 
 .PHONY: fas-rs
@@ -19,25 +19,23 @@ endif
 
 .PHONY: hook
 hook:
-	@cd surfaceflinger_hook && \
+	cd libgui-analyze && \
 	make RELEASE=$(RELEASE)
 
 .PHONY: package
 package: fas-rs hook
-	@rm -rf output/*
-	@mkdir -p output
-
-	@cp -rf module/* output/
+	rm -rf output/*
+	mkdir -p output
+	cp -rf module/* output/
 
 ifeq ($(RELEASE), true)
-	@cp -f target/aarch64-linux-android/release/fas-rs output/
+	cp -f target/aarch64-linux-android/release/fas-rs output/
 else
-	@cp -f target/aarch64-linux-android/debug/fas-rs output/
+	cp -f target/aarch64-linux-android/debug/fas-rs output/
 endif
 
-	@cp -rf surfaceflinger_hook/output output/hook
-	@mv output/hook/sepolicy.rule output/
+	cp -f libgui-analyze/build/arm64-v8a.so output/zygisk
 
-	@cd output && \
+	cd output && \
 	zip -9 -rq fas-rs.zip .
 	@echo "Packaged at output/fas-rs.zip"

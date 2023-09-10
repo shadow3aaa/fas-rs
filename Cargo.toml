@@ -1,42 +1,41 @@
 [package]
-name = 'fas-rs'
-version = '0.3.1'
-edition = '2021'
-description = 'Frame-aware scheduling binary'
-authors = [ 'shadow3' ]
-license = 'Apache-2.0'
-readme = 'README.md'
-repository = 'https://github.com/shadow3aaa/fas-rs'
+name = "fas-rs"
+version = "0.3.1"
+edition = "2021"
+description = "Frame-aware scheduling binary"
+authors = [ "shadow3" ]
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/shadow3aaa/fas-rs"
 
 [workspace]
-members = [ 'fas-rs-fw' ]
-exclude = [ 'surfaceflinger_hook' ]
+members = [ "fas-rs-fw" ]
+exclude = [ "libgui-analyze" ]
 
 [dependencies]
-# cpu_cycles_reader = '0.1.41'
-likely_stable = '0.1.2'
-parking_lot = '0.12.1'
-pretty_env_logger = '0.5.0'
-log = '0.4.19'
+likely_stable = "0.1.2"
+parking_lot = "0.12.1"
+pretty_env_logger = "0.5.0"
+log = "0.4.19"
 anyhow = "1.0.75"
 thiserror = "1.0.47"
 clap = { version = "4.4.0", features = [ "derive" ] }
 
 [dependencies.fas-rs-fw]
-path = './fas-rs-fw'
+path = "./fas-rs-fw"
 
 [dependencies.yata]
-version = '0.6.1'
-default_features = false
+version = "0.6.1"
+default-features = false
 
 [dependencies.inotify]
-version = '0.10.2'
-default_features = false
+version = "0.10.2"
+default-features = false
 
 [build-dependencies]
-toml = '0.7.6'
-serde = '1.0.178'
-serde_derive = '1.0.178'
+toml = "0.7.6"
+serde = "1.0.178"
+serde_derive = "1.0.178"
 
 [profile.dev]
 overflow-checks = false
@@ -44,7 +43,7 @@ overflow-checks = false
 [profile.release]
 overflow-checks = false
 codegen-units = 1
-lto = 'fat'
+lto = "fat"
 opt-level = 3
 strip = true
-panic = 'abort'
+panic = "abort"

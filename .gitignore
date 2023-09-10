@@ -8,8 +8,5 @@
 # build
 /output
 
-# vscode
-.vscode
-
 # cross-dirty
 .cargo
