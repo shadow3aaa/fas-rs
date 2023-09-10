@@ -13,7 +13,6 @@
 *  limitations under the License. */
 mod merge;
 mod read;
-mod topapp;
 
 use std::{
     fs,
@@ -38,15 +37,6 @@ use read::wait_and_read;
 type ConfData = RwLock<Value>;
 pub struct Config {
     toml: Arc<ConfData>,
-    exit: Arc<AtomicBool>,
-    topapp: Option<Vec<String>>,
-    topapp_rx: Receiver<Option<Vec<String>>>,
-}
-
-impl Drop for Config {
-    fn drop(&mut self) {
-        self.exit.store(true, Ordering::Release);
-    }
 }
 
 impl Config {
@@ -74,38 +64,18 @@ impl Config {
                 .spawn(move || wait_and_read(&path, &toml, &exit))?;
         }
 
-        let (sx, rx) = mpsc::channel();
-
-        {
-            let exit = exit.clone();
-
-            thread::Builder::new()
-                .name("TopappThread".into())
-                .spawn(move || Self::topapp_updater(&sx, &exit))?;
-        }
-
         info!("Config watcher started");
 
-        Ok(Self {
-            toml,
-            exit,
-            topapp: None,
-            topapp_rx: rx,
-        })
+        Ok(Self { toml })
     }
 
-    /// 从配置中读取现在的游戏和目标fps、帧窗口大小
+    /// 从配置中读取目标fps
     ///
     /// # Panics
     ///
     /// 读取/解析配置失败
-    pub fn cur_game_fps(&mut self) -> Option<(String, u32)> {
-        if let Some(t) = self.topapp_rx.try_iter().last() {
-            trace!("topapp: {t:?}");
-            self.topapp = t;
-        }
-
-        let pkgs = self.topapp.clone()?;
+    pub fn target_fps<S: AsRef<str>>(&self, pkg: S) -> Option<u32> {
+        let pkg = pkg.as_ref();
 
         let toml = self.toml.read();
         let list = toml
@@ -116,15 +86,7 @@ impl Config {
 
         drop(toml); // early-drop Rwlock
 
-        let pkg = pkgs.into_iter().find(|key| list.contains_key(key))?;
-
-        let target_fps = list
-            .get(&pkg)?
-            .as_integer()
-            .ok_or(Error::Other("Failed to parse target_fps"))
-            .unwrap();
-
-        Some((pkg, target_fps.try_into().unwrap()))
+        list.get(pkg)?.as_integer().map(|t| t.try_into().unwrap())
     }
 
     /// 从配置中读取一个配置参数的值

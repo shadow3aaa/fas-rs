@@ -11,11 +11,9 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-mod main_loop;
+mod binder;
+mod policy;
 mod thermal;
-
-use log::info;
-use surfaceflinger_hook_api::Connection;
 
 use crate::{
     config::Config,
@@ -23,6 +21,8 @@ use crate::{
     node::Node,
     PerformanceController,
 };
+
+use self::binder::FrameAwareService;
 
 /// 调度器
 pub struct Scheduler<P: PerformanceController> {
@@ -81,17 +81,6 @@ impl<P: PerformanceController> Scheduler<P> {
             .controller
             .ok_or(Error::SchedulerMissing("Controller"))?;
 
-        info!("Connecting to hook");
-
-        let mut connection = Connection::init_and_wait()?;
-
-        info!("Connected to hook");
-
-        Self::main_loop(
-            &mut config,
-            &controller,
-            &mut connection,
-            self.jank_level_max,
-        )
+        FrameAwareService::run_server(config, controller)
     }
 }

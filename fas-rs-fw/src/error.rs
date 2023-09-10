@@ -44,11 +44,6 @@ pub enum Error {
         #[from]
         source: io::Error,
     },
-    #[error("{source:?}")]
-    ApiError {
-        #[from]
-        source: surfaceflinger_hook_api::Error,
-    },
     #[error("Got an error: {0}")]
     Other(&'static str),
 }
