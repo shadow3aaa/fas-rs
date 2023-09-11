@@ -15,8 +15,6 @@ use std::time::Duration;
 
 use crate::{PerformanceController, Result};
 
-use super::Scheduler;
-
 pub trait PerformanceControllerExt {
     fn do_policy(&self, frametime: Duration) -> Result<()>;
 }
@@ -25,7 +23,7 @@ impl<P> PerformanceControllerExt for P
 where
     P: PerformanceController,
 {
-    fn do_policy(&self, frametime: Duration) -> Result<()> {
+    fn do_policy(&self, _frametime: Duration) -> Result<()> {
         todo!()
     }
 }

@@ -75,7 +75,7 @@ impl<P: PerformanceController> Scheduler<P> {
         Node::init()?;
         Node::create_node("mode", "balance")?;
 
-        let mut config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
+        let config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
 
         let controller = self
             .controller

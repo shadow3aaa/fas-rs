@@ -14,6 +14,7 @@ use std::time::Duration;
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 use binder_rust::{BinderService, Parcel, ServiceManager};
+use log::error;
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 
@@ -29,32 +30,41 @@ pub struct FrameAwareService<P: PerformanceControllerExt> {
 #[derive(Debug, FromPrimitive, PartialEq, Eq)]
 enum MessageCode {
     FrameData = 1,
-    NotPermitted = 2,
-}
-
-struct FrameData {
-    pub frametime: u64,
-    pub package_name: String,
 }
 
 impl<P: PerformanceControllerExt> BinderService for FrameAwareService<P> {
     fn process_request(&self, code: u32, data: &mut Parcel) -> Parcel {
-        let code = MessageCode::from_u32(code).unwrap();
+        let reply = Parcel::empty();
+
+        let Some(code) = MessageCode::from_u32(code) else {
+            return reply;
+        };
+
         if code == MessageCode::FrameData {
-            let frame_data: FrameData = data.read_object();
-            if let Some(fps) = self.config.target_fps(frame_data.package_name) {
-                let frametime = Duration::from_nanos(frame_data.frametime);
-                self.controller.do_policy(frametime);
+            let Ok(frametime) = data.read_u32() else {
+                return reply;
+            };
+        
+            let Ok(pkg) = data.read_str16() else {
+                return reply;
+            };
+
+            if let Some(_fps) = self.config.target_fps(pkg) {
+                let frametime = Duration::from_nanos(frametime.into());
+                self.controller
+                    .do_policy(frametime)
+                    .unwrap_or_else(|e| error!("{e:?}"));
             }
         }
-        Parcel::empty()
+
+        reply
     }
 }
 
 impl<P: PerformanceController + PerformanceControllerExt> FrameAwareService<P> {
     pub fn run_server(config: Config, controller: P) -> ! {
         let server = Self { config, controller };
-        let mut manager = &mut ServiceManager::new();
+        let manager = &mut ServiceManager::new().unwrap();
 
         manager
             .register_service(
@@ -64,7 +74,9 @@ impl<P: PerformanceController + PerformanceControllerExt> FrameAwareService<P> {
                 true,
                 0,
             )
-            .run();
+            .unwrap()
+            .run()
+            .unwrap();
         unreachable!() // run is a forover loop, so
     }
 }

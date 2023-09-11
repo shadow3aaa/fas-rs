@@ -17,16 +17,12 @@ mod read;
 use std::{
     fs,
     path::Path,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        mpsc::{self, Receiver},
-        Arc,
-    },
+    sync::{atomic::AtomicBool, Arc},
     thread,
 };
 
 use likely_stable::LikelyOption;
-use log::{info, trace};
+use log::info;
 use parking_lot::RwLock;
 use toml::Value;
 
@@ -57,7 +53,7 @@ impl Config {
         {
             let path = path.to_owned();
             let toml = toml.clone();
-            let exit = exit.clone();
+            let exit = exit;
 
             thread::Builder::new()
                 .name("ConfigThread".into())
