@@ -19,7 +19,7 @@ use log::debug;
 use crate::{IRemoteService::IRemoteService, CHANNEL};
 
 pub fn thread(process: &str) -> anyhow::Result<()> {
-    let fas_service: Strong<dyn IRemoteService> = binder::wait_for_interface("fas_rs_service")?;
+    let fas_service: Strong<dyn IRemoteService> = binder::wait_for_interface("fas_rs_server")?;
 
     let mut stamp = Instant::now();
 

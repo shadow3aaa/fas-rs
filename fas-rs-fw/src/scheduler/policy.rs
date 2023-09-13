@@ -11,19 +11,19 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::time::Duration;
 
+use super::FasData;
 use crate::{PerformanceController, Result};
 
 pub trait PerformanceControllerExt {
-    fn do_policy(&self, frametime: Duration) -> Result<()>;
+    fn do_policy(&self, data: FasData) -> Result<()>;
 }
 
 impl<P> PerformanceControllerExt for P
 where
     P: PerformanceController,
 {
-    fn do_policy(&self, _frametime: Duration) -> Result<()> {
+    fn do_policy(&self, _data: FasData) -> Result<()> {
         todo!()
     }
 }

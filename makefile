@@ -17,9 +17,9 @@ else
 	cargo build --target aarch64-linux-android
 endif
 
-.PHONY: hook
+.PHONY: zygisk
 hook:
-	cd libgui-analyze && \
+	cd zygisk && \
 	make RELEASE=$(RELEASE)
 
 .PHONY: package

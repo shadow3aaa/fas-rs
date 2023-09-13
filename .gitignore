@@ -1,5 +1,6 @@
 # target
 /target
+/zygisk/rust/target
 
 # module-dirty
 /module/README.md
@@ -7,6 +8,7 @@
 
 # build
 /output
+/zygisk/build
 
 # cross-dirty
 .cargo

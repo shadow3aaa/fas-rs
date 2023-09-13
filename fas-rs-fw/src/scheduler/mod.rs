@@ -13,7 +13,8 @@
 *  limitations under the License. */
 mod binder;
 mod policy;
-mod thermal;
+
+use std::time::Duration;
 
 use crate::{
     config::Config,
@@ -22,7 +23,14 @@ use crate::{
     PerformanceController,
 };
 
-use self::binder::FrameAwareService;
+use self::binder::FasServer;
+use policy::PerformanceControllerExt;
+
+pub struct FasData {
+    pub target_fps: u32,
+    pub pkg: String,
+    pub frametime: Duration,
+}
 
 /// 调度器
 pub struct Scheduler<P: PerformanceController> {
@@ -31,7 +39,10 @@ pub struct Scheduler<P: PerformanceController> {
     jank_level_max: Option<u32>,
 }
 
-impl<P: PerformanceController> Scheduler<P> {
+impl<P> Scheduler<P>
+where
+    P: PerformanceController,
+{
     /// 构造调度器并且初始化
     #[must_use]
     pub const fn new() -> Self {
@@ -81,6 +92,11 @@ impl<P: PerformanceController> Scheduler<P> {
             .controller
             .ok_or(Error::SchedulerMissing("Controller"))?;
 
-        FrameAwareService::run_server(config, controller)
+        let rx = FasServer::run_server(config)?;
+
+        loop {
+            let data = rx.recv().map_err(|_| Error::Other("Binder server died"))?;
+            controller.do_policy(data)?;
+        }
     }
 }

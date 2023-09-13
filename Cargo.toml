@@ -10,7 +10,7 @@ repository = "https://github.com/shadow3aaa/fas-rs"
 
 [workspace]
 members = [ "fas-rs-fw" ]
-exclude = [ "libgui-analyze" ]
+exclude = [ "libgui-analyze", "zygisk/rust" ]
 
 [dependencies]
 likely_stable = "0.1.2"

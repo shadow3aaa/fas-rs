@@ -118,7 +118,7 @@ pub trait IRemoteServiceDefault: Send + Sync {
 }
 pub mod transactions {
     pub const sendFrameData: binder::binder_impl::TransactionCode =
-        binder::binder_impl::FIRST_CALL_TRANSACTION;
+        binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
 }
 pub type IRemoteServiceDefaultRef = Option<std::sync::Arc<dyn IRemoteServiceDefault>>;
 use lazy_static::lazy_static;
@@ -143,7 +143,7 @@ impl BpRemoteService {
         _arg_FrameTimeNanos: i64,
         _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>,
     ) -> binder::Result<bool> {
-        if matches!(_aidl_reply, Err(binder::StatusCode::UNKNOWN_TRANSACTION)) {
+        if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
             if let Some(_aidl_default_impl) = <Self as IRemoteService>::getDefaultImpl() {
                 return _aidl_default_impl.sendFrameData(_arg_Pkg, _arg_FrameTimeNanos);
             }
@@ -221,6 +221,6 @@ fn on_transact(
         _ => Err(binder::StatusCode::UNKNOWN_TRANSACTION),
     }
 }
-pub mod mangled {
+pub(crate) mod mangled {
     pub use super::IRemoteService as _14_IRemoteService;
 }
