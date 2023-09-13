@@ -29,9 +29,15 @@ use crate::{
 };
 use IRemoteService::BnRemoteService;
 
+#[allow(clippy::module_name_repetitions)]
+pub enum BinderData {
+    Pid(i32),
+    Frame(FasData),
+}
+
 pub struct FasServer {
     config: Config,
-    sx: Mutex<Sender<FasData>>,
+    sx: Mutex<Sender<BinderData>>,
 }
 
 impl Interface for FasServer {}
@@ -51,16 +57,24 @@ impl IRemoteService::IRemoteService for FasServer {
             frametime,
         };
 
-        if let Err(e) = self.sx.lock().send(data) {
+        if let Err(e) = self.sx.lock().send(BinderData::Frame(data)) {
             error!("{e:?}");
         }
 
         Ok(true)
     }
+
+    fn sendPid(&self, pid: i32) -> binder::Result<()> {
+        if let Err(e) = self.sx.lock().send(BinderData::Pid(pid)) {
+            error!("{e:?}");
+        }
+
+        Ok(())
+    }
 }
 
 impl FasServer {
-    pub fn run_server(config: Config) -> Result<Receiver<FasData>> {
+    pub fn run_server(config: Config) -> Result<Receiver<BinderData>> {
         let (sx, rx) = mpsc::channel();
         let server = Self {
             config,

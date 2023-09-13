@@ -24,7 +24,6 @@ use crate::{
 };
 
 use self::binder::FasServer;
-use policy::PerformanceControllerExt;
 
 pub struct FasData {
     pub target_fps: u32,
@@ -88,15 +87,16 @@ where
 
         let config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
 
-        let controller = self
+        let _controller = self
             .controller
             .ok_or(Error::SchedulerMissing("Controller"))?;
 
         let rx = FasServer::run_server(config)?;
 
         loop {
-            let data = rx.recv().map_err(|_| Error::Other("Binder server died"))?;
-            controller.do_policy(data)?;
+            let _data = rx.recv().map_err(|_| Error::Other("Binder server died"))?;
+            todo!("进行调度")
+            // controller.do_policy(data)?;
         }
     }
 }
