@@ -62,7 +62,7 @@ pub unsafe extern "C" fn hook_handler(process: *const c_char) {
     let Ok(process) = process.to_str() else {
         return;
     };
-    let process = process.to_string();
+    let process = process.to_string(); // Copy process name here, so zygisk can release the original process name jstring safely
 
     debug!("process: [{}], pid: [{}]", process, process::id());
 
@@ -91,9 +91,12 @@ unsafe fn hook() -> Result<()> {
     Ok(())
 }
 
-// int Surface::queueBuffer(android_native_buffer_t* buffer, int fenceFd)
+/* Function signature(c++):
+*  int Surface::queueBuffer(android_native_buffer_t* buffer, int fenceFd)
+*
+*  This function is called every time a new frame is added to the buffer */
 unsafe extern "C" fn post_hook(android_native_buffer_t: c_void, fence_id: c_int) -> c_int {
-    let ori_fun: extern "C" fn(c_void, c_int) -> c_int = mem::transmute(OLD_FUNC_PTR);
+    let ori_fun: extern "C" fn(c_void, c_int) -> c_int = mem::transmute(OLD_FUNC_PTR); // trans ptr to ori func
     let result = ori_fun(android_native_buffer_t, fence_id);
 
     let _ = CHANNEL.sx.try_send(());
