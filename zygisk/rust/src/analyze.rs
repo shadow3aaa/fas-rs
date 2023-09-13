@@ -11,19 +11,22 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::time::Instant;
+use std::{process, time::Instant};
 
 use binder::Strong;
 use log::debug;
 
 use crate::{IRemoteService::IRemoteService, CHANNEL};
 
+#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 pub fn thread(process: &str) -> anyhow::Result<()> {
     let fas_service: Strong<dyn IRemoteService> = binder::wait_for_interface("fas_rs_server")?;
 
     let mut stamp = Instant::now();
 
     loop {
+        let _ = fas_service.sendPid(process::id() as i32);
+
         if let Err(e) = CHANNEL.rx.recv() {
             debug!("End analyze thread, reason: {e:?}");
             return Ok(());
@@ -35,11 +38,7 @@ pub fn thread(process: &str) -> anyhow::Result<()> {
 
         debug!("process: [{process}] framtime: [{frametime:?}]");
 
-        #[allow(clippy::cast_possible_truncation)]
-        if !fas_service
-            .sendFrameData(process, frametime.as_nanos() as i64)
-            .unwrap_or(true)
-        {
+        if Ok(false) == fas_service.sendFrameData(process, frametime.as_nanos() as i64) {
             debug!("Exit analyze thread, since server prefer this is not a fas app");
             return Ok(());
         }
