@@ -30,6 +30,7 @@ use crate::{
 use IRemoteService::BnRemoteService;
 
 #[allow(clippy::module_name_repetitions)]
+#[derive(Debug, Clone)]
 pub enum BinderData {
     Pid(i32),
     Frame(FasData),

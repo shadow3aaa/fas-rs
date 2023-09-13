@@ -29,7 +29,6 @@ use fas_rs_fw::prelude::*;
 use anyhow::Result;
 use clap::Parser;
 use log::warn;
-use pretty_env_logger::init_custom_env;
 
 use cpu_common::CpuCommon;
 
@@ -48,7 +47,7 @@ struct Args {
 
 fn main() -> Result<()> {
     // 初始化Log
-    init_custom_env("FAS_LOG");
+    pretty_env_logger::init_custom_env("FAS_LOG");
 
     // 绑定到小核
     let self_pid = process::id();

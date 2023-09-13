@@ -23,8 +23,11 @@ use crate::{
     PerformanceController,
 };
 
+use log::debug;
+
 use self::binder::FasServer;
 
+#[derive(Debug, Clone)]
 pub struct FasData {
     pub target_fps: u32,
     pub pkg: String,
@@ -94,8 +97,8 @@ where
         let rx = FasServer::run_server(config)?;
 
         loop {
-            let _data = rx.recv().map_err(|_| Error::Other("Binder server died"))?;
-            todo!("进行调度")
+            let data = rx.recv().map_err(|_| Error::Other("Binder server died"))?;
+            debug!("{data:?}");
             // controller.do_policy(data)?;
         }
     }

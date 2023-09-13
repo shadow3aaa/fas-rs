@@ -18,12 +18,12 @@ else
 endif
 
 .PHONY: zygisk
-hook:
+zygisk:
 	cd zygisk && \
 	make RELEASE=$(RELEASE)
 
 .PHONY: package
-package: fas-rs hook
+package: fas-rs zygisk
 	rm -rf output/*
 	mkdir -p output
 	cp -rf module/* output/
@@ -35,7 +35,7 @@ else
 endif
 
 	mkdir output/zygisk
-	cp -f libgui-analyze/build/arm64-v8a.so output/zygisk
+	cp -f zygisk/build/arm64-v8a.so output/zygisk
 
 	cd output && \
 	zip -9 -rq fas-rs.zip .
