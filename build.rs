@@ -56,8 +56,21 @@ fn main() -> Result<(), Box<dyn Error>> {
     writeln!(file, "description={}", package.description)?;
     writeln!(
         file,
-        "updateJson=https://github.com/shadow3aaa/fas-rs/raw/master/update.json"
+        "updateJson=https://github.com/shadow3aaa/fas-rs/raw/master/update/update.json"
     )?;
+
+    let update_json = format!(
+        r#"
+{{
+    "versionCode": {version_code},
+    "version": "v{0}",
+    "zipUrl": "https://github.com/shadow3aaa/fas-rs/releases/download/v{0}/fas-rs.zip",
+    "changelog": "https://github.com/shadow3aaa/fas-rs/raw/master/changelog.md"
+}}
+    "#,
+        package.version
+    );
+    fs::write("update/update.json", update_json.trim())?;
 
     let _ = fs::remove_file("module/README.md");
     fs::copy("README.md", "module/README.md")?;
