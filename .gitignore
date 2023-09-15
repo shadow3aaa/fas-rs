@@ -9,6 +9,3 @@
 # build
 /output
 /zygisk/build
-
-# cross-dirty
-.cargo

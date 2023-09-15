@@ -14,7 +14,11 @@
 #![deny(clippy::all, clippy::pedantic)]
 #![warn(clippy::nursery)]
 #![allow(clippy::missing_safety_doc)]
-#![allow(clippy::cast_precision_loss)]
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 
 mod IRemoteService;
 mod analyze;
@@ -55,7 +59,7 @@ pub unsafe extern "C" fn hook_handler(process: *const c_char) {
     android_logger::init_once(
         Config::default()
             .with_max_level(LevelFilter::Trace)
-            .with_tag("libgui analyze"),
+            .with_tag("fas-rs-libgui"),
     );
 
     let process = CStr::from_ptr(process);
@@ -68,7 +72,9 @@ pub unsafe extern "C" fn hook_handler(process: *const c_char) {
         return;
     }
 
-    debug!("process: [{}], pid: [{}]", process, process::id());
+    let pid = process::id() as i32;
+
+    debug!("process: [{}], pid: [pid]", process);
 
     if let Err(e) = thread::Builder::new()
         .name("libgui-analyze".into())
@@ -79,7 +85,7 @@ pub unsafe extern "C" fn hook_handler(process: *const c_char) {
                 return;
             }; // block and wait binder server
 
-            if Ok(false) == fas_service.sendFrameData(&process, 0) {
+            if Ok(false) == fas_service.sendData(&process, pid, 0) {
             debug!("Exit analyze thread, since server prefer this is not a fas app");
             return;
         } // Check first to avoid unnecessary hook

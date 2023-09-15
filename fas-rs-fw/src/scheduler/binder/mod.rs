@@ -30,23 +30,16 @@ use crate::{
 };
 use IRemoteService::BnRemoteService;
 
-#[allow(clippy::module_name_repetitions)]
-#[derive(Debug, Clone)]
-pub enum BinderData {
-    Pid(i32),
-    Frame(FasData),
-}
-
 pub struct FasServer {
     config: Config,
-    sx: Mutex<Sender<BinderData>>,
+    sx: Mutex<Sender<FasData>>,
 }
 
 impl Interface for FasServer {}
 
 impl IRemoteService::IRemoteService for FasServer {
     #[allow(clippy::cast_sign_loss)]
-    fn sendFrameData(&self, pkg: &str, frametime_ns: i64) -> binder::Result<bool> {
+    fn sendData(&self, pkg: &str, pid: i32, frametime_ns: i64) -> binder::Result<bool> {
         let Some(target_fps) = self.config.target_fps(pkg) else {
             return Ok(false);
         };
@@ -55,28 +48,21 @@ impl IRemoteService::IRemoteService for FasServer {
 
         let data = FasData {
             target_fps,
+            pid,
             pkg: pkg.to_string(),
             frametime,
         };
 
-        if let Err(e) = self.sx.lock().send(BinderData::Frame(data)) {
+        if let Err(e) = self.sx.lock().send(data) {
             error!("{e:?}");
         }
 
         Ok(true)
     }
-
-    fn sendPid(&self, pid: i32) -> binder::Result<()> {
-        if let Err(e) = self.sx.lock().send(BinderData::Pid(pid)) {
-            error!("{e:?}");
-        }
-
-        Ok(())
-    }
 }
 
 impl FasServer {
-    pub fn run_server(config: Config) -> Result<Receiver<BinderData>> {
+    pub fn run_server(config: Config) -> Result<Receiver<FasData>> {
         let (sx, rx) = mpsc::channel();
 
         thread::Builder::new()
@@ -86,7 +72,7 @@ impl FasServer {
         Ok(rx)
     }
 
-    fn run(sx: Sender<BinderData>, config: Config) -> Result<()> {
+    fn run(sx: Sender<FasData>, config: Config) -> Result<()> {
         let server = Self {
             config,
             sx: Mutex::new(sx),

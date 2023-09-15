@@ -38,7 +38,7 @@ impl TimedWatcher {
         })
     }
 
-    pub fn is_top_app(&mut self, pid: i32) -> Result<bool> {
+    pub fn is_topapp(&mut self, pid: i32) -> Result<bool> {
         if self.last_refresh.elapsed() > REFRESH_TIME {
             self.cache = Self::read_pids()?;
         }

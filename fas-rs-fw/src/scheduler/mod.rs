@@ -31,6 +31,7 @@ use looper::Looper;
 pub struct FasData {
     pub target_fps: u32,
     pub pkg: String,
+    pub pid: i32,
     pub frametime: Duration,
 }
 
@@ -93,8 +94,6 @@ impl<P: PerformanceController> Scheduler<P> {
 
         let rx = FasServer::run_server(config.clone())?;
 
-        let looper = Looper::new(rx, config, controller);
-
-        looper.enter_loop()
+        Looper::new(rx, config, controller)?.enter_loop()
     }
 }

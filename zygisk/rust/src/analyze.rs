@@ -18,13 +18,12 @@ use log::debug;
 
 use crate::{IRemoteService::IRemoteService, CHANNEL};
 
-#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 pub fn thread(fas_service: &Strong<dyn IRemoteService>, process: &str) -> anyhow::Result<()> {
     let mut stamp = Instant::now();
 
-    loop {
-        let _ = fas_service.sendPid(process::id() as i32);
+    let pid = process::id() as i32;
 
+    loop {
         if let Err(e) = CHANNEL.rx.recv() {
             debug!("End analyze thread, reason: {e:?}");
             return Ok(());
@@ -36,7 +35,7 @@ pub fn thread(fas_service: &Strong<dyn IRemoteService>, process: &str) -> anyhow
 
         debug!("process: [{process}] framtime: [{frametime:?}]");
 
-        if Ok(false) == fas_service.sendFrameData(process, frametime.as_nanos() as i64) {
+        if Ok(false) == fas_service.sendData(process, pid, frametime.as_nanos() as i64) {
             debug!("Exit analyze thread, since server prefer this is not a fas app");
             return Ok(());
         }

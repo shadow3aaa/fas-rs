@@ -1,7 +1,8 @@
 #![forbid(unsafe_code)]
+#![allow(clippy::all, clippy::pedantic)]
+#![allow(warnings)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
-#![allow(clippy::all, clippy::pedantic, warnings)]
 #[allow(unused_imports)]
 use binder::binder_impl::IBinderInternal;
 use binder::declare_binder_interface;
@@ -20,8 +21,12 @@ pub trait IRemoteService: binder::Interface + Send {
     {
         "IRemoteService"
     }
-    fn sendFrameData(&self, _arg_Pkg: &str, _arg_FrameTimeNanos: i64) -> binder::Result<bool>;
-    fn sendPid(&self, _arg_pid: i32) -> binder::Result<()>;
+    fn sendData(
+        &self,
+        _arg_Pkg: &str,
+        _arg_pid: i32,
+        _arg_FrameTimeNanos: i64,
+    ) -> binder::Result<bool>;
     fn getDefaultImpl() -> IRemoteServiceDefaultRef
     where
         Self: Sized,
@@ -42,12 +47,12 @@ pub trait IRemoteServiceAsync<P>: binder::Interface + Send {
     {
         "IRemoteService"
     }
-    fn sendFrameData<'a>(
+    fn sendData<'a>(
         &'a self,
         _arg_Pkg: &'a str,
+        _arg_pid: i32,
         _arg_FrameTimeNanos: i64,
     ) -> binder::BoxFuture<'a, binder::Result<bool>>;
-    fn sendPid(&self, _arg_pid: i32) -> binder::BoxFuture<'_, binder::Result<()>>;
 }
 #[::async_trait::async_trait]
 pub trait IRemoteServiceAsyncServer: binder::Interface + Send {
@@ -57,9 +62,12 @@ pub trait IRemoteServiceAsyncServer: binder::Interface + Send {
     {
         "IRemoteService"
     }
-    async fn sendFrameData(&self, _arg_Pkg: &str, _arg_FrameTimeNanos: i64)
-        -> binder::Result<bool>;
-    async fn sendPid(&self, _arg_pid: i32) -> binder::Result<()>;
+    async fn sendData(
+        &self,
+        _arg_Pkg: &str,
+        _arg_pid: i32,
+        _arg_FrameTimeNanos: i64,
+    ) -> binder::Result<bool>;
 }
 impl BnRemoteService {
     /// Create a new async binder service.
@@ -97,16 +105,16 @@ impl BnRemoteService {
             T: IRemoteServiceAsyncServer + Send + Sync + 'static,
             R: binder::binder_impl::BinderAsyncRuntime + Send + Sync + 'static,
         {
-            fn sendFrameData(
+            fn sendData(
                 &self,
                 _arg_Pkg: &str,
+                _arg_pid: i32,
                 _arg_FrameTimeNanos: i64,
             ) -> binder::Result<bool> {
-                self._rt
-                    .block_on(self._inner.sendFrameData(_arg_Pkg, _arg_FrameTimeNanos))
-            }
-            fn sendPid(&self, _arg_pid: i32) -> binder::Result<()> {
-                self._rt.block_on(self._inner.sendPid(_arg_pid))
+                self._rt.block_on(
+                    self._inner
+                        .sendData(_arg_Pkg, _arg_pid, _arg_FrameTimeNanos),
+                )
             }
         }
         let wrapped = Wrapper {
@@ -117,18 +125,18 @@ impl BnRemoteService {
     }
 }
 pub trait IRemoteServiceDefault: Send + Sync {
-    fn sendFrameData(&self, _arg_Pkg: &str, _arg_FrameTimeNanos: i64) -> binder::Result<bool> {
-        Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
-    }
-    fn sendPid(&self, _arg_pid: i32) -> binder::Result<()> {
+    fn sendData(
+        &self,
+        _arg_Pkg: &str,
+        _arg_pid: i32,
+        _arg_FrameTimeNanos: i64,
+    ) -> binder::Result<bool> {
         Err(binder::StatusCode::UNKNOWN_TRANSACTION.into())
     }
 }
 pub mod transactions {
-    pub const sendFrameData: binder::binder_impl::TransactionCode =
-        binder::binder_impl::FIRST_CALL_TRANSACTION;
-    pub const sendPid: binder::binder_impl::TransactionCode =
-        binder::binder_impl::FIRST_CALL_TRANSACTION + 1;
+    pub const sendData: binder::binder_impl::TransactionCode =
+        binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
 }
 pub type IRemoteServiceDefaultRef = Option<std::sync::Arc<dyn IRemoteServiceDefault>>;
 use lazy_static::lazy_static;
@@ -137,25 +145,28 @@ lazy_static! {
         std::sync::Mutex::new(None);
 }
 impl BpRemoteService {
-    fn build_parcel_sendFrameData(
+    fn build_parcel_sendData(
         &self,
         _arg_Pkg: &str,
+        _arg_pid: i32,
         _arg_FrameTimeNanos: i64,
     ) -> binder::Result<binder::binder_impl::Parcel> {
         let mut aidl_data = self.binder.prepare_transact()?;
         aidl_data.write(_arg_Pkg)?;
+        aidl_data.write(&_arg_pid)?;
         aidl_data.write(&_arg_FrameTimeNanos)?;
         Ok(aidl_data)
     }
-    fn read_response_sendFrameData(
+    fn read_response_sendData(
         &self,
         _arg_Pkg: &str,
+        _arg_pid: i32,
         _arg_FrameTimeNanos: i64,
         _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>,
     ) -> binder::Result<bool> {
-        if matches!(_aidl_reply, Err(binder::StatusCode::UNKNOWN_TRANSACTION)) {
+        if let Err(binder::StatusCode::UNKNOWN_TRANSACTION) = _aidl_reply {
             if let Some(_aidl_default_impl) = <Self as IRemoteService>::getDefaultImpl() {
-                return _aidl_default_impl.sendFrameData(_arg_Pkg, _arg_FrameTimeNanos);
+                return _aidl_default_impl.sendData(_arg_Pkg, _arg_pid, _arg_FrameTimeNanos);
             }
         }
         let _aidl_reply = _aidl_reply?;
@@ -166,56 +177,31 @@ impl BpRemoteService {
         let _aidl_return: bool = _aidl_reply.read()?;
         Ok(_aidl_return)
     }
-    fn build_parcel_sendPid(&self, _arg_pid: i32) -> binder::Result<binder::binder_impl::Parcel> {
-        let mut aidl_data = self.binder.prepare_transact()?;
-        aidl_data.write(&_arg_pid)?;
-        Ok(aidl_data)
-    }
-    fn read_response_sendPid(
-        &self,
-        _arg_pid: i32,
-        _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>,
-    ) -> binder::Result<()> {
-        if matches!(_aidl_reply, Err(binder::StatusCode::UNKNOWN_TRANSACTION)) {
-            if let Some(_aidl_default_impl) = <Self as IRemoteService>::getDefaultImpl() {
-                return _aidl_default_impl.sendPid(_arg_pid);
-            }
-        }
-        let _aidl_reply = _aidl_reply?;
-        let _aidl_status: binder::Status = _aidl_reply.read()?;
-        if !_aidl_status.is_ok() {
-            return Err(_aidl_status);
-        }
-        Ok(())
-    }
 }
 impl IRemoteService for BpRemoteService {
-    fn sendFrameData(&self, _arg_Pkg: &str, _arg_FrameTimeNanos: i64) -> binder::Result<bool> {
-        let _aidl_data = self.build_parcel_sendFrameData(_arg_Pkg, _arg_FrameTimeNanos)?;
+    fn sendData(
+        &self,
+        _arg_Pkg: &str,
+        _arg_pid: i32,
+        _arg_FrameTimeNanos: i64,
+    ) -> binder::Result<bool> {
+        let _aidl_data = self.build_parcel_sendData(_arg_Pkg, _arg_pid, _arg_FrameTimeNanos)?;
         let _aidl_reply = self.binder.submit_transact(
-            transactions::sendFrameData,
+            transactions::sendData,
             _aidl_data,
             binder::binder_impl::FLAG_PRIVATE_LOCAL,
         );
-        self.read_response_sendFrameData(_arg_Pkg, _arg_FrameTimeNanos, _aidl_reply)
-    }
-    fn sendPid(&self, _arg_pid: i32) -> binder::Result<()> {
-        let _aidl_data = self.build_parcel_sendPid(_arg_pid)?;
-        let _aidl_reply = self.binder.submit_transact(
-            transactions::sendPid,
-            _aidl_data,
-            binder::binder_impl::FLAG_PRIVATE_LOCAL,
-        );
-        self.read_response_sendPid(_arg_pid, _aidl_reply)
+        self.read_response_sendData(_arg_Pkg, _arg_pid, _arg_FrameTimeNanos, _aidl_reply)
     }
 }
 impl<P: binder::BinderAsyncPool> IRemoteServiceAsync<P> for BpRemoteService {
-    fn sendFrameData<'a>(
+    fn sendData<'a>(
         &'a self,
         _arg_Pkg: &'a str,
+        _arg_pid: i32,
         _arg_FrameTimeNanos: i64,
     ) -> binder::BoxFuture<'a, binder::Result<bool>> {
-        let _aidl_data = match self.build_parcel_sendFrameData(_arg_Pkg, _arg_FrameTimeNanos) {
+        let _aidl_data = match self.build_parcel_sendData(_arg_Pkg, _arg_pid, _arg_FrameTimeNanos) {
             Ok(_aidl_data) => _aidl_data,
             Err(err) => return Box::pin(std::future::ready(Err(err))),
         };
@@ -223,40 +209,25 @@ impl<P: binder::BinderAsyncPool> IRemoteServiceAsync<P> for BpRemoteService {
         P::spawn(
             move || {
                 binder.submit_transact(
-                    transactions::sendFrameData,
+                    transactions::sendData,
                     _aidl_data,
                     binder::binder_impl::FLAG_PRIVATE_LOCAL,
                 )
             },
             move |_aidl_reply| async move {
-                self.read_response_sendFrameData(_arg_Pkg, _arg_FrameTimeNanos, _aidl_reply)
+                self.read_response_sendData(_arg_Pkg, _arg_pid, _arg_FrameTimeNanos, _aidl_reply)
             },
-        )
-    }
-    fn sendPid(&self, _arg_pid: i32) -> binder::BoxFuture<'_, binder::Result<()>> {
-        let _aidl_data = match self.build_parcel_sendPid(_arg_pid) {
-            Ok(_aidl_data) => _aidl_data,
-            Err(err) => return Box::pin(std::future::ready(Err(err))),
-        };
-        let binder = self.binder.clone();
-        P::spawn(
-            move || {
-                binder.submit_transact(
-                    transactions::sendPid,
-                    _aidl_data,
-                    binder::binder_impl::FLAG_PRIVATE_LOCAL,
-                )
-            },
-            move |_aidl_reply| async move { self.read_response_sendPid(_arg_pid, _aidl_reply) },
         )
     }
 }
 impl IRemoteService for binder::binder_impl::Binder<BnRemoteService> {
-    fn sendFrameData(&self, _arg_Pkg: &str, _arg_FrameTimeNanos: i64) -> binder::Result<bool> {
-        self.0.sendFrameData(_arg_Pkg, _arg_FrameTimeNanos)
-    }
-    fn sendPid(&self, _arg_pid: i32) -> binder::Result<()> {
-        self.0.sendPid(_arg_pid)
+    fn sendData(
+        &self,
+        _arg_Pkg: &str,
+        _arg_pid: i32,
+        _arg_FrameTimeNanos: i64,
+    ) -> binder::Result<bool> {
+        self.0.sendData(_arg_Pkg, _arg_pid, _arg_FrameTimeNanos)
     }
 }
 fn on_transact(
@@ -266,10 +237,11 @@ fn on_transact(
     _aidl_reply: &mut binder::binder_impl::BorrowedParcel<'_>,
 ) -> std::result::Result<(), binder::StatusCode> {
     match _aidl_code {
-        transactions::sendFrameData => {
+        transactions::sendData => {
             let _arg_Pkg: String = _aidl_data.read()?;
+            let _arg_pid: i32 = _aidl_data.read()?;
             let _arg_FrameTimeNanos: i64 = _aidl_data.read()?;
-            let _aidl_return = _aidl_service.sendFrameData(&_arg_Pkg, _arg_FrameTimeNanos);
+            let _aidl_return = _aidl_service.sendData(&_arg_Pkg, _arg_pid, _arg_FrameTimeNanos);
             match &_aidl_return {
                 Ok(_aidl_return) => {
                     _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
@@ -279,20 +251,9 @@ fn on_transact(
             }
             Ok(())
         }
-        transactions::sendPid => {
-            let _arg_pid: i32 = _aidl_data.read()?;
-            let _aidl_return = _aidl_service.sendPid(_arg_pid);
-            match &_aidl_return {
-                Ok(_aidl_return) => {
-                    _aidl_reply.write(&binder::Status::from(binder::StatusCode::OK))?;
-                }
-                Err(_aidl_status) => _aidl_reply.write(_aidl_status)?,
-            }
-            Ok(())
-        }
         _ => Err(binder::StatusCode::UNKNOWN_TRANSACTION),
     }
 }
-pub mod mangled {
+pub(crate) mod mangled {
     pub use super::IRemoteService as _14_IRemoteService;
 }
