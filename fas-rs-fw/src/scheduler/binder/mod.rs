@@ -15,6 +15,7 @@ mod IRemoteService;
 
 use std::{
     sync::mpsc::{self, Receiver, Sender},
+    thread,
     time::Duration,
 };
 
@@ -77,6 +78,15 @@ impl IRemoteService::IRemoteService for FasServer {
 impl FasServer {
     pub fn run_server(config: Config) -> Result<Receiver<BinderData>> {
         let (sx, rx) = mpsc::channel();
+
+        thread::Builder::new()
+            .name("BinderServer".into())
+            .spawn(|| Self::run(sx, config))?;
+
+        Ok(rx)
+    }
+
+    fn run(sx: Sender<BinderData>, config: Config) -> Result<()> {
         let server = Self {
             config,
             sx: Mutex::new(sx),
@@ -87,7 +97,8 @@ impl FasServer {
             .map_err(|_| Error::Other("Failed to register binder service?"))?;
 
         info!("Binder server started");
+        binder::ProcessState::join_thread_pool();
 
-        Ok(rx)
+        Ok(())
     }
 }

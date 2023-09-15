@@ -19,9 +19,7 @@ use log::debug;
 use crate::{IRemoteService::IRemoteService, CHANNEL};
 
 #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
-pub fn thread(process: &str) -> anyhow::Result<()> {
-    let fas_service: Strong<dyn IRemoteService> = binder::wait_for_interface("fas_rs_server")?; // block and wait binder server
-
+pub fn thread(fas_service: &Strong<dyn IRemoteService>, process: &str) -> anyhow::Result<()> {
     let mut stamp = Instant::now();
 
     loop {

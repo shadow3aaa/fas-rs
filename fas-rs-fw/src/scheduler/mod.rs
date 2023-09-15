@@ -12,7 +12,8 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 mod binder;
-mod policy;
+mod looper;
+mod topapp;
 
 use std::time::Duration;
 
@@ -23,9 +24,8 @@ use crate::{
     PerformanceController,
 };
 
-use log::debug;
-
 use self::binder::FasServer;
+use looper::Looper;
 
 #[derive(Debug, Clone)]
 pub struct FasData {
@@ -41,10 +41,7 @@ pub struct Scheduler<P: PerformanceController> {
     jank_level_max: Option<u32>,
 }
 
-impl<P> Scheduler<P>
-where
-    P: PerformanceController,
-{
+impl<P: PerformanceController> Scheduler<P> {
     /// 构造调度器并且初始化
     #[must_use]
     pub const fn new() -> Self {
@@ -90,16 +87,14 @@ where
 
         let config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
 
-        let _controller = self
+        let controller = self
             .controller
             .ok_or(Error::SchedulerMissing("Controller"))?;
 
-        let rx = FasServer::run_server(config)?;
+        let rx = FasServer::run_server(config.clone())?;
 
-        loop {
-            let data = rx.recv().map_err(|_| Error::Other("Binder server died"))?;
-            debug!("{data:?}");
-            // controller.do_policy(data)?;
-        }
+        let looper = Looper::new(rx, config, controller);
+
+        looper.enter_loop()
     }
 }

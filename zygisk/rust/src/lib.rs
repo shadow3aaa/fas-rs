@@ -64,22 +64,35 @@ pub unsafe extern "C" fn hook_handler(process: *const c_char) {
     };
     let process = process.to_string(); // Copy process name here, so zygisk can release the original process name jstring safely
 
-    debug!("process: [{}], pid: [{}]", process, process::id());
-
     if process.contains("zygote") {
         return;
     }
 
-    if let Err(e) = hook() {
-        error!("Failed to hook, reason: {e:#?}");
-        return;
-    }
-
-    debug!("Hooked");
+    debug!("process: [{}], pid: [{}]", process, process::id());
 
     if let Err(e) = thread::Builder::new()
         .name("libgui-analyze".into())
-        .spawn(move || analyze::thread(&process))
+        .spawn(move || {
+            use IRemoteService::IRemoteService;
+
+            let Ok(fas_service) = binder::wait_for_interface::<dyn IRemoteService>("fas_rs_server") else {
+                return;
+            }; // block and wait binder server
+
+            if Ok(false) == fas_service.sendFrameData(&process, 0) {
+            debug!("Exit analyze thread, since server prefer this is not a fas app");
+            return;
+        } // Check first to avoid unnecessary hook
+
+            if let Err(e) = hook() {
+                error!("Failed to hook, reason: {e:#?}");
+                return;
+            }
+
+            debug!("Hooked");
+
+            analyze::thread(&fas_service, &process).unwrap_or_else(|e| error!("{e:?}"));
+        })
     {
         error!("Failed to start analyze thread, reason: {e:?}");
     }

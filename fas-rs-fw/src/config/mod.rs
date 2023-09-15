@@ -31,6 +31,8 @@ use crate::error::{Error, Result};
 use read::wait_and_read;
 
 type ConfData = RwLock<Value>;
+
+#[derive(Clone)]
 pub struct Config {
     toml: Arc<ConfData>,
 }

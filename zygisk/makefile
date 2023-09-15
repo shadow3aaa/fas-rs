@@ -21,18 +21,16 @@ ifeq ($(RELEASE), true)
 	aarch64-linux-android-clang++ $(CXX_RELEASE_FLAG) --shared src/hook.cpp \
 		-Lbuild/rust \
 		-Irust/include \
-		-llog -lc++ -lbinder_ndk \
 		-nostdlib++ \
-		-Wl,-lrust, \
+		-Wl,-lrust,-llog,-lc++,-lbinder_ndk \
 		-o build/arm64-v8a.so
 	@strip build/arm64-v8a.so
 else
 	aarch64-linux-android-clang++ $(CXX_DEBUG_FLAG) --shared src/hook.cpp \
 		-Lbuild/rust \
 		-Irust/include \
-		-llog -lc++ -lbinder_ndk \
 		-nostdlib++ \
-		-Wl,-lrust \
+		-Wl,-lrust,-llog,-lc++,-lbinder_ndk \
 		-o build/arm64-v8a.so
 endif
 

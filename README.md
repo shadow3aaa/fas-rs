@@ -95,13 +95,15 @@ fast_thermal = 46000
 ```bash
 # clone
 git clone https://github.com/shadow3aaa/fas-rs
-git submodule init
-# Synchronize subprojects
-git submodule update --init --recursive
+
 # install deps
 apt install zip ndk* clang binutils-is-llvm
+
 # make debug
-make
+make RELEASE=false
+
 # make release
 make RELEASE=true
+# or(release build is default)
+make
 ```

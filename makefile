@@ -1,9 +1,9 @@
 .DEFAULT_GOAL := package
-RELEASE ?= false
+RELEASE ?= true
 
 .PHONY: clean
 clean:
-	rm -rf output/*
+	rm -rf output/temp/*
 	cargo clean
 	cd surfaceflinger_hook && \
     make clean
@@ -25,18 +25,20 @@ zygisk:
 .PHONY: package
 package: fas-rs zygisk
 	rm -rf output/*
-	mkdir -p output
-	cp -rf module/* output/
+	mkdir -p output/temp
+	cp -rf module/* output/temp
 
 ifeq ($(RELEASE), true)
-	cp -f target/aarch64-linux-android/release/fas-rs output/
+	cp -f target/aarch64-linux-android/release/fas-rs output/temp
 else
-	cp -f target/aarch64-linux-android/debug/fas-rs output/
+	cp -f target/aarch64-linux-android/debug/fas-rs output/temp
 endif
 
-	mkdir output/zygisk
-	cp -f zygisk/build/arm64-v8a.so output/zygisk
+	mkdir output/temp/zygisk
+	cp -f zygisk/build/arm64-v8a.so output/temp/zygisk
 
-	cd output && \
-	zip -9 -rq fas-rs.zip .
+	cd output/temp && \
+	zip -9 -rq fas-rs.zip . && \
+	mv fas-rs.zip ..
+	
 	@echo "Packaged at output/fas-rs.zip"
