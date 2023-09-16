@@ -29,6 +29,11 @@ struct TomlData {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    println!("cargo:rerun-if-changed=README.md");
+    println!("cargo:rerun-if-changed=Cargo.lock");
+    println!("cargo:rerun-if-changed=Cargo.toml");
+    println!("cargo:rerun-if-changed=LICENSE");
+
     let toml = fs::read_to_string("Cargo.toml")?;
     let data: TomlData = toml::from_str(&toml)?;
 

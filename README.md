@@ -2,7 +2,7 @@
 
 - fas-rs程序在安卓平台运行
 - fas-rs通过某种方式在监听帧变化，并且将此数据用于性能调度
-- todo-list [todo.md](update/todo.md)
+- [todo-list](update/todo.md)
 
 ## **配置合并**
 

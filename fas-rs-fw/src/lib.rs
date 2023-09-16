@@ -13,6 +13,7 @@
 *  limitations under the License. */
 #![deny(clippy::all, clippy::pedantic)]
 #![warn(clippy::nursery)]
+#![allow(clippy::missing_errors_doc)]
 
 #[cfg(not(target_os = "android"))]
 #[cfg(not(target_arch = "aarch64"))]

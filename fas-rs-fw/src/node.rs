@@ -11,32 +11,36 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-
 use std::{fs, path::Path};
+
+use log::error;
 
 use crate::error::{Error, Result};
 
 const NODE_PATH: &str = "/dev/fas_rs";
 
+#[derive(Debug)]
+pub enum Mode {
+    Powersave,
+    Balance,
+    Performance,
+    Fast,
+}
+
 pub struct Node;
 
 impl Node {
     /// 初始化节点
-    ///
-    /// # Errors
-    ///
-    /// 创建节点文件夹失败
     pub fn init() -> Result<()> {
         let _ = fs::remove_dir_all(NODE_PATH);
         fs::create_dir(NODE_PATH)?;
+
+        Self::create_node("mode", "balance")?;
+
         Ok(())
     }
 
     /// 创建一个新节点
-    ///
-    /// # Errors
-    ///
-    /// 创建失败
     pub fn create_node<S: AsRef<str>>(i: S, d: S) -> Result<()> {
         let id = i.as_ref();
         let default = d.as_ref();
@@ -47,11 +51,27 @@ impl Node {
         Ok(())
     }
 
+    /// 读取当前模式
+    pub fn read_mode() -> Result<Mode> {
+        let path = Path::new(NODE_PATH).join("mode");
+        Ok(
+            match fs::read_to_string(path)
+                .map_err(|_| Error::NodeNotFound)?
+                .trim()
+            {
+                "powersave" => Mode::Powersave,
+                "balance" => Mode::Balance,
+                "performance" => Mode::Performance,
+                "fast" => Mode::Fast,
+                _ => {
+                    error!("Failed to parse current mode");
+                    Mode::Balance
+                }
+            },
+        )
+    }
+
     /// 读取指定的节点
-    ///
-    /// # Errors
-    ///
-    /// 节点未创建/不存在
     #[inline]
     pub fn read_node<S: AsRef<str>>(i: S) -> Result<String> {
         let id = i.as_ref();

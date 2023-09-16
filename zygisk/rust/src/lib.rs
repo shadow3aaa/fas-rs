@@ -74,7 +74,7 @@ pub unsafe extern "C" fn hook_handler(process: *const c_char) {
 
     let pid = process::id() as i32;
 
-    debug!("process: [{}], pid: [pid]", process);
+    debug!("process: [{}], pid: [{pid}]", process);
 
     if let Err(e) = thread::Builder::new()
         .name("libgui-analyze".into())
