@@ -14,6 +14,11 @@
 #![deny(clippy::all, clippy::pedantic)]
 #![warn(clippy::nursery)]
 #![allow(clippy::missing_errors_doc)]
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_precision_loss
+)]
 
 #[cfg(not(target_os = "android"))]
 #[cfg(not(target_arch = "aarch64"))]

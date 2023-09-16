@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 use std::{
-    collections::{hash_map::HashMap, VecDeque},
+    collections::hash_map::{Entry, HashMap},
     sync::mpsc::Receiver,
     time::Duration,
 };
@@ -26,17 +26,16 @@ use crate::{
     PerformanceController,
 };
 
-const BUFFER_CAP: usize = 1024;
-
-type FrameTimeBuffers = HashMap<Process, VecDeque<Duration>>;
-type Process = (String, i32);
+type Buffers = HashMap<Process, (Duration, Duration)>; // Process, (jank_scale, total_jank_time)
+type Process = (String, i32); // process, pid
 
 pub struct Looper<P: PerformanceController> {
     rx: Receiver<FasData>,
     config: Config,
     controller: P,
     topapp_checker: TimedWatcher,
-    buffers: FrameTimeBuffers,
+    buffers: Buffers,
+    started: bool,
 }
 
 impl<P: PerformanceController> Looper<P> {
@@ -46,7 +45,8 @@ impl<P: PerformanceController> Looper<P> {
             config,
             controller,
             topapp_checker: TimedWatcher::new()?,
-            buffers: HashMap::new(),
+            buffers: Buffers::new(),
+            started: false,
         })
     }
 
@@ -55,13 +55,14 @@ impl<P: PerformanceController> Looper<P> {
             let data = self
                 .rx
                 .recv()
-                .map_err(|_e| Error::Other("Got an error when recving binder data"))?;
+                .map_err(|_| Error::Other("Got an error when recving binder data"))?;
 
             if !self.check_topapp(data.pid)? {
                 continue;
             }
 
-            self.buffer_push((data.pkg, data.pid), data.frametime);
+            self.buffer_update(&data);
+            self.buffer_policy()?;
 
             debug!("{:#?}", self.buffers);
         }
@@ -74,16 +75,61 @@ impl<P: PerformanceController> Looper<P> {
         self.topapp_checker.is_topapp(p) // binder server已经忽略了非列表内应用，因此这里只用检查是否是顶层应用
     }
 
-    fn buffer_push(&mut self, p: Process, d: Duration) {
-        let buffer = self
-            .buffers
-            .entry(p)
-            .or_insert_with(|| VecDeque::with_capacity(BUFFER_CAP));
-
-        if buffer.len() >= BUFFER_CAP {
-            buffer.pop_back();
+    fn buffer_update(&mut self, d: &FasData) {
+        if d.frametime.is_zero() {
+            return;
+        } else if d.target_fps == 0 {
+            panic!("Target fps must be bigger than zero");
         }
 
-        buffer.push_front(d);
+        let process = (d.pkg.clone(), d.pid);
+        let scale_time = Duration::from_secs(1)
+            .checked_div(d.target_fps)
+            .unwrap_or_default();
+        let jank_time = d.frametime.saturating_sub(scale_time);
+
+        match self.buffers.entry(process) {
+            Entry::Occupied(mut o) => {
+                let value = o.get_mut();
+                if value.0 == scale_time {
+                    value.1 += jank_time;
+                } else {
+                    value.0 = scale_time;
+                    value.1 = Duration::ZERO;
+                }
+            }
+            Entry::Vacant(v) => {
+                v.insert((scale_time, jank_time));
+            }
+        }
+    }
+
+    fn buffer_policy(&mut self) -> Result<()> {
+        if self.buffers.is_empty() && self.started {
+            self.controller.init_default(&self.config)?;
+            self.started = false;
+            return Ok(());
+        } else if !self.started {
+            self.controller.init_game(&self.config)?;
+        }
+
+        let level = self
+            .buffers
+            .values_mut()
+            .filter_map(|(scale_time, jank_time)| {
+                if jank_time >= scale_time {
+                    let level = jank_time.as_nanos() as f64 / scale_time.as_nanos() as f64;
+                    *jank_time = Duration::ZERO;
+                    Some(level.ceil() as u32)
+                } else {
+                    None
+                }
+            })
+            .max()
+            .unwrap_or_default();
+
+        self.controller.perf(level, &self.config);
+
+        Ok(())
     }
 }
