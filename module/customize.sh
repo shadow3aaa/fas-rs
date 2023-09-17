@@ -18,12 +18,22 @@ SKIPUNZIP=0
 dir=/sdcard/Android/fas-rs
 conf=$dir/games.toml
 
+[ -v $KSU ] && KSU=false
+
 if [ $ARCH != "arm64" ]; then
 	ui_print "Only for arm64 device !"
 	abort
 elif [ $API -le 30 ]; then
 	ui_print "Required A12+ !"
 	abort
+elif ! $KSU && [ $MAGISK_VER_CODE -lt 26000 ]; then
+	ui_print "Required magisk v26.0+, since we use zygisk api v4"
+	abort
+elif ! $KSU && [ $ZYGISK_ENABLED -ne 1 ]; then
+	ui_print "Required zygisk option to be opened"
+	abort
+elif $KSU; then
+	ui_print "⚠ KSU detected, make sure you has installed zygisk-on-ksu"
 fi
 
 # permission
