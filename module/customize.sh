@@ -19,6 +19,14 @@ dir=/sdcard/Android/fas-rs
 conf=/sdcard/Android/fas-rs/games.toml
 lib=/system/lib64/libgui.so
 
+if [ $ARCH != "arm64" ]; then
+	ui_print "Only for arm64 device !"
+	abort
+else if [ $API -le 30 ]; then
+	ui_print "Required A12+ !"
+	abort
+fi
+
 if [ -f $lib ]; then
 	ui_print "Supported device"
 else
