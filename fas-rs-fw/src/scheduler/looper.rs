@@ -13,7 +13,7 @@
 *  limitations under the License. */
 use std::{
     collections::hash_map::{Entry, HashMap},
-    sync::mpsc::Receiver,
+    sync::mpsc::{Receiver, RecvTimeoutError},
     time::Duration,
 };
 
@@ -57,10 +57,23 @@ impl<P: PerformanceController> Looper<P> {
 
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
-            let data = self
-                .rx
-                .recv()
-                .map_err(|_| Error::Other("Got an error when recving binder data"))?;
+            let data = match self.rx.recv_timeout(Duration::from_secs(1)) {
+                Ok(d) => d,
+                Err(e) => {
+                    if e == RecvTimeoutError::Disconnected {
+                        return Err(Error::Other("Binder Disconnected"));
+                    }
+
+                    if self.started {
+                        self.buffers
+                            .values_mut()
+                            .for_each(|(_, j)| *j += Duration::from_secs(1));
+                    }
+
+                    self.buffer_policy()?;
+                    continue;
+                }
+            };
 
             if !self.check_topapp(data.pid)? {
                 continue;
@@ -114,7 +127,7 @@ impl<P: PerformanceController> Looper<P> {
             self.controller.init_default(&self.config)?;
             self.started = false;
             return Ok(());
-        } else if !self.started {
+        } else if !self.buffers.is_empty() && !self.started {
             self.controller.init_game(&self.config)?;
             self.started = true;
         }

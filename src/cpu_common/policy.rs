@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 use std::{
-    cell::Cell,
+    cell::{Cell, RefCell},
     cmp::Ordering,
     fs,
     os::unix::fs::PermissionsExt,
@@ -31,6 +31,7 @@ pub struct Policy {
     pub min_freq: Freq,
     cur_freq: Cell<Freq>,
     pub is_little: Cell<bool>,
+    gov_snapshot: RefCell<Option<String>>,
 }
 
 impl Policy {
@@ -53,20 +54,17 @@ impl Policy {
             min_freq,
             cur_freq: max_freq.into(),
             is_little: false.into(),
+            gov_snapshot: RefCell::new(None),
         })
     }
 
-    pub fn reset_default(&self) -> Result<()> {
+    pub fn init_default(&self) -> Result<()> {
         if !self.is_little.get() {
             let path = self.path.join("scaling_governor");
             let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
 
-            if fs::read_to_string(self.path.join("scaling_available_governors"))?
-                .contains("schedutil")
-            {
-                fs::write(path, "schedutil")?;
-            } else {
-                fs::write(path, "walt")?;
+            if let Some(ref gov) = *self.gov_snapshot.borrow() {
+                fs::write(path, gov)?;
             }
         }
 
@@ -74,10 +72,14 @@ impl Policy {
         self.write_freq()
     }
 
-    pub fn reset_game(&self) -> Result<()> {
+    pub fn init_game(&self) -> Result<()> {
         if !self.is_little.get() {
             let path = self.path.join("scaling_governor");
             let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
+
+            let cur_gov = fs::read_to_string(&path)?;
+            self.gov_snapshot.replace(Some(cur_gov));
+
             fs::write(path, "performance")?;
         }
 

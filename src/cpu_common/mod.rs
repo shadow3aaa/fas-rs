@@ -99,7 +99,7 @@ impl PerformanceController for CpuCommon {
         self.enable.set(true);
         self.policies
             .iter()
-            .for_each(|p| p.reset_game().unwrap_or_else(|e| error!("{e:?}")));
+            .for_each(|p| p.init_game().unwrap_or_else(|e| error!("{e:?}")));
         Ok(())
     }
 
@@ -107,7 +107,7 @@ impl PerformanceController for CpuCommon {
         self.enable.set(false);
         self.policies
             .iter()
-            .for_each(|p| p.reset_default().unwrap_or_else(|e| error!("{e:?}")));
+            .for_each(|p| p.init_default().unwrap_or_else(|e| error!("{e:?}")));
         Ok(())
     }
 }
