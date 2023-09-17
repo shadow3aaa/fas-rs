@@ -26,8 +26,8 @@ use crate::{
     PerformanceController,
 };
 
-const JANK_REC: usize = 5;
-const BIG_JANK_REC: usize = 10;
+const JANK_REC: usize = 3;
+const BIG_JANK_REC: usize = 6;
 
 type Buffers = HashMap<Process, (Duration, Duration)>; // Process, (jank_scale, total_jank_time)
 type Process = (String, i32); // process, pid

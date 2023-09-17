@@ -30,6 +30,7 @@ pub struct Policy {
     pub max_freq: Freq,
     pub min_freq: Freq,
     cur_freq: Cell<Freq>,
+    pub is_little: Cell<bool>,
 }
 
 impl Policy {
@@ -50,11 +51,36 @@ impl Policy {
             path: p.to_path_buf(),
             max_freq,
             min_freq,
-            cur_freq: Cell::new(max_freq),
+            cur_freq: max_freq.into(),
+            is_little: false.into(),
         })
     }
 
-    pub fn reset(&self) -> Result<()> {
+    pub fn reset_default(&self) -> Result<()> {
+        if !self.is_little.get() {
+            let path = self.path.join("scaling_governor");
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
+
+            if fs::read_to_string(self.path.join("scaling_available_governors"))?
+                .contains("schedutil")
+            {
+                fs::write(path, "schedutil")?;
+            } else {
+                fs::write(path, "walt")?;
+            }
+        }
+
+        self.cur_freq.set(self.max_freq);
+        self.write_freq()
+    }
+
+    pub fn reset_game(&self) -> Result<()> {
+        if !self.is_little.get() {
+            let path = self.path.join("scaling_governor");
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
+            fs::write(path, "performance")?;
+        }
+
         self.cur_freq.set(self.max_freq);
         self.write_freq()
     }
@@ -81,11 +107,8 @@ impl Policy {
 
     fn write_freq(&self) -> Result<()> {
         let path = self.path.join("scaling_max_freq");
-
         let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
-
-        fs::write(path, format!("{}\n", self.cur_freq.get()))?;
-
+        fs::write(path, self.cur_freq.get().to_string())?;
         Ok(())
     }
 

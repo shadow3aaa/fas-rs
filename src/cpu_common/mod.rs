@@ -59,8 +59,12 @@ impl CpuCommon {
             * 1000;
 
         // 设置了忽略小核则去掉第一个
-        if ignore && policies.len() > 2 {
-            policies.remove(0);
+        if policies.len() > 2 {
+            if ignore {
+                policies.remove(0);
+            } else {
+                policies.first_mut().unwrap().is_little = true.into();
+            }
         }
 
         let max_freq_all = policies.iter().map(|p| p.max_freq).max().unwrap();
@@ -95,7 +99,7 @@ impl PerformanceController for CpuCommon {
         self.enable.set(true);
         self.policies
             .iter()
-            .for_each(|p| p.reset().unwrap_or_else(|e| error!("{e:?}")));
+            .for_each(|p| p.reset_game().unwrap_or_else(|e| error!("{e:?}")));
         Ok(())
     }
 
@@ -103,7 +107,7 @@ impl PerformanceController for CpuCommon {
         self.enable.set(false);
         self.policies
             .iter()
-            .for_each(|p| p.reset().unwrap_or_else(|e| error!("{e:?}")));
+            .for_each(|p| p.reset_default().unwrap_or_else(|e| error!("{e:?}")));
         Ok(())
     }
 }
