@@ -1,6 +1,6 @@
 # todo list(画饼) for v0.3.1:
 
-* **⚠变为libgui注入获取frametime**
+* ~~变为libgui注入获取frametime~~
 * ~~解决实际的游戏帧率总是比target_fps稳定低的问题~~
 * 内置可开关的自带模式切换系统
 * 4模式分别独立拥有除keep_std以外的profile
