@@ -42,8 +42,8 @@
 
 - 类型: 布尔
 - 可用值: true false
-- true: 在机器至少有3个及以上的集簇时，fas-rs只控制非小核集群 *
-- false: fas-rs始终控制所有集群
+- true: 在机器至少有3个及以上的集簇时，fas-rs只控制非小核集群
+- false: fas-rs始终控制所有集群 *
 
 ### **min_step**
 
