@@ -16,13 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - uses: actions-rs/toolchain@v1.0.6
-      with:
-        toolchain: nightly
-        override: true
-        target: aarch64-linux-android
     - name: Setup deps
       run: |
+        rustup target add aarch64-linux-android
         cargo install cargo-ndk
         sudo apt install zip
     - name: build
