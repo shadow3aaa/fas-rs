@@ -1,13 +1,10 @@
 [config]
-balance_thermal = 38000
-fast_thermal = 46000
 ignore_little = true
 keep_std = true
 min_step = 20
-performance_thermal = 42000
-powersave_thermal = 36000
 
 [game_list]
+"com.hypergryph.arknights" = 60
 "com.miHoYo.Yuanshen" = 60
 "com.miHoYo.enterprise.NGHSoD" = 60
 "com.miHoYo.hkrpg" = 60

@@ -20,7 +20,7 @@ log = "0.4.19"
 anyhow = "1.0.75"
 thiserror = "1.0.47"
 clap = { version = "4.4.0", features = [ "derive" ] }
-inotify ={ version = "0.10.2", default-features = false}
+inotify = { version = "0.10.2", default-features = false }
 
 [dependencies.fas-rs-fw]
 path = "./fas-rs-fw"

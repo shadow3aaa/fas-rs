@@ -36,7 +36,7 @@ pub fn thread(fas_service: &Strong<dyn IRemoteService>, process: &str) -> anyhow
         debug!("process: [{process}] framtime: [{frametime:?}]");
 
         if Ok(false) == fas_service.sendData(process, pid, frametime.as_nanos() as i64) {
-            debug!("Exit analyze thread, since server prefer this is not a fas app");
+            debug!("Exit analyze thread, since server prefer this is not a fas app anymore");
             return Ok(());
         }
     }

@@ -33,6 +33,7 @@ ifeq ($(RELEASE), true)
 else
 	cp -f target/aarch64-linux-android/debug/fas-rs output/.temp
 endif
+	strip output/.temp/fas-rs
 
 	mkdir -p output/.temp/zygisk
 	cp -f zygisk/build/arm64-v8a.so output/.temp/zygisk

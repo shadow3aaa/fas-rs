@@ -86,7 +86,6 @@ pub unsafe extern "C" fn hook_handler(process: *const c_char) {
             }; // block and wait binder server
 
             if Ok(false) == fas_service.sendData(&process, pid, 0) {
-            debug!("Exit analyze thread, since server prefer this is not a fas app");
             return;
         } // Check first to avoid unnecessary hook
 
