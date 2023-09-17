@@ -14,7 +14,7 @@
 
     **Note: 以上行为是未开启[keep_std](#keep_std)模式的行为(默认开启)，开启后合并行为详见[keep_std](#keep_std)**
 
-- ### 已知缺陷
+- ### 注意
 
   - 使用自动序列化和反序列化实现，**无法保存注释**等非序列化必须信息
 
@@ -51,19 +51,13 @@
 - 可用值: 任意正整数
 - 作用: Fas每次调整最大频率时的最小粒度，越大变化越大，单位是Mhz(频率)
 
-### **powersave/balance/performance/fast + thermal**
-
-- 类型: 整数
-- 可用值: 任意正整数
-- 作用: 对应模式触发温控限制的电池温度，默认为`balance`单位是`摄氏度 * 1000`，比如25.5摄氏度就是25500
-
 #### **\* : 默认配置**
 
 ## **应用列表配置**
 
-### **Package = target_fps**
+### **"package" = target_fps**
 
-- Package: 字符串，应用包名
+- package: 字符串，应用包名
 - target_fps: 正整数，表示应用运行的目标fps
 
 ### **示例**
@@ -73,12 +67,9 @@
 ignore_little = true
 keep_std = true
 min_step = 20
-powersave_thermal = 36000
-balance_thermal = 38000
-performance_thermal = 42000
-fast_thermal = 46000
 
 [game_list]
+"com.hypergryph.arknights" = 60
 "com.miHoYo.Yuanshen" = 60
 "com.miHoYo.enterprise.NGHSoD" = 60
 "com.miHoYo.hkrpg" = 60
