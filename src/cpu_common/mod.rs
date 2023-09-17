@@ -58,7 +58,7 @@ impl CpuCommon {
             .ok_or(Error::ParseConfig)?
             * 1000;
 
-        // 设置了忽略小核则去掉最前面的
+        // 设置了忽略小核则去掉第一个
         if ignore && policies.len() > 2 {
             policies.remove(0);
         }
@@ -92,18 +92,18 @@ impl PerformanceController for CpuCommon {
     }
 
     fn init_game(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
+        self.enable.set(true);
         self.policies
             .iter()
             .for_each(|p| p.reset().unwrap_or_else(|e| error!("{e:?}")));
-        self.enable.set(true);
         Ok(())
     }
 
     fn init_default(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
+        self.enable.set(false);
         self.policies
             .iter()
             .for_each(|p| p.reset().unwrap_or_else(|e| error!("{e:?}")));
-        self.enable.set(false);
         Ok(())
     }
 }

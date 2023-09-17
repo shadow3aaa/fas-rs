@@ -26,7 +26,8 @@ use crate::{
     PerformanceController,
 };
 
-const JANK_REC: usize = 3;
+const JANK_REC: usize = 5;
+const BIG_JANK_REC: usize = 10;
 
 type Buffers = HashMap<Process, (Duration, Duration)>; // Process, (jank_scale, total_jank_time)
 type Process = (String, i32); // process, pid
@@ -122,27 +123,36 @@ impl<P: PerformanceController> Looper<P> {
             .buffers
             .values_mut()
             .filter_map(|(scale_time, jank_time)| {
-                if *jank_time > *scale_time / 4 {
-                    let level = jank_time.as_nanos() as f64 / scale_time.as_nanos() as f64;
-                    
-                    *jank_time = Duration::ZERO;
-                    
-                    let level = level.ceil() as u32;
-                    Some(level.max(0))
+                let result = if *jank_time > *scale_time {
+                    self.jank_counter = BIG_JANK_REC;
+                    Some(10)
+                } else if *jank_time > *scale_time / 2 {
+                    self.jank_counter = JANK_REC;
+                    Some(5)
+                } else if *jank_time > *scale_time / 4 {
+                    self.jank_counter = JANK_REC;
+                    Some(2)
+                } else if *jank_time > *scale_time / 8 {
+                    self.jank_counter = JANK_REC;
+                    Some(1)
                 } else {
                     None
+                };
+
+                if result.is_some() {
+                    *jank_time = Duration::ZERO;
                 }
+
+                result
             })
             .max()
             .unwrap_or_default();
-        
+
         debug!("jank-level: {level}");
-        
+
         if level == 0 && self.jank_counter > 0 {
             self.jank_counter -= 1;
             return Ok(());
-        } else {
-            self.jank_counter = JANK_REC;
         }
 
         self.controller.perf(level, &self.config);
