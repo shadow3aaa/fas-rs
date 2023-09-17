@@ -63,6 +63,9 @@ impl CpuCommon {
             policies.remove(0);
         }
 
+        let max_freq_all = policies.iter().map(|p| p.max_freq).max().unwrap();
+        policies.iter_mut().for_each(|p| p.max_freq = max_freq_all);
+
         Ok(Self {
             step: step.try_into()?,
             policies,
