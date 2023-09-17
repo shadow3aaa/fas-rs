@@ -26,8 +26,8 @@ use crate::{
     PerformanceController,
 };
 
-const JANK_REC: usize = 3;
-const BIG_JANK_REC: usize = 5;
+const JANK_REC: usize = 5;
+const BIG_JANK_REC: usize = 10;
 
 type Buffers = HashMap<Process, (Duration, Duration)>; // Process, (jank_scale, total_jank_time)
 type Process = (String, i32); // process, pid
@@ -132,6 +132,9 @@ impl<P: PerformanceController> Looper<P> {
                 } else if *jank_time > *scale_time / 4 {
                     self.jank_counter = JANK_REC;
                     Some(2)
+                } else if *jank_time > *scale_time / 8 {
+                    self.jank_counter = JANK_REC;
+                    Some(1)
                 } else {
                     None
                 };
