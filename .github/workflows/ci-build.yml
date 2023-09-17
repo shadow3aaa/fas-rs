@@ -24,6 +24,6 @@ jobs:
     - name: Setup deps
       run: |
         cargo install cargo-ndk
-        apt install zip
+        sudo apt install zip
     - name: build
       run: make -f makefile-ndk
