@@ -70,12 +70,15 @@ impl<P: PerformanceController> Looper<P> {
                             .for_each(|(_, j)| *j += Duration::from_secs(1).as_nanos() as isize);
                     }
 
+                    self.retain_topapp();
                     self.buffer_policy()?;
+
                     continue;
                 }
             };
 
-            if !self.check_topapp(data.pid)? {
+            self.retain_topapp();
+            if !self.topapp_checker.is_topapp(data.pid)? {
                 continue;
             }
 
@@ -87,10 +90,9 @@ impl<P: PerformanceController> Looper<P> {
     }
 
     /* 检查是否为顶层应用，并且删除不是顶层应用的buffer **/
-    fn check_topapp(&mut self, p: i32) -> Result<bool> {
+    fn retain_topapp(&mut self) {
         self.buffers
             .retain(|(_, p), _| self.topapp_checker.is_topapp(*p).unwrap_or(false));
-        self.topapp_checker.is_topapp(p) // binder server已经忽略了非列表内应用，因此这里只用检查是否是顶层应用
     }
 
     fn buffer_update(&mut self, d: &FasData) {
