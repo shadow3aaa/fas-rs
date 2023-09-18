@@ -29,7 +29,7 @@ use crate::{
 const JANK_REC: usize = 3;
 const BIG_JANK_REC: usize = 6;
 
-type Buffers = HashMap<Process, (Duration, Duration)>; // Process, (jank_scale, total_jank_time)
+type Buffers = HashMap<Process, (isize, isize)>; // Process, (jank_scale, total_jank_time_ns)
 type Process = (String, i32); // process, pid
 
 pub struct Looper<P: PerformanceController> {
@@ -67,7 +67,7 @@ impl<P: PerformanceController> Looper<P> {
                     if self.started {
                         self.buffers
                             .values_mut()
-                            .for_each(|(_, j)| *j += Duration::from_secs(1));
+                            .for_each(|(_, j)| *j += Duration::from_secs(1).as_nanos() as isize);
                     }
 
                     self.buffer_policy()?;
@@ -103,8 +103,9 @@ impl<P: PerformanceController> Looper<P> {
         let process = (d.pkg.clone(), d.pid);
         let scale_time = Duration::from_secs(1)
             .checked_div(d.target_fps)
-            .unwrap_or_default();
-        let jank_time = d.frametime.saturating_sub(scale_time);
+            .unwrap_or_default()
+            .as_nanos() as isize;
+        let jank_time = d.frametime.as_nanos() as isize - scale_time;
 
         match self.buffers.entry(process) {
             Entry::Occupied(mut o) => {
@@ -113,7 +114,7 @@ impl<P: PerformanceController> Looper<P> {
                     value.1 += jank_time;
                 } else {
                     value.0 = scale_time;
-                    value.1 = Duration::ZERO;
+                    value.1 = 0;
                 }
             }
             Entry::Vacant(v) => {
@@ -153,7 +154,7 @@ impl<P: PerformanceController> Looper<P> {
                 };
 
                 if result.is_some() {
-                    *jank_time = Duration::ZERO;
+                    *jank_time = 0;
                 }
 
                 result
