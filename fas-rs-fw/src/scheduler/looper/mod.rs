@@ -63,7 +63,7 @@ impl<P: PerformanceController> Looper<P> {
                 .max()
                 .unwrap_or_else(|| Duration::from_secs(1).as_nanos() as isize);
             let timeout = timeout.min(Duration::from_secs(1).as_nanos() as isize);
-            let timeout = Duration::from_nanos(timeout as u64); // 获取buffer中最大的标准帧时间作为接收超时时间
+            let timeout = Duration::from_nanos(timeout as u64) * 2; // 获取buffer中最大的 (标准帧时间 * 2) 作为接收超时时间
 
             let data = match self.rx.recv_timeout(timeout) {
                 Ok(d) => d,
@@ -75,7 +75,7 @@ impl<P: PerformanceController> Looper<P> {
                     if self.started {
                         self.buffers
                             .values_mut()
-                            .for_each(|(_, j)| *j += Duration::from_secs(1).as_nanos() as isize);
+                            .for_each(|(_, j)| *j += (timeout / 2).as_nanos() as isize);
                     }
 
                     self.retain_topapp();

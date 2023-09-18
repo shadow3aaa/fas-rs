@@ -17,8 +17,8 @@ use log::debug;
 use super::Looper;
 use crate::{error::Result, PerformanceController};
 
-const JANK_REC: usize = 5;
-const BIG_JANK_REC: usize = 10;
+const JANK_REC: usize = 3;
+const BIG_JANK_REC: usize = 7;
 
 impl<P: PerformanceController> Looper<P> {
     pub fn buffer_policy(&mut self) -> Result<()> {
@@ -39,7 +39,7 @@ impl<P: PerformanceController> Looper<P> {
                     self.jank_counter = BIG_JANK_REC;
                     Some(10)
                 } else if *jank_time > *scale_time / 2 {
-                    self.jank_counter = JANK_REC;
+                    self.jank_counter = BIG_JANK_REC;
                     Some(6)
                 } else if *jank_time > *scale_time / 4 {
                     self.jank_counter = JANK_REC;
@@ -47,7 +47,7 @@ impl<P: PerformanceController> Looper<P> {
                 } else if *jank_time > *scale_time / 8 {
                     self.jank_counter = JANK_REC;
                     Some(2)
-                } else if *jank_time > *scale_time / 16 {
+                } else if *jank_time > *scale_time / 12 {
                     self.jank_counter = JANK_REC;
                     Some(1)
                 } else {
