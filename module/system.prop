@@ -1,1 +1,2 @@
 vendor.perf.framepacing.enable=false
+debug.sf.latch_unsignaled=true
