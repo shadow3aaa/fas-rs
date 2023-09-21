@@ -11,9 +11,14 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{collections::hash_map::Entry, time::Duration};
+use std::{
+    collections::{hash_map::Entry, VecDeque},
+    time::Duration,
+};
 
-use super::{super::FasData, Looper};
+use sliding_features::{Echo, ALMA};
+
+use super::{super::FasData, Buffer, Looper};
 use crate::PerformanceController;
 
 impl<P: PerformanceController> Looper<P> {
@@ -31,25 +36,34 @@ impl<P: PerformanceController> Looper<P> {
         }
 
         let process = (d.pkg.clone(), d.pid);
-        let scale_time = Duration::from_secs(1)
-            .checked_div(d.target_fps)
-            .unwrap_or_default()
-            .as_nanos() as isize;
-        let jank_time = d.frametime.as_nanos() as isize - scale_time;
+        let target_fps = d.target_fps;
+        let scale_time = Duration::from_secs(1) / target_fps / target_fps;
 
         match self.buffers.entry(process) {
             Entry::Occupied(mut o) => {
                 let value = o.get_mut();
-                if value.0 == scale_time {
-                    value.1 += jank_time;
-                    value.1 = value.1.max(-value.0);
+                if value.target_fps == target_fps {
+                    value.push_frametime(d.frametime);
                 } else {
-                    value.0 = scale_time;
-                    value.1 = 0;
+                    let buffer = Buffer {
+                        scale: scale_time,
+                        target_fps,
+                        frametimes: VecDeque::new(),
+                        smoother: ALMA::new(Echo::new(), 5),
+                    };
+                    *value = buffer;
                 }
             }
             Entry::Vacant(v) => {
-                v.insert((scale_time, jank_time));
+                let mut buffer = Buffer {
+                    scale: scale_time,
+                    target_fps,
+                    frametimes: VecDeque::new(),
+                    smoother: ALMA::new(Echo::new(), 5),
+                };
+                buffer.push_frametime(d.frametime);
+
+                v.insert(buffer);
             }
         }
     }

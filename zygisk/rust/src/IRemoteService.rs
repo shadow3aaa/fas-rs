@@ -1,8 +1,8 @@
 #![forbid(unsafe_code)]
-#![allow(clippy::all, clippy::pedantic)]
-#![allow(warnings)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
+#![allow(clippy::all, clippy::pedantic)]
+#![allow(warnings)]
 #[allow(unused_imports)]
 use binder::binder_impl::IBinderInternal;
 use binder::declare_binder_interface;

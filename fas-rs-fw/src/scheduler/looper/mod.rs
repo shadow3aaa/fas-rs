@@ -15,10 +15,13 @@ mod policy;
 mod utils;
 
 use std::{
-    collections::hash_map::HashMap,
+    collections::{HashMap, VecDeque},
     sync::mpsc::{Receiver, RecvTimeoutError},
     time::Duration,
 };
+
+use log::debug;
+use sliding_features::{Echo, View, ALMA};
 
 use super::{topapp::TimedWatcher, FasData};
 use crate::{
@@ -27,8 +30,34 @@ use crate::{
     PerformanceController,
 };
 
-pub type Buffers = HashMap<Process, (isize, isize)>; // Process, (jank_scale, total_jank_time_ns)
+const BUFFER_LEN: usize = 144;
+
+pub type Buffers = HashMap<Process, Buffer>; // Process, (jank_scale, total_jank_time_ns)
 pub type Process = (String, i32); // process, pid
+
+#[derive(Debug)]
+pub struct Buffer {
+    pub scale: Duration,
+    pub target_fps: u32,
+    pub frametimes: VecDeque<Duration>,
+    pub smoother: ALMA<Echo>,
+}
+
+impl Buffer {
+    pub fn push_frametime(&mut self, d: Duration) {
+        if self.frametimes.len() >= BUFFER_LEN {
+            self.frametimes.pop_back();
+        }
+
+        self.smoother.update(d.as_nanos() as f64);
+        let frametime = self.smoother.last();
+        let frametime = Duration::from_nanos(frametime as u64);
+
+        debug!("frametime: {frametime:?}");
+
+        self.frametimes.push_front(frametime);
+    }
+}
 
 pub struct Looper<P: PerformanceController> {
     rx: Receiver<FasData>,
@@ -37,7 +66,6 @@ pub struct Looper<P: PerformanceController> {
     topapp_checker: TimedWatcher,
     buffers: Buffers,
     started: bool,
-    jank_counter: usize,
 }
 
 impl<P: PerformanceController> Looper<P> {
@@ -49,51 +77,52 @@ impl<P: PerformanceController> Looper<P> {
             topapp_checker: TimedWatcher::new()?,
             buffers: Buffers::new(),
             started: false,
-            jank_counter: 0,
         })
     }
 
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
-            let timeout = self
+            let mut timeout = self
                 .buffers
                 .values()
-                .map(|(s, _)| s)
-                .copied()
+                .map(|b| Duration::from_secs(1) / b.target_fps)
                 .max()
-                .unwrap_or_else(|| Duration::from_secs(1).as_nanos() as isize);
-            let timeout = timeout.min(Duration::from_secs(1).as_nanos() as isize);
-            let timeout = Duration::from_nanos(timeout as u64) * 2; // 获取buffer中最大的 (标准帧时间 * 2) 作为接收超时时间
+                .unwrap_or_default();
+            timeout *= 10; // 获取buffer中最大的 (标准帧时间 * 10) 作为接收超时时间
 
-            let data = match self.rx.recv_timeout(timeout) {
-                Ok(d) => d,
-                Err(e) => {
-                    if e == RecvTimeoutError::Disconnected {
-                        return Err(Error::Other("Binder Disconnected"));
+            let data = if timeout.is_zero() {
+                Some(
+                    self.rx
+                        .recv()
+                        .map_err(|_| Error::Other("Binder Disconnected"))?,
+                )
+            } else {
+                match self.rx.recv_timeout(timeout) {
+                    Ok(d) => Some(d),
+                    Err(e) => {
+                        if e == RecvTimeoutError::Disconnected {
+                            return Err(Error::Other("Binder Disconnected"));
+                        }
+
+                        if self.started {
+                            self.buffers
+                                .values_mut()
+                                .for_each(|b| b.push_frametime(timeout));
+                        }
+
+                        None
                     }
-
-                    if self.started {
-                        self.buffers
-                            .values_mut()
-                            .for_each(|(_, j)| *j += (timeout / 2).as_nanos() as isize);
-                    }
-
-                    self.retain_topapp();
-                    self.buffer_policy()?;
-
-                    continue;
                 }
             };
 
-            self.retain_topapp();
-            if !self.topapp_checker.is_topapp(data.pid)? {
-                continue;
+            if let Some(data) = data {
+                self.buffer_update(&data);
             }
 
-            self.buffer_update(&data);
+            self.retain_topapp();
             self.buffer_policy()?;
 
-            // debug!("{:#?}", self.buffers);
+            debug!("{:#?}", self.buffers);
         }
     }
 }

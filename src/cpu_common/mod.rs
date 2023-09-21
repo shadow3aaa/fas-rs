@@ -13,7 +13,7 @@
 *  limitations under the License. */
 mod policy;
 
-use std::{cell::Cell, ffi::OsStr, fs};
+use std::{cell::Cell, collections::HashSet, ffi::OsStr, fs};
 
 use anyhow::Result;
 use fas_rs_fw::prelude::*;
@@ -52,12 +52,6 @@ impl CpuCommon {
             .as_bool()
             .ok_or(Error::ParseConfig)?;
 
-        let step = config
-            .get_conf("min_step")?
-            .as_integer()
-            .ok_or(Error::ParseConfig)?
-            * 1000;
-
         // 设置了忽略小核则去掉第一个
         if policies.len() > 2 {
             if ignore {
@@ -67,11 +61,25 @@ impl CpuCommon {
             }
         }
 
-        let max_freq_all = policies.iter().map(|p| p.max_freq).max().unwrap();
+        let mut freqs: Vec<_> = policies
+            .iter()
+            .flat_map(|p| p.freqs.iter().copied())
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect();
+        freqs.sort_unstable();
+
+        let step = freqs
+            .windows(2)
+            .map(|arr| arr[1] - arr[0])
+            .min()
+            .unwrap();
+
+        let max_freq_all = freqs.last().copied().unwrap();
         policies.iter_mut().for_each(|p| p.max_freq = max_freq_all);
 
         Ok(Self {
-            step: step.try_into()?,
+            step,
             policies,
             enable: Cell::new(false),
         })

@@ -29,6 +29,7 @@ pub struct Policy {
     pub path: PathBuf,
     pub max_freq: Freq,
     pub min_freq: Freq,
+    pub freqs: Vec<Freq>,
     cur_freq: Cell<Freq>,
     pub is_little: Cell<bool>,
     gov_snapshot: RefCell<Option<String>>,
@@ -52,6 +53,7 @@ impl Policy {
             path: p.to_path_buf(),
             max_freq,
             min_freq,
+            freqs,
             cur_freq: max_freq.into(),
             is_little: false.into(),
             gov_snapshot: RefCell::new(None),
@@ -80,7 +82,7 @@ impl Policy {
             let cur_gov = fs::read_to_string(&path)?;
             self.gov_snapshot.replace(Some(cur_gov));
 
-            fs::write(path, "performance")?;
+            fs::write(path, "performance\n")?;
         }
 
         self.cur_freq.set(self.max_freq);
@@ -110,7 +112,7 @@ impl Policy {
     fn write_freq(&self) -> Result<()> {
         let path = self.path.join("scaling_max_freq");
         let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
-        fs::write(path, self.cur_freq.get().to_string())?;
+        fs::write(path, format!("{}\n", self.cur_freq.get()))?;
         Ok(())
     }
 

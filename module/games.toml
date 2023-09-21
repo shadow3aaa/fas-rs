@@ -1,7 +1,6 @@
 [config]
 ignore_little = false
 keep_std = true
-min_step = 20
 
 [game_list]
 "com.hypergryph.arknights" = 60

@@ -11,14 +11,15 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+use std::time::Duration;
 
 use log::debug;
 
-use super::Looper;
+use super::{Buffer, Looper};
 use crate::{error::Result, PerformanceController};
 
-const JANK_REC: usize = 3;
-const BIG_JANK_REC: usize = 7;
+const LITTLE_JANK_REC: usize = 8;
+const BIG_JANK_REC: usize = 30;
 
 impl<P: PerformanceController> Looper<P> {
     pub fn buffer_policy(&mut self) -> Result<()> {
@@ -31,47 +32,55 @@ impl<P: PerformanceController> Looper<P> {
             self.started = true;
         }
 
-        let level = self
-            .buffers
-            .values_mut()
-            .filter_map(|(scale_time, jank_time)| {
-                let result = if *jank_time > *scale_time {
-                    self.jank_counter = BIG_JANK_REC;
-                    Some(10)
-                } else if *jank_time > *scale_time / 2 {
-                    self.jank_counter = BIG_JANK_REC;
-                    Some(6)
-                } else if *jank_time > *scale_time / 4 {
-                    self.jank_counter = JANK_REC;
-                    Some(4)
-                } else if *jank_time > *scale_time / 8 {
-                    self.jank_counter = JANK_REC;
-                    Some(2)
-                } else if *jank_time > *scale_time / 12 {
-                    self.jank_counter = JANK_REC;
-                    Some(1)
-                } else {
-                    None
-                };
+        let levels: Vec<_> = self.buffers.values().map(Self::calculate_level).collect();
 
-                if result.is_some() {
-                    *jank_time = 0;
-                }
+        let Some(level) = levels.iter()
+            .filter_map(|l| *l)
+            .max() else {
+            return Ok(());
+        };
 
-                result
-            })
-            .max()
-            .unwrap_or_default();
-
-        debug!("jank-level: {level}");
-
-        if level == 0 && self.jank_counter > 0 {
-            self.jank_counter -= 1;
+        if level == 0 && levels.iter().any(Option::is_none) {
             return Ok(());
         }
 
-        self.controller.perf(level, &self.config);
+        debug!("jank-level: {level}");
 
+        self.controller.perf(level, &self.config);
         Ok(())
+    }
+
+    fn calculate_level(buffer: &Buffer) -> Option<u32> {
+        let scale = buffer.scale;
+        let target_frametime = Duration::from_secs(1) / buffer.target_fps;
+
+        let little_jank = scale * 3 / 2;
+        let big_jank = target_frametime * 5;
+
+        let buffer = &buffer.frametimes;
+
+        let frametime = buffer.iter().next()?;
+        let diff = frametime.saturating_sub(target_frametime);
+        
+        debug!("diff: {diff:?}");
+
+        let level = if diff < little_jank {
+            0
+        } else if diff < big_jank {
+            1
+        } else {
+            8
+        };
+      
+        if level == 0 && (buffer
+                .iter()
+                .take(LITTLE_JANK_REC)
+                .any(|d| d.saturating_sub(target_frametime) > little_jank)
+            || buffer.iter().take(BIG_JANK_REC).any(|d| d.saturating_sub(target_frametime) > big_jank))
+        {
+            None
+        } else {
+            Some(level)
+        }
     }
 }

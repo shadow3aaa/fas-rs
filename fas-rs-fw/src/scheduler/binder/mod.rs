@@ -38,7 +38,6 @@ pub struct FasServer {
 impl Interface for FasServer {}
 
 impl IRemoteService::IRemoteService for FasServer {
-    #[allow(clippy::cast_sign_loss)]
     fn sendData(&self, pkg: &str, pid: i32, frametime_ns: i64) -> binder::Result<bool> {
         let Some(target_fps) = self.config.target_fps(pkg) else {
             return Ok(false);

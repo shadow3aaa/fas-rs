@@ -30,6 +30,7 @@ use std::{
     mem, process, ptr,
     sync::mpsc::{self, Receiver, SyncSender},
     thread,
+    time::Instant,
 };
 
 use android_logger::{self, Config};
@@ -48,11 +49,12 @@ static CHANNEL: Lazy<Channel> = Lazy::new(|| {
 });
 
 struct Channel {
-    sx: SyncSender<()>,
-    rx: Receiver<()>,
+    sx: SyncSender<(*mut c_void, Instant)>,
+    rx: Receiver<(*mut c_void, Instant)>,
 }
 
 unsafe impl Sync for Channel {}
+unsafe impl Send for Channel {}
 
 #[no_mangle]
 pub unsafe extern "C" fn hook_handler(process: *const c_char) {
@@ -113,11 +115,13 @@ unsafe fn hook() -> Result<()> {
 *  int Surface::queueBuffer(android_native_buffer_t* buffer, int fenceFd)
 *
 *  This function is called every time a new frame is added to the buffer */
-unsafe extern "C" fn post_hook(android_native_buffer_t: c_void, fence_id: c_int) -> c_int {
-    let ori_fun: extern "C" fn(c_void, c_int) -> c_int = mem::transmute(OLD_FUNC_PTR); // trans ptr to ori func
+unsafe extern "C" fn post_hook(android_native_buffer_t: *mut c_void, fence_id: c_int) -> c_int {
+    let ori_fun: extern "C" fn(*mut c_void, c_int) -> c_int = mem::transmute(OLD_FUNC_PTR); // trans ptr to ori func
     let result = ori_fun(android_native_buffer_t, fence_id);
 
-    let _ = CHANNEL.sx.try_send(());
+    let _ = CHANNEL
+        .sx
+        .try_send((android_native_buffer_t, Instant::now()));
 
     result
 }

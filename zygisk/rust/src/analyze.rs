@@ -11,7 +11,11 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{process, time::Instant};
+use std::{
+    collections::hash_map::{Entry, HashMap},
+    process,
+    time::{Duration, Instant},
+};
 
 use binder::Strong;
 use log::debug;
@@ -19,19 +23,31 @@ use log::debug;
 use crate::{IRemoteService::IRemoteService, CHANNEL};
 
 pub fn thread(fas_service: &Strong<dyn IRemoteService>, process: &str) -> anyhow::Result<()> {
-    let mut stamp = Instant::now();
-
     let pid = process::id() as i32;
+    let mut buffer_stamp: HashMap<_, Instant> = HashMap::new();
 
     loop {
-        if let Err(e) = CHANNEL.rx.recv() {
-            debug!("End analyze thread, reason: {e:?}");
-            return Ok(());
+        buffer_stamp.retain(|_, s| s.elapsed() < Duration::from_secs(10)); // buffer gc
+
+        let (buffer_ptr, stamp) = match CHANNEL.rx.recv() {
+            Ok(o) => o,
+            Err(e) => {
+                debug!("End analyze thread, reason: {e:?}");
+                return Ok(());
+            }
+        };
+
+        if buffer_ptr.is_null() {
+            continue;
         }
 
-        let now = Instant::now();
-        let frametime = now - stamp;
-        stamp = now;
+        let frametime = match buffer_stamp.entry(buffer_ptr) {
+            Entry::Occupied(mut o) => o.insert(stamp).elapsed(),
+            Entry::Vacant(v) => {
+                v.insert(stamp);
+                continue;
+            }
+        };
 
         debug!("process: [{process}] framtime: [{frametime:?}]");
 
