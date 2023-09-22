@@ -70,7 +70,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     "versionCode": {version_code},
     "version": "v{0}",
     "zipUrl": "https://github.com/shadow3aaa/fas-rs/releases/download/v{0}/fas-rs.zip",
-    "changelog": "https://github.com/shadow3aaa/fas-rs/raw/master/changelog.md"
+    "changelog": "https://github.com/shadow3aaa/fas-rs/raw/master/update/changelog.md"
 }}
     "#,
         package.version
