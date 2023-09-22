@@ -53,7 +53,8 @@ impl Buffer {
         let frametime = self.smoother.last();
         let frametime = Duration::from_nanos(frametime as u64);
 
-        debug!("frametime: {frametime:?}");
+        debug!("original frametime: {d:?}");
+        debug!("smoothed frametime: {frametime:?}");
 
         self.frametimes.push_front(frametime);
     }
@@ -87,7 +88,7 @@ impl<P: PerformanceController> Looper<P> {
                 .values()
                 .map(|b| Duration::from_secs(1) / b.target_fps)
                 .max()
-                .unwrap_or_default();
+                .unwrap_or(Duration::ZERO);
             timeout *= 10; // 获取buffer中最大的 (标准帧时间 * 10) 作为接收超时时间
 
             let data = if timeout.is_zero() {
@@ -116,13 +117,15 @@ impl<P: PerformanceController> Looper<P> {
             };
 
             if let Some(data) = data {
-                self.buffer_update(&data);
+                self.buffer_update(&data)?;
             }
 
             self.retain_topapp();
             self.buffer_policy()?;
 
-            debug!("{:#?}", self.buffers);
+            if self.started {
+                debug!("{:#?}", self.buffers);
+            }
         }
     }
 }

@@ -19,7 +19,7 @@ use std::{
 use sliding_features::{Echo, EMA};
 
 use super::{super::FasData, Buffer, Looper};
-use crate::PerformanceController;
+use crate::{error::Result, PerformanceController};
 
 impl<P: PerformanceController> Looper<P> {
     /* 检查是否为顶层应用，并且删除不是顶层应用的buffer **/
@@ -28,9 +28,9 @@ impl<P: PerformanceController> Looper<P> {
             .retain(|(_, p), _| self.topapp_checker.is_topapp(*p).unwrap_or(false));
     }
 
-    pub fn buffer_update(&mut self, d: &FasData) {
-        if d.frametime.is_zero() {
-            return;
+    pub fn buffer_update(&mut self, d: &FasData) -> Result<()> {
+        if self.topapp_checker.is_topapp(d.pid)? || d.frametime.is_zero() {
+            return Ok(());
         } else if d.target_fps == 0 {
             panic!("Target fps must be bigger than zero");
         }
@@ -51,7 +51,7 @@ impl<P: PerformanceController> Looper<P> {
                         frametimes: VecDeque::new(),
                         smoother: EMA::new(
                             Echo::new(),
-                            (target_fps / 12).max(5).try_into().unwrap(),
+                            (target_fps / 6).max(5).try_into().unwrap(),
                         ),
                     };
                     *value = buffer;
@@ -62,12 +62,14 @@ impl<P: PerformanceController> Looper<P> {
                     scale: scale_time,
                     target_fps,
                     frametimes: VecDeque::new(),
-                    smoother: EMA::new(Echo::new(), (target_fps / 12).max(5).try_into().unwrap()),
+                    smoother: EMA::new(Echo::new(), (target_fps / 6).max(5).try_into().unwrap()),
                 };
                 buffer.push_frametime(d.frametime);
 
                 v.insert(buffer);
             }
         }
+
+        Ok(())
     }
 }
