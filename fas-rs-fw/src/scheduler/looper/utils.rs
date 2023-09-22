@@ -16,7 +16,7 @@ use std::{
     time::Duration,
 };
 
-use sliding_features::{Echo, ALMA};
+use sliding_features::{Echo, EMA};
 
 use super::{super::FasData, Buffer, Looper};
 use crate::PerformanceController;
@@ -49,7 +49,10 @@ impl<P: PerformanceController> Looper<P> {
                         scale: scale_time,
                         target_fps,
                         frametimes: VecDeque::new(),
-                        smoother: ALMA::new(Echo::new(), 5),
+                        smoother: EMA::new(
+                            Echo::new(),
+                            (target_fps / 12).max(5).try_into().unwrap(),
+                        ),
                     };
                     *value = buffer;
                 }
@@ -59,7 +62,7 @@ impl<P: PerformanceController> Looper<P> {
                     scale: scale_time,
                     target_fps,
                     frametimes: VecDeque::new(),
-                    smoother: ALMA::new(Echo::new(), 5),
+                    smoother: EMA::new(Echo::new(), (target_fps / 12).max(5).try_into().unwrap()),
                 };
                 buffer.push_frametime(d.frametime);
 

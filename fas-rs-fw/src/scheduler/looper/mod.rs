@@ -21,7 +21,7 @@ use std::{
 };
 
 use log::debug;
-use sliding_features::{Echo, View, ALMA};
+use sliding_features::{Echo, View, EMA};
 
 use super::{topapp::TimedWatcher, FasData};
 use crate::{
@@ -40,7 +40,7 @@ pub struct Buffer {
     pub scale: Duration,
     pub target_fps: u32,
     pub frametimes: VecDeque<Duration>,
-    pub smoother: ALMA<Echo>,
+    pub smoother: EMA<Echo>,
 }
 
 impl Buffer {
