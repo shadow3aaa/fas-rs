@@ -69,11 +69,7 @@ impl CpuCommon {
             .collect();
         freqs.sort_unstable();
 
-        let step = freqs
-            .windows(2)
-            .map(|arr| arr[1] - arr[0])
-            .min()
-            .unwrap();
+        let step = freqs.windows(2).map(|arr| arr[1] - arr[0]).min().unwrap();
 
         let max_freq_all = freqs.last().copied().unwrap();
         policies.iter_mut().for_each(|p| p.max_freq = max_freq_all);

@@ -61,7 +61,7 @@ impl<P: PerformanceController> Looper<P> {
 
         let frametime = buffer.iter().next()?;
         let diff = frametime.saturating_sub(target_frametime);
-        
+
         debug!("diff: {diff:?}");
 
         let level = if diff < little_jank {
@@ -71,12 +71,16 @@ impl<P: PerformanceController> Looper<P> {
         } else {
             8
         };
-      
-        if level == 0 && (buffer
+
+        if level == 0
+            && (buffer
                 .iter()
                 .take(LITTLE_JANK_REC)
                 .any(|d| d.saturating_sub(target_frametime) > little_jank)
-            || buffer.iter().take(BIG_JANK_REC).any(|d| d.saturating_sub(target_frametime) > big_jank))
+                || buffer
+                    .iter()
+                    .take(BIG_JANK_REC)
+                    .any(|d| d.saturating_sub(target_frametime) > big_jank))
         {
             None
         } else {

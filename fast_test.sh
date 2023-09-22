@@ -14,5 +14,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# run on root
+# run test on termux
 su -c "killall fas-rs; FAS_LOG=debug output/.temp/fas-rs -r"
