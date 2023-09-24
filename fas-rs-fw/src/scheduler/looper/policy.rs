@@ -18,8 +18,32 @@ use log::debug;
 use super::{Buffer, Looper};
 use crate::{error::Result, PerformanceController};
 
-const LITTLE_JANK_REC: usize = 8;
-const BIG_JANK_REC: usize = 30;
+struct Policy {
+    pub basic_scale: Duration,
+    pub basic_rec: usize,
+    pub big_scale: Duration,
+    pub big_rec: usize,
+}
+
+impl Policy {
+    pub fn adapt(target_fps: u32) -> Self {
+        if target_fps <= 60 {
+            Self {
+                basic_scale: Duration::from_secs(1) / target_fps / target_fps * 3 / 2,
+                basic_rec: 8,
+                big_scale: Duration::from_secs(1) / target_fps * 5,
+                big_rec: 30,
+            }
+        } else {
+            Self {
+                basic_scale: Duration::from_secs(1) / target_fps / target_fps * 3,
+                basic_rec: 0,
+                big_scale: Duration::from_secs(1) / target_fps * 20,
+                big_rec: 15,
+            }
+        }
+    }
+}
 
 impl<P: PerformanceController> Looper<P> {
     pub fn buffer_policy(&mut self) -> Result<()> {
@@ -51,36 +75,33 @@ impl<P: PerformanceController> Looper<P> {
     }
 
     fn calculate_level(buffer: &Buffer) -> Option<u32> {
-        let scale = buffer.scale;
+        let policy = Policy::adapt(buffer.target_fps);
         let target_frametime = Duration::from_secs(1) / buffer.target_fps;
 
-        let little_jank = scale * 3 / 2;
-        let big_jank = target_frametime * 5;
+        let frametimes = &buffer.frametimes;
+        let frametime = frametimes.iter().next()?;
 
-        let buffer = &buffer.frametimes;
-
-        let frametime = buffer.iter().next()?;
         let diff = frametime.saturating_sub(target_frametime);
 
         debug!("diff: {diff:?}");
 
-        let level = if diff < little_jank {
-            0
-        } else if diff < big_jank {
-            1
+        let level = if diff < policy.big_scale {
+            diff.as_nanos() / policy.basic_scale.as_nanos()
         } else {
-            8
+            10
         };
 
+        let level: u32 = level.try_into().unwrap_or(u32::MAX);
+
         if level == 0
-            && (buffer
+            && (frametimes
                 .iter()
-                .take(LITTLE_JANK_REC)
-                .any(|d| d.saturating_sub(target_frametime) > little_jank)
-                || buffer
+                .take(policy.basic_rec)
+                .any(|d| d.saturating_sub(target_frametime) > policy.basic_scale)
+                || frametimes
                     .iter()
-                    .take(BIG_JANK_REC)
-                    .any(|d| d.saturating_sub(target_frametime) > big_jank))
+                    .take(policy.big_rec)
+                    .any(|d| d.saturating_sub(target_frametime) > policy.big_scale))
         {
             None
         } else {

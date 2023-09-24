@@ -11,12 +11,9 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{
-    collections::{hash_map::Entry, VecDeque},
-    time::Duration,
-};
+use std::collections::{hash_map::Entry, VecDeque};
 
-use sliding_features::{Echo, EMA};
+use sliding_features::{Echo, ALMA};
 
 use super::{super::FasData, Buffer, Looper};
 use crate::{error::Result, PerformanceController};
@@ -29,7 +26,7 @@ impl<P: PerformanceController> Looper<P> {
     }
 
     pub fn buffer_update(&mut self, d: &FasData) -> Result<()> {
-        if self.topapp_checker.is_topapp(d.pid)? || d.frametime.is_zero() {
+        if !self.topapp_checker.is_topapp(d.pid)? || d.frametime.is_zero() {
             return Ok(());
         } else if d.target_fps == 0 {
             panic!("Target fps must be bigger than zero");
@@ -37,7 +34,6 @@ impl<P: PerformanceController> Looper<P> {
 
         let process = (d.pkg.clone(), d.pid);
         let target_fps = d.target_fps;
-        let scale_time = Duration::from_secs(1) / target_fps / target_fps;
 
         match self.buffers.entry(process) {
             Entry::Occupied(mut o) => {
@@ -46,23 +42,18 @@ impl<P: PerformanceController> Looper<P> {
                     value.push_frametime(d.frametime);
                 } else {
                     let buffer = Buffer {
-                        scale: scale_time,
                         target_fps,
                         frametimes: VecDeque::new(),
-                        smoother: EMA::new(
-                            Echo::new(),
-                            (target_fps / 6).max(5).try_into().unwrap(),
-                        ),
+                        smoother: ALMA::new(Echo::new(), 20),
                     };
                     *value = buffer;
                 }
             }
             Entry::Vacant(v) => {
                 let mut buffer = Buffer {
-                    scale: scale_time,
                     target_fps,
                     frametimes: VecDeque::new(),
-                    smoother: EMA::new(Echo::new(), (target_fps / 6).max(5).try_into().unwrap()),
+                    smoother: ALMA::new(Echo::new(), 20),
                 };
                 buffer.push_frametime(d.frametime);
 

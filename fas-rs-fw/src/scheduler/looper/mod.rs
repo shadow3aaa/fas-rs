@@ -21,7 +21,6 @@ use std::{
 };
 
 use log::debug;
-use sliding_features::{Echo, View, EMA};
 
 use super::{topapp::TimedWatcher, FasData};
 use crate::{
@@ -37,10 +36,8 @@ pub type Process = (String, i32); // process, pid
 
 #[derive(Debug)]
 pub struct Buffer {
-    pub scale: Duration,
     pub target_fps: u32,
     pub frametimes: VecDeque<Duration>,
-    pub smoother: EMA<Echo>,
 }
 
 impl Buffer {
@@ -49,14 +46,7 @@ impl Buffer {
             self.frametimes.pop_back();
         }
 
-        self.smoother.update(d.as_nanos() as f64);
-        let frametime = self.smoother.last();
-        let frametime = Duration::from_nanos(frametime as u64);
-
-        debug!("original frametime: {d:?}");
-        debug!("smoothed frametime: {frametime:?}");
-
-        self.frametimes.push_front(frametime);
+        self.frametimes.push_front(d);
     }
 }
 
@@ -89,7 +79,7 @@ impl<P: PerformanceController> Looper<P> {
                 .map(|b| Duration::from_secs(1) / b.target_fps)
                 .max()
                 .unwrap_or(Duration::ZERO);
-            timeout *= 10; // 获取buffer中最大的 (标准帧时间 * 10) 作为接收超时时间
+            timeout *= 100; // 获取buffer中最大的 (标准帧时间 * 10) 作为接收超时时间
 
             let data = if timeout.is_zero() {
                 Some(

@@ -119,9 +119,13 @@ unsafe extern "C" fn post_hook(android_native_buffer_t: *mut c_void, fence_id: c
     let ori_fun: extern "C" fn(*mut c_void, c_int) -> c_int = mem::transmute(OLD_FUNC_PTR); // trans ptr to ori func
     let result = ori_fun(android_native_buffer_t, fence_id);
 
-    let _ = CHANNEL
-        .sx
-        .try_send((android_native_buffer_t, Instant::now()));
+    debug!("queue buffer hook: buffer: {android_native_buffer_t:?}, result: {result}");
+
+    if result == 0 {
+        let _ = CHANNEL
+            .sx
+            .try_send((android_native_buffer_t, Instant::now()));
+    }
 
     result
 }
