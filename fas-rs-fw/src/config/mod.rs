@@ -32,7 +32,13 @@ use read::wait_and_read;
 
 type ConfData = RwLock<Value>;
 
-#[derive(Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TargetFps {
+    Auto,
+    Value(u32),
+}
+
+#[derive(Debug, Clone)]
 pub struct Config {
     toml: Arc<ConfData>,
 }
@@ -72,7 +78,7 @@ impl Config {
     /// # Panics
     ///
     /// 读取/解析配置失败
-    pub fn target_fps<S: AsRef<str>>(&self, pkg: S) -> Option<u32> {
+    pub fn target_fps<S: AsRef<str>>(&self, pkg: S) -> Option<TargetFps> {
         let pkg = pkg.as_ref();
 
         let toml = self.toml.read();
@@ -81,10 +87,17 @@ impl Config {
             .and_then_likely(Value::as_table)
             .cloned()
             .unwrap();
+        let value = list.get(pkg)?;
 
         drop(toml); // early-drop Rwlock
 
-        list.get(pkg)?.as_integer().map(|t| t.try_into().unwrap())
+        if let Some(v) = value.as_integer() {
+            Some(TargetFps::Value(v.try_into().unwrap()))
+        } else if value.as_str() == Some("auto") {
+            Some(TargetFps::Auto)
+        } else {
+            None
+        }
     }
 
     /// 从配置中读取一个配置参数的值

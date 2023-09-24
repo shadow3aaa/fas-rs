@@ -38,6 +38,7 @@ pub struct FasServer {
 impl Interface for FasServer {}
 
 impl IRemoteService::IRemoteService for FasServer {
+    #[allow(non_snake_case)]
     fn sendData(&self, pkg: &str, pid: i32, frametime_ns: i64) -> binder::Result<bool> {
         let Some(target_fps) = self.config.target_fps(pkg) else {
             return Ok(false);

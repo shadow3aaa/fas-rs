@@ -109,6 +109,11 @@ impl Policy {
         self.write_freq()
     }
 
+    pub fn release_max(&self) -> Result<()> {
+        self.cur_freq.set(self.max_freq);
+        self.write_freq()
+    }
+
     fn write_freq(&self) -> Result<()> {
         let path = self.path.join("scaling_max_freq");
         let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));

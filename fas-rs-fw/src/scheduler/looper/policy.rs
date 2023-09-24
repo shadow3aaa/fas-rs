@@ -11,42 +11,18 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use log::debug;
 
-use super::{Buffer, Looper};
-use crate::{error::Result, PerformanceController};
+use super::{Buffer, Looper, BUFFER_MAX, FRAME_UNIT};
+use crate::{config::TargetFps, error::Result, Config, PerformanceController};
 
-struct Policy {
-    pub basic_scale: Duration,
-    pub basic_rec: usize,
-    pub big_scale: Duration,
-    pub big_rec: usize,
-}
-
-impl Policy {
-    pub fn adapt(target_fps: u32) -> Self {
-        if target_fps <= 60 {
-            Self {
-                basic_scale: Duration::from_secs(1) / target_fps / target_fps * 3 / 2,
-                basic_rec: 8,
-                big_scale: Duration::from_secs(1) / target_fps * 5,
-                big_rec: 30,
-            }
-        } else {
-            Self {
-                basic_scale: Duration::from_secs(1) / target_fps / target_fps * 3,
-                basic_rec: 0,
-                big_scale: Duration::from_secs(1) / target_fps * 20,
-                big_rec: 15,
-            }
-        }
-    }
-}
+const JANK_KEEP_COUNT: u8 = 30;
+const NORMAL_KEEP_COUNT: u8 = 8;
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn buffer_policy(&mut self) -> Result<()> {
+    pub fn buffers_policy(&mut self) -> Result<()> {
         if self.buffers.is_empty() && self.started {
             self.controller.init_default(&self.config)?;
             self.started = false;
@@ -56,56 +32,104 @@ impl<P: PerformanceController> Looper<P> {
             self.started = true;
         }
 
-        let levels: Vec<_> = self.buffers.values().map(Self::calculate_level).collect();
-
-        let Some(level) = levels.iter()
-            .filter_map(|l| *l)
-            .max() else {
-            return Ok(());
-        };
-
-        if level == 0 && levels.iter().any(Option::is_none) {
-            return Ok(());
+        for buffer in self.buffers.values_mut() {
+            Self::do_policy(buffer, &self.controller, &self.config)?;
         }
 
-        debug!("jank-level: {level}");
-
-        self.controller.perf(level, &self.config);
         Ok(())
     }
 
-    fn calculate_level(buffer: &Buffer) -> Option<u32> {
-        let policy = Policy::adapt(buffer.target_fps);
-        let target_frametime = Duration::from_secs(1) / buffer.target_fps;
+    fn calulate_fps(buffer: &Buffer) -> Option<u32> {
+        if buffer.frametimes.len() < BUFFER_MAX {
+            return None;
+        }
 
-        let frametimes = &buffer.frametimes;
-        let frametime = frametimes.iter().next()?;
+        let avg_time: Duration =
+            buffer.frametimes.iter().sum::<Duration>() / BUFFER_MAX.try_into().unwrap();
 
-        let diff = frametime.saturating_sub(target_frametime);
-
-        debug!("diff: {diff:?}");
-
-        let level = if diff < policy.big_scale {
-            diff.as_nanos() / policy.basic_scale.as_nanos()
+        if avg_time < Duration::from_micros(6800) {
+            None
+        } else if avg_time < Duration::from_micros(8130) {
+            Some(144)
+        } else if avg_time < Duration::from_micros(10638) {
+            Some(120)
+        } else if avg_time < Duration::from_micros(16129) {
+            Some(90)
+        } else if avg_time < Duration::from_micros(21740) {
+            Some(60)
+        } else if avg_time < Duration::from_micros(32258) {
+            Some(45)
+        } else if avg_time < Duration::from_micros(50000) {
+            Some(30)
         } else {
-            10
+            None
+        }
+    }
+
+    fn do_policy(buffer: &mut Buffer, controller: &P, config: &Config) -> Result<()> {
+        if buffer.frametimes.len() < FRAME_UNIT {
+            return Ok(());
+        }
+
+        let Some(target_fps) = (match buffer.target_fps {
+            TargetFps::Auto => Self::calulate_fps(buffer),
+            TargetFps::Value(f) => Some(f),
+        }) else {
+            return Ok(());
         };
 
-        let level: u32 = level.try_into().unwrap_or(u32::MAX);
+        let frame = buffer.frametimes.front().copied().unwrap();
+        let frame_unit: Duration = buffer.frametimes.iter().take(FRAME_UNIT).sum();
 
-        if level == 0
-            && (frametimes
-                .iter()
-                .take(policy.basic_rec)
-                .any(|d| d.saturating_sub(target_frametime) > policy.basic_scale)
-                || frametimes
-                    .iter()
-                    .take(policy.big_rec)
-                    .any(|d| d.saturating_sub(target_frametime) > policy.big_scale))
-        {
-            None
-        } else {
-            Some(level)
+        let normalized_frame = frame * target_fps;
+        let noramlized_frame_unit = frame_unit * target_fps;
+
+        if normalized_frame > Duration::from_millis(3500) {
+            controller.release_max(config)?; // big jank
+        } else if normalized_frame > Duration::from_millis(1700) {
+            buffer.rec_counter = JANK_KEEP_COUNT; // jank
+
+            let last_jank = buffer.last_jank;
+            buffer.last_jank = Some(Instant::now());
+
+            if let Some(last_jank) = last_jank {
+                let normalized_last_jank = last_jank.elapsed() * target_fps;
+
+                if normalized_last_jank >= Duration::from_secs(60) {
+                    return Ok(()); // 1 jank is allowed every 60 frames
+                }
+            }
+
+            if let Some(front) = buffer.frametimes.front_mut() {
+                *front = Duration::from_secs(1) / target_fps;
+            }
+
+            controller.limit(config)?;
+        } else if noramlized_frame_unit < Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() {
+            if buffer.rec_counter != 0 {
+                buffer.rec_counter -= 1;
+                return Ok(());
+            }
+
+            if let Some(last_limit) = buffer.last_limit {
+                let normalized_last_limit = last_limit.elapsed() * target_fps;
+                if normalized_last_limit <= Duration::from_secs(30) {
+                    return Ok(());
+                } // 1 limit is allowed every 30 frames
+            }
+
+            buffer.last_limit = Some(Instant::now());
+            buffer.rec_counter = NORMAL_KEEP_COUNT;
+
+            controller.limit(config)?;
+        } else if noramlized_frame_unit > Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() {
+            if let Some(front) = buffer.frametimes.front_mut() {
+                *front = Duration::from_secs(1) / target_fps;
+            }
+
+            controller.release(config)?;
         }
+
+        Ok(())
     }
 }

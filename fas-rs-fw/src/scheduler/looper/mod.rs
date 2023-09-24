@@ -17,32 +17,46 @@ mod utils;
 use std::{
     collections::{HashMap, VecDeque},
     sync::mpsc::{Receiver, RecvTimeoutError},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use log::debug;
 
 use super::{topapp::TimedWatcher, FasData};
 use crate::{
-    config::Config,
+    config::{Config, TargetFps},
     error::{Error, Result},
     PerformanceController,
 };
 
-const BUFFER_LEN: usize = 144;
+const FRAME_UNIT: usize = 5;
+const BUFFER_MAX: usize = 30;
 
 pub type Buffers = HashMap<Process, Buffer>; // Process, (jank_scale, total_jank_time_ns)
 pub type Process = (String, i32); // process, pid
 
 #[derive(Debug)]
 pub struct Buffer {
-    pub target_fps: u32,
+    pub target_fps: TargetFps,
     pub frametimes: VecDeque<Duration>,
+    pub last_jank: Option<Instant>,
+    pub last_limit: Option<Instant>,
+    pub rec_counter: u8,
 }
 
 impl Buffer {
+    pub fn new(target_fps: TargetFps) -> Self {
+        Self {
+            target_fps,
+            frametimes: VecDeque::with_capacity(BUFFER_MAX),
+            last_jank: None,
+            last_limit: None,
+            rec_counter: 0,
+        }
+    }
+
     pub fn push_frametime(&mut self, d: Duration) {
-        if self.frametimes.len() >= BUFFER_LEN {
+        if self.frametimes.len() >= BUFFER_MAX {
             self.frametimes.pop_back();
         }
 
@@ -73,22 +87,14 @@ impl<P: PerformanceController> Looper<P> {
 
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
-            let mut timeout = self
-                .buffers
-                .values()
-                .map(|b| Duration::from_secs(1) / b.target_fps)
-                .max()
-                .unwrap_or(Duration::ZERO);
-            timeout *= 100; // 获取buffer中最大的 (标准帧时间 * 10) 作为接收超时时间
-
-            let data = if timeout.is_zero() {
+            let data = if self.buffers.is_empty() {
                 Some(
                     self.rx
                         .recv()
                         .map_err(|_| Error::Other("Binder Disconnected"))?,
                 )
             } else {
-                match self.rx.recv_timeout(timeout) {
+                match self.rx.recv_timeout(Duration::from_secs(1)) {
                     Ok(d) => Some(d),
                     Err(e) => {
                         if e == RecvTimeoutError::Disconnected {
@@ -96,9 +102,7 @@ impl<P: PerformanceController> Looper<P> {
                         }
 
                         if self.started {
-                            self.buffers
-                                .values_mut()
-                                .for_each(|b| b.push_frametime(timeout));
+                            todo!("scale to max freq");
                         }
 
                         None
@@ -107,11 +111,11 @@ impl<P: PerformanceController> Looper<P> {
             };
 
             if let Some(data) = data {
-                self.buffer_update(&data)?;
+                self.buffer_update(&data);
             }
 
             self.retain_topapp();
-            self.buffer_policy()?;
+            self.buffers_policy()?;
 
             if self.started {
                 debug!("{:#?}", self.buffers);

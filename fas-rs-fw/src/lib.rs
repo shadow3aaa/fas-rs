@@ -38,10 +38,9 @@ pub use scheduler::Scheduler;
 
 /// 性能控制器接口
 pub trait PerformanceController: Send {
-    /// 根据jank-level调整性能
-    ///
-    /// jank-level: 0: 无jank 1~[`u32::max`]: 越大jank越严重
-    fn perf(&self, l: u32, c: &Config);
+    fn limit(&self, c: &Config) -> Result<()>;
+    fn release(&self, c: &Config) -> Result<()>;
+    fn release_max(&self, c: &Config) -> Result<()>;
     /// 游戏状态初始化
     ///
     /// # Errors

@@ -18,7 +18,7 @@ mod topapp;
 use std::time::Duration;
 
 use crate::{
-    config::Config,
+    config::{Config, TargetFps},
     error::{Error, Result},
     node::Node,
     PerformanceController,
@@ -29,7 +29,7 @@ use looper::Looper;
 
 #[derive(Debug, Clone)]
 pub struct FasData {
-    pub target_fps: u32,
+    pub target_fps: TargetFps,
     pub pkg: String,
     pub pid: i32,
     pub frametime: Duration,

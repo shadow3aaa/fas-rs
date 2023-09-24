@@ -83,20 +83,25 @@ impl CpuCommon {
 }
 
 impl PerformanceController for CpuCommon {
-    fn perf(&self, l: u32, _c: &Config) {
-        if !self.enable.get() {
-            return;
-        }
+    fn limit(&self, _c: &Config) -> fas_rs_fw::Result<()> {
+        self.policies
+            .iter()
+            .for_each(|p| p.limit(self.step).unwrap_or_else(|e| error!("{e:?}")));
+        Ok(())
+    }
 
-        if l == 0 {
-            self.policies
-                .iter()
-                .for_each(|p| p.limit(self.step).unwrap_or_else(|e| error!("{e:?}")));
-        } else {
-            self.policies
-                .iter()
-                .for_each(|p| p.release(self.step * l).unwrap_or_else(|e| error!("{e:?}")));
-        }
+    fn release(&self, _c: &Config) -> fas_rs_fw::Result<()> {
+        self.policies
+            .iter()
+            .for_each(|p| p.release(self.step).unwrap_or_else(|e| error!("{e:?}")));
+        Ok(())
+    }
+
+    fn release_max(&self, _c: &Config) -> fas_rs_fw::Result<()> {
+        self.policies
+            .iter()
+            .for_each(|p| p.release_max().unwrap_or_else(|e| error!("{e:?}")));
+        Ok(())
     }
 
     fn init_game(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {

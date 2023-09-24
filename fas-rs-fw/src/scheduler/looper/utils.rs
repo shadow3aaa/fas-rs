@@ -13,10 +13,8 @@
 *  limitations under the License. */
 use std::collections::{hash_map::Entry, VecDeque};
 
-use sliding_features::{Echo, ALMA};
-
 use super::{super::FasData, Buffer, Looper};
-use crate::{error::Result, PerformanceController};
+use crate::{config::TargetFps, error::Result, PerformanceController};
 
 impl<P: PerformanceController> Looper<P> {
     /* 检查是否为顶层应用，并且删除不是顶层应用的buffer **/
@@ -28,7 +26,7 @@ impl<P: PerformanceController> Looper<P> {
     pub fn buffer_update(&mut self, d: &FasData) -> Result<()> {
         if !self.topapp_checker.is_topapp(d.pid)? || d.frametime.is_zero() {
             return Ok(());
-        } else if d.target_fps == 0 {
+        } else if d.target_fps == TargetFps::Value(0) {
             panic!("Target fps must be bigger than zero");
         }
 
@@ -36,27 +34,10 @@ impl<P: PerformanceController> Looper<P> {
         let target_fps = d.target_fps;
 
         match self.buffers.entry(process) {
-            Entry::Occupied(mut o) => {
-                let value = o.get_mut();
-                if value.target_fps == target_fps {
-                    value.push_frametime(d.frametime);
-                } else {
-                    let buffer = Buffer {
-                        target_fps,
-                        frametimes: VecDeque::new(),
-                        smoother: ALMA::new(Echo::new(), 20),
-                    };
-                    *value = buffer;
-                }
-            }
+            Entry::Occupied(mut o) => o.get_mut().push_frametime(d.frametime),
             Entry::Vacant(v) => {
-                let mut buffer = Buffer {
-                    target_fps,
-                    frametimes: VecDeque::new(),
-                    smoother: ALMA::new(Echo::new(), 20),
-                };
+                let mut buffer = Buffer::new(target_fps);
                 buffer.push_frametime(d.frametime);
-
                 v.insert(buffer);
             }
         }
