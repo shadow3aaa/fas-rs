@@ -11,7 +11,9 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::collections::{hash_map::Entry, VecDeque};
+use std::collections::hash_map::Entry;
+
+use log::info;
 
 use super::{super::FasData, Buffer, Looper};
 use crate::{config::TargetFps, error::Result, PerformanceController};
@@ -36,6 +38,7 @@ impl<P: PerformanceController> Looper<P> {
         match self.buffers.entry(process) {
             Entry::Occupied(mut o) => o.get_mut().push_frametime(d.frametime),
             Entry::Vacant(v) => {
+                info!("Loaded fas on {:?}", v.key());
                 let mut buffer = Buffer::new(target_fps);
                 buffer.push_frametime(d.frametime);
                 v.insert(buffer);

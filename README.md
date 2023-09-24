@@ -52,28 +52,28 @@
 ### **"package" = target_fps**
 
 - package: 字符串，应用包名
-- target_fps: 正整数，表示应用运行的目标fps
+- target_fps: 字符串"auto"，或者任意正整数，表示锁定应用运行的目标fps，auto则是自动判断
 
 ### **示例**
 
 ```toml
 [config]
-ignore_little = true
+ignore_little = false
 keep_std = true
-min_step = 20
 
 [game_list]
-"com.hypergryph.arknights" = 60
-"com.miHoYo.Yuanshen" = 60
-"com.miHoYo.enterprise.NGHSoD" = 60
-"com.miHoYo.hkrpg" = 60
-"com.mojang.minecraftpe" = 120
-"com.netease.x19" = 120
-"com.pixeltoys.freeblade" = 60
-"com.prpr.musedash.TapTap" = 60
-"com.shangyoo.neon" = 60
-"com.tencent.tmgp.pubgmhd" = 60
-"com.tencent.tmgp.sgame" = 120
+"com.hypergryph.arknights" = "auto"
+"com.miHoYo.Yuanshen" = "auto"
+"com.miHoYo.enterprise.NGHSoD" = "auto"
+"com.miHoYo.hkrpg" = "auto"
+"com.mojang.minecraftpe" = "auto"
+"com.netease.party" = "auto"
+"com.netease.x19" = "auto"
+"com.pixeltoys.freeblade" = "auto"
+"com.prpr.musedash.TapTap" = "auto"
+"com.shangyoo.neon" = "auto"
+"com.tencent.tmgp.pubgmhd" = "auto"
+"com.tencent.tmgp.sgame" = "auto"
 ```
 
 ## **编译(termux为例)**

@@ -21,6 +21,7 @@ anyhow = "1.0.75"
 thiserror = "1.0.47"
 clap = { version = "4.4.0", features = [ "derive" ] }
 inotify = { version = "0.10.2", default-features = false }
+libc = "0.2.148"
 
 [dependencies.fas-rs-fw]
 path = "./fas-rs-fw"

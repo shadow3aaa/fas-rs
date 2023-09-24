@@ -39,6 +39,7 @@ pub type Process = (String, i32); // process, pid
 pub struct Buffer {
     pub target_fps: TargetFps,
     pub frametimes: VecDeque<Duration>,
+    pub frame_unit: VecDeque<Duration>,
     pub last_jank: Option<Instant>,
     pub last_limit: Option<Instant>,
     pub rec_counter: u8,
@@ -49,6 +50,7 @@ impl Buffer {
         Self {
             target_fps,
             frametimes: VecDeque::with_capacity(BUFFER_MAX),
+            frame_unit: VecDeque::with_capacity(FRAME_UNIT),
             last_jank: None,
             last_limit: None,
             rec_counter: 0,
@@ -60,7 +62,12 @@ impl Buffer {
             self.frametimes.pop_back();
         }
 
+        if self.frame_unit.len() >= FRAME_UNIT {
+            self.frame_unit.pop_back();
+        }
+
         self.frametimes.push_front(d);
+        self.frame_unit.push_front(d);
     }
 }
 
@@ -102,7 +109,7 @@ impl<P: PerformanceController> Looper<P> {
                         }
 
                         if self.started {
-                            todo!("scale to max freq");
+                            self.controller.release_max(&self.config)?;
                         }
 
                         None
@@ -111,7 +118,7 @@ impl<P: PerformanceController> Looper<P> {
             };
 
             if let Some(data) = data {
-                self.buffer_update(&data);
+                self.buffer_update(&data)?;
             }
 
             self.retain_topapp();

@@ -11,40 +11,31 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{
-    fs::{self, set_permissions},
-    os::unix::fs::PermissionsExt,
-    path::Path,
-    thread,
-    time::Duration,
-};
+use std::{thread, time::Duration};
+
+use crate::misc::lock_value;
 
 macro_rules! disable {
     ($($path: literal),*) => {
         {
             $(
-                write_and_lock(Path::new($path), "0");
+                lock_value("0", $path);
             )*
         }
     }
 }
 
-pub fn cleaner() {
+pub fn cleaner() -> ! {
     loop {
         disable!(
             "/sys/module/mtk_fpsgo/parameters/perfmgr_enable",
             "/sys/module/perfmgr/parameters/perfmgr_enable",
             "/sys/module/perfmgr_policy/parameters/perfmgr_enable",
-            "/sys/module/perfmgr_mtk/perfmgr_enable",
-            "/sys/kernel/fpsgo/common/fpsgo_enable"
+            "/sys/module/perfmgr_mtk/parameters/perfmgr_enable",
+            "/sys/kernel/fpsgo/common/fpsgo_enable",
+            "/sys/kernel/fpsgo/common/force_onoff"
         );
 
         thread::sleep(Duration::from_secs(10));
     }
-}
-
-fn write_and_lock(path: &Path, value: &str) {
-    let _ = set_permissions(path, PermissionsExt::from_mode(0o644));
-    let _ = fs::write(path, value);
-    let _ = set_permissions(path, PermissionsExt::from_mode(0o444));
 }

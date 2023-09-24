@@ -295,6 +295,7 @@ dependencies = [
  "clap",
  "fas-rs-fw",
  "inotify",
+ "libc",
  "likely_stable",
  "log",
  "parking_lot",

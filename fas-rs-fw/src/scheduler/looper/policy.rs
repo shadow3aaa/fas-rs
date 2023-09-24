@@ -20,6 +20,8 @@ use crate::{config::TargetFps, error::Result, Config, PerformanceController};
 
 const JANK_KEEP_COUNT: u8 = 30;
 const NORMAL_KEEP_COUNT: u8 = 8;
+const MARGIN_A: Duration = Duration::from_millis(350);
+const MARGIN_B: Duration = Duration::from_millis(400);
 
 impl<P: PerformanceController> Looper<P> {
     pub fn buffers_policy(&mut self) -> Result<()> {
@@ -39,13 +41,15 @@ impl<P: PerformanceController> Looper<P> {
         Ok(())
     }
 
-    fn calulate_fps(buffer: &Buffer) -> Option<u32> {
+    fn calculate_fps(buffer: &Buffer) -> Option<u32> {
         if buffer.frametimes.len() < BUFFER_MAX {
             return None;
         }
 
         let avg_time: Duration =
             buffer.frametimes.iter().sum::<Duration>() / BUFFER_MAX.try_into().unwrap();
+
+        debug!("avg_time: {avg_time:?}");
 
         if avg_time < Duration::from_micros(6800) {
             None
@@ -72,21 +76,29 @@ impl<P: PerformanceController> Looper<P> {
         }
 
         let Some(target_fps) = (match buffer.target_fps {
-            TargetFps::Auto => Self::calulate_fps(buffer),
+            TargetFps::Auto => Self::calculate_fps(buffer),
             TargetFps::Value(f) => Some(f),
         }) else {
             return Ok(());
         };
 
-        let frame = buffer.frametimes.front().copied().unwrap();
-        let frame_unit: Duration = buffer.frametimes.iter().take(FRAME_UNIT).sum();
+        let frame = buffer.frame_unit.front().copied().unwrap();
+        let frame_unit: Duration = buffer.frame_unit.iter().sum();
 
         let normalized_frame = frame * target_fps;
-        let noramlized_frame_unit = frame_unit * target_fps;
+        let normalized_frame_unit = frame_unit * target_fps;
 
-        if normalized_frame > Duration::from_millis(3500) {
+        debug!("target_fps: {target_fps}");
+        debug!("normalized_frame: {normalized_frame:?}");
+        debug!("normalized_frame_unit: {normalized_frame_unit:?}");
+
+        if normalized_frame > Duration::from_millis(3500) + MARGIN_A {
+            if let Some(front) = buffer.frame_unit.front_mut() {
+                *front = Duration::from_secs(1) / target_fps;
+            }
+
             controller.release_max(config)?; // big jank
-        } else if normalized_frame > Duration::from_millis(1700) {
+        } else if normalized_frame > Duration::from_millis(1700) + MARGIN_A {
             buffer.rec_counter = JANK_KEEP_COUNT; // jank
 
             let last_jank = buffer.last_jank;
@@ -100,12 +112,14 @@ impl<P: PerformanceController> Looper<P> {
                 }
             }
 
-            if let Some(front) = buffer.frametimes.front_mut() {
+            if let Some(front) = buffer.frame_unit.front_mut() {
                 *front = Duration::from_secs(1) / target_fps;
             }
 
-            controller.limit(config)?;
-        } else if noramlized_frame_unit < Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() {
+            controller.release(config)?;
+        } else if normalized_frame_unit
+            < Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() + MARGIN_B
+        {
             if buffer.rec_counter != 0 {
                 buffer.rec_counter -= 1;
                 return Ok(());
@@ -113,17 +127,19 @@ impl<P: PerformanceController> Looper<P> {
 
             if let Some(last_limit) = buffer.last_limit {
                 let normalized_last_limit = last_limit.elapsed() * target_fps;
-                if normalized_last_limit <= Duration::from_secs(30) {
+                if normalized_last_limit <= Duration::from_secs(3) {
                     return Ok(());
-                } // 1 limit is allowed every 30 frames
+                } // 1 limit is allowed every 3 frames
             }
 
             buffer.last_limit = Some(Instant::now());
             buffer.rec_counter = NORMAL_KEEP_COUNT;
 
             controller.limit(config)?;
-        } else if noramlized_frame_unit > Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() {
-            if let Some(front) = buffer.frametimes.front_mut() {
+        } else if normalized_frame_unit
+            > Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() + MARGIN_B
+        {
+            if let Some(front) = buffer.frame_unit.front_mut() {
                 *front = Duration::from_secs(1) / target_fps;
             }
 

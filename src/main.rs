@@ -21,6 +21,7 @@ compile_error!("Only for aarch64 android");
 mod clean;
 mod cpu_common;
 mod error;
+mod misc;
 
 use std::{fs, process, thread};
 
@@ -28,7 +29,7 @@ use fas_rs_fw::prelude::*;
 
 use anyhow::Result;
 use clap::Parser;
-use log::warn;
+use log::{info, warn};
 
 use cpu_common::CpuCommon;
 
@@ -73,8 +74,9 @@ fn main() -> Result<()> {
         let cpu = CpuCommon::new(&config)?;
 
         thread::Builder::new()
-            .name("Cleaner".into())
-            .spawn(|| clean::cleaner)?;
+            .name("CleanerThead".into())
+            .spawn(clean::cleaner)?;
+        info!("Cleaner thread started");
 
         Scheduler::new()
             .config(config)

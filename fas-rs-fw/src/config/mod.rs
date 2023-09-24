@@ -91,13 +91,16 @@ impl Config {
 
         drop(toml); // early-drop Rwlock
 
-        if let Some(v) = value.as_integer() {
-            Some(TargetFps::Value(v.try_into().unwrap()))
-        } else if value.as_str() == Some("auto") {
-            Some(TargetFps::Auto)
-        } else {
-            None
-        }
+        value.as_integer().map_or_else(
+            || {
+                if value.as_str() == Some("auto") {
+                    Some(TargetFps::Auto)
+                } else {
+                    None
+                }
+            },
+            |v| Some(TargetFps::Value(v.try_into().unwrap())),
+        )
     }
 
     /// 从配置中读取一个配置参数的值
