@@ -15,13 +15,14 @@ use std::time::{Duration, Instant};
 
 use log::debug;
 
-use super::{Buffer, Looper, BUFFER_MAX, FRAME_UNIT};
+use super::{Buffer, Looper, FRAME_UNIT};
 use crate::{config::TargetFps, error::Result, Config, PerformanceController};
 
 const JANK_KEEP_COUNT: u8 = 30;
 const NORMAL_KEEP_COUNT: u8 = 8;
-const MARGIN_A: Duration = Duration::from_millis(350);
-const MARGIN_B: Duration = Duration::from_millis(400);
+const TOLERANT_BIG_JANK: Duration = Duration::from_millis(500);
+const TOLERANT_JANK: Duration = Duration::from_millis(350);
+const TOLERANT_UNIT: Duration = Duration::from_millis(250);
 
 impl<P: PerformanceController> Looper<P> {
     pub fn buffers_policy(&mut self) -> Result<()> {
@@ -39,35 +40,6 @@ impl<P: PerformanceController> Looper<P> {
         }
 
         Ok(())
-    }
-
-    fn calculate_fps(buffer: &Buffer) -> Option<u32> {
-        if buffer.frametimes.len() < BUFFER_MAX {
-            return None;
-        }
-
-        let avg_time: Duration =
-            buffer.frametimes.iter().sum::<Duration>() / BUFFER_MAX.try_into().unwrap();
-
-        debug!("avg_time: {avg_time:?}");
-
-        if avg_time < Duration::from_micros(6800) {
-            None
-        } else if avg_time < Duration::from_micros(8130) {
-            Some(144)
-        } else if avg_time < Duration::from_micros(10638) {
-            Some(120)
-        } else if avg_time < Duration::from_micros(16129) {
-            Some(90)
-        } else if avg_time < Duration::from_micros(21740) {
-            Some(60)
-        } else if avg_time < Duration::from_micros(32258) {
-            Some(45)
-        } else if avg_time < Duration::from_micros(50000) {
-            Some(30)
-        } else {
-            None
-        }
     }
 
     fn do_policy(buffer: &mut Buffer, controller: &P, config: &Config) -> Result<()> {
@@ -92,13 +64,13 @@ impl<P: PerformanceController> Looper<P> {
         debug!("normalized_frame: {normalized_frame:?}");
         debug!("normalized_frame_unit: {normalized_frame_unit:?}");
 
-        if normalized_frame > Duration::from_millis(3500) + MARGIN_A {
+        if normalized_frame > Duration::from_millis(3500) + TOLERANT_BIG_JANK {
             if let Some(front) = buffer.frame_unit.front_mut() {
                 *front = Duration::from_secs(1) / target_fps;
             }
 
             controller.release_max(config)?; // big jank
-        } else if normalized_frame > Duration::from_millis(1700) + MARGIN_A {
+        } else if normalized_frame > Duration::from_millis(1700) + TOLERANT_JANK {
             buffer.rec_counter = JANK_KEEP_COUNT; // jank
 
             let last_jank = buffer.last_jank;
@@ -118,7 +90,7 @@ impl<P: PerformanceController> Looper<P> {
 
             controller.release(config)?;
         } else if normalized_frame_unit
-            < Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() + MARGIN_B
+            < Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() + TOLERANT_UNIT
         {
             if buffer.rec_counter != 0 {
                 buffer.rec_counter -= 1;
@@ -137,7 +109,7 @@ impl<P: PerformanceController> Looper<P> {
 
             controller.limit(config)?;
         } else if normalized_frame_unit
-            > Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() + MARGIN_B
+            > Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() + TOLERANT_UNIT
         {
             if let Some(front) = buffer.frame_unit.front_mut() {
                 *front = Duration::from_secs(1) / target_fps;

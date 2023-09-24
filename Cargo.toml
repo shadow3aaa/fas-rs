@@ -1,6 +1,6 @@
 [package]
 name = "fas-rs"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2021"
 description = "Frame-aware scheduling binary"
 authors = [ "shadow3" ]
@@ -24,7 +24,7 @@ inotify = { version = "0.10.2", default-features = false }
 libc = "0.2.148"
 
 [dependencies.fas-rs-fw]
-path = "./fas-rs-fw"
+path = "fas-rs-fw"
 
 [build-dependencies]
 toml = "0.7.6"

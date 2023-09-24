@@ -3,6 +3,7 @@
 - fas-rs程序在安卓平台运行
 - fas-rs通过某种方式在监听帧变化，并且将此数据用于性能调度
 - [todo-list](update/todo.md)
+- [change-log](update/changelog.md)
 
 ## **配置合并**
 
@@ -35,24 +36,25 @@
 
 - 类型: 布尔
 - 可用值: true false
-- true: 永远在配置合并时保持标准配置的profile，保留本地配置的应用列表 *
-- false: 详见[配置合并](#配置合并)
+- true: 永远在配置合并时保持标准配置的profile，保留本地配置的应用列表，其它地方和false相同 *
+- false: [配置合并的默认行为](#配置合并)
 
 ### **ignore_little**
 
 - 类型: 布尔
 - 可用值: true false
-- true: 在机器至少有3个及以上的集簇时，fas-rs只控制非小核集群
+- true: 在机器至少有3个及以上的集簇时，fas-rs只控制非小核集簇
 - false: fas-rs始终控制所有集群 *
 
 #### **\* : 默认配置**
 
 ## **应用列表配置**
 
-### **"package" = target_fps**
+### **"package" = target_fps / "auto"**
 
 - package: 字符串，应用包名
-- target_fps: 字符串"auto"，或者任意正整数，表示锁定应用运行的目标fps，auto则是自动判断
+- target_fps: 字符串"auto"，或者任意正整数，表示锁定应用运行的目标fps，"auto"则是自动判断
+    * "auto"是推荐选项，它在运行时判断目标fps，也就是说能够适配游戏不同的界面有不同的fps，然而，它只支持30/45/48/60/90/120/144这几种常见目标fps的判断，如果你的游戏不属于以上的任意一种，那么应该手动指定而不使用"auto"
 
 ### **示例**
 

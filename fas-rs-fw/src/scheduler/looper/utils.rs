@@ -11,11 +11,11 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::collections::hash_map::Entry;
+use std::{collections::hash_map::Entry, time::Duration};
 
-use log::info;
+use log::{debug, info};
 
-use super::{super::FasData, Buffer, Looper};
+use super::{super::FasData, Buffer, Looper, BUFFER_MAX};
 use crate::{config::TargetFps, error::Result, PerformanceController};
 
 impl<P: PerformanceController> Looper<P> {
@@ -46,5 +46,41 @@ impl<P: PerformanceController> Looper<P> {
         }
 
         Ok(())
+    }
+
+    pub fn calculate_fps(buffer: &Buffer) -> Option<u32> {
+        if buffer.frametimes.len() < BUFFER_MAX {
+            return None;
+        }
+
+        let avg_time: Duration =
+            buffer.frametimes.iter().sum::<Duration>() / BUFFER_MAX.try_into().unwrap();
+
+        debug!("avg_time: {avg_time:?}");
+
+        if avg_time < Duration::from_micros(8130) {
+            // 123fps
+            Some(144)
+        } else if avg_time < Duration::from_micros(10638) {
+            // 94 fps
+            Some(120)
+        } else if avg_time < Duration::from_micros(16129) {
+            // 62 fps
+            Some(90)
+        } else if avg_time < Duration::from_micros(20408) {
+            // 49 fps
+            Some(60)
+        } else if avg_time < Duration::from_micros(21739) {
+            // 46 fps
+            Some(48)
+        } else if avg_time < Duration::from_micros(32258) {
+            // 31 fps
+            Some(45)
+        } else if avg_time < Duration::from_micros(50000) {
+            // 20 fps
+            Some(30)
+        } else {
+            None
+        }
     }
 }
