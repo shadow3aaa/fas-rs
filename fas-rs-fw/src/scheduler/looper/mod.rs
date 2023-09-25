@@ -11,6 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+mod mode_policy;
 mod policy;
 mod utils;
 
@@ -21,6 +22,7 @@ use std::{
 };
 
 use log::debug;
+use sliding_features::{Echo, View, ALMA};
 
 use super::{topapp::TimedWatcher, FasData};
 use crate::{
@@ -43,6 +45,7 @@ pub struct Buffer {
     pub last_jank: Option<Instant>,
     pub last_limit: Option<Instant>,
     pub rec_counter: u8,
+    smoother: ALMA<Echo>,
 }
 
 impl Buffer {
@@ -54,6 +57,7 @@ impl Buffer {
             last_jank: None,
             last_limit: None,
             rec_counter: 0,
+            smoother: ALMA::new(Echo::new(), FRAME_UNIT),
         }
     }
 
@@ -66,8 +70,11 @@ impl Buffer {
             self.frame_unit.pop_back();
         }
 
+        self.smoother.update(d.as_nanos() as f64);
+        let smoothed_frame = Duration::from_nanos(self.smoother.last() as u64);
+
         self.frametimes.push_front(d);
-        self.frame_unit.push_front(d);
+        self.frame_unit.push_front(smoothed_frame);
     }
 }
 
@@ -81,15 +88,15 @@ pub struct Looper<P: PerformanceController> {
 }
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn new(rx: Receiver<FasData>, config: Config, controller: P) -> Result<Self> {
-        Ok(Self {
+    pub fn new(rx: Receiver<FasData>, config: Config, controller: P) -> Self {
+        Self {
             rx,
             config,
             controller,
-            topapp_checker: TimedWatcher::new()?,
+            topapp_checker: TimedWatcher::new(),
             buffers: Buffers::new(),
             started: false,
-        })
+        }
     }
 
     pub fn enter_loop(&mut self) -> Result<()> {
@@ -118,7 +125,7 @@ impl<P: PerformanceController> Looper<P> {
             };
 
             if let Some(data) = data {
-                self.buffer_update(&data)?;
+                self.buffer_update(&data);
             }
 
             self.retain_topapp();

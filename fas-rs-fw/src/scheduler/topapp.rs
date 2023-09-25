@@ -11,69 +11,64 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-//! 根据cgroup.procs和进程pid鉴定是否为顶层应用
-
 use std::{
-    collections::HashSet,
-    fs,
+    process::Command,
     time::{Duration, Instant},
 };
 
-use crate::error::{Error, Result};
+use likely_stable::LikelyOption;
 
-const REFRESH_TIME: Duration = Duration::from_secs(1);
+const REFRESH_TIME: Duration = Duration::from_secs(2);
 
-// 定时刷新cgroup
 pub struct TimedWatcher {
-    cache: HashSet<i32>,
+    cache: Vec<i32>,
     last_refresh: Instant,
 }
 
 impl TimedWatcher {
-    pub fn new() -> Result<Self> {
-        let cache = Self::read_pids()?;
-        Ok(Self {
+    pub fn new() -> Self {
+        let cache = Self::get_top_pids().unwrap_or_default();
+        Self {
             cache,
             last_refresh: Instant::now(),
-        })
+        }
     }
 
-    pub fn is_topapp(&mut self, pid: i32) -> Result<bool> {
+    pub fn is_topapp(&mut self, pid: i32) -> bool {
         if self.last_refresh.elapsed() > REFRESH_TIME {
-            self.cache = Self::read_pids()?;
+            self.cache = Self::get_top_pids().unwrap_or_default();
             self.last_refresh = Instant::now();
         }
 
-        Ok(self.cache.contains(&pid))
+        self.cache.contains(&pid)
     }
 
-    fn read_pids() -> Result<HashSet<i32>> {
-        let mut pids = HashSet::new();
+    fn get_top_pids() -> Option<Vec<i32>> {
+        let dump = Command::new("dumpsys")
+            .args(["window", "visible-apps"])
+            .output()
+            .ok()?;
+        let dump = String::from_utf8_lossy(&dump.stdout).into_owned();
 
-        let mut no_cpuset = false;
-        fs::read_to_string("/dev/cpuset/top-app/cgroup.procs").map_or_else(
-            |_| {
-                no_cpuset = true;
-            },
-            |cpuset| {
-                pids.extend(cpuset.lines().filter_map(|p| p.trim().parse::<i32>().ok()));
-            },
-        );
+        Some(Self::parse_top_app(&dump))
+    }
 
-        let mut no_cpuctl = false;
-        fs::read_to_string("/dev/cpuctl/top-app/cgroup.procs").map_or_else(
-            |_| {
-                no_cpuctl = true;
-            },
-            |cpuctl| {
-                pids.extend(cpuctl.lines().filter_map(|p| p.trim().parse::<i32>().ok()));
-            },
-        );
-
-        if no_cpuset && no_cpuctl {
-            Err(Error::Other("cgroup.procs not found"))
-        } else {
-            Ok(pids)
+    fn parse_top_app(dump: &str) -> Vec<i32> {
+        let mut result: Vec<i32> = Vec::new();
+        for l in dump.lines() {
+            if l.contains("Session{") {
+                if let Some(p) = l
+                    .split_whitespace()
+                    .nth(3)
+                    .and_then_likely(|p| p.split(':').next())
+                {
+                    if let Ok(pid) = p.trim().parse() {
+                        result.push(pid);
+                    }
+                }
+            }
         }
+
+        result
     }
 }

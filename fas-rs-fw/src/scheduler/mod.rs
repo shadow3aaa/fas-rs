@@ -94,6 +94,6 @@ impl<P: PerformanceController> Scheduler<P> {
 
         let rx = FasServer::run_server(config.clone())?;
 
-        Looper::new(rx, config, controller)?.enter_loop()
+        Looper::new(rx, config, controller).enter_loop()
     }
 }

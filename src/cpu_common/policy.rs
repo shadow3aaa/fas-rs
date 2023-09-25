@@ -23,14 +23,12 @@ use anyhow::Result;
 use likely_stable::LikelyOption;
 
 use super::Freq;
+use crate::misc::lock_value;
 
 #[derive(PartialEq, Eq)]
 pub struct Policy {
     pub path: PathBuf,
-    pub max_freq: Freq,
-    pub min_freq: Freq,
     pub freqs: Vec<Freq>,
-    cur_freq: Cell<Freq>,
     pub is_little: Cell<bool>,
     gov_snapshot: RefCell<Option<String>>,
 }
@@ -46,78 +44,42 @@ impl Policy {
 
         freqs.sort_unstable();
 
-        let max_freq = freqs.last().copied().unwrap();
-        let min_freq = freqs.first().copied().unwrap();
-
         Ok(Self {
             path: p.to_path_buf(),
-            max_freq,
-            min_freq,
             freqs,
-            cur_freq: max_freq.into(),
             is_little: false.into(),
             gov_snapshot: RefCell::new(None),
         })
     }
 
     pub fn init_default(&self) -> Result<()> {
-        if !self.is_little.get() {
-            let path = self.path.join("scaling_governor");
-            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
-
-            if let Some(ref gov) = *self.gov_snapshot.borrow() {
-                fs::write(path, gov)?;
-            }
+        let path = self.path.join("scaling_governor");
+        if let Some(ref gov) = *self.gov_snapshot.borrow() {
+            lock_value(path, gov)?;
         }
 
-        self.cur_freq.set(self.max_freq);
-        self.write_freq()
+        Ok(())
     }
 
     pub fn init_game(&self) -> Result<()> {
         if !self.is_little.get() {
             let path = self.path.join("scaling_governor");
-            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
 
             let cur_gov = fs::read_to_string(&path)?;
             self.gov_snapshot.replace(Some(cur_gov));
 
-            fs::write(path, "performance\n")?;
+            lock_value(path, "performance")?;
         }
 
-        self.cur_freq.set(self.max_freq);
-        self.write_freq()
+        Ok(())
     }
 
-    pub fn limit(&self, s: Freq) -> Result<()> {
-        let freq = self.cur_freq.get();
-        let freq = freq.saturating_sub(s);
-
-        let freq = freq.max(self.min_freq);
-        self.cur_freq.set(freq);
-
-        self.write_freq()
-    }
-
-    pub fn release(&self, s: Freq) -> Result<()> {
-        let freq = self.cur_freq.get();
-        let freq = freq.saturating_add(s);
-
-        let freq = freq.min(self.max_freq);
-        self.cur_freq.set(freq);
-
-        self.write_freq()
-    }
-
-    pub fn release_max(&self) -> Result<()> {
-        self.cur_freq.set(self.max_freq);
-        self.write_freq()
-    }
-
-    fn write_freq(&self) -> Result<()> {
+    pub fn set_freq(&self, f: Freq) -> Result<()> {
         let path = self.path.join("scaling_max_freq");
+
         let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
-        fs::write(path, format!("{}\n", self.cur_freq.get()))?;
+        fs::write(path, format!("{f}"))?;
+
         Ok(())
     }
 

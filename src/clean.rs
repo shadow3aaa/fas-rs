@@ -19,7 +19,7 @@ macro_rules! disable {
     ($($path: literal),*) => {
         {
             $(
-                lock_value("0", $path);
+                let _ = lock_value($path, "0");
             )*
         }
     }

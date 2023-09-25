@@ -13,7 +13,7 @@
 *  limitations under the License. */
 mod policy;
 
-use std::{cell::Cell, collections::HashSet, ffi::OsStr, fs};
+use std::{cell::Cell, collections::BTreeSet, ffi::OsStr, fs};
 
 use anyhow::Result;
 use fas_rs_fw::prelude::*;
@@ -25,7 +25,8 @@ use policy::Policy;
 pub type Freq = u32; // 单位: khz
 
 pub struct CpuCommon {
-    step: Freq,
+    freqs: BTreeSet<Freq>,
+    cur_freq: Cell<Freq>,
     policies: Vec<Policy>,
     enable: Cell<bool>,
 }
@@ -61,62 +62,92 @@ impl CpuCommon {
             }
         }
 
-        let mut freqs: Vec<_> = policies
+        let freqs: BTreeSet<_> = policies
             .iter()
             .flat_map(|p| p.freqs.iter().copied())
-            .collect::<HashSet<_>>()
-            .into_iter()
             .collect();
-        freqs.sort_unstable();
-
-        let step = freqs.windows(2).map(|arr| arr[1] - arr[0]).min().unwrap();
-
-        let max_freq_all = freqs.last().copied().unwrap();
-        policies.iter_mut().for_each(|p| p.max_freq = max_freq_all);
 
         Ok(Self {
-            step,
+            cur_freq: freqs.last().copied().unwrap().into(),
+            freqs,
             policies,
-            enable: Cell::new(false),
+            enable: false.into(),
         })
     }
 }
 
 impl PerformanceController for CpuCommon {
     fn limit(&self, _c: &Config) -> fas_rs_fw::Result<()> {
-        self.policies
-            .iter()
-            .for_each(|p| p.limit(self.step).unwrap_or_else(|e| error!("{e:?}")));
+        let cur_freq = self.cur_freq.get();
+        let prev_freq = self
+            .freqs
+            .range(..cur_freq)
+            .next_back()
+            .copied()
+            .unwrap_or(cur_freq);
+
+        for policy in &self.policies {
+            policy
+                .set_freq(prev_freq)
+                .unwrap_or_else(|e| error!("{e:?}"));
+        }
+
+        self.cur_freq.set(prev_freq);
+
         Ok(())
     }
 
     fn release(&self, _c: &Config) -> fas_rs_fw::Result<()> {
-        self.policies
-            .iter()
-            .for_each(|p| p.release(self.step).unwrap_or_else(|e| error!("{e:?}")));
+        let cur_freq = self.cur_freq.get();
+        let next_freq = self
+            .freqs
+            .range(cur_freq..)
+            .nth(1)
+            .copied()
+            .unwrap_or(cur_freq);
+
+        for policy in &self.policies {
+            policy
+                .set_freq(next_freq)
+                .unwrap_or_else(|e| error!("{e:?}"));
+        }
+
+        self.cur_freq.set(next_freq);
+
         Ok(())
     }
 
     fn release_max(&self, _c: &Config) -> fas_rs_fw::Result<()> {
-        self.policies
-            .iter()
-            .for_each(|p| p.release_max().unwrap_or_else(|e| error!("{e:?}")));
+        let max_freq = self.freqs.last().copied().unwrap();
+
+        for policy in &self.policies {
+            policy
+                .set_freq(max_freq)
+                .unwrap_or_else(|e| error!("{e:?}"));
+        }
+
+        self.cur_freq.set(max_freq);
+
         Ok(())
     }
 
     fn init_game(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
         self.enable.set(true);
-        self.policies
-            .iter()
-            .for_each(|p| p.init_game().unwrap_or_else(|e| error!("{e:?}")));
+
+        for policy in &self.policies {
+            policy.init_game().unwrap_or_else(|e| error!("{e:?}"));
+        }
+
         Ok(())
     }
 
     fn init_default(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
         self.enable.set(false);
-        self.policies
-            .iter()
-            .for_each(|p| p.init_default().unwrap_or_else(|e| error!("{e:?}")));
+
+        for policy in &self.policies {
+            policy.init_default().unwrap_or_else(|e| error!("{e:?}"));
+        }
+
         Ok(())
     }
 }

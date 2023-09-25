@@ -11,20 +11,26 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{ffi::CString, fs, ptr};
+use std::{ffi::CString, fs, path::Path, ptr};
 
+use fas_rs_fw::Result;
 use libc::{mount, umount, umount2, MS_BIND, MS_REC};
 
-pub fn lock_value<S: AsRef<str>>(v: S, p: S) {
+pub fn lock_value<P: AsRef<Path>, S: AsRef<str>>(p: P, v: S) -> Result<()> {
     let value = v.as_ref();
     let path = p.as_ref();
 
-    unmount(path);
-    let _ = fs::write(path, value);
+    let path = format!("{}", path.display());
     let mount_path = format!("/cache/mount_mask_{value}");
-    let _ = fs::write(&mount_path, value);
 
-    mount_bind(&mount_path, path);
+    unmount(&path);
+
+    fs::write(&path, value)?;
+    fs::write(&mount_path, value)?;
+
+    mount_bind(&mount_path, &path);
+
+    Ok(())
 }
 
 fn mount_bind(src_path: &str, dest_path: &str) {

@@ -18,12 +18,6 @@ use log::debug;
 use super::{Buffer, Looper, FRAME_UNIT};
 use crate::{config::TargetFps, error::Result, Config, PerformanceController};
 
-const JANK_KEEP_COUNT: u8 = 30;
-const NORMAL_KEEP_COUNT: u8 = 8;
-const TOLERANT_BIG_JANK: Duration = Duration::from_millis(500);
-const TOLERANT_JANK: Duration = Duration::from_millis(350);
-const TOLERANT_UNIT: Duration = Duration::from_millis(250);
-
 impl<P: PerformanceController> Looper<P> {
     pub fn buffers_policy(&mut self) -> Result<()> {
         if self.buffers.is_empty() && self.started {
@@ -54,6 +48,10 @@ impl<P: PerformanceController> Looper<P> {
             return Ok(());
         };
 
+        let policy = Self::policy_config()?;
+
+        debug!("mode policy: {policy:?}");
+
         let frame = buffer.frame_unit.front().copied().unwrap();
         let frame_unit: Duration = buffer.frame_unit.iter().sum();
 
@@ -64,14 +62,10 @@ impl<P: PerformanceController> Looper<P> {
         debug!("normalized_frame: {normalized_frame:?}");
         debug!("normalized_frame_unit: {normalized_frame_unit:?}");
 
-        if normalized_frame > Duration::from_millis(3500) + TOLERANT_BIG_JANK {
-            if let Some(front) = buffer.frame_unit.front_mut() {
-                *front = Duration::from_secs(1) / target_fps;
-            }
-
+        if normalized_frame > Duration::from_millis(3500) + policy.tolerant_big_jank {
             controller.release_max(config)?; // big jank
-        } else if normalized_frame > Duration::from_millis(1700) + TOLERANT_JANK {
-            buffer.rec_counter = JANK_KEEP_COUNT; // jank
+        } else if normalized_frame > Duration::from_millis(1700) + policy.tolerant_jank {
+            buffer.rec_counter = policy.jank_keep_count; // jank
 
             let last_jank = buffer.last_jank;
             buffer.last_jank = Some(Instant::now());
@@ -90,7 +84,7 @@ impl<P: PerformanceController> Looper<P> {
 
             controller.release(config)?;
         } else if normalized_frame_unit
-            < Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() + TOLERANT_UNIT
+            < Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() + policy.tolerant_unit
         {
             if buffer.rec_counter != 0 {
                 buffer.rec_counter -= 1;
@@ -105,11 +99,11 @@ impl<P: PerformanceController> Looper<P> {
             }
 
             buffer.last_limit = Some(Instant::now());
-            buffer.rec_counter = NORMAL_KEEP_COUNT;
+            buffer.rec_counter = policy.normal_keep_count;
 
             controller.limit(config)?;
         } else if normalized_frame_unit
-            > Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() + TOLERANT_UNIT
+            > Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() + policy.tolerant_unit
         {
             if let Some(front) = buffer.frame_unit.front_mut() {
                 *front = Duration::from_secs(1) / target_fps;
