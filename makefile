@@ -36,7 +36,9 @@ endif
 	strip output/.temp/fas-rs
 
 	mkdir -p output/.temp/zygisk
+	mkdir -p output/.temp/system/lib64
 	cp -f zygisk/build/arm64-v8a.so output/.temp/zygisk
+	cp -f zygisk/build/libfasrs.so output/.temp/system/lib64
 
 	cd output/.temp && \
 	zip -9 -rq fas-rs.zip . && \

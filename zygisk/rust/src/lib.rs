@@ -57,7 +57,7 @@ unsafe impl Sync for Channel {}
 unsafe impl Send for Channel {}
 
 #[no_mangle]
-pub unsafe extern "C" fn hook_handler(process: *const c_char) {
+pub unsafe extern "C" fn __hook_handler__(process: *const c_char) {
     android_logger::init_once(
         Config::default()
             .with_max_level(LevelFilter::Trace)

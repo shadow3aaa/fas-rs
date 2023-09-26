@@ -57,7 +57,7 @@ impl Buffer {
             last_jank: None,
             last_limit: None,
             rec_counter: 0,
-            smoother: ALMA::new(Echo::new(), FRAME_UNIT),
+            smoother: ALMA::new(Echo::new(), FRAME_UNIT * 2),
         }
     }
 
@@ -108,7 +108,7 @@ impl<P: PerformanceController> Looper<P> {
                         .map_err(|_| Error::Other("Binder Disconnected"))?,
                 )
             } else {
-                match self.rx.recv_timeout(Duration::from_secs(1)) {
+                match self.rx.recv_timeout(Duration::from_millis(1750)) {
                     Ok(d) => Some(d),
                     Err(e) => {
                         if e == RecvTimeoutError::Disconnected {

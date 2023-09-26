@@ -21,35 +21,35 @@ use crate::{
 };
 
 const POWERSAVE: PolicyConfig = PolicyConfig {
-    normal_keep_count: 4,
-    jank_keep_count: 15,
+    normal_keep_count: 8,
+    jank_keep_count: 30,
     tolerant_jank: Duration::from_millis(900),
-    tolerant_big_jank: Duration::from_millis(1800),
-    tolerant_unit: Duration::from_millis(250),
+    tolerant_big_jank: Duration::from_millis(1850),
+    tolerant_unit: Duration::from_millis(275),
 };
 
 const BALANCE: PolicyConfig = PolicyConfig {
-    normal_keep_count: 4,
-    jank_keep_count: 15,
-    tolerant_jank: Duration::from_millis(750),
-    tolerant_big_jank: Duration::from_millis(1600),
-    tolerant_unit: Duration::from_millis(225),
+    normal_keep_count: 8,
+    jank_keep_count: 30,
+    tolerant_jank: Duration::from_millis(800),
+    tolerant_big_jank: Duration::from_millis(1750),
+    tolerant_unit: Duration::from_millis(250),
 };
 
 const PERFORMANCE: PolicyConfig = PolicyConfig {
-    normal_keep_count: 4,
-    jank_keep_count: 15,
+    normal_keep_count: 8,
+    jank_keep_count: 30,
     tolerant_jank: Duration::from_millis(550),
-    tolerant_big_jank: Duration::from_millis(1350),
-    tolerant_unit: Duration::from_millis(175),
+    tolerant_big_jank: Duration::from_millis(1450),
+    tolerant_unit: Duration::from_millis(195),
 };
 
 const FAST: PolicyConfig = PolicyConfig {
-    normal_keep_count: 4,
-    jank_keep_count: 15,
-    tolerant_jank: Duration::from_millis(375),
-    tolerant_big_jank: Duration::from_millis(775),
-    tolerant_unit: Duration::from_millis(150),
+    normal_keep_count: 8,
+    jank_keep_count: 30,
+    tolerant_jank: Duration::from_millis(415),
+    tolerant_big_jank: Duration::from_millis(1000),
+    tolerant_unit: Duration::from_millis(172),
 };
 
 #[derive(Debug)]
