@@ -25,7 +25,7 @@ const POWERSAVE: PolicyConfig = PolicyConfig {
     jank_keep_count: 30,
     tolerant_jank: Duration::from_millis(900),
     tolerant_big_jank: Duration::from_millis(1850),
-    tolerant_unit: Duration::from_millis(275),
+    tolerant_unit: 5,
 };
 
 const BALANCE: PolicyConfig = PolicyConfig {
@@ -33,7 +33,7 @@ const BALANCE: PolicyConfig = PolicyConfig {
     jank_keep_count: 30,
     tolerant_jank: Duration::from_millis(800),
     tolerant_big_jank: Duration::from_millis(1750),
-    tolerant_unit: Duration::from_millis(250),
+    tolerant_unit: 3,
 };
 
 const PERFORMANCE: PolicyConfig = PolicyConfig {
@@ -41,7 +41,7 @@ const PERFORMANCE: PolicyConfig = PolicyConfig {
     jank_keep_count: 30,
     tolerant_jank: Duration::from_millis(550),
     tolerant_big_jank: Duration::from_millis(1450),
-    tolerant_unit: Duration::from_millis(195),
+    tolerant_unit: 2,
 };
 
 const FAST: PolicyConfig = PolicyConfig {
@@ -49,7 +49,7 @@ const FAST: PolicyConfig = PolicyConfig {
     jank_keep_count: 30,
     tolerant_jank: Duration::from_millis(415),
     tolerant_big_jank: Duration::from_millis(1000),
-    tolerant_unit: Duration::from_millis(172),
+    tolerant_unit: 1,
 };
 
 #[derive(Debug)]
@@ -58,7 +58,7 @@ pub struct PolicyConfig {
     pub jank_keep_count: u8,
     pub tolerant_jank: Duration,
     pub tolerant_big_jank: Duration,
-    pub tolerant_unit: Duration,
+    pub tolerant_unit: u32,
 }
 
 impl<P: PerformanceController> Looper<P> {

@@ -84,7 +84,7 @@ impl<P: PerformanceController> Looper<P> {
 
             controller.release(config)?;
         } else if normalized_frame_unit
-            < Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() + policy.tolerant_unit
+            <= Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() * policy.tolerant_unit
         {
             if buffer.rec_counter != 0 {
                 buffer.rec_counter -= 1;
@@ -103,7 +103,7 @@ impl<P: PerformanceController> Looper<P> {
 
             controller.limit(config)?;
         } else if normalized_frame_unit
-            > Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() + policy.tolerant_unit
+            > Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() * policy.tolerant_unit
         {
             if let Some(front) = buffer.frame_unit.front_mut() {
                 *front = Duration::from_secs(1) / target_fps;
