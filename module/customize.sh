@@ -36,6 +36,15 @@ elif $KSU; then
 	ui_print "⚠ KSU detected, make sure you has installed zygisk-on-ksu"
 fi
 
+# warnings
+ui_print "
+Disclaimer & Warning:
+FAS-RS currently injects the game via Zygisk, intercepting libgui's function calls to get frame rendering time
+This means that you can't use zygisk hiding for the target game, otherwise fas-rs won't work (it's okay to apply hiding to non-FAS targets)
+However, this also causes root detection or injection detection of the target game to be triggered. When this happens, you are responsible for it
+At the same time, I guarantee that fas-rs' zygisk injection is only for the sole purpose of fetching frametime for frame-aware scheduling. This project will always be open source, and anyone can review it to confirm that there is indeed no malicious code in it.
+"
+
 # permission
 chmod +x $MODPATH/fas-rs
 
