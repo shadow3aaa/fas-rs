@@ -14,43 +14,7 @@
 use std::time::Duration;
 
 use super::Looper;
-use crate::{
-    error::Result,
-    node::{Mode, Node},
-    PerformanceController,
-};
-
-const POWERSAVE: PolicyConfig = PolicyConfig {
-    normal_keep_count: 8,
-    jank_keep_count: 30,
-    tolerant_jank: Duration::from_millis(900),
-    tolerant_big_jank: Duration::from_millis(1850),
-    tolerant_unit: 5,
-};
-
-const BALANCE: PolicyConfig = PolicyConfig {
-    normal_keep_count: 8,
-    jank_keep_count: 30,
-    tolerant_jank: Duration::from_millis(800),
-    tolerant_big_jank: Duration::from_millis(1750),
-    tolerant_unit: 3,
-};
-
-const PERFORMANCE: PolicyConfig = PolicyConfig {
-    normal_keep_count: 8,
-    jank_keep_count: 30,
-    tolerant_jank: Duration::from_millis(550),
-    tolerant_big_jank: Duration::from_millis(1450),
-    tolerant_unit: 2,
-};
-
-const FAST: PolicyConfig = PolicyConfig {
-    normal_keep_count: 8,
-    jank_keep_count: 30,
-    tolerant_jank: Duration::from_millis(415),
-    tolerant_big_jank: Duration::from_millis(1000),
-    tolerant_unit: 1,
-};
+use crate::{error::Result, node::Node, Config, Error, PerformanceController};
 
 #[derive(Debug)]
 pub struct PolicyConfig {
@@ -62,12 +26,41 @@ pub struct PolicyConfig {
 }
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn policy_config() -> Result<PolicyConfig> {
-        Ok(match Node::read_mode()? {
-            Mode::Powersave => POWERSAVE,
-            Mode::Balance => BALANCE,
-            Mode::Performance => PERFORMANCE,
-            Mode::Fast => FAST,
+    pub fn policy_config(config: &Config) -> Result<PolicyConfig> {
+        let mode = Node::read_mode()?;
+
+        let normal_keep_count = config
+            .get_mode_conf(mode, "normal_keep_count")?
+            .as_integer()
+            .ok_or(Error::ParseConfig)? as u8;
+        let jank_keep_count = config
+            .get_mode_conf(mode, "jank_keep_count")?
+            .as_integer()
+            .ok_or(Error::ParseConfig)? as u8;
+
+        let tolerant_jank = config
+            .get_mode_conf(mode, "tolerant_jank")?
+            .as_integer()
+            .ok_or(Error::ParseConfig)?;
+        let tolerant_jank = Duration::from_millis(tolerant_jank as u64);
+
+        let tolerant_big_jank = config
+            .get_mode_conf(mode, "tolerant_big_jank")?
+            .as_integer()
+            .ok_or(Error::ParseConfig)?;
+        let tolerant_big_jank = Duration::from_millis(tolerant_big_jank as u64);
+
+        let tolerant_unit = config
+            .get_mode_conf(mode, "tolerant_unit")?
+            .as_integer()
+            .ok_or(Error::ParseConfig)? as u32;
+
+        Ok(PolicyConfig {
+            normal_keep_count,
+            jank_keep_count,
+            tolerant_jank,
+            tolerant_big_jank,
+            tolerant_unit,
         })
     }
 }

@@ -11,20 +11,44 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{fs, path::Path};
-
-use log::error;
+use std::{fs, path::Path, str::FromStr};
 
 use crate::error::{Error, Result};
 
 const NODE_PATH: &str = "/dev/fas_rs";
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Mode {
     Powersave,
     Balance,
     Performance,
     Fast,
+}
+
+impl FromStr for Mode {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Ok(match s {
+            "powersave" => Self::Powersave,
+            "balance" => Self::Balance,
+            "performance" => Self::Performance,
+            "fast" => Self::Fast,
+            _ => return Err(Error::ParseNode),
+        })
+    }
+}
+
+impl ToString for Mode {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Powersave => "powersave",
+            Self::Balance => "balance",
+            Self::Performance => "performance",
+            Self::Fast => "fast",
+        }
+        .into()
+    }
 }
 
 pub struct Node;
@@ -54,20 +78,11 @@ impl Node {
     /// 读取当前模式
     pub fn read_mode() -> Result<Mode> {
         let path = Path::new(NODE_PATH).join("mode");
-        Ok(
-            match fs::read_to_string(path)
+
+        Mode::from_str(
+            fs::read_to_string(path)
                 .map_err(|_| Error::NodeNotFound)?
-                .trim()
-            {
-                "powersave" => Mode::Powersave,
-                "balance" => Mode::Balance,
-                "performance" => Mode::Performance,
-                "fast" => Mode::Fast,
-                _ => {
-                    error!("Failed to parse current mode");
-                    Mode::Balance
-                }
-            },
+                .trim(),
         )
     }
 

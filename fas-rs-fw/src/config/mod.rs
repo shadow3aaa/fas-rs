@@ -26,7 +26,10 @@ use log::info;
 use parking_lot::RwLock;
 use toml::Value;
 
-use crate::error::{Error, Result};
+use crate::{
+    error::{Error, Result},
+    node::Mode,
+};
 
 use read::wait_and_read;
 
@@ -44,11 +47,6 @@ pub struct Config {
 }
 
 impl Config {
-    /// 读取配置
-    ///
-    /// # Errors
-    ///
-    /// 解析配置失败/路径不存在
     pub fn new<P: AsRef<Path>>(p: P) -> Result<Self> {
         let path = p.as_ref();
         let ori = fs::read_to_string(path)?;
@@ -73,11 +71,6 @@ impl Config {
         Ok(Self { toml })
     }
 
-    /// 从配置中读取目标fps
-    ///
-    /// # Panics
-    ///
-    /// 读取/解析配置失败
     pub fn target_fps<S: AsRef<str>>(&self, pkg: S) -> Option<TargetFps> {
         let pkg = pkg.as_ref();
         let pkg = pkg.split(':').next()?;
@@ -104,15 +97,20 @@ impl Config {
         )
     }
 
-    /// 从配置中读取一个配置参数的值
-    ///
-    /// # Errors
-    ///
-    /// 读取目标配置失败
+    pub fn get_mode_conf<S: AsRef<str>>(&self, m: Mode, l: S) -> Result<Value> {
+        let label = l.as_ref();
+        let mode = m.to_string();
+        let toml = self.toml.read();
+
+        toml.get(mode)
+            .and_then_likely(|t| t.get(label).cloned())
+            .ok_or(Error::ConfigValueNotFound)
+    }
+
     pub fn get_conf<S: AsRef<str>>(&self, l: S) -> Result<Value> {
         let label = l.as_ref();
-
         let toml = self.toml.read();
+
         toml.get("config")
             .and_then_likely(|t| t.get(label).cloned())
             .ok_or(Error::ConfigValueNotFound)

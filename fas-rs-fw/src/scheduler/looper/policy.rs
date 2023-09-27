@@ -48,7 +48,7 @@ impl<P: PerformanceController> Looper<P> {
             return Ok(());
         };
 
-        let policy = Self::policy_config()?;
+        let policy = Self::policy_config(config)?;
 
         debug!("mode policy: {policy:?}");
 
