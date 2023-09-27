@@ -25,6 +25,10 @@ use crate::error::{Error, Result};
 struct ConfigData {
     pub config: Table,
     pub game_list: Table,
+    pub powersave: Table,
+    pub balance: Table,
+    pub performance: Table,
+    pub fast: Table,
 }
 
 impl Config {
@@ -49,25 +53,35 @@ impl Config {
             let new_conf = ConfigData {
                 config: std_conf.config,
                 game_list: local_conf.game_list,
+                powersave: std_conf.powersave,
+                balance: std_conf.balance,
+                performance: std_conf.performance,
+                fast: std_conf.fast,
             };
             return Ok(toml::to_string(&new_conf)?);
         }
 
-        let old_config = local_conf.config;
-        let mut std_config = std_conf.config;
-
-        let old_config: Table = old_config
-            .into_iter()
-            .filter(|(k, _)| std_config.contains_key(k))
-            .collect();
-
-        std_config.extend(old_config);
+        let config = Self::table_merge(std_conf.config, local_conf.config);
+        let powersave = Self::table_merge(std_conf.powersave, local_conf.powersave);
+        let balance = Self::table_merge(std_conf.balance, local_conf.balance);
+        let performance = Self::table_merge(std_conf.performance, local_conf.performance);
+        let fast = Self::table_merge(std_conf.fast, local_conf.fast);
 
         let new_conf = ConfigData {
-            config: std_config,
+            config,
             game_list: local_conf.game_list,
+            powersave,
+            balance,
+            performance,
+            fast,
         };
 
         Ok(toml::to_string_pretty(&new_conf)?)
+    }
+
+    fn table_merge(mut s: Table, l: Table) -> Table {
+        let old: Table = l.into_iter().filter(|(k, _)| s.contains_key(k)).collect();
+        s.extend(old);
+        s
     }
 }

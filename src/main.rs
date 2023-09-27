@@ -63,7 +63,7 @@ fn main() -> Result<()> {
         let local = fs::read_to_string(&local_path)?;
         let std = fs::read_to_string(std_path)?;
 
-        let new = Config::merge(&local, &std)?;
+        let new = Config::merge(&local, &std).unwrap_or(std);
 
         fs::write(local_path, new)?;
     }
