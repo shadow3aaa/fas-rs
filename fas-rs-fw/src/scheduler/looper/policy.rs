@@ -58,6 +58,11 @@ impl<P: PerformanceController> Looper<P> {
         let normalized_frame = frame * target_fps;
         let normalized_frame_unit = frame_unit * target_fps;
 
+        let normalized_unit_scale = Duration::from_secs(1)
+            / (target_fps - policy.tolerant_unit).max(1)
+            * target_fps
+            * FRAME_UNIT.try_into().unwrap();
+
         debug!("target_fps: {target_fps}");
         debug!("normalized_frame: {normalized_frame:?}");
         debug!("normalized_frame_unit: {normalized_frame_unit:?}");
@@ -83,9 +88,7 @@ impl<P: PerformanceController> Looper<P> {
             }
 
             controller.release(config)?;
-        } else if normalized_frame_unit
-            <= Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() * policy.tolerant_unit
-        {
+        } else if normalized_frame_unit <= normalized_unit_scale {
             if buffer.rec_counter != 0 {
                 buffer.rec_counter -= 1;
                 return Ok(());
@@ -102,9 +105,7 @@ impl<P: PerformanceController> Looper<P> {
             buffer.rec_counter = policy.normal_keep_count;
 
             controller.limit(config)?;
-        } else if normalized_frame_unit
-            > Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() * policy.tolerant_unit
-        {
+        } else if normalized_frame_unit > normalized_unit_scale {
             if let Some(front) = buffer.frame_unit.front_mut() {
                 *front = Duration::from_secs(1) / target_fps;
             }
