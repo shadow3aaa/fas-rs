@@ -76,6 +76,34 @@ keep_std = true
 "com.shangyoo.neon" = "auto"
 "com.tencent.tmgp.pubgmhd" = "auto"
 "com.tencent.tmgp.sgame" = "auto"
+
+[powersave]
+jank_keep_count = 30
+normal_keep_count = 8
+tolerant_big_jank = 1850
+tolerant_jank = 900
+tolerant_unit = 5
+
+[balance]
+jank_keep_count = 30
+normal_keep_count = 8
+tolerant_big_jank = 1750
+tolerant_jank = 800
+tolerant_unit = 5
+
+[performance]
+jank_keep_count = 30
+normal_keep_count = 8
+tolerant_big_jank = 1550
+tolerant_jank = 650
+tolerant_unit = 5
+
+[fast]
+jank_keep_count = 30
+normal_keep_count = 8
+tolerant_big_jank = 1450
+tolerant_jank = 550
+tolerant_unit = 5
 ```
 
 ## **编译(termux为例)**

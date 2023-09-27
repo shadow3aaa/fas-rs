@@ -2,34 +2,6 @@
 ignore_little = false
 keep_std = true
 
-[powersave]
-normal_keep_count = 8
-jank_keep_count = 30
-tolerant_jank = 900
-tolerant_big_jank = 1850
-tolerant_unit = 5
-
-[balance]
-normal_keep_count = 8
-jank_keep_count = 30
-tolerant_jank = 800
-tolerant_big_jank = 1750
-tolerant_unit = 5
-
-[performance]
-normal_keep_count = 8
-jank_keep_count = 30
-tolerant_jank = 650
-tolerant_big_jank = 1550
-tolerant_unit = 5
-
-[fast]
-normal_keep_count = 8
-jank_keep_count = 30
-tolerant_jank = 550
-tolerant_big_jank = 1450
-tolerant_unit = 5
-
 [game_list]
 "com.hypergryph.arknights" = "auto"
 "com.miHoYo.Yuanshen" = "auto"
@@ -43,3 +15,31 @@ tolerant_unit = 5
 "com.shangyoo.neon" = "auto"
 "com.tencent.tmgp.pubgmhd" = "auto"
 "com.tencent.tmgp.sgame" = "auto"
+
+[powersave]
+jank_keep_count = 30
+normal_keep_count = 8
+tolerant_big_jank = 1850
+tolerant_jank = 900
+tolerant_unit = 5
+
+[balance]
+jank_keep_count = 30
+normal_keep_count = 8
+tolerant_big_jank = 1750
+tolerant_jank = 800
+tolerant_unit = 5
+
+[performance]
+jank_keep_count = 30
+normal_keep_count = 8
+tolerant_big_jank = 1550
+tolerant_jank = 650
+tolerant_unit = 5
+
+[fast]
+jank_keep_count = 30
+normal_keep_count = 8
+tolerant_big_jank = 1450
+tolerant_jank = 550
+tolerant_unit = 5
