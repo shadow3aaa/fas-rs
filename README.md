@@ -89,21 +89,21 @@ jank_keep_count = 30
 normal_keep_count = 8
 tolerant_big_jank = 1750
 tolerant_jank = 800
-tolerant_unit = 5
+tolerant_unit = 3
 
 [performance]
 jank_keep_count = 30
 normal_keep_count = 8
 tolerant_big_jank = 1550
 tolerant_jank = 650
-tolerant_unit = 5
+tolerant_unit = 2
 
 [fast]
 jank_keep_count = 30
 normal_keep_count = 8
 tolerant_big_jank = 1450
 tolerant_jank = 550
-tolerant_unit = 5
+tolerant_unit = 1
 ```
 
 ## **编译(termux为例)**
