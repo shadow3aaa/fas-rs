@@ -16,8 +16,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use likely_stable::LikelyOption;
-
 const REFRESH_TIME: Duration = Duration::from_secs(2);
 
 pub struct TimedWatcher {
@@ -54,21 +52,11 @@ impl TimedWatcher {
     }
 
     fn parse_top_app(dump: &str) -> Vec<i32> {
-        let mut result: Vec<i32> = Vec::new();
-        for l in dump.lines() {
-            if l.contains("Session{") {
-                if let Some(p) = l
-                    .split_whitespace()
-                    .nth(3)
-                    .and_then_likely(|p| p.split(':').next())
-                {
-                    if let Ok(pid) = p.trim().parse() {
-                        result.push(pid);
-                    }
-                }
-            }
-        }
-
-        result
+        dump.lines()
+            .filter(|l| l.contains("Session{"))
+            .filter_map(|l| l.split_whitespace().nth(3))
+            .filter_map(|s| s.split(':').next())
+            .map(|p| p.trim().parse().unwrap())
+            .collect()
     }
 }

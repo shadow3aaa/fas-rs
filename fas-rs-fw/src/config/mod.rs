@@ -80,6 +80,7 @@ impl Config {
     /// 读取/解析配置失败
     pub fn target_fps<S: AsRef<str>>(&self, pkg: S) -> Option<TargetFps> {
         let pkg = pkg.as_ref();
+        let pkg = pkg.split(':').next()?;
 
         let toml = self.toml.read();
         let list = toml
