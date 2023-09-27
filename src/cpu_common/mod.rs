@@ -107,9 +107,7 @@ impl PerformanceController for CpuCommon {
             .unwrap_or(cur_freq);
 
         for policy in &self.policies {
-            policy
-                .set_freq(next_freq)
-                .unwrap_or_else(|e| error!("{e:?}"));
+            let _ = policy.set_freq(next_freq);
         }
 
         self.cur_freq.set(next_freq);
@@ -121,9 +119,7 @@ impl PerformanceController for CpuCommon {
         let max_freq = self.freqs.last().copied().unwrap();
 
         for policy in &self.policies {
-            policy
-                .set_freq(max_freq)
-                .unwrap_or_else(|e| error!("{e:?}"));
+            let _ = policy.set_freq(max_freq);
         }
 
         self.cur_freq.set(max_freq);
