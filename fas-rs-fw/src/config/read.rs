@@ -56,8 +56,12 @@ pub(super) fn wait_and_read(path: &Path, toml: &Arc<ConfData>, exit: &Arc<Atomic
         *toml.write() = toml::from_str(&ori).unwrap();
 
         // wait until file change
-        let mut inotify = Inotify::init().unwrap();
-        inotify.watches().add(path, WatchMask::CLOSE_WRITE).unwrap();
-        let _ = inotify.read_events_blocking(&mut []);
+        let Ok(mut inotify) = Inotify::init() else {
+            continue;
+        };
+        
+        if inotify.watches().add(path, WatchMask::CLOSE_WRITE).is_ok() {
+            let _ = inotify.read_events_blocking(&mut []);
+        }
     }
 }
