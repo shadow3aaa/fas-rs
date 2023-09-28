@@ -108,18 +108,15 @@ impl<P: PerformanceController> Looper<P> {
                         .map_err(|_| Error::Other("Binder Disconnected"))?,
                 )
             } else {
-                match self.rx.recv_timeout(Duration::from_millis(1750)) {
+                match self.rx.recv_timeout(Duration::from_secs(1)) {
                     Ok(d) => Some(d),
                     Err(e) => {
                         if e == RecvTimeoutError::Disconnected {
                             return Err(Error::Other("Binder Disconnected"));
                         }
 
-                        if self.started {
-                            self.controller.release_max(&self.config)?;
-                        }
-
-                        None
+                        self.retain_topapp()?;
+                        continue;
                     }
                 }
             };
@@ -128,7 +125,7 @@ impl<P: PerformanceController> Looper<P> {
                 self.buffer_update(&data);
             }
 
-            self.retain_topapp();
+            self.retain_topapp()?;
             self.buffers_policy()?;
 
             if self.started {

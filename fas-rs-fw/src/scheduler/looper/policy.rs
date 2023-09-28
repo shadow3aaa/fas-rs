@@ -20,15 +20,6 @@ use crate::{config::TargetFps, error::Result, Config, PerformanceController};
 
 impl<P: PerformanceController> Looper<P> {
     pub fn buffers_policy(&mut self) -> Result<()> {
-        if self.buffers.is_empty() && self.started {
-            self.controller.init_default(&self.config)?;
-            self.started = false;
-            return Ok(());
-        } else if !self.buffers.is_empty() && !self.started {
-            self.controller.init_game(&self.config)?;
-            self.started = true;
-        }
-
         for buffer in self.buffers.values_mut() {
             Self::do_policy(buffer, &self.controller, &self.config)?;
         }

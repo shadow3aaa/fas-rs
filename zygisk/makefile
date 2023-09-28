@@ -13,16 +13,16 @@ clean:
 
 .PHONY: init-build
 init-build:
-	mkdir -p build
+	mkdir -p build/rust
 
 .PHONY: zygisk-lib
-zygisk-lib: init-build
+zygisk-lib: init-build rust-lib
 ifeq ($(RELEASE), true)
 	aarch64-linux-android-clang++ $(CXX_RELEASE_FLAG) --shared src/hook.cpp \
 		-Lbuild/rust \
 		-Irust/include \
 		-nostdlib++ \
-		-Wl,-llog,-lc++ \
+		-Wl,-llog,-lc++,-lrust,-lbinder_ndk \
 		-o build/arm64-v8a.so
 	strip build/arm64-v8a.so
 else
@@ -30,7 +30,7 @@ else
 		-Lbuild/rust \
 		-Irust/include \
 		-nostdlib++ \
-		-Wl,-llog,-lc++ \
+		-Wl,-llog,-lc++,-lrust,-lbinder_ndk \
 		-o build/arm64-v8a.so
 endif
 
@@ -38,8 +38,8 @@ endif
 rust-lib: init-build
 ifeq ($(RELEASE), true)
 	cd rust && cargo build --release --target aarch64-linux-android
-	cp -f rust/target/aarch64-linux-android/release/libfasrs.so build
+	cp -f rust/target/aarch64-linux-android/release/librust.a build/rust
 else
 	cd rust && cargo build --target aarch64-linux-android
-	cp -f rust/target/aarch64-linux-android/debug/libfasrs.so build
+	cp -f rust/target/aarch64-linux-android/debug/librust.a build/rust
 endif

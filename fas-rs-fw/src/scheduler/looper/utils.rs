@@ -16,13 +16,24 @@ use std::{collections::hash_map::Entry, time::Duration};
 use log::{debug, info};
 
 use super::{super::FasData, Buffer, Looper, BUFFER_MAX};
-use crate::{config::TargetFps, PerformanceController};
+use crate::{config::TargetFps, error::Result, PerformanceController};
 
 impl<P: PerformanceController> Looper<P> {
     /* 检查是否为顶层应用，并且删除不是顶层应用的buffer **/
-    pub fn retain_topapp(&mut self) {
+    pub fn retain_topapp(&mut self) -> Result<()> {
         self.buffers
             .retain(|(_, p), _| self.topapp_checker.is_topapp(*p));
+
+        if self.buffers.is_empty() && self.started {
+            self.controller.init_default(&self.config)?;
+            self.started = false;
+            return Ok(());
+        } else if !self.buffers.is_empty() && !self.started {
+            self.controller.init_game(&self.config)?;
+            self.started = true;
+        }
+
+        Ok(())
     }
 
     pub fn buffer_update(&mut self, d: &FasData) {

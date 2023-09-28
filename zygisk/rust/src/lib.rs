@@ -57,7 +57,9 @@ unsafe impl Sync for Channel {}
 unsafe impl Send for Channel {}
 
 #[no_mangle]
-pub unsafe extern "C" fn __hook_handler__(process: *const c_char) {
+pub unsafe extern "C" fn __hook_handler__(process: *const c_char) -> bool {
+    use IRemoteService::IRemoteService;
+
     android_logger::init_once(
         Config::default()
             .with_max_level(LevelFilter::Trace)
@@ -66,31 +68,27 @@ pub unsafe extern "C" fn __hook_handler__(process: *const c_char) {
 
     let process = CStr::from_ptr(process);
     let Ok(process) = process.to_str() else {
-        return;
+        return false;
     };
     let process = process.to_string(); // Copy process name here, so zygisk can release the original process name jstring safely
 
     if process.contains("zygote") {
-        return;
+        return false;
     }
 
-    let pid = process::id() as i32;
+    let Ok(fas_service) = binder::get_interface::<dyn IRemoteService>("fas_rs_server") else {
+        error!("Failed to get binder interface, fas-rs-server didn't started");
+        return false;
+    }; // get binder server interface
 
-    debug!("process: [{}], pid: [{pid}]", process);
+    let pid = process::id() as i32;
+    if Ok(false) == fas_service.sendData(&process, pid, 0) {
+        return false;
+    } // Check first to avoid unnecessary hook
 
     if let Err(e) = thread::Builder::new()
         .name("libgui-analyze".into())
         .spawn(move || {
-            use IRemoteService::IRemoteService;
-
-            let Ok(fas_service) = binder::wait_for_interface::<dyn IRemoteService>("fas_rs_server") else {
-                return;
-            }; // block and wait binder server
-
-            if Ok(false) == fas_service.sendData(&process, pid, 0) {
-            return;
-        } // Check first to avoid unnecessary hook
-
             if let Err(e) = hook() {
                 error!("Failed to hook, reason: {e:#?}");
                 return;
@@ -103,6 +101,8 @@ pub unsafe extern "C" fn __hook_handler__(process: *const c_char) {
     {
         error!("Failed to start analyze thread, reason: {e:?}");
     }
+
+    true
 }
 
 unsafe fn hook() -> Result<()> {
