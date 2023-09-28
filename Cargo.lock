@@ -320,7 +320,6 @@ dependencies = [
  "parking_lot",
  "serde",
  "serde_derive",
- "sliding_features",
  "thiserror",
  "toml",
  "unix-named-pipe",
@@ -686,12 +685,6 @@ name = "shlex"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7cee0529a6d40f580e7a5e6c495c8fbfe21b7b52795ed4bb5e62cdf92bc6380"
-
-[[package]]
-name = "sliding_features"
-version = "2.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "206d35c19f2fbff5ad55a95ad0b0c9c8087985fff4fd71246ca6e7e0a988cb30"
 
 [[package]]
 name = "smallvec"

@@ -17,29 +17,29 @@ keep_std = true
 "com.tencent.tmgp.sgame" = "auto"
 
 [powersave]
-jank_keep_count = 30
-normal_keep_count = 8
-tolerant_big_jank = 1850
-tolerant_jank = 900
-tolerant_unit = 5
+jank_keep_count = 15
+normal_keep_count = 5
+tolerant_big_jank = 5000
+tolerant_jank = 2750
+tolerant_unit = 4
 
 [balance]
-jank_keep_count = 30
-normal_keep_count = 8
-tolerant_big_jank = 1750
-tolerant_jank = 800
+jank_keep_count = 25
+normal_keep_count = 5
+tolerant_big_jank = 3000
+tolerant_jank = 1500
 tolerant_unit = 3
 
 [performance]
 jank_keep_count = 30
-normal_keep_count = 8
-tolerant_big_jank = 1550
-tolerant_jank = 650
+normal_keep_count = 5
+tolerant_big_jank = 2000
+tolerant_jank = 1250
 tolerant_unit = 2
 
 [fast]
 jank_keep_count = 30
-normal_keep_count = 8
+normal_keep_count = 6
 tolerant_big_jank = 1450
-tolerant_jank = 550
+tolerant_jank = 1000
 tolerant_unit = 1

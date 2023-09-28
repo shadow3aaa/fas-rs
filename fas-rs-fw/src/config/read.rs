@@ -45,7 +45,6 @@ pub(super) fn wait_and_read(path: &Path, toml: &Arc<ConfData>, exit: &Arc<Atomic
                 retry_count = 0;
                 s
             }
-            #[allow(unused_variables)]
             Err(e) => {
                 debug!("Failed to read file '{}': {e}", path.display());
                 retry_count += 1;
@@ -59,7 +58,7 @@ pub(super) fn wait_and_read(path: &Path, toml: &Arc<ConfData>, exit: &Arc<Atomic
         let Ok(mut inotify) = Inotify::init() else {
             continue;
         };
-        
+
         if inotify.watches().add(path, WatchMask::CLOSE_WRITE).is_ok() {
             let _ = inotify.read_events_blocking(&mut []);
         }

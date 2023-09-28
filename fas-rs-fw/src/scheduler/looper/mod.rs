@@ -22,7 +22,6 @@ use std::{
 };
 
 use log::debug;
-use sliding_features::{Echo, View, ALMA};
 
 use super::{topapp::TimedWatcher, FasData};
 use crate::{
@@ -45,7 +44,6 @@ pub struct Buffer {
     pub last_jank: Option<Instant>,
     pub last_limit: Option<Instant>,
     pub rec_counter: u8,
-    smoother: ALMA<Echo>,
 }
 
 impl Buffer {
@@ -57,7 +55,6 @@ impl Buffer {
             last_jank: None,
             last_limit: None,
             rec_counter: 0,
-            smoother: ALMA::new(Echo::new(), FRAME_UNIT * 2),
         }
     }
 
@@ -70,11 +67,8 @@ impl Buffer {
             self.frame_unit.pop_back();
         }
 
-        self.smoother.update(d.as_nanos() as f64);
-        let smoothed_frame = Duration::from_nanos(self.smoother.last() as u64);
-
         self.frametimes.push_front(d);
-        self.frame_unit.push_front(smoothed_frame);
+        self.frame_unit.push_front(d);
     }
 }
 

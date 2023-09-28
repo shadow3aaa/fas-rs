@@ -12,13 +12,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License. */
 #include <android/log.h>
-#include <dlfcn.h>
-#include <fcntl.h>
 #include <rust.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <cstdlib>
+#include <stdlib.h>
 
 #include "zygisk.hpp"
 
@@ -26,8 +21,6 @@ using zygisk::Api;
 using zygisk::AppSpecializeArgs;
 using zygisk::Option;
 using zygisk::ServerSpecializeArgs;
-
-using HookFunction = bool (*)(const char *);
 
 #define LOGD(...) \
   __android_log_print(ANDROID_LOG_DEBUG, "libgui hook", __VA_ARGS__)
@@ -54,9 +47,7 @@ class LibGuiHook : public zygisk::ModuleBase {
 
   bool do_hook(const AppSpecializeArgs *args) {
     const char *process = env->GetStringUTFChars(args->nice_name, nullptr);
-
     bool result = rust::__hook_handler__(process);
-
     env->ReleaseStringUTFChars(args->nice_name, process);
 
     return result;
