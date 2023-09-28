@@ -49,8 +49,12 @@ impl<P: PerformanceController> Looper<P> {
         let normalized_frame = frame * target_fps;
         let normalized_frame_unit = frame_unit * target_fps;
 
-        let normalized_unit_scale = Duration::from_secs(1)
-            / (target_fps - policy.tolerant_unit).max(1)
+        let normalized_limit_scale = Duration::from_secs(1)
+            .div_f64((f64::from(target_fps) - policy.tolerant_frame_limit).max(1.0))
+            * target_fps
+            * FRAME_UNIT.try_into().unwrap();
+        let normalized_jank_scale = Duration::from_secs(1)
+            .div_f64((f64::from(target_fps) - policy.tolerant_frame_jank).max(1.0))
             * target_fps
             * FRAME_UNIT.try_into().unwrap();
 
@@ -58,33 +62,9 @@ impl<P: PerformanceController> Looper<P> {
         debug!("normalized_frame: {normalized_frame:?}");
         debug!("normalized_frame_unit: {normalized_frame_unit:?}");
 
-        if normalized_frame > Duration::from_millis(3500) + policy.tolerant_big_jank {
+        if normalized_frame > Duration::from_secs(7) {
             controller.release_max(config)?; // big jank
-        } else if normalized_frame > Duration::from_millis(1700) + policy.tolerant_jank {
-            buffer.rec_counter = policy.jank_keep_count; // jank
-
-            let last_jank = buffer.last_jank;
-            buffer.last_jank = Some(Instant::now());
-
-            if let Some(last_jank) = last_jank {
-                let normalized_last_jank = last_jank.elapsed() * target_fps;
-
-                if normalized_last_jank >= Duration::from_secs(60) {
-                    return Ok(()); // 1 jank is allowed every 60 frames
-                }
-            }
-
-            if let Some(front) = buffer.frame_unit.front_mut() {
-                *front = Duration::from_secs(1) / target_fps;
-            }
-
-            controller.release(config)?;
-        } else if normalized_frame_unit <= normalized_unit_scale {
-            if buffer.rec_counter != 0 {
-                buffer.rec_counter -= 1;
-                return Ok(());
-            }
-
+        } else if normalized_frame_unit < normalized_limit_scale {
             if let Some(last_limit) = buffer.last_limit {
                 let normalized_last_limit = last_limit.elapsed() * target_fps;
                 if normalized_last_limit <= Duration::from_secs(3) {
@@ -93,10 +73,9 @@ impl<P: PerformanceController> Looper<P> {
             }
 
             buffer.last_limit = Some(Instant::now());
-            buffer.rec_counter = policy.normal_keep_count;
 
             controller.limit(config)?;
-        } else if normalized_frame_unit > normalized_unit_scale {
+        } else if normalized_frame_unit > normalized_jank_scale {
             if let Some(front) = buffer.frame_unit.front_mut() {
                 *front = Duration::from_secs(1) / target_fps;
             }

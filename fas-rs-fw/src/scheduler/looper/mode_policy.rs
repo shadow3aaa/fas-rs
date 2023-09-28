@@ -11,56 +11,32 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::time::Duration;
 
 use super::Looper;
 use crate::{error::Result, node::Node, Config, Error, PerformanceController};
 
 #[derive(Debug)]
 pub struct PolicyConfig {
-    pub normal_keep_count: u8,
-    pub jank_keep_count: u8,
-    pub tolerant_jank: Duration,
-    pub tolerant_big_jank: Duration,
-    pub tolerant_unit: u32,
+    pub tolerant_frame_limit: f64,
+    pub tolerant_frame_jank: f64,
 }
 
 impl<P: PerformanceController> Looper<P> {
     pub fn policy_config(config: &Config) -> Result<PolicyConfig> {
         let mode = Node::read_mode()?;
 
-        let normal_keep_count = config
-            .get_mode_conf(mode, "normal_keep_count")?
-            .as_integer()
-            .ok_or(Error::ParseConfig)? as u8;
-        let jank_keep_count = config
-            .get_mode_conf(mode, "jank_keep_count")?
-            .as_integer()
-            .ok_or(Error::ParseConfig)? as u8;
-
-        let tolerant_jank = config
-            .get_mode_conf(mode, "tolerant_jank")?
-            .as_integer()
+        let tolerant_frame_limit = config
+            .get_mode_conf(mode, "tolerant_frame_limit")?
+            .as_float()
             .ok_or(Error::ParseConfig)?;
-        let tolerant_jank = Duration::from_millis(tolerant_jank as u64);
-
-        let tolerant_big_jank = config
-            .get_mode_conf(mode, "tolerant_big_jank")?
-            .as_integer()
+        let tolerant_frame_jank = config
+            .get_mode_conf(mode, "tolerant_frame_jank")?
+            .as_float()
             .ok_or(Error::ParseConfig)?;
-        let tolerant_big_jank = Duration::from_millis(tolerant_big_jank as u64);
-
-        let tolerant_unit = config
-            .get_mode_conf(mode, "tolerant_unit")?
-            .as_integer()
-            .ok_or(Error::ParseConfig)? as u32;
 
         Ok(PolicyConfig {
-            normal_keep_count,
-            jank_keep_count,
-            tolerant_jank,
-            tolerant_big_jank,
-            tolerant_unit,
+            tolerant_frame_limit,
+            tolerant_frame_jank,
         })
     }
 }

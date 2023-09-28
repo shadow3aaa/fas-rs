@@ -41,9 +41,7 @@ pub struct Buffer {
     pub target_fps: TargetFps,
     pub frametimes: VecDeque<Duration>,
     pub frame_unit: VecDeque<Duration>,
-    pub last_jank: Option<Instant>,
     pub last_limit: Option<Instant>,
-    pub rec_counter: u8,
 }
 
 impl Buffer {
@@ -52,9 +50,7 @@ impl Buffer {
             target_fps,
             frametimes: VecDeque::with_capacity(BUFFER_MAX),
             frame_unit: VecDeque::with_capacity(FRAME_UNIT),
-            last_jank: None,
             last_limit: None,
-            rec_counter: 0,
         }
     }
 
