@@ -16,10 +16,10 @@ exclude = [ "libgui-analyze", "zygisk/rust", "target" ]
 likely_stable = "0.1.2"
 parking_lot = "0.12.1"
 pretty_env_logger = "0.5.0"
-log = "0.4.19"
+log = "0.4.20"
 anyhow = "1.0.75"
-thiserror = "1.0.47"
-clap = { version = "4.4.0", features = [ "derive" ] }
+thiserror = "1.0.49"
+clap = { version = "4.4.6", features = [ "derive" ] }
 inotify = { version = "0.10.2", default-features = false }
 libc = "0.2.148"
 
@@ -27,9 +27,9 @@ libc = "0.2.148"
 path = "fas-rs-fw"
 
 [build-dependencies]
-toml = "0.7.6"
-serde = "1.0.178"
-serde_derive = "1.0.178"
+toml = "0.8.1"
+serde = "1.0.188"
+serde_derive = "1.0.188"
 
 [profile.dev]
 overflow-checks = false

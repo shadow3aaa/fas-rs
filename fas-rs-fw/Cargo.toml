@@ -8,12 +8,12 @@ repository = "https://github.com/shadow3aaa/fas-rs"
 
 [dependencies]
 likely_stable = "0.1.2"
-log = "0.4.19"
+log = "0.4.20"
 parking_lot = "0.12.1"
-serde = "1.0.178"
-serde_derive = "1.0.178"
-thiserror = "1.0.48"
-toml = "0.7.6"
+serde = "1.0.188"
+serde_derive = "1.0.188"
+thiserror = "1.0.49"
+toml = "0.8.1"
 async-trait = "0.1.73"
 binder = { package = "binder_ndk", version = "0.2.0" }
 lazy_static = "1.4.0"
