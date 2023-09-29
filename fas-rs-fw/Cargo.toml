@@ -14,7 +14,6 @@ serde = "1.0.178"
 serde_derive = "1.0.178"
 thiserror = "1.0.48"
 toml = "0.7.6"
-unix-named-pipe = "0.2.0"
 async-trait = "0.1.73"
 binder = { package = "binder_ndk", version = "0.2.0" }
 lazy_static = "1.4.0"

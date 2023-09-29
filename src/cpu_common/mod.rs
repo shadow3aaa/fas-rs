@@ -17,7 +17,6 @@ use std::{cell::Cell, collections::BTreeSet, ffi::OsStr, fs};
 
 use anyhow::Result;
 use fas_rs_fw::prelude::*;
-use log::error;
 
 use crate::error::Error;
 use policy::Policy;
@@ -87,9 +86,7 @@ impl PerformanceController for CpuCommon {
             .unwrap_or(cur_freq);
 
         for policy in &self.policies {
-            policy
-                .set_freq(prev_freq)
-                .unwrap_or_else(|e| error!("{e:?}"));
+            let _ = policy.set_freq(prev_freq);
         }
 
         self.cur_freq.set(prev_freq);
@@ -131,7 +128,7 @@ impl PerformanceController for CpuCommon {
         self.enable.set(true);
 
         for policy in &self.policies {
-            policy.init_game().unwrap_or_else(|e| error!("{e:?}"));
+            let _ = policy.init_game();
         }
 
         Ok(())
@@ -141,7 +138,7 @@ impl PerformanceController for CpuCommon {
         self.enable.set(false);
 
         for policy in &self.policies {
-            policy.init_default().unwrap_or_else(|e| error!("{e:?}"));
+            let _ = policy.init_default();
         }
 
         Ok(())
