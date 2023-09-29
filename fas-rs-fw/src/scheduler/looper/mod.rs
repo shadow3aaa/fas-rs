@@ -110,6 +110,11 @@ impl<P: PerformanceController> Looper<P> {
                         }
 
                         self.retain_topapp()?;
+
+                        if self.started {
+                            self.controller.release_max(&self.config)?;
+                        }
+
                         continue;
                     }
                 }
