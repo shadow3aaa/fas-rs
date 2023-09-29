@@ -51,7 +51,7 @@ ui_print "
     So when this happens,
     YOU SHOULD TAKE RESPONSIBILITY YOURSELF.
     
-    At the same time, I guarantee that fas-rs'
+    At the same time, I guarantee that fas-rs' s
     zygisk injection is only for the sole purpose
     of fetching frametime for frame-aware scheduling.
     This project will always be open source,

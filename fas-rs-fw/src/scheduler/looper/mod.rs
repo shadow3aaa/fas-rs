@@ -42,6 +42,7 @@ pub struct Buffer {
     pub frametimes: VecDeque<Duration>,
     pub frame_unit: VecDeque<Duration>,
     pub last_limit: Option<Instant>,
+    pub counter: u8,
 }
 
 impl Buffer {
@@ -51,6 +52,7 @@ impl Buffer {
             frametimes: VecDeque::with_capacity(BUFFER_MAX),
             frame_unit: VecDeque::with_capacity(FRAME_UNIT),
             last_limit: None,
+            counter: 0,
         }
     }
 

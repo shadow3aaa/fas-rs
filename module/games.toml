@@ -9,6 +9,7 @@ keep_std = true
 "com.miHoYo.hkrpg" = "auto"
 "com.mojang.minecraftpe" = "auto"
 "com.netease.party" = "auto"
+"com.netease.wotb" = "auto"
 "com.netease.x19" = "auto"
 "com.pixeltoys.freeblade" = "auto"
 "com.prpr.musedash.TapTap" = "auto"
@@ -17,18 +18,21 @@ keep_std = true
 "com.tencent.tmgp.sgame" = "auto"
 
 [powersave]
-tolerant_frame_limit = 1.0
+jank_rec_count = 16
 tolerant_frame_jank = 1.0
+tolerant_frame_limit = 1.0
 
 [balance]
-tolerant_frame_limit = 0.85
+jank_rec_count = 16
 tolerant_frame_jank = 0.9
+tolerant_frame_limit = 0.85
 
 [performance]
-tolerant_frame_limit = 0.7
+jank_rec_count = 16
 tolerant_frame_jank = 0.75
+tolerant_frame_limit = 0.7
 
 [fast]
-normal_keep_count = 8
-tolerant_frame_limit = 0.6
-tolerant_frame_jank = 0.7
+jank_rec_count = 16
+tolerant_frame_jank = 0.15
+tolerant_frame_limit = 0.1
