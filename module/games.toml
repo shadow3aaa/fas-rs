@@ -20,17 +20,17 @@ keep_std = true
 [powersave]
 jank_rec_count = 4
 tolerant_frame_jank = 5.0
-tolerant_frame_limit = 4.5
+tolerant_frame_limit = 4.9
 
 [balance]
-jank_rec_count = 8
+jank_rec_count = 6
 tolerant_frame_jank = 3.0
-tolerant_frame_limit = 2.5
+tolerant_frame_limit = 2.9
 
 [performance]
-jank_rec_count = 8
+jank_rec_count = 6
 tolerant_frame_jank = 2.0
-tolerant_frame_limit = 1.5
+tolerant_frame_limit = 1.9
 
 [fast]
 jank_rec_count = 8
