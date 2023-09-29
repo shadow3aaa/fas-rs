@@ -36,6 +36,7 @@ impl<P: PerformanceController> Looper<P> {
             TargetFps::Auto => Self::calculate_fps(buffer),
             TargetFps::Value(f) => Some(f),
         }) else {
+            controller.release_max(config)?;
             return Ok(());
         };
 
