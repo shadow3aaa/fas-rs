@@ -56,6 +56,13 @@
 - target_fps / "auto": 任意正整数，或者字符串"auto"，表示锁定应用运行的目标fps，"auto"则是自动判断
   - "auto"是推荐选项，它在运行时判断目标fps，也就是说能够适配游戏不同的界面有不同的fps，然而，它只支持30/45/48/60/90/120/144这几种常见目标fps的判断，如果你的游戏不属于以上的任意一种，那么应该手动指定而不使用"auto"
 
+## **powersave / balance / performance / fast mode配置**
+
+- mode: 对应scene中的4模式
+- jank_rec_count: 升频(jank)发生后，多少个标准渲染时间后可开始降频，为正整数(u8范围内)
+- tolerant_frame_jank: 近5帧平均fps < 标准fps - tolerant_frame_jank 时判定为jank，升频，为浮点数/整数(f64范围内，可为负数)
+- tolerant_frame_limit: 近5帧平均fps > 标准fps - tolerant_frame_limit 时判定为无jank，降低频，为浮点数/整数(f64范围内，可为负数)
+
 ### **示例**
 
 ```toml
@@ -70,6 +77,7 @@ keep_std = true
 "com.miHoYo.hkrpg" = "auto"
 "com.mojang.minecraftpe" = "auto"
 "com.netease.party" = "auto"
+"com.netease.wotb" = "auto"
 "com.netease.x19" = "auto"
 "com.pixeltoys.freeblade" = "auto"
 "com.prpr.musedash.TapTap" = "auto"
@@ -78,32 +86,24 @@ keep_std = true
 "com.tencent.tmgp.sgame" = "auto"
 
 [powersave]
-jank_keep_count = 30
-normal_keep_count = 8
-tolerant_big_jank = 1850
-tolerant_jank = 900
-tolerant_unit = 5
+jank_rec_count = 4
+tolerant_frame_jank = 5.0
+tolerant_frame_limit = 4.9
 
 [balance]
-jank_keep_count = 30
-normal_keep_count = 8
-tolerant_big_jank = 1750
-tolerant_jank = 800
-tolerant_unit = 3
+jank_rec_count = 6
+tolerant_frame_jank = 3.0
+tolerant_frame_limit = 2.9
 
 [performance]
-jank_keep_count = 30
-normal_keep_count = 8
-tolerant_big_jank = 1550
-tolerant_jank = 650
-tolerant_unit = 2
+jank_rec_count = 6
+tolerant_frame_jank = 2.0
+tolerant_frame_limit = 1.9
 
 [fast]
-jank_keep_count = 30
-normal_keep_count = 8
-tolerant_big_jank = 1450
-tolerant_jank = 550
-tolerant_unit = 1
+jank_rec_count = 8
+tolerant_frame_jank = 1.0
+tolerant_frame_limit = 1.0
 ```
 
 ## **编译(termux为例)**
