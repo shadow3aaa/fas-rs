@@ -3,14 +3,14 @@ name = "fas-rs"
 version = "0.3.4"
 edition = "2021"
 description = "Frame-aware scheduling binary"
-authors = [ "shadow3" ]
+authors = ["shadow3"]
 license = "Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/shadow3aaa/fas-rs"
 
 [workspace]
-members = [ "fas-rs-fw" ]
-exclude = [ "libgui-analyze", "zygisk/rust", "target" ]
+members = ["fas-rs-fw"]
+exclude = ["libgui-analyze", "zygisk/rust", "target"]
 
 [dependencies]
 likely_stable = "0.1.2"
@@ -19,7 +19,7 @@ pretty_env_logger = "0.5.0"
 log = "0.4.20"
 anyhow = "1.0.75"
 thiserror = "1.0.49"
-clap = { version = "4.4.6", features = [ "derive" ] }
+clap = { version = "4.4.6", features = ["derive"] }
 inotify = { version = "0.10.2", default-features = false }
 libc = "0.2.148"
 
