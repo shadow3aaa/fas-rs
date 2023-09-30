@@ -59,9 +59,10 @@
 ## **powersave / balance / performance / fast mode配置**
 
 - mode: 对应scene中的4模式
-- jank_rec_count: 升频(jank)发生后，多少个标准渲染时间后可开始降频，为正整数(u8范围内)
-- tolerant_frame_jank: 近5帧平均fps < 标准fps - tolerant_frame_jank 时判定为jank，升频，为浮点数/整数(f64范围内，可为负数)
-- tolerant_frame_limit: 近5帧平均fps > 标准fps - tolerant_frame_limit 时判定为无jank，降低频，为浮点数/整数(f64范围内，可为负数)
+- jank_rec_count(u8): (big)jank发生后，多少个标准渲染时间后可开始降频
+- normal_keep_count(u8): 降频发生后，下一次降频至少要经过多少个标准渲染时间
+- tolerant_frame_jank(f64 / i32): 近5帧平均fps < 标准fps - tolerant_frame_jank 时判定为jank，进行升频
+- tolerant_frame_limit(f64 / i32): 近5帧平均fps > 标准fps - tolerant_frame_limit 时判定为无jank，进行降频
 
 ### **示例**
 
@@ -86,21 +87,25 @@ keep_std = true
 "com.tencent.tmgp.sgame" = "auto"
 
 [powersave]
+normal_keep_count = 2
 jank_rec_count = 4
 tolerant_frame_jank = 5.0
 tolerant_frame_limit = 4.9
 
 [balance]
+normal_keep_count = 3
 jank_rec_count = 6
 tolerant_frame_jank = 3.0
 tolerant_frame_limit = 2.9
 
 [performance]
+normal_keep_count = 3
 jank_rec_count = 6
 tolerant_frame_jank = 2.0
 tolerant_frame_limit = 1.9
 
 [fast]
+normal_keep_count = 4
 jank_rec_count = 8
 tolerant_frame_jank = 1.0
 tolerant_frame_limit = 1.0
