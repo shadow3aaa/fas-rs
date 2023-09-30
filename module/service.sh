@@ -22,6 +22,7 @@ until [ -d "/sdcard/Android" ]; do
 	sleep 1
 done
 
+killall fas-rs
 nohup env FAS_LOG=info $MODDIR/fas-rs --run >$dir/fas_log.txt 2>&1 &
 
 # vtools support

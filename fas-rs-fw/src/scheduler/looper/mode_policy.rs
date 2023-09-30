@@ -20,6 +20,7 @@ use crate::{error::Result, node::Node, Config, Error, PerformanceController};
 #[derive(Debug)]
 pub struct PolicyConfig {
     pub jank_rec_count: u8,
+    pub normal_keep_count: u8,
     pub tolerant_frame_limit: f64,
     pub tolerant_frame_jank: f64,
 }
@@ -30,6 +31,10 @@ impl<P: PerformanceController> Looper<P> {
 
         let jank_rec_count = config
             .get_mode_conf(mode, "jank_rec_count")?
+            .as_integer()
+            .ok_or(Error::ParseConfig)? as u8;
+        let normal_keep_count = config
+            .get_mode_conf(mode, "normal_keep_count")?
             .as_integer()
             .ok_or(Error::ParseConfig)? as u8;
 
@@ -49,6 +54,7 @@ impl<P: PerformanceController> Looper<P> {
 
         Ok(PolicyConfig {
             jank_rec_count,
+            normal_keep_count,
             tolerant_frame_limit,
             tolerant_frame_jank,
         })
