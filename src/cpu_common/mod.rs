@@ -124,7 +124,8 @@ impl PerformanceController for CpuCommon {
         Ok(())
     }
 
-    fn init_game(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
+    fn init_game(&self, c: &Config) -> Result<(), fas_rs_fw::Error> {
+        self.release_max(c)?;
         self.enable.set(true);
 
         for policy in &self.policies {
@@ -134,7 +135,8 @@ impl PerformanceController for CpuCommon {
         Ok(())
     }
 
-    fn init_default(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
+    fn init_default(&self, c: &Config) -> Result<(), fas_rs_fw::Error> {
+        self.release_max(c)?;
         self.enable.set(false);
 
         for policy in &self.policies {

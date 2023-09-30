@@ -23,7 +23,6 @@ use anyhow::Result;
 use likely_stable::LikelyOption;
 
 use super::Freq;
-use crate::misc::lock_value;
 
 #[derive(PartialEq, Eq)]
 pub struct Policy {
@@ -55,7 +54,9 @@ impl Policy {
     pub fn init_default(&self) -> Result<()> {
         let path = self.path.join("scaling_governor");
         if let Some(ref gov) = *self.gov_snapshot.borrow() {
-            lock_value(path, gov)?;
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
+            fs::write(&path, gov)?;
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
         }
 
         Ok(())
@@ -68,7 +69,9 @@ impl Policy {
             let cur_gov = fs::read_to_string(&path)?;
             self.gov_snapshot.replace(Some(cur_gov));
 
-            lock_value(path, "performance")?;
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
+            fs::write(&path, "performance")?;
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
         }
 
         Ok(())
@@ -78,7 +81,7 @@ impl Policy {
         let path = self.path.join("scaling_max_freq");
 
         let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
-        fs::write(path, format!("{f}"))?;
+        fs::write(path, f.to_string())?;
 
         Ok(())
     }
