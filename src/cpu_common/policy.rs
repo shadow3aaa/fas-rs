@@ -54,8 +54,12 @@ impl Policy {
         };
 
         Ok(Self {
-            num: Self::parse_policy(p.file_name().and_then_likely(|s| s.to_str()).unwrap())
-                .ok_or(Error::Other("Failed to parse cpufreq policy num"))?,
+            num: Self::parse_policy(
+                p.file_name()
+                    .and_then_likely(std::ffi::OsStr::to_str)
+                    .unwrap(),
+            )
+            .ok_or(Error::Other("Failed to parse cpufreq policy num"))?,
             path: p.to_path_buf(),
             freqs,
             is_little: false.into(),
