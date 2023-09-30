@@ -112,7 +112,8 @@ impl<P: PerformanceController> Looper<P> {
                         self.retain_topapp()?;
 
                         if self.started {
-                            self.controller.release_max(&self.config)?;
+                            self.buffers.values_mut().for_each(|b| b.push_frametime(Duration::from_secs(1)));
+                            self.buffers_policy()?;
                         }
 
                         continue;

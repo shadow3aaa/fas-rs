@@ -44,6 +44,9 @@ impl<P: PerformanceController> Looper<P> {
 
         debug!("mode policy: {policy:?}");
 
+        let Some(normalized_frame) = buffer.frametimes.front().copied() else {
+            return Ok(());
+        };
         let frame_unit: Duration = buffer.frame_unit.iter().sum();
         let normalized_frame_unit = frame_unit * target_fps;
 
@@ -51,19 +54,36 @@ impl<P: PerformanceController> Looper<P> {
             .div_f64((f64::from(target_fps) - policy.tolerant_frame_limit).max(1.0))
             * target_fps
             * FRAME_UNIT.try_into().unwrap();
-        let normalized_jank_scale = Duration::from_secs(1)
+        let normalized_release_scale = Duration::from_secs(1)
             .div_f64((f64::from(target_fps) - policy.tolerant_frame_jank).max(1.0))
             * target_fps
             * FRAME_UNIT.try_into().unwrap();
-        let normalized_big_jank_scale =
-            Duration::from_secs(1) * FRAME_UNIT.try_into().unwrap() * 10;
+
+        let normalized_big_jank_scale = Duration::from_secs(2);
+        let normalized_jank_scale = Duration::from_millis(1700);
 
         debug!("target_fps: {target_fps}");
         debug!("normalized_frame_unit: {normalized_frame_unit:?}");
 
-        if normalized_frame_unit > normalized_big_jank_scale {
+        if normalized_frame > normalized_big_jank_scale {
             controller.release_max(config)?; // big jank
             buffer.counter = policy.jank_rec_count;
+        } else if normalized_frame > normalized_jank_scale {
+            if let Some(last_release) = buffer.last_release {
+                let normalized_last_release = last_release.elapsed() * target_fps;
+                if normalized_last_release <= Duration::from_secs(3) {
+                    return Ok(());
+                } // 1 release is allowed every 3 frames
+            }
+
+            buffer.last_release = Some(Instant::now());
+            buffer.counter = policy.jank_rec_count;
+
+            if let Some(front) = buffer.frame_unit.front_mut() {
+                *front = Duration::from_secs(1) / target_fps;
+            }
+
+            controller.release(config)?;
         } else if normalized_frame_unit < normalized_limit_scale {
             if buffer.counter != 0 {
                 buffer.counter -= 1;
@@ -80,17 +100,8 @@ impl<P: PerformanceController> Looper<P> {
             buffer.last_limit = Some(Instant::now());
 
             controller.limit(config)?;
-        } else if normalized_frame_unit > normalized_jank_scale {
+        } else if normalized_frame_unit > normalized_release_scale {
             buffer.counter = policy.jank_rec_count;
-
-            if let Some(last_release) = buffer.last_release {
-                let normalized_last_release = last_release.elapsed() * target_fps;
-                if normalized_last_release <= Duration::from_secs(3) {
-                    return Ok(());
-                } // 1 release is allowed every 3 frames
-            }
-
-            buffer.last_release = Some(Instant::now());
 
             if let Some(front) = buffer.frame_unit.front_mut() {
                 *front = Duration::from_secs(1) / target_fps;
