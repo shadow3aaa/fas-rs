@@ -86,7 +86,7 @@ impl PerformanceController for CpuCommon {
             .unwrap_or(cur_freq);
 
         for policy in &self.policies {
-            let _ = policy.set_freq(prev_freq);
+            let _ = policy.set_fas_freq(prev_freq);
         }
 
         self.cur_freq.set(prev_freq);
@@ -104,7 +104,7 @@ impl PerformanceController for CpuCommon {
             .unwrap_or(cur_freq);
 
         for policy in &self.policies {
-            let _ = policy.set_freq(next_freq);
+            let _ = policy.set_fas_freq(next_freq);
         }
 
         self.cur_freq.set(next_freq);
@@ -116,7 +116,7 @@ impl PerformanceController for CpuCommon {
         let max_freq = self.freqs.last().copied().unwrap();
 
         for policy in &self.policies {
-            let _ = policy.set_freq(max_freq);
+            let _ = policy.set_fas_freq(max_freq);
         }
 
         self.cur_freq.set(max_freq);
@@ -124,8 +124,7 @@ impl PerformanceController for CpuCommon {
         Ok(())
     }
 
-    fn init_game(&self, c: &Config) -> Result<(), fas_rs_fw::Error> {
-        self.release_max(c)?;
+    fn init_game(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
         self.enable.set(true);
 
         for policy in &self.policies {
@@ -135,8 +134,7 @@ impl PerformanceController for CpuCommon {
         Ok(())
     }
 
-    fn init_default(&self, c: &Config) -> Result<(), fas_rs_fw::Error> {
-        self.release_max(c)?;
+    fn init_default(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
         self.enable.set(false);
 
         for policy in &self.policies {
