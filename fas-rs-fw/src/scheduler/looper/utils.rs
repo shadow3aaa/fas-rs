@@ -113,7 +113,6 @@ impl<P: PerformanceController> Looper<P> {
                 *stamp = Instant::now();
 
                 let min_frametime = buffer.frametimes.iter().copied().min().unwrap();
-
                 if min_frametime > Duration::from_secs(1) / target_fps {
                     return;
                 }

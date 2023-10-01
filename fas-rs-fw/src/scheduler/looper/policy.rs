@@ -59,10 +59,9 @@ impl<P: PerformanceController> Looper<P> {
             * target_fps
             * FRAME_UNIT.try_into().unwrap();
 
-        let normalized_big_jank_scale = Duration::from_secs(2);
+        let normalized_big_jank_scale = Duration::from_secs(5);
 
         Self::calculate_jank_scale(buffer, target_fps);
-
         let Some((normalized_jank_scale, _)) = buffer.jank_scale.get(&target_fps).copied() else {
             controller.release_max(config)?;
             return Ok(());
