@@ -64,21 +64,24 @@ impl<P: PerformanceController> Looper<P> {
         Self::calculate_jank_scale(buffer, target_fps);
 
         let Some((normalized_jank_scale, _)) = buffer.jank_scale.get(&target_fps).copied() else {
+            controller.release_max(config)?;
             return Ok(());
         };
 
         debug!("target_fps: {target_fps}");
         debug!("normalized_frame_unit: {normalized_frame_unit:?}");
+        debug!("normalized_jank_scale: {normalized_jank_scale:?}");
 
         if normalized_frame > normalized_big_jank_scale {
             controller.release_max(config)?; // big jank
             buffer.counter = policy.jank_rec_count;
+            debug!("JANK: big jank");
         } else if normalized_frame > normalized_jank_scale {
             if let Some(last_release) = buffer.last_release {
                 let normalized_last_release = last_release.elapsed() * target_fps;
                 if normalized_last_release <= Duration::from_secs(30) {
                     return Ok(());
-                } // 1 release is allowed every 30 frames
+                } // 1 jank is allowed every 30 frames
             }
 
             buffer.last_release = Some(Instant::now());
@@ -89,6 +92,7 @@ impl<P: PerformanceController> Looper<P> {
             }
 
             controller.release(config)?;
+            debug!("JANK: simp jank");
         } else if normalized_frame_unit < normalized_limit_scale {
             if buffer.counter != 0 {
                 buffer.counter -= 1;
@@ -106,8 +110,10 @@ impl<P: PerformanceController> Looper<P> {
             buffer.last_limit = Some(Instant::now());
 
             controller.limit(config)?;
+            debug!("JANK: no jank");
         } else if normalized_frame_unit > normalized_release_scale {
             controller.release(config)?;
+            debug!("JANK: unit jank");
         }
 
         Ok(())

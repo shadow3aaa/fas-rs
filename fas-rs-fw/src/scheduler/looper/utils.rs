@@ -22,7 +22,7 @@ use super::{super::FasData, Buffer, Looper, BUFFER_MAX};
 use crate::{config::TargetFps, error::Result, PerformanceController};
 
 const NORMALIZED_BASIC_JANK_SCALE: Duration = Duration::from_millis(1700);
-const NORMALIZED_RECACULATE_JANK_SCALE: Duration = Duration::from_secs(60);
+const NORMALIZED_RECACULATE_JANK_SCALE: Duration = Duration::from_secs(BUFFER_MAX as u64);
 
 impl<P: PerformanceController> Looper<P> {
     /* 检查是否为顶层应用，并且删除不是顶层应用的buffer **/
@@ -119,9 +119,9 @@ impl<P: PerformanceController> Looper<P> {
                 }
 
                 let normalized_min_frametime = min_frametime * target_fps;
-                let normalized_scale_frametime = Duration::from_secs(1) + Duration::from_secs(1).saturating_sub(normalized_min_frametime);
-                let normalized_new_scale =
-                    NORMALIZED_BASIC_JANK_SCALE - Duration::from_secs(1) + normalized_scale_frametime;
+                let normalized_fix_frametime =
+                    Duration::from_secs(1).saturating_sub(normalized_min_frametime);
+                let normalized_new_scale = NORMALIZED_BASIC_JANK_SCALE + normalized_fix_frametime;
 
                 *normalized_scale = normalized_new_scale;
             }

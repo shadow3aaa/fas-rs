@@ -30,8 +30,8 @@ use crate::{
     PerformanceController,
 };
 
-const FRAME_UNIT: usize = 10;
-const BUFFER_MAX: usize = 60;
+const FRAME_UNIT: usize = 5;
+const BUFFER_MAX: usize = 30;
 
 pub type Buffers = HashMap<Process, Buffer>; // Process, (jank_scale, total_jank_time_ns)
 pub type Process = (String, i32); // process, pid
