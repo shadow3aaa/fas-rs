@@ -105,7 +105,7 @@ impl<P: PerformanceController> Looper<P> {
                 } // 1 limit is allowed every 3 frames
             }
 
-            buffer.counter = policy.normal_keep_count;
+            // buffer.counter = policy.normal_keep_count;
             buffer.last_limit = Some(Instant::now());
 
             controller.limit(config)?;
