@@ -119,8 +119,9 @@ impl<P: PerformanceController> Looper<P> {
                 }
 
                 let normalized_min_frametime = min_frametime * target_fps;
+                let normalized_scale_frametime = Duration::from_secs(1) + Duration::from_secs(1).saturating_sub(normalized_min_frametime);
                 let normalized_new_scale =
-                    NORMALIZED_BASIC_JANK_SCALE - Duration::from_secs(1) + normalized_min_frametime;
+                    NORMALIZED_BASIC_JANK_SCALE - Duration::from_secs(1) + normalized_scale_frametime;
 
                 *normalized_scale = normalized_new_scale;
             }
