@@ -43,6 +43,7 @@ pub struct Buffer {
     pub frame_unit: VecDeque<Duration>,
     pub last_limit: Option<Instant>,
     pub last_release: Option<Instant>,
+    pub jank_scale: HashMap<u32, (Duration, Instant)>,
     pub counter: u8,
 }
 
@@ -54,6 +55,7 @@ impl Buffer {
             frame_unit: VecDeque::with_capacity(FRAME_UNIT),
             last_limit: None,
             last_release: None,
+            jank_scale: HashMap::new(),
             counter: 0,
         }
     }

@@ -60,7 +60,12 @@ impl<P: PerformanceController> Looper<P> {
             * FRAME_UNIT.try_into().unwrap();
 
         let normalized_big_jank_scale = Duration::from_secs(2);
-        let normalized_jank_scale = Duration::from_millis(1700);
+
+        Self::calculate_jank_scale(buffer, target_fps);
+
+        let Some((normalized_jank_scale, _)) = buffer.jank_scale.get(&target_fps).copied() else {
+            return Ok(());
+        };
 
         debug!("target_fps: {target_fps}");
         debug!("normalized_frame_unit: {normalized_frame_unit:?}");

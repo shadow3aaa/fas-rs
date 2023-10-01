@@ -11,12 +11,18 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{collections::hash_map::Entry, time::Duration};
+use std::{
+    collections::hash_map::Entry,
+    time::{Duration, Instant},
+};
 
 use log::{debug, info};
 
 use super::{super::FasData, Buffer, Looper, BUFFER_MAX};
 use crate::{config::TargetFps, error::Result, PerformanceController};
+
+const NORMALIZED_BASIC_JANK_SCALE: Duration = Duration::from_millis(1700);
+const NORMALIZED_RECACULATE_JANK_SCALE: Duration = Duration::from_secs(60);
 
 impl<P: PerformanceController> Looper<P> {
     /* 检查是否为顶层应用，并且删除不是顶层应用的buffer **/
@@ -90,6 +96,37 @@ impl<P: PerformanceController> Looper<P> {
             Some(30)
         } else {
             None
+        }
+    }
+
+    pub fn calculate_jank_scale(buffer: &mut Buffer, target_fps: u32) {
+        match buffer.jank_scale.entry(target_fps) {
+            Entry::Occupied(mut o) => {
+                let (normalized_scale, stamp) = o.get_mut();
+                let normalized_elapsed_time = stamp.elapsed() * target_fps;
+
+                if buffer.frametimes.len() < BUFFER_MAX
+                    || normalized_elapsed_time < NORMALIZED_RECACULATE_JANK_SCALE
+                {
+                    return;
+                }
+                *stamp = Instant::now();
+
+                let min_frametime = buffer.frametimes.iter().copied().min().unwrap();
+
+                if min_frametime > Duration::from_secs(1) / target_fps {
+                    return;
+                }
+
+                let normalized_min_frametime = min_frametime * target_fps;
+                let normalized_new_scale =
+                    NORMALIZED_BASIC_JANK_SCALE - Duration::from_secs(1) + normalized_min_frametime;
+
+                *normalized_scale = normalized_new_scale;
+            }
+            Entry::Vacant(v) => {
+                v.insert((NORMALIZED_BASIC_JANK_SCALE, Instant::now()));
+            }
         }
     }
 }
