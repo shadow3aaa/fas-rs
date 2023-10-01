@@ -122,7 +122,7 @@ impl<P: PerformanceController> Looper<P> {
                     Duration::from_secs(1).saturating_sub(normalized_min_frametime);
                 let normalized_new_scale = NORMALIZED_BASIC_JANK_SCALE + normalized_fix_frametime;
 
-                *normalized_scale = normalized_new_scale;
+                *normalized_scale = normalized_new_scale.min(Duration::from_millis(2500));
             }
             Entry::Vacant(v) => {
                 v.insert((NORMALIZED_BASIC_JANK_SCALE, Instant::now()));
