@@ -11,21 +11,15 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{
-    collections::hash_map::Entry,
-    time::{Duration, Instant},
-};
+use std::collections::hash_map::Entry;
 
-use log::{debug, info};
+use log::info;
 
-use super::{super::FasData, Buffer, Looper, BUFFER_MAX};
+use super::{super::FasData, Buffer, Looper};
 use crate::{config::TargetFps, error::Result, PerformanceController};
 
-const NORMALIZED_BASIC_JANK_SCALE: Duration = Duration::from_millis(1700);
-const NORMALIZED_RECACULATE_JANK_SCALE: Duration = Duration::from_secs(BUFFER_MAX as u64);
-
 impl<P: PerformanceController> Looper<P> {
-    /* 检查是否为顶层应用，并且删除不是顶层应用的buffer **/
+    // 删除不是顶层应用的buffer
     pub fn retain_topapp(&mut self) -> Result<()> {
         self.buffers
             .retain(|(_, p), _| self.topapp_checker.is_topapp(*p));
@@ -59,73 +53,6 @@ impl<P: PerformanceController> Looper<P> {
                 let mut buffer = Buffer::new(target_fps);
                 buffer.push_frametime(d.frametime);
                 v.insert(buffer);
-            }
-        }
-    }
-
-    pub fn calculate_fps(buffer: &Buffer) -> Option<u32> {
-        if buffer.frametimes.len() < BUFFER_MAX {
-            return None;
-        }
-
-        let avg_time: Duration =
-            buffer.frametimes.iter().sum::<Duration>() / BUFFER_MAX.try_into().unwrap();
-
-        debug!("avg_time: {avg_time:?}");
-
-        if avg_time < Duration::from_micros(8130) {
-            // 123fps
-            Some(144)
-        } else if avg_time < Duration::from_micros(10638) {
-            // 94 fps
-            Some(120)
-        } else if avg_time < Duration::from_micros(16129) {
-            // 62 fps
-            Some(90)
-        } else if avg_time < Duration::from_micros(20408) {
-            // 49 fps
-            Some(60)
-        } else if avg_time < Duration::from_micros(21739) {
-            // 46 fps
-            Some(48)
-        } else if avg_time < Duration::from_micros(32258) {
-            // 31 fps
-            Some(45)
-        } else if avg_time < Duration::from_micros(50000) {
-            // 20 fps
-            Some(30)
-        } else {
-            None
-        }
-    }
-
-    pub fn calculate_jank_scale(buffer: &mut Buffer, target_fps: u32) {
-        match buffer.jank_scale.entry(target_fps) {
-            Entry::Occupied(mut o) => {
-                let (normalized_scale, stamp) = o.get_mut();
-                let normalized_elapsed_time = stamp.elapsed() * target_fps;
-
-                if buffer.frametimes.len() < BUFFER_MAX
-                    || normalized_elapsed_time < NORMALIZED_RECACULATE_JANK_SCALE
-                {
-                    return;
-                }
-                *stamp = Instant::now();
-
-                let min_frametime = buffer.frametimes.iter().copied().min().unwrap();
-                if min_frametime * target_fps > Duration::from_secs(1) {
-                    return;
-                }
-
-                let normalized_min_frametime = min_frametime * target_fps;
-                let normalized_fix_frametime =
-                    Duration::from_secs(1).saturating_sub(normalized_min_frametime);
-                let normalized_new_scale = NORMALIZED_BASIC_JANK_SCALE + normalized_fix_frametime;
-
-                *normalized_scale = normalized_new_scale.min(Duration::from_millis(2500));
-            }
-            Entry::Vacant(v) => {
-                v.insert((NORMALIZED_BASIC_JANK_SCALE, Instant::now()));
             }
         }
     }

@@ -39,21 +39,17 @@ pub struct FasData {
 pub struct Scheduler<P: PerformanceController> {
     controller: Option<P>,
     config: Option<Config>,
-    jank_level_max: Option<u32>,
 }
 
 impl<P: PerformanceController> Scheduler<P> {
-    /// 构造调度器并且初始化
     #[must_use]
     pub const fn new() -> Self {
         Self {
             controller: None,
             config: None,
-            jank_level_max: None,
         }
     }
 
-    /// 配置
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
     pub fn config(mut self, c: Config) -> Self {
@@ -61,7 +57,6 @@ impl<P: PerformanceController> Scheduler<P> {
         self
     }
 
-    /// 控制器
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
     pub fn controller(mut self, c: P) -> Self {
@@ -69,19 +64,6 @@ impl<P: PerformanceController> Scheduler<P> {
         self
     }
 
-    /// jank-level上限，超过的视为上限
-    #[must_use]
-    #[allow(clippy::missing_const_for_fn)]
-    pub fn jank_level_max(mut self, l: u32) -> Self {
-        self.jank_level_max = Some(l);
-        self
-    }
-
-    /// 运行
-    ///
-    /// # Errors
-    ///
-    /// 缺少必要参数构建失败
     pub fn start_run(self) -> Result<()> {
         Node::init()?;
         Node::create_node("mode", "balance")?;

@@ -14,6 +14,7 @@
 #![deny(clippy::all, clippy::pedantic)]
 #![warn(clippy::nursery)]
 #![allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
+#![allow(clippy::module_name_repetitions)]
 #![allow(
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss,

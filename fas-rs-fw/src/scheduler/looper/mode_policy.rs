@@ -20,9 +20,9 @@ use crate::{error::Result, node::Node, Config, Error, PerformanceController};
 #[derive(Debug)]
 pub struct PolicyConfig {
     pub jank_rec_count: u8,
-    // pub normal_keep_count: u8,
-    pub tolerant_frame_limit: f64,
-    pub tolerant_frame_jank: f64,
+    pub normal_rec_count: u8,
+    // pub tolerant_frame_limit: f64,
+    // pub tolerant_frame_jank: f64,
 }
 
 impl<P: PerformanceController> Looper<P> {
@@ -33,20 +33,20 @@ impl<P: PerformanceController> Looper<P> {
             .get_mode_conf(mode, "jank_rec_count")?
             .as_integer()
             .ok_or(Error::ParseConfig)? as u8;
-        /* let normal_keep_count = config
-        .get_mode_conf(mode, "normal_keep_count")?
-        .as_integer()
-        .ok_or(Error::ParseConfig)? as u8; */
+        let normal_rec_count = config
+            .get_mode_conf(mode, "normal_rec_count")?
+            .as_integer()
+            .ok_or(Error::ParseConfig)? as u8;
 
-        let tolerant_frame_limit = config.get_mode_conf(mode, "tolerant_frame_limit")?;
+        /* let tolerant_frame_limit = config.get_mode_conf(mode, "tolerant_frame_limit")?;
         let tolerant_frame_limit = match tolerant_frame_limit {
             Value::Float(f) => f,
             Value::Integer(i) => i as f64,
             _ => return Err(Error::ParseConfig),
-        };
+        }; */
 
         let tolerant_frame_jank = config.get_mode_conf(mode, "tolerant_frame_jank")?;
-        let tolerant_frame_jank = match tolerant_frame_jank {
+        let _tolerant_frame_jank = match tolerant_frame_jank {
             Value::Float(f) => f,
             Value::Integer(i) => i as f64,
             _ => return Err(Error::ParseConfig),
@@ -54,9 +54,9 @@ impl<P: PerformanceController> Looper<P> {
 
         Ok(PolicyConfig {
             jank_rec_count,
-            // normal_keep_count,
-            tolerant_frame_limit,
-            tolerant_frame_jank,
+            normal_rec_count,
+            // tolerant_frame_limit,
+            // tolerant_frame_jank,
         })
     }
 }

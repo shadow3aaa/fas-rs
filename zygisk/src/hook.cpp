@@ -11,9 +11,8 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License. */
-#include <android/log.h>
+#include <sys/types.h>
 #include <rust.h>
-#include <stdlib.h>
 
 #include "zygisk.hpp"
 
@@ -36,20 +35,24 @@ class LibGuiHook : public zygisk::ModuleBase {
         const uid_t uid = args->uid;
         const gid_t gid = args->gid;
 
-        if (uid <= 10000 || gid <= 10000 || !do_hook(args))
-            api->setOption(Option::DLCLOSE_MODULE_LIBRARY);  // so momo won't
-                                                             // detect us
+        if (uid <= 10000 || gid <= 10000) {
+            api->setOption(Option::DLCLOSE_MODULE_LIBRARY);
+            return;
+        }
+            
+        if (!do_hook(args)) {
+            api->setOption(Option::DLCLOSE_MODULE_LIBRARY);
+        }
     }
 
    private:
     Api *api;
     JNIEnv *env;
 
-    bool do_hook(const AppSpecializeArgs *args) {
+    auto do_hook(const AppSpecializeArgs *args) -> bool {
         const char *process = env->GetStringUTFChars(args->nice_name, nullptr);
-        bool result = rust::__hook_handler__(process);
+        bool const result = rust::hook_handler(process);
         env->ReleaseStringUTFChars(args->nice_name, process);
-
         return result;
     }
 };
