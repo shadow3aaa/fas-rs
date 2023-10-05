@@ -11,15 +11,14 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License. */
-#include <sys/types.h>
 #include <rust.h>
+#include <sys/types.h>
 
 #include "zygisk.hpp"
 
 using zygisk::Api;
 using zygisk::AppSpecializeArgs;
 using zygisk::Option;
-using zygisk::ServerSpecializeArgs;
 
 #define LOGD(...) \
     __android_log_print(ANDROID_LOG_DEBUG, "libgui hook", __VA_ARGS__)
@@ -32,14 +31,6 @@ class LibGuiHook : public zygisk::ModuleBase {
     }
 
     void postAppSpecialize(const AppSpecializeArgs *args) override {
-        const uid_t uid = args->uid;
-        const gid_t gid = args->gid;
-
-        if (uid <= 10000 || gid <= 10000) {
-            api->setOption(Option::DLCLOSE_MODULE_LIBRARY);
-            return;
-        }
-            
         if (!do_hook(args)) {
             api->setOption(Option::DLCLOSE_MODULE_LIBRARY);
         }

@@ -14,6 +14,7 @@
 #![deny(clippy::all, clippy::pedantic)]
 #![warn(clippy::nursery)]
 #![allow(clippy::missing_safety_doc)]
+#![allow(clippy::similar_names)]
 #![allow(
     clippy::cast_possible_truncation,
     clippy::cast_possible_wrap,
@@ -27,7 +28,7 @@ mod hook;
 
 use std::{
     ffi::CStr,
-    mem, process, ptr,
+    mem, ptr,
     sync::mpsc::{self, Receiver, SyncSender},
     thread,
     time::Instant,
@@ -35,7 +36,7 @@ use std::{
 
 use android_logger::{self, Config};
 use dobby_api::Address;
-use libc::{c_char, c_int, c_void};
+use libc::{c_char, c_int, c_void, getgid, getpid};
 use log::{debug, error, LevelFilter};
 use once_cell::sync::Lazy;
 
@@ -60,11 +61,12 @@ unsafe impl Send for Channel {}
 pub unsafe extern "C" fn __hook_handler__(process: *const c_char) -> bool {
     use IRemoteService::IRemoteService;
 
-    android_logger::init_once(
-        Config::default()
-            .with_max_level(LevelFilter::Trace)
-            .with_tag("fas-rs-libgui"),
-    );
+    let pid = getpid();
+    let gid = getgid();
+
+    if pid <= 10000 || gid <= 10000 {
+        return false;
+    }
 
     let process = CStr::from_ptr(process);
     let Ok(process) = process.to_str() else {
@@ -76,12 +78,17 @@ pub unsafe extern "C" fn __hook_handler__(process: *const c_char) -> bool {
         return false;
     }
 
+    android_logger::init_once(
+        Config::default()
+            .with_max_level(LevelFilter::Trace)
+            .with_tag("fas-rs-libgui"),
+    );
+
     let Ok(fas_service) = binder::get_interface::<dyn IRemoteService>("fas_rs_server") else {
         error!("Failed to get binder interface, fas-rs-server didn't started");
         return false;
     }; // get binder server interface
 
-    let pid = process::id() as i32;
     if Ok(false) == fas_service.sendData(&process, pid, 0) {
         return false;
     } // Check first to avoid unnecessary hook

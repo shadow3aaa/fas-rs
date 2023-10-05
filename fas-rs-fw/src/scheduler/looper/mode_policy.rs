@@ -12,8 +12,6 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 
-use toml::Value;
-
 use super::Looper;
 use crate::{error::Result, node::Node, Config, Error, PerformanceController};
 
@@ -43,14 +41,14 @@ impl<P: PerformanceController> Looper<P> {
             Value::Float(f) => f,
             Value::Integer(i) => i as f64,
             _ => return Err(Error::ParseConfig),
-        }; */
+        };
 
         let tolerant_frame_jank = config.get_mode_conf(mode, "tolerant_frame_jank")?;
         let _tolerant_frame_jank = match tolerant_frame_jank {
             Value::Float(f) => f,
             Value::Integer(i) => i as f64,
             _ => return Err(Error::ParseConfig),
-        };
+        }; */
 
         Ok(PolicyConfig {
             jank_rec_count,
