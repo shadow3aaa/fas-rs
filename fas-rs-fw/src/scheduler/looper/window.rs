@@ -11,7 +11,10 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{collections::VecDeque, time::Duration};
+use std::{
+    collections::VecDeque,
+    time::{Duration, Instant},
+};
 
 use log::debug;
 
@@ -22,44 +25,61 @@ use log::debug;
 pub struct AutoFrameWindow {
     target_fps: u32,
     win_len: usize,
+    last_reduce: Instant,
     pub frametimes: VecDeque<Duration>,
 }
 
+pub enum FrameWindowData {
+    Avg(Duration),
+    NotEnough,
+}
+
 impl AutoFrameWindow {
-    pub fn new(t: u32, w: usize) -> Self {
+    pub fn new(t: u32) -> Self {
         Self {
             target_fps: t,
-            win_len: w,
-            frametimes: VecDeque::with_capacity(w),
+            win_len: 5,
+            last_reduce: Instant::now(),
+            frametimes: VecDeque::with_capacity(5),
         }
     }
 
-    pub fn push(&mut self, d: Duration) {
-        while self.frametimes.len() >= self.win_len {
-            self.frametimes.pop_back();
-        }
-
+    pub fn update(&mut self, d: Duration) -> FrameWindowData {
         let d = d * self.target_fps;
         self.frametimes.push_front(d);
+        self.frametimes.truncate(self.win_len);
 
         let Some(avg) = self.get_avg() else {
-            return;
+            return FrameWindowData::NotEnough;
         };
+
+        // let normalized_last_reduce = self.last_reduce.elapsed() * self.target_fps;
+        if self.last_reduce.elapsed() > Duration::from_secs(1) {
+            self.win_len = self.win_len.saturating_sub(1);
+            self.win_len = self.win_len.max(5);
+
+            self.last_reduce = Instant::now();
+
+            debug!(
+                "Auto resize the frame window length, current length: {}",
+                self.win_len
+            );
+        }
 
         if avg < Duration::from_millis(950) {
             self.win_len = self.win_len.saturating_add(1);
-        } else if avg > Duration::from_millis(1050) {
-            self.win_len = self.win_len.saturating_sub(1);
+            self.win_len = self.win_len.min(self.target_fps as usize / 2);
+
+            debug!(
+                "Auto resize the frame window length, current length: {}",
+                self.win_len
+            );
         }
 
-        self.win_len = self.win_len.clamp(2, (self.target_fps as usize / 2).max(2));
-        debug!(
-            "Auto resize the frame window length, current length: {}",
-            self.win_len
-        );
+        FrameWindowData::Avg(avg)
     }
 
-    pub fn get_avg(&self) -> Option<Duration> {
+    fn get_avg(&self) -> Option<Duration> {
         let cur_len = self.frametimes.len();
 
         if cur_len < self.win_len {

@@ -18,7 +18,7 @@ use std::{
 
 use log::debug;
 
-use super::window::AutoFrameWindow;
+use super::window::{AutoFrameWindow, FrameWindowData};
 use crate::config::TargetFps;
 
 const BUFFER_MAX: usize = 144;
@@ -47,8 +47,7 @@ impl Buffer {
         }
     }
 
-    // 返回值代表数据是否已经足够
-    pub fn push_frametime(&mut self, d: Duration) {
+    pub fn push_frametime(&mut self, d: Duration) -> FrameWindowData {
         if self.frametimes.len() >= BUFFER_MAX {
             self.frametimes.pop_back();
         }
@@ -56,13 +55,14 @@ impl Buffer {
         self.frametimes.push_front(d);
 
         if let Some(target_fps) = self.calculate_fps() {
+            self.target_fps = Some(target_fps);
             self.windows
                 .entry(target_fps)
-                .or_insert_with(|| AutoFrameWindow::new(target_fps, 5))
-                .push(d);
-            self.target_fps = Some(target_fps);
+                .or_insert_with(|| AutoFrameWindow::new(target_fps))
+                .update(d)
         } else {
             self.target_fps = None;
+            FrameWindowData::NotEnough
         }
     }
 

@@ -36,7 +36,7 @@ use std::{
 
 use android_logger::{self, Config};
 use dobby_api::Address;
-use libc::{c_char, c_int, c_void, getgid, getpid};
+use libc::{c_char, c_int, c_void, getgid, getpid, getuid};
 use log::{debug, error, LevelFilter};
 use once_cell::sync::Lazy;
 
@@ -62,9 +62,10 @@ pub unsafe extern "C" fn __hook_handler__(process: *const c_char) -> bool {
     use IRemoteService::IRemoteService;
 
     let pid = getpid();
+    let uid = getuid();
     let gid = getgid();
 
-    if pid <= 10000 || gid <= 10000 {
+    if uid <= 10000 || gid <= 10000 {
         return false;
     }
 

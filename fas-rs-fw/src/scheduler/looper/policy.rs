@@ -19,39 +19,37 @@ use super::{Buffer, Looper};
 use crate::{error::Result, Config, PerformanceController};
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn do_policy(buffer: &mut Buffer, controller: &P, config: &Config) -> Result<()> {
+    pub fn do_policy(
+        buffer: &mut Buffer,
+        normalized_frametime: Duration,
+        controller: &P,
+        config: &Config,
+    ) -> Result<()> {
         let Some(target_fps) = buffer.target_fps else {
             return Ok(());
         };
-        let window = buffer.windows.get_mut(&target_fps).unwrap();
 
+        let window = buffer.windows.get_mut(&target_fps).unwrap();
         let policy = Self::policy_config(config)?;
         debug!("mode policy: {policy:?}");
 
-        let Some(normalized_frametime) = window.get_avg() else {
-            return Ok(());
-        };
-
         let normalized_big_jank_scale = calculate_normalized_scale(target_fps, 10.0);
-        let normalized_jank_scale = calculate_normalized_scale(target_fps, 3.0);
-        /* let normalized_limit_scale =
-            calculate_normalized_scale(target_fps, policy.tolerant_frame_limit);
-        let normalized_release_scale =
-            calculate_normalized_scale(target_fps, policy.tolerant_frame_jank); */
+        let normalized_jank_scale = calculate_normalized_scale(target_fps, 5.0);
+        let normalized_limit_scale = calculate_normalized_scale(target_fps, 0.8);
+        let normalized_release_scale = calculate_normalized_scale(target_fps, 0.5);
 
         debug!("target_fps: {target_fps}");
         debug!("normalized frametime: {normalized_frametime:?}");
         debug!("simple jank scale: {normalized_jank_scale:?}");
         debug!("big jank scale: {normalized_big_jank_scale:?}");
-        // debug!("limit scale: {normalized_limit_scale:?}");
-        // debug!("release scale: {normalized_release_scale:?}");
+        debug!("limit scale: {normalized_limit_scale:?}");
+        debug!("release scale: {normalized_release_scale:?}");
 
         if normalized_frametime > normalized_big_jank_scale {
             controller.release_max(config)?; // big jank
             buffer.counter = policy.jank_rec_count;
             debug!("JANK: big jank");
         } else if normalized_frametime > normalized_jank_scale {
-            buffer.counter = policy.jank_rec_count;
             if let Some(front) = buffer.frametimes.front_mut() {
                 *front = Duration::from_secs(1) / target_fps;
             }
@@ -60,19 +58,29 @@ impl<P: PerformanceController> Looper<P> {
                 *front = Duration::from_secs(1);
             }
 
+            if let Some(stamp) = buffer.last_jank {
+                let normalized_last_jank = stamp.elapsed() * target_fps;
+                if normalized_last_jank < Duration::from_secs(30) {
+                    return Ok(());
+                }
+            }
+
+            buffer.last_jank = Some(Instant::now());
+            buffer.counter = policy.jank_rec_count;
+
             controller.release(config)?;
             debug!("JANK: simp jank");
-        } else if normalized_frametime <= Duration::from_secs(1) {
+        } else if normalized_frametime <= normalized_limit_scale {
             if buffer.counter != 0 {
                 buffer.counter -= 1;
                 return Ok(());
             }
 
-            if let Some(last_limit) = buffer.last_limit {
-                let normalized_limit = last_limit.elapsed() * target_fps;
-                if normalized_limit <= Duration::from_secs(3) {
+            if let Some(stamp) = buffer.last_limit {
+                let normalized_last_limit = stamp.elapsed() * target_fps;
+                if normalized_last_limit < Duration::from_secs(3) {
                     return Ok(());
-                } // 1 limit is allowed every 3 frames
+                }
             }
 
             buffer.last_limit = Some(Instant::now());
@@ -80,7 +88,7 @@ impl<P: PerformanceController> Looper<P> {
 
             controller.limit(config)?;
             debug!("JANK: no jank");
-        } else if normalized_frametime > Duration::from_millis(1100) {
+        } else if normalized_frametime > normalized_release_scale {
             controller.release(config)?;
             debug!("JANK: unit jank");
         }

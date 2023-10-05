@@ -33,6 +33,7 @@ use crate::{
 };
 
 use buffer::Buffer;
+use window::FrameWindowData;
 
 pub type Buffers = HashMap<Process, Buffer>; // Process, (jank_scale, total_jank_time_ns)
 pub type Process = (String, i32); // process, pid
@@ -77,11 +78,21 @@ impl<P: PerformanceController> Looper<P> {
                 }
             };
 
-            self.buffer_update(&data);
             self.retain_topapp()?;
 
+            let Some(frame) = self.buffer_update(&data) else {
+                continue;
+            };
+            let frame = match frame {
+                FrameWindowData::Avg(f) => f,
+                FrameWindowData::NotEnough => {
+                    self.controller.release_max(&self.config)?;
+                    continue;
+                }
+            };
+
             if let Some(buffer) = self.buffers.get_mut(&(data.pkg.clone(), data.pid)) {
-                Self::do_policy(buffer, &self.controller, &self.config)?;
+                Self::do_policy(buffer, frame, &self.controller, &self.config)?;
             }
 
             debug!("{:#?}", self.buffers);
