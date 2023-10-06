@@ -41,10 +41,6 @@ impl FrameWindow {
         self.frametimes.truncate(self.len);
     }
 
-    pub fn resize(&mut self, w: usize) {
-        self.len = w;
-    }
-
     pub fn last(&mut self) -> Option<&mut Duration> {
         if self.frametimes.len() < self.len {
             None

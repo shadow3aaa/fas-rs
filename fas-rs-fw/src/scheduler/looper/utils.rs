@@ -36,9 +36,9 @@ impl<P: PerformanceController> Looper<P> {
         Ok(())
     }
 
-    pub fn buffer_update(&mut self, d: &FasData) -> Option<&mut Buffer> {
+    pub fn buffer_update(&mut self, d: &FasData) {
         if !self.topapp_checker.is_topapp(d.pid) || d.frametime.is_zero() {
-            return None;
+            return;
         } else if d.target_fps == TargetFps::Value(0) {
             panic!("Target fps must be bigger than zero");
         }
@@ -46,18 +46,14 @@ impl<P: PerformanceController> Looper<P> {
         let process = (d.pkg.clone(), d.pid);
         let target_fps = d.target_fps;
 
-        Some(match self.buffers.entry(process) {
-            Entry::Occupied(mut o) => {
-                let buffer = o.get_mut();
-                buffer.push_frametime(d.frametime);
-                buffer
-            }
+        match self.buffers.entry(process) {
+            Entry::Occupied(mut o) => o.get_mut().push_frametime(d.frametime),
             Entry::Vacant(v) => {
                 info!("Loaded fas on {:?}", v.key());
                 let mut buffer = Buffer::new(target_fps);
                 buffer.push_frametime(d.frametime);
-                v.insert(buffer)
+                v.insert(buffer);
             }
-        })
+        }
     }
 }

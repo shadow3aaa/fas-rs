@@ -44,7 +44,7 @@ impl<P: PerformanceController> Looper<P> {
         };
 
         let tolerant_frame_jank = config.get_mode_conf(mode, "tolerant_frame_jank")?;
-        let _tolerant_frame_jank = match tolerant_frame_jank {
+        let tolerant_frame_jank = match tolerant_frame_jank {
             Value::Float(f) => f,
             Value::Integer(i) => i as f64,
             _ => return Err(Error::ParseConfig),
