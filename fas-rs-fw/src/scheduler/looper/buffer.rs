@@ -18,7 +18,7 @@ use std::{
 
 use log::debug;
 
-use super::window::{AutoFrameWindow, FrameWindowData};
+use super::window::FrameWindow;
 use crate::config::TargetFps;
 
 const BUFFER_MAX: usize = 144;
@@ -28,7 +28,7 @@ pub struct Buffer {
     pub target_fps_config: TargetFps,
     pub target_fps: Option<u32>,
     pub frametimes: VecDeque<Duration>,
-    pub windows: HashMap<u32, AutoFrameWindow>,
+    pub windows: HashMap<u32, FrameWindow>,
     pub last_jank: Option<Instant>,
     pub last_limit: Option<Instant>,
     pub counter: u8,
@@ -47,7 +47,7 @@ impl Buffer {
         }
     }
 
-    pub fn push_frametime(&mut self, d: Duration) -> FrameWindowData {
+    pub fn push_frametime(&mut self, d: Duration) {
         if self.frametimes.len() >= BUFFER_MAX {
             self.frametimes.pop_back();
         }
@@ -58,11 +58,10 @@ impl Buffer {
             self.target_fps = Some(target_fps);
             self.windows
                 .entry(target_fps)
-                .or_insert_with(|| AutoFrameWindow::new(target_fps))
+                .or_insert_with(|| FrameWindow::new(target_fps, 5))
                 .update(d)
         } else {
             self.target_fps = None;
-            FrameWindowData::NotEnough
         }
     }
 

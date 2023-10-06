@@ -15,7 +15,7 @@ use std::collections::hash_map::Entry;
 
 use log::info;
 
-use super::{super::FasData, window::FrameWindowData, Buffer, Looper};
+use super::{super::FasData, Buffer, Looper};
 use crate::{config::TargetFps, error::Result, PerformanceController};
 
 impl<P: PerformanceController> Looper<P> {
@@ -36,7 +36,7 @@ impl<P: PerformanceController> Looper<P> {
         Ok(())
     }
 
-    pub fn buffer_update(&mut self, d: &FasData) -> Option<FrameWindowData> {
+    pub fn buffer_update(&mut self, d: &FasData) -> Option<&mut Buffer> {
         if !self.topapp_checker.is_topapp(d.pid) || d.frametime.is_zero() {
             return None;
         } else if d.target_fps == TargetFps::Value(0) {
@@ -47,13 +47,16 @@ impl<P: PerformanceController> Looper<P> {
         let target_fps = d.target_fps;
 
         Some(match self.buffers.entry(process) {
-            Entry::Occupied(mut o) => o.get_mut().push_frametime(d.frametime),
+            Entry::Occupied(mut o) => {
+                let buffer = o.get_mut();
+                buffer.push_frametime(d.frametime);
+                buffer
+            }
             Entry::Vacant(v) => {
                 info!("Loaded fas on {:?}", v.key());
                 let mut buffer = Buffer::new(target_fps);
-                let result = buffer.push_frametime(d.frametime);
-                v.insert(buffer);
-                result
+                buffer.push_frametime(d.frametime);
+                v.insert(buffer)
             }
         })
     }
