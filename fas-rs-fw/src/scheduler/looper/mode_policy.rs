@@ -11,6 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+use toml::Value;
 
 use super::Looper;
 use crate::{error::Result, node::Node, Config, Error, PerformanceController};
@@ -19,8 +20,8 @@ use crate::{error::Result, node::Node, Config, Error, PerformanceController};
 pub struct PolicyConfig {
     pub jank_rec_count: u8,
     pub normal_rec_count: u8,
-    // pub tolerant_frame_limit: f64,
-    // pub tolerant_frame_jank: f64,
+    pub tolerant_frame_limit: f64,
+    pub tolerant_frame_jank: f64,
 }
 
 impl<P: PerformanceController> Looper<P> {
@@ -36,7 +37,7 @@ impl<P: PerformanceController> Looper<P> {
             .as_integer()
             .ok_or(Error::ParseConfig)? as u8;
 
-        /* let tolerant_frame_limit = config.get_mode_conf(mode, "tolerant_frame_limit")?;
+        let tolerant_frame_limit = config.get_mode_conf(mode, "tolerant_frame_limit")?;
         let tolerant_frame_limit = match tolerant_frame_limit {
             Value::Float(f) => f,
             Value::Integer(i) => i as f64,
@@ -48,13 +49,13 @@ impl<P: PerformanceController> Looper<P> {
             Value::Float(f) => f,
             Value::Integer(i) => i as f64,
             _ => return Err(Error::ParseConfig),
-        }; */
+        };
 
         Ok(PolicyConfig {
             jank_rec_count,
             normal_rec_count,
-            // tolerant_frame_limit,
-            // tolerant_frame_jank,
+            tolerant_frame_limit,
+            tolerant_frame_jank,
         })
     }
 }

@@ -36,10 +36,12 @@ impl<P: PerformanceController> Looper<P> {
             return Ok(());
         };
 
-        let normalized_big_jank_scale = calculate_normalized_scale(target_fps, 10.0);
-        let normalized_jank_scale = calculate_normalized_scale(target_fps, 5.0);
-        let normalized_limit_scale = calculate_normalized_scale(target_fps, 0.8);
-        let normalized_release_scale = calculate_normalized_scale(target_fps, 0.5);
+        let normalized_big_jank_scale = Duration::from_secs(2);
+        let normalized_jank_scale = Duration::from_millis(1700);
+        let normalized_limit_scale =
+            calculate_normalized_scale(target_fps, policy.tolerant_frame_limit);
+        let normalized_release_scale =
+            calculate_normalized_scale(target_fps, policy.tolerant_frame_jank);
 
         debug!("target_fps: {target_fps}");
         debug!("normalized frametime: {normalized_frame:?}");

@@ -59,7 +59,7 @@ impl Buffer {
             self.windows
                 .entry(target_fps)
                 .or_insert_with(|| FrameWindow::new(target_fps, 5))
-                .update(d)
+                .update(d);
         } else {
             self.target_fps = None;
         }

@@ -14,5 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# run test on termux
-su -c "killall fas-rs; FAS_LOG=debug output/.temp/fas-rs -r"
+# fast commands on termux(android)
+
+run() {
+    su -c 'killall fas-rs 2>&1 >/dev/null; FAS_LOG=debug output/.temp/fas-rs -r'
+}
+
+if [ ! -f output/fas-rs.zip ]; then
+    echo "Make first"
+    exit 1
+elif [ -v $1 ]; then
+    echo "Required an argument: --install, --run or --install-and-run"
+    exit 1
+elif [ "$1" = "--install" ]; then
+    su -c magisk --install-module output/fas-rs.zip
+elif [ "$1" = "--run" ]; then
+    run
+elif [ "$1" = "--install-and-run" ]; then
+    su -c magisk --install-module output/fas-rs.zip
+    run
+fi
