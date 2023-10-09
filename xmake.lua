@@ -8,7 +8,7 @@ target("fas-rs")
     end)
     
     before_build(function (target)
-        os.mkdir("output")
+        os.rm("output/.temp")
         os.cp("module", "output/.temp")
     end)
 
