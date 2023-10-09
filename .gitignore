@@ -6,7 +6,10 @@
 /module/README.md
 /module/module.prop
 
-# build
+# xmake
 /build
+/.xmake
+
+# build
 /output
 /zygisk/output
