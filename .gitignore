@@ -7,5 +7,6 @@
 /module/module.prop
 
 # build
+/build
 /output
 /zygisk/output
