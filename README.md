@@ -118,15 +118,10 @@ tolerant_frame_limit = 1.0
 git clone https://github.com/shadow3aaa/fas-rs
 
 # install deps
-apt install rust zip ndk* clang binutils-is-llvm
+apt install rust zip ndk* clang binutils-is-llvm xmake
 
-# make debug
-make RELEASE=false
-
-# make release
-make RELEASE=true
-# or(release build is default)
-make
+# build & package
+xmake
 ```
 
 ## **🐷🐷(🐷🐷🐷)**
