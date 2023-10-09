@@ -1,0 +1,28 @@
+{
+    ["zig_arch_arm64-v8a_plat_linux"] = {
+        __global = true,
+        arch = "arm64-v8a",
+        plat = "linux",
+        zig = "/data/data/com.termux/files/usr/bin/zig"
+    },
+    ["tool_target_zygisk_linux_arm64-v8a_cxx"] = {
+        toolname = "clang",
+        toolchain_info = {
+            arch = "arm64-v8a",
+            name = "gcc",
+            cachekey = "gcc_arch_arm64-v8a_plat_linux",
+            plat = "linux"
+        },
+        program = "/data/data/com.termux/files/usr/bin/gcc"
+    },
+    ["tool_target_zygisk_linux_arm64-v8a_sh"] = {
+        toolname = "clangxx",
+        toolchain_info = {
+            arch = "arm64-v8a",
+            name = "gcc",
+            cachekey = "gcc_arch_arm64-v8a_plat_linux",
+            plat = "linux"
+        },
+        program = "/data/data/com.termux/files/usr/bin/g++"
+    }
+}

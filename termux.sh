@@ -33,4 +33,6 @@ elif [ "$1" = "--run" ]; then
 elif [ "$1" = "--install-and-run" ]; then
     su -c magisk --install-module output/fas-rs.zip
     run
+else
+    echo "Undefined argument, Required an argument: --install, --run or --install-and-run"
 fi

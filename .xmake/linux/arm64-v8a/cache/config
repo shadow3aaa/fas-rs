@@ -1,0 +1,8 @@
+{
+    mtimes = {
+        ["xmake.lua"] = 1696879044,
+        ["zygisk/xmake.lua"] = 1696878879
+    },
+    options = { },
+    recheck = false
+}
