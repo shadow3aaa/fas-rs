@@ -34,7 +34,7 @@ target("package")
         else
             os.cp("target/aarch64-linux-android/release/fas-rs", "output/.temp/fas-rs")
         end
-        
+
         os.cp("zygisk/output/arm64-v8a.so", "output/.temp/zygisk/arm64-v8a.so")
         
         os.cd(temp)

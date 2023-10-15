@@ -1,3 +1,3 @@
 # prebuilt
 
-- This dynlib was pulled from my device to make the linker happy
+- This dynlib was pulled from my device to make linker happy

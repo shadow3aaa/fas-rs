@@ -28,7 +28,7 @@ impl<P: PerformanceController> Looper<P> {
         let policy = Self::policy_config(config)?;
         debug!("mode policy: {policy:?}");
 
-        let Some(normalized_avg_frame) = window.get_avg() else {
+        let Some(normalized_avg_frame) = window.avg() else {
             return Ok(());
         };
 

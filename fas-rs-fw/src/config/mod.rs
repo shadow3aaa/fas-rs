@@ -14,12 +14,7 @@
 mod merge;
 mod read;
 
-use std::{
-    fs,
-    path::Path,
-    sync::{atomic::AtomicBool, Arc},
-    thread,
-};
+use std::{fs, path::Path, sync::Arc, thread};
 
 use likely_stable::LikelyOption;
 use log::info;
@@ -54,16 +49,13 @@ impl Config {
         let toml = toml::from_str(&ori)?;
         let toml = Arc::new(RwLock::new(toml));
 
-        let exit = Arc::new(AtomicBool::new(false));
-
         {
             let path = path.to_owned();
             let toml = toml.clone();
-            let exit = exit;
 
             thread::Builder::new()
                 .name("ConfigThread".into())
-                .spawn(move || wait_and_read(&path, &toml, &exit))?;
+                .spawn(move || wait_and_read(&path, &toml))?;
         }
 
         info!("Config watcher started");

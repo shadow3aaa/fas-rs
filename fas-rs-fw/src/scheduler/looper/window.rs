@@ -28,30 +28,52 @@ impl FrameWindow {
         Self {
             target_fps: t,
             len: w,
-            frametimes: VecDeque::with_capacity(w),
+            frametimes: VecDeque::with_capacity(t as usize),
         }
     }
 
     pub fn update(&mut self, d: Duration) {
         let d = d * self.target_fps;
         self.frametimes.push_front(d);
-        self.frametimes.truncate(self.len);
+        self.frametimes.truncate(self.target_fps as usize);
     }
 
     pub fn last(&mut self) -> Option<&mut Duration> {
-        if self.frametimes.len() < self.len {
+        if self.frametimes.len() < self.target_fps as usize {
             None
         } else {
             self.frametimes.front_mut()
         }
     }
 
-    pub fn get_avg(&self) -> Option<Duration> {
+    pub fn avg(&self) -> Option<Duration> {
         if self.frametimes.len() < self.len {
             None
         } else {
-            let sum = self.frametimes.iter().sum::<Duration>();
+            let sum = self.frametimes.iter().take(self.len).sum::<Duration>();
             Some(sum / self.len as u32)
         }
+    }
+
+    fn calculate_variance(&self) -> Option<Duration> {
+        let cur_len = self.frametimes.len();
+
+        if cur_len < self.target_fps as usize {
+            return None;
+        }
+
+        let avg = self.frametimes.iter().sum::<Duration>() / cur_len as u32;
+        let avg = avg.as_secs_f64();
+
+        let variance = self
+            .frametimes
+            .iter()
+            .map(std::time::Duration::as_secs_f64)
+            .map(|t| (t - avg).powi(2))
+            .sum::<f64>()
+            / cur_len as f64;
+        let variance = Duration::from_secs_f64(variance);
+
+        Some(variance)
     }
 }

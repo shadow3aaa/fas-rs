@@ -11,30 +11,17 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{
-    fs,
-    path::Path,
-    process,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-    thread,
-    time::Duration,
-};
+use std::{fs, path::Path, process, sync::Arc, thread, time::Duration};
 
 use inotify::{Inotify, WatchMask};
 use log::{debug, error};
 
 use super::ConfData;
 
-pub(super) fn wait_and_read(path: &Path, toml: &Arc<ConfData>, exit: &Arc<AtomicBool>) {
+pub(super) fn wait_and_read(path: &Path, toml: &Arc<ConfData>) {
     let mut retry_count = 0;
-    loop {
-        if exit.load(Ordering::Acquire) {
-            return;
-        }
 
+    loop {
         if retry_count > 10 {
             error!("Too many read config retries");
             process::exit(1);

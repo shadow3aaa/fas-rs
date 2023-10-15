@@ -1,15 +1,11 @@
 # target
 /target
-/zygisk/rust/target
 
 # module-dirty
 /module/README.md
 /module/module.prop
 
-# xmake
+# build
 /build
 /.xmake
-
-# build
 /output
-/zygisk/output
