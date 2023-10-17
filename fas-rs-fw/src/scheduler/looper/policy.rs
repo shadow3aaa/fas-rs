@@ -80,16 +80,6 @@ impl<P: PerformanceController> Looper<P> {
                 return Ok(());
             }
 
-            if let Some(stamp) = buffer.last_limit {
-                let normalized_last_limit = stamp.elapsed() * target_fps;
-                if normalized_last_limit < Duration::from_secs(3) {
-                    return Ok(());
-                }
-            }
-
-            buffer.last_limit = Some(Instant::now());
-            buffer.counter = policy.normal_rec_count;
-
             controller.limit(config)?;
             debug!("JANK: no jank");
         } else if normalized_avg_frame > normalized_release_scale {
