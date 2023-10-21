@@ -14,6 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 MODDIR=${0%/*}
+dir=/sdcard/Android/fas-rs
 
-# update vtools support
-sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
+# start with std profile
+nohup env FAS_LOG=info $MODDIR/fas-rs --local-profile $MODDIR/games.toml --run >$MODDIR/init_log.txt 2>&1 &
+
+# so it won't block post-data
+{
+	# wait until the sdcard is decrypted
+	until [ -d $dir ]; do
+		sleep 1
+	done
+
+	# start with user profile
+	killall fas-rs
+	nohup env FAS_LOG=info $MODDIR/fas-rs --run >$dir/fas_log.txt 2>&1 &
+} &

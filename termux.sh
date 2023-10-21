@@ -21,7 +21,7 @@ run() {
 }
 
 if [ ! -f output/fas-rs.zip ]; then
-    echo "Make first"
+    echo "Run xmake first"
     exit 1
 elif [ -v $1 ]; then
     echo "Required an argument: --install, --run or --install-and-run"

@@ -69,8 +69,7 @@ fn main() -> Result<()> {
     }
 
     if args.run {
-        let conf_path = args.local_profile;
-        let config = Config::new(conf_path)?;
+        let config = Config::new(args.local_profile, args.std_profile)?;
         let cpu = CpuCommon::new(&config)?;
 
         thread::Builder::new()

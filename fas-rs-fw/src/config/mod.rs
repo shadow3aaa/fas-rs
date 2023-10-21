@@ -42,8 +42,10 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new<P: AsRef<Path>>(p: P) -> Result<Self> {
+    pub fn new<P: AsRef<Path>>(p: P, sp: P) -> Result<Self> {
         let path = p.as_ref();
+        let _std_path = sp.as_ref();
+
         let ori = fs::read_to_string(path)?;
 
         let toml = toml::from_str(&ori)?;
@@ -51,11 +53,12 @@ impl Config {
 
         {
             let path = path.to_owned();
+            let std_path = path.clone();
             let toml = toml.clone();
 
             thread::Builder::new()
                 .name("ConfigThread".into())
-                .spawn(move || wait_and_read(&path, &toml))?;
+                .spawn(move || wait_and_read(&path, &std_path, &toml))?;
         }
 
         info!("Config watcher started");
