@@ -1,4 +1,4 @@
-#!/system/bin/sh
+#!/bin/bash
 #
 # Copyright 2023 shadow3aaa@gitbub.com
 #
