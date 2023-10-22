@@ -80,7 +80,7 @@ impl<P: PerformanceController> Looper<P> {
             self.retain_topapp()?;
             self.buffer_update(&data);
 
-            if let Some(buffer) = self.buffers.get_mut(&(data.pkg.clone(), data.pid)) {
+            for buffer in self.buffers.values_mut() {
                 Self::do_policy(buffer, &self.controller, &self.config)?;
             }
 
