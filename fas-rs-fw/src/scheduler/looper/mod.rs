@@ -29,6 +29,7 @@ use super::{topapp::TimedWatcher, FasData};
 use crate::{
     config::Config,
     error::{Error, Result},
+    node::Node,
     PerformanceController,
 };
 
@@ -40,6 +41,7 @@ pub type Process = (String, i32); // process, pid
 pub struct Looper<P: PerformanceController> {
     rx: Receiver<FasData>,
     config: Config,
+    node: Node,
     controller: P,
     topapp_checker: TimedWatcher,
     buffers: Buffers,
@@ -47,10 +49,11 @@ pub struct Looper<P: PerformanceController> {
 }
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn new(rx: Receiver<FasData>, config: Config, controller: P) -> Self {
+    pub fn new(rx: Receiver<FasData>, config: Config, node: Node, controller: P) -> Self {
         Self {
             rx,
             config,
+            node,
             controller,
             topapp_checker: TimedWatcher::new(),
             buffers: Buffers::new(),
@@ -81,7 +84,7 @@ impl<P: PerformanceController> Looper<P> {
             self.buffer_update(&data);
 
             for buffer in self.buffers.values_mut() {
-                Self::do_policy(buffer, &self.controller, &self.config)?;
+                Self::do_policy(buffer, &self.controller, &self.config, &mut self.node)?;
             }
 
             debug!("{:#?}", self.buffers);

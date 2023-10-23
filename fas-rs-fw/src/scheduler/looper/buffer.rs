@@ -25,41 +25,57 @@ const BUFFER_MAX: usize = 144;
 
 #[derive(Debug)]
 pub struct Buffer {
-    pub target_fps_config: TargetFps,
     pub target_fps: Option<u32>,
+    target_fps_config: TargetFps,
+    timer: Instant,
+    pub variance: Option<Duration>,
     pub frametimes: VecDeque<Duration>,
     pub windows: HashMap<u32, FrameWindow>,
     pub last_jank: Option<Instant>,
+    pub last_release: Option<Instant>,
     pub counter: u8,
 }
 
 impl Buffer {
     pub fn new(t: TargetFps) -> Self {
         Self {
-            target_fps_config: t,
             target_fps: None,
+            target_fps_config: t,
+            timer: Instant::now(),
+            variance: None,
             frametimes: VecDeque::with_capacity(BUFFER_MAX),
             windows: HashMap::new(),
             last_jank: None,
+            last_release: None,
             counter: 0,
         }
     }
 
     pub fn push_frametime(&mut self, d: Duration) {
-        if self.frametimes.len() >= BUFFER_MAX {
+        let cur_len = self.frametimes.len();
+        if cur_len >= BUFFER_MAX {
             self.frametimes.pop_back();
         }
 
         self.frametimes.push_front(d);
 
-        if let Some(target_fps) = self.calculate_fps() {
-            self.target_fps = Some(target_fps);
+        if cur_len < BUFFER_MAX {
+            return;
+        }
+
+        if let Some(fps) = self.target_fps {
             self.windows
-                .entry(target_fps)
-                .or_insert_with(|| FrameWindow::new(target_fps, 10))
+                .entry(fps)
+                .or_insert_with(|| FrameWindow::new(fps, 10))
                 .update(d);
+
+            if self.timer.elapsed() * fps > Duration::from_secs(30) {
+                self.target_fps = self.calculate_fps();
+                self.calculate_variance();
+                self.timer = Instant::now();
+            }
         } else {
-            self.target_fps = None;
+            self.target_fps = self.calculate_fps();
         }
     }
 
@@ -101,5 +117,35 @@ impl Buffer {
         } else {
             None
         }
+    }
+
+    fn calculate_variance(&mut self) {
+        let cur_len = self.frametimes.len();
+
+        if cur_len < BUFFER_MAX {
+            self.variance = None;
+            return;
+        }
+
+        let Some(target_fps) = self.target_fps else {
+            self.variance = None;
+            return;
+        };
+
+        let avg = self.frametimes.iter().sum::<Duration>() / cur_len as u32;
+        let avg = avg.as_secs_f64();
+
+        let variance = self
+            .frametimes
+            .iter()
+            .map(Duration::as_secs_f64)
+            .map(|t| (t - avg).powi(2))
+            .sum::<f64>()
+            / cur_len as f64;
+        let variance = Duration::from_secs_f64(variance) * target_fps; // normalized here
+
+        debug!("variance: {variance:?}");
+
+        self.variance = Some(variance);
     }
 }

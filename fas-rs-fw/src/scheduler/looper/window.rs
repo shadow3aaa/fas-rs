@@ -13,8 +13,6 @@
 *  limitations under the License. */
 use std::{collections::VecDeque, time::Duration};
 
-use log::debug;
-
 /* 尽管部分游戏渲染时间长度是离散的，但必然在某个长度上的均值贴合标准渲染时间
 *  AutoFrameWindow的本质是一个自动变长的简单均值滑动窗口，它在取均值出现小于标准渲染时间时自动变长
 *  因为这意味着还有帧出现在AutoFrameWindow的控制范围之外 */
@@ -49,34 +47,11 @@ impl FrameWindow {
     }
 
     pub fn avg(&self) -> Option<Duration> {
-        debug!("variance: {:?}", self.calculate_variance());
         if self.frametimes.len() < self.len {
             None
         } else {
             let sum = self.frametimes.iter().take(self.len).sum::<Duration>();
             Some(sum / self.len as u32)
         }
-    }
-
-    fn calculate_variance(&self) -> Option<Duration> {
-        let cur_len = self.frametimes.len();
-
-        if cur_len < self.target_fps as usize {
-            return None;
-        }
-
-        let avg = self.frametimes.iter().sum::<Duration>() / cur_len as u32;
-        let avg = avg.as_secs_f64();
-
-        let variance = self
-            .frametimes
-            .iter()
-            .map(std::time::Duration::as_secs_f64)
-            .map(|t| (t - avg).powi(2))
-            .sum::<f64>()
-            / cur_len as f64;
-        let variance = Duration::from_secs_f64(variance);
-
-        Some(variance)
     }
 }

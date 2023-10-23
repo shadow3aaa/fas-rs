@@ -65,8 +65,7 @@ impl<P: PerformanceController> Scheduler<P> {
     }
 
     pub fn start_run(self) -> Result<()> {
-        Node::init()?;
-        Node::create_node("mode", "balance")?;
+        let node = Node::init()?;
 
         let config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
 
@@ -76,6 +75,6 @@ impl<P: PerformanceController> Scheduler<P> {
 
         let rx = FasServer::run_server(config.clone())?;
 
-        Looper::new(rx, config, controller).enter_loop()
+        Looper::new(rx, config, node, controller).enter_loop()
     }
 }

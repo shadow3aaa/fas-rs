@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Copyright 2023 shadow3aaa@gitbub.com
 #
@@ -23,7 +23,7 @@ run() {
 if [ ! -f output/fas-rs.zip ]; then
     echo "Run xmake first"
     exit 1
-elif [ -v $1 ]; then
+elif [ "$1" = "" ]; then
     echo "Required an argument: --install, --run or --install-and-run"
     exit 1
 elif [ "$1" = "--install" ]; then

@@ -14,6 +14,7 @@
 #![deny(clippy::all, clippy::pedantic)]
 #![warn(clippy::nursery)]
 #![allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
+#![allow(clippy::similar_names)]
 #![allow(clippy::module_name_repetitions)]
 #![allow(
     clippy::cast_possible_truncation,
@@ -37,21 +38,10 @@ pub use error::{Error, Result};
 pub use node::Node;
 pub use scheduler::Scheduler;
 
-/// 性能控制器接口
 pub trait PerformanceController: Send {
     fn limit(&self, c: &Config) -> Result<()>;
     fn release(&self, c: &Config) -> Result<()>;
     fn release_max(&self, c: &Config) -> Result<()>;
-    /// 游戏状态初始化
-    ///
-    /// # Errors
-    ///
-    /// 初始化失败
     fn init_game(&self, c: &Config) -> Result<()>;
-    /// 默认状态初始化
-    ///
-    /// # Errors
-    ///
-    /// 还原失败
     fn init_default(&self, c: &Config) -> Result<()>;
 }

@@ -16,16 +16,29 @@ use std::time::{Duration, Instant};
 use log::debug;
 
 use super::{Buffer, Looper};
-use crate::{error::Result, Config, PerformanceController};
+use crate::{error::Result, node::Node, Config, PerformanceController};
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn do_policy(buffer: &mut Buffer, controller: &P, config: &Config) -> Result<()> {
+    pub fn do_policy(
+        buffer: &mut Buffer,
+        controller: &P,
+        config: &Config,
+        node: &mut Node,
+    ) -> Result<()> {
         let Some(target_fps) = buffer.target_fps else {
             return Ok(());
         };
 
-        let window = buffer.windows.get_mut(&target_fps).unwrap();
-        let policy = Self::policy_config(config)?;
+        let Some(variance) = buffer.variance else {
+            return Ok(());
+        };
+
+        let Some(window) = buffer.windows.get_mut(&target_fps) else {
+            return Ok(());
+        };
+
+        let mode = node.get_mode()?;
+        let policy = Self::policy_config(mode, variance, config)?;
         debug!("mode policy: {policy:?}");
 
         let Some(normalized_avg_frame) = window.avg() else {
@@ -79,6 +92,15 @@ impl<P: PerformanceController> Looper<P> {
                 buffer.counter -= 1;
                 return Ok(());
             }
+
+            if let Some(stamp) = buffer.last_release {
+                let normalized_last_release = stamp.elapsed() * target_fps;
+                if normalized_last_release < Duration::from_secs(3) {
+                    return Ok(());
+                }
+            }
+
+            buffer.last_release = Some(Instant::now());
 
             controller.limit(config)?;
             debug!("JANK: no jank");

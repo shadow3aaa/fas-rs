@@ -11,11 +11,18 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{fs, path::Path, str::FromStr};
+use std::{
+    collections::HashMap,
+    fs,
+    path::Path,
+    str::FromStr,
+    time::{Duration, Instant},
+};
 
 use crate::error::{Error, Result};
 
 const NODE_PATH: &str = "/dev/fas_rs";
+const REFRESH_TIME: Duration = Duration::from_secs(1);
 
 #[derive(Debug, Clone, Copy)]
 pub enum Mode {
@@ -51,32 +58,67 @@ impl ToString for Mode {
     }
 }
 
-pub struct Node;
+pub struct Node {
+    map: HashMap<String, (String, Instant)>,
+    mode: Mode,
+    mode_timer: Instant,
+}
 
 impl Node {
-    /// 初始化节点
-    pub fn init() -> Result<()> {
+    pub fn init() -> Result<Self> {
         let _ = fs::remove_dir_all(NODE_PATH);
         fs::create_dir(NODE_PATH)?;
 
-        Self::create_node("mode", "balance")?;
+        let mut result = Self {
+            map: HashMap::new(),
+            mode: Mode::Balance,
+            mode_timer: Instant::now(),
+        };
+        result.create_node("mode", "balance")?;
 
-        Ok(())
+        Ok(result)
     }
 
-    /// 创建一个新节点
-    pub fn create_node<S: AsRef<str>>(i: S, d: S) -> Result<()> {
+    pub fn create_node<S: AsRef<str>>(&mut self, i: S, d: S) -> Result<()> {
         let id = i.as_ref();
         let default = d.as_ref();
 
         let path = Path::new(NODE_PATH).join(id);
         fs::write(path, default)?;
 
+        self.map
+            .entry(id.to_string())
+            .or_insert((default.to_string(), Instant::now()));
+
         Ok(())
     }
 
-    /// 读取当前模式
-    pub fn read_mode() -> Result<Mode> {
+    pub fn get_mode(&mut self) -> Result<Mode> {
+        if self.mode_timer.elapsed() > REFRESH_TIME {
+            self.mode = Self::read_mode()?;
+            self.mode_timer = Instant::now();
+        }
+
+        Ok(self.mode)
+    }
+
+    pub fn get_node<S: AsRef<str>>(&mut self, i: S) -> Result<String> {
+        let id = i.as_ref();
+
+        if let Some((value, stamp)) = self.map.get_mut(id) {
+            if stamp.elapsed() > REFRESH_TIME {
+                let path = Path::new(NODE_PATH).join(id);
+                *value = fs::read_to_string(path)?;
+                *stamp = Instant::now();
+            }
+
+            Ok(value.clone())
+        } else {
+            Err(Error::NodeNotFound)
+        }
+    }
+
+    fn read_mode() -> Result<Mode> {
         let path = Path::new(NODE_PATH).join("mode");
 
         Mode::from_str(
@@ -84,14 +126,5 @@ impl Node {
                 .map_err(|_| Error::NodeNotFound)?
                 .trim(),
         )
-    }
-
-    /// 读取指定的节点
-    #[inline]
-    pub fn read_node<S: AsRef<str>>(i: S) -> Result<String> {
-        let id = i.as_ref();
-
-        let path = Path::new(NODE_PATH).join(id);
-        fs::read_to_string(path).map_err(|_| Error::NodeNotFound)
     }
 }
