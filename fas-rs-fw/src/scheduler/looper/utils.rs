@@ -19,7 +19,6 @@ use super::{super::FasData, Buffer, Looper};
 use crate::{config::TargetFps, error::Result, PerformanceController};
 
 impl<P: PerformanceController> Looper<P> {
-    // 删除不是顶层应用的buffer
     pub fn retain_topapp(&mut self) -> Result<()> {
         self.buffers
             .retain(|(_, p), _| self.topapp_checker.is_topapp(*p));

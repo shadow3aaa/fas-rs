@@ -66,7 +66,7 @@ impl<P: PerformanceController> Looper<P> {
 
         if *normalized_frame > normalized_big_jank_scale {
             controller.release_max(config)?; // big jank
-            buffer.counter = policy.jank_rec_count;
+            buffer.counter = policy.jank_keep_count;
             debug!("JANK: big jank");
         } else if *normalized_frame > normalized_jank_scale {
             if let Some(stamp) = buffer.last_jank {
@@ -77,7 +77,7 @@ impl<P: PerformanceController> Looper<P> {
             } // one jank is allow in 30 frames at least
 
             buffer.last_jank = Some(Instant::now());
-            buffer.counter = policy.jank_rec_count;
+            buffer.counter = policy.jank_keep_count;
 
             controller.release(config)?;
             debug!("JANK: simp jank");
@@ -86,6 +86,8 @@ impl<P: PerformanceController> Looper<P> {
                 buffer.counter -= 1;
                 return Ok(());
             }
+
+            buffer.counter = policy.normal_keep_count;
 
             controller.limit(config)?;
             debug!("JANK: no jank");

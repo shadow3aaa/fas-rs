@@ -11,7 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use toml::Value;
 
@@ -20,19 +20,14 @@ use crate::{error::Result, node::Mode, Config, Error, PerformanceController};
 
 #[derive(Debug)]
 pub struct PolicyConfig {
-    pub jank_rec_count: u8,
-    // pub normal_rec_count: u8,
+    pub jank_keep_count: u8,
+    pub normal_keep_count: u8,
     pub tolerant_frame_limit: f64,
     pub tolerant_frame_jank: f64,
 }
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn policy_config(mode: Mode, _variance: Duration, config: &Config) -> Result<PolicyConfig> {
-        let jank_rec_count = config
-            .get_mode_conf(mode, "jank_rec_count")?
-            .as_integer()
-            .ok_or(Error::ParseConfig)? as u8;
-
+    pub fn policy_config(mode: Mode, variance: Duration, config: &Config) -> Result<PolicyConfig> {
         let tolerant_frame_limit = config.get_mode_conf(mode, "tolerant_frame_limit")?;
         let tolerant_frame_limit = match tolerant_frame_limit {
             Value::Float(f) => f,
@@ -47,9 +42,26 @@ impl<P: PerformanceController> Looper<P> {
             _ => return Err(Error::ParseConfig),
         };
 
+        let jank_keep_count;
+        let normal_keep_count;
+
+        if variance > Duration::from_micros(750) {
+            jank_keep_count = 2;
+            normal_keep_count = 1;
+        } else if variance > Duration::from_micros(500) {
+            jank_keep_count = 4;
+            normal_keep_count = 2;
+        } else if variance > Duration::from_millis(250) {
+            jank_keep_count = 6;
+            normal_keep_count = 3;
+        } else {
+            jank_keep_count = 16;
+            normal_keep_count = 8;
+        }
+
         Ok(PolicyConfig {
-            jank_rec_count,
-            // normal_rec_count: Self::normal_rec_count(variance),
+            jank_keep_count,
+            normal_keep_count,
             tolerant_frame_limit,
             tolerant_frame_jank,
         })

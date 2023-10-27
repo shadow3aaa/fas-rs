@@ -67,7 +67,7 @@ impl Buffer {
                 .or_insert_with(|| FrameWindow::new(fps, 5))
                 .update(d);
 
-            if self.timer.elapsed() * fps > Duration::from_secs(30) {
+            if self.timer.elapsed() * fps > Duration::from_secs(BUFFER_MAX.try_into().unwrap()) {
                 self.target_fps = self.calculate_fps();
                 self.variance = self.calculate_variance();
                 self.timer = Instant::now();
