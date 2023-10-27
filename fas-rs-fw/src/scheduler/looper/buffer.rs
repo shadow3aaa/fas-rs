@@ -128,17 +128,14 @@ impl Buffer {
             return None;
         };
 
-        let avg = self.frametimes.iter().sum::<Duration>() / cur_len as u32;
-        let avg = avg.as_secs_f64();
-
         let variance = self
             .frametimes
             .iter()
-            .map(Duration::as_secs_f64)
-            .map(|t| (t - avg).powi(2))
+            .map(|t| (*t * target_fps).as_secs_f64())
+            .map(|t| (t - 1.0).powi(2))
             .sum::<f64>()
             / cur_len as f64;
-        let variance = Duration::from_secs_f64(variance) * target_fps; // normalized here
+        let variance = Duration::from_secs_f64(variance);
 
         debug!("variance: {variance:?}");
 

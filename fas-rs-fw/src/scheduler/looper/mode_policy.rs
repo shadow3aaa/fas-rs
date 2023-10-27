@@ -11,7 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 
 use toml::Value;
 
@@ -45,13 +45,13 @@ impl<P: PerformanceController> Looper<P> {
         let jank_keep_count;
         let normal_keep_count;
 
-        if variance > Duration::from_micros(750) {
+        if variance > Duration::from_millis(100) {
             jank_keep_count = 2;
             normal_keep_count = 1;
-        } else if variance > Duration::from_micros(500) {
+        } else if variance > Duration::from_millis(75) {
             jank_keep_count = 4;
             normal_keep_count = 2;
-        } else if variance > Duration::from_millis(250) {
+        } else if variance > Duration::from_millis(40) {
             jank_keep_count = 6;
             normal_keep_count = 3;
         } else {
@@ -66,8 +66,4 @@ impl<P: PerformanceController> Looper<P> {
             tolerant_frame_jank,
         })
     }
-
-    /* fn normal_rec_count(variance: Duration) -> u8 {
-        if variance > Duration::from_millis()
-    } */
 }
