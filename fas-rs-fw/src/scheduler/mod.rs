@@ -66,7 +66,6 @@ impl<P: PerformanceController> Scheduler<P> {
 
     pub fn start_run(self) -> Result<()> {
         let node = Node::init()?;
-
         let config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
 
         let controller = self

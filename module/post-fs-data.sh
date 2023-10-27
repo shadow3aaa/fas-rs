@@ -17,7 +17,7 @@ MODDIR=${0%/*}
 dir=/sdcard/Android/fas-rs
 
 # start with std profile
-nohup env FAS_LOG=info $MODDIR/fas-rs --local-profile $MODDIR/games.toml --run >$MODDIR/init_log.txt 2>&1 &
+nohup env FAS_LOG=info $MODDIR/fas-rs --local-profile $MODDIR/games.toml --std-profile $MODDIR/games.toml --run >$MODDIR/init_log.txt 2>&1 &
 
 # so it won't block post-data
 {
@@ -28,5 +28,5 @@ nohup env FAS_LOG=info $MODDIR/fas-rs --local-profile $MODDIR/games.toml --run >
 
 	# start with user profile
 	killall fas-rs
-	nohup env FAS_LOG=info $MODDIR/fas-rs --run >$dir/fas_log.txt 2>&1 &
+	nohup env FAS_LOG=info $MODDIR/fas-rs --run --local-profile $dir/games.toml --std-profile $MODDIR/games.toml >$dir/fas_log.txt 2>&1 &
 } &

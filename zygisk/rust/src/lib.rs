@@ -28,7 +28,7 @@ mod hook;
 
 use std::{
     ffi::CStr,
-    mem, ptr,
+    fs, mem, ptr,
     sync::mpsc::{self, Receiver, SyncSender},
     thread,
     time::Instant,
@@ -39,9 +39,12 @@ use dobby_api::Address;
 use libc::{c_char, c_int, c_void, getgid, getpid, getuid};
 use log::{debug, error, LevelFilter};
 use once_cell::sync::Lazy;
+use toml::Value;
 
 use error::Result;
 use hook::SymbolHooker;
+
+const CONFIG_PATH: &str = "/sdcard/Android/fas-rs/games.toml";
 
 static mut OLD_FUNC_PTR: Address = ptr::null_mut();
 static CHANNEL: Lazy<Channel> = Lazy::new(|| {
@@ -58,10 +61,50 @@ unsafe impl Sync for Channel {}
 unsafe impl Send for Channel {}
 
 #[no_mangle]
-pub unsafe extern "C" fn __hook_handler__(process: *const c_char) -> bool {
+pub unsafe extern "C" fn _need_hook_(process: *const c_char) -> bool {
+    android_logger::init_once(
+        Config::default()
+            .with_max_level(LevelFilter::Trace)
+            .with_tag("libgui-zygisk"),
+    );
+
+    let process = CStr::from_ptr(process);
+    debug!("process: {process:?}");
+    let Ok(process) = process.to_str() else {
+        return false;
+    };
+    let process = process_name(process);
+
+    let Ok(config) = fs::read_to_string(CONFIG_PATH) else {
+        error!("Failed to read config file: {CONFIG_PATH}");
+        return false;
+    };
+
+    let Ok(config) = toml::from_str::<Value>(&config) else {
+        error!("Failed to parse config");
+        return false;
+    };
+
+    let Some(list) = config.get("game_list") else {
+        debug!("Didn't find game_list in config");
+        return false;
+    };
+
+    debug!("{list:?}");
+    list.get(&process).is_some()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn _hook_handler_(process: *const c_char) -> bool {
     use IRemoteService::IRemoteService;
 
-    let pid = getpid();
+    android_logger::init_once(
+        Config::default()
+            .with_max_level(LevelFilter::Trace)
+            .with_tag("libgui-zygisk"),
+    );
+
+    let _pid = getpid();
     let uid = getuid();
     let gid = getgid();
 
@@ -73,26 +116,12 @@ pub unsafe extern "C" fn __hook_handler__(process: *const c_char) -> bool {
     let Ok(process) = process.to_str() else {
         return false;
     };
-    let process = process.to_string(); // Copy process name here, so zygisk can release the original process name jstring safely
+    let process = process_name(process);
+    debug!("process: {process}");
 
-    if process.contains("zygote") {
+    if process == "zygote" || process == "zygote64" {
         return false;
     }
-
-    android_logger::init_once(
-        Config::default()
-            .with_max_level(LevelFilter::Trace)
-            .with_tag("fas-rs-libgui"),
-    );
-
-    let Ok(fas_service) = binder::get_interface::<dyn IRemoteService>("fas_rs_server") else {
-        error!("Failed to get binder interface, fas-rs-server didn't started");
-        return false;
-    }; // get binder server interface
-
-    if Ok(false) == fas_service.sendData(&process, pid, 0) {
-        return false;
-    } // Check first to avoid unnecessary hook
 
     if let Err(e) = thread::Builder::new()
         .name("libgui-analyze".into())
@@ -104,6 +133,12 @@ pub unsafe extern "C" fn __hook_handler__(process: *const c_char) -> bool {
 
             debug!("Hooked");
 
+            let Ok(fas_service) = binder::get_interface::<dyn IRemoteService>("fas_rs_server")
+            else {
+                error!("Failed to get binder interface, fas-rs-server didn't started");
+                return;
+            }; // get binder server interface
+
             analyze::thread(&fas_service, &process).unwrap_or_else(|e| error!("{e:?}"));
         })
     {
@@ -111,6 +146,16 @@ pub unsafe extern "C" fn __hook_handler__(process: *const c_char) -> bool {
     }
 
     true
+}
+
+fn process_name<S: AsRef<str>>(process: S) -> String {
+    let process = process.as_ref();
+    process
+        .split(':')
+        .next()
+        .unwrap_or_default()
+        .trim()
+        .to_string()
 }
 
 unsafe fn hook() -> Result<()> {

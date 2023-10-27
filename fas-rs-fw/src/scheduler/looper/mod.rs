@@ -23,8 +23,6 @@ use std::{
     time::Duration,
 };
 
-use log::debug;
-
 use super::{topapp::TimedWatcher, FasData};
 use crate::{
     config::Config,
@@ -86,8 +84,6 @@ impl<P: PerformanceController> Looper<P> {
             for buffer in self.buffers.values_mut() {
                 Self::do_policy(buffer, &self.controller, &self.config, &mut self.node)?;
             }
-
-            debug!("{:#?}", self.buffers);
         }
     }
 }

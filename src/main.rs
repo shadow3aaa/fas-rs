@@ -38,7 +38,7 @@ use cpu_common::CpuCommon;
 struct Args {
     #[arg(short, long, default_value = "/sdcard/Android/fas-rs/games.toml")]
     local_profile: String,
-    #[arg(short, long, default_value = "games.toml")]
+    #[arg(short, long, default_value = "/data/adb/modules/fas_rs/games.toml")]
     std_profile: String,
     #[arg(short, long)]
     run: bool,

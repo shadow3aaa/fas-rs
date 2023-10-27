@@ -44,7 +44,7 @@ pub struct Config {
 impl Config {
     pub fn new<P: AsRef<Path>>(p: P, sp: P) -> Result<Self> {
         let path = p.as_ref();
-        let _std_path = sp.as_ref();
+        let std_path = sp.as_ref();
 
         let ori = fs::read_to_string(path)?;
 
@@ -53,7 +53,7 @@ impl Config {
 
         {
             let path = path.to_owned();
-            let std_path = path.clone();
+            let std_path = std_path.to_owned();
             let toml = toml.clone();
 
             thread::Builder::new()

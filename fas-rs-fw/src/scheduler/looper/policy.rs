@@ -69,12 +69,6 @@ impl<P: PerformanceController> Looper<P> {
             buffer.counter = policy.jank_rec_count;
             debug!("JANK: big jank");
         } else if *normalized_frame > normalized_jank_scale {
-            if let Some(front) = buffer.frametimes.front_mut() {
-                *front = Duration::from_secs(1) / target_fps;
-            }
-
-            *normalized_frame = Duration::from_secs(1);
-
             if let Some(stamp) = buffer.last_jank {
                 let normalized_last_jank = stamp.elapsed() * target_fps;
                 if normalized_last_jank < Duration::from_secs(30) {
@@ -92,15 +86,6 @@ impl<P: PerformanceController> Looper<P> {
                 buffer.counter -= 1;
                 return Ok(());
             }
-
-            if let Some(stamp) = buffer.last_release {
-                let normalized_last_release = stamp.elapsed() * target_fps;
-                if normalized_last_release < Duration::from_secs(3) {
-                    return Ok(());
-                }
-            }
-
-            buffer.last_release = Some(Instant::now());
 
             controller.limit(config)?;
             debug!("JANK: no jank");

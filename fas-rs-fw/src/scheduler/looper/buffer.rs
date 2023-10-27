@@ -32,7 +32,6 @@ pub struct Buffer {
     pub frametimes: VecDeque<Duration>,
     pub windows: HashMap<u32, FrameWindow>,
     pub last_jank: Option<Instant>,
-    pub last_release: Option<Instant>,
     pub counter: u8,
 }
 
@@ -46,7 +45,6 @@ impl Buffer {
             frametimes: VecDeque::with_capacity(BUFFER_MAX),
             windows: HashMap::new(),
             last_jank: None,
-            last_release: None,
             counter: 0,
         }
     }
@@ -66,12 +64,12 @@ impl Buffer {
         if let Some(fps) = self.target_fps {
             self.windows
                 .entry(fps)
-                .or_insert_with(|| FrameWindow::new(fps, 10))
+                .or_insert_with(|| FrameWindow::new(fps, 5))
                 .update(d);
 
             if self.timer.elapsed() * fps > Duration::from_secs(30) {
                 self.target_fps = self.calculate_fps();
-                self.calculate_variance();
+                self.variance = self.calculate_variance();
                 self.timer = Instant::now();
             }
         } else {
@@ -119,17 +117,15 @@ impl Buffer {
         }
     }
 
-    fn calculate_variance(&mut self) {
+    fn calculate_variance(&mut self) -> Option<Duration> {
         let cur_len = self.frametimes.len();
 
         if cur_len < BUFFER_MAX {
-            self.variance = None;
-            return;
+            return None;
         }
 
         let Some(target_fps) = self.target_fps else {
-            self.variance = None;
-            return;
+            return None;
         };
 
         let avg = self.frametimes.iter().sum::<Duration>() / cur_len as u32;
@@ -146,6 +142,6 @@ impl Buffer {
 
         debug!("variance: {variance:?}");
 
-        self.variance = Some(variance);
+        Some(variance)
     }
 }
