@@ -37,6 +37,18 @@ class LibGuiHook : public zygisk::ModuleBase {
 
     void preAppSpecialize(AppSpecializeArgs *args) override {
         bool hook = false;
+        const char *process = env->GetStringUTFChars(args->nice_name, nullptr);
+
+        uid_t uid = args->uid;
+        gid_t gid = args->gid;
+
+        if (uid <= 10000 || gid < 10000 ||
+            strstr(process, "zygisk") != nullptr) {
+            this->need_hook = false;
+            env->ReleaseStringUTFChars(args->nice_name, process);
+            return;
+        }
+
         const int fd = api->connectCompanion();
 
         if (fd == -1) {
@@ -44,26 +56,30 @@ class LibGuiHook : public zygisk::ModuleBase {
             return;
         }
 
-        LOGD("Root process connected");
-
-        const char *process = env->GetStringUTFChars(args->nice_name, nullptr);
-
-        LOGD("Sending process length to root process");
         size_t len = strlen(process) + 1;
-        write(fd, &len, sizeof(len));
 
-        LOGD("Sending process name to root process");
-        write(fd, process, len);
+        if (write(fd, &len, sizeof(len)) == -1) {
+            close(fd);
+            env->ReleaseStringUTFChars(args->nice_name, process);
+            return;
+        }
 
+        if (write(fd, process, len) == -1) {
+            close(fd);
+            env->ReleaseStringUTFChars(args->nice_name, process);
+            return;
+        }
+
+        if (read(fd, &hook, sizeof(hook)) == -1) {
+            close(fd);
+            env->ReleaseStringUTFChars(args->nice_name, process);
+            return;
+        }
+
+        close(fd);
         env->ReleaseStringUTFChars(args->nice_name, process);
 
-        LOGD("Reading need_hook from root process");
-        read(fd, &hook, sizeof(hook));
-        close(fd);
-
         this->need_hook = hook;
-
-        LOGD("preAppSpecialize ends");
     }
 
     void postAppSpecialize(const AppSpecializeArgs *args) override {
@@ -87,21 +103,19 @@ static void companion_handler(int fd) {
     size_t len = 0;
     bool need_hook = false;
 
-    LOGD("Reading process length from socket");
-    read(fd, &len, sizeof(len));
+    if (read(fd, &len, sizeof(len)) == -1) {
+        return;
+    }
 
     char process[len];
     memset(process, 0, sizeof(process));
 
-    LOGD("Reading process from socket");
-    read(fd, &process, sizeof(process));
+    if (read(fd, &process, sizeof(process)) == -1) {
+        return;
+    }
 
     need_hook = rust::need_hook(process);
-
-    LOGD("Writing need_hook: %d to socket", need_hook);
     write(fd, &need_hook, sizeof(need_hook));
-
-    LOGD("Root process ends");
 }
 
 REGISTER_ZYGISK_MODULE(LibGuiHook)

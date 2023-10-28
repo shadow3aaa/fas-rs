@@ -36,7 +36,7 @@ use std::{
 
 use android_logger::{self, Config};
 use dobby_api::Address;
-use libc::{c_char, c_int, c_void, getgid, getpid, getuid};
+use libc::{c_char, c_int, c_void};
 use log::{debug, error, LevelFilter};
 use once_cell::sync::Lazy;
 use toml::Value;
@@ -44,7 +44,7 @@ use toml::Value;
 use error::Result;
 use hook::SymbolHooker;
 
-const CONFIG_PATH: &str = "/sdcard/Android/fas-rs/games.toml";
+const CONFIG: &str = "/data/media/0/Android/fas-rs/games.toml";
 
 static mut OLD_FUNC_PTR: Address = ptr::null_mut();
 static CHANNEL: Lazy<Channel> = Lazy::new(|| {
@@ -75,8 +75,8 @@ pub unsafe extern "C" fn _need_hook_(process: *const c_char) -> bool {
     };
     let process = process_name(process);
 
-    let Ok(config) = fs::read_to_string(CONFIG_PATH) else {
-        error!("Failed to read config file: {CONFIG_PATH}");
+    let Ok(config) = fs::read_to_string(CONFIG) else {
+        error!("Failed to read config file: {CONFIG}");
         return false;
     };
 
@@ -104,24 +104,12 @@ pub unsafe extern "C" fn _hook_handler_(process: *const c_char) -> bool {
             .with_tag("libgui-zygisk"),
     );
 
-    let _pid = getpid();
-    let uid = getuid();
-    let gid = getgid();
-
-    if uid <= 10000 || gid <= 10000 {
-        return false;
-    }
-
     let process = CStr::from_ptr(process);
     let Ok(process) = process.to_str() else {
         return false;
     };
     let process = process_name(process);
     debug!("process: {process}");
-
-    if process == "zygote" || process == "zygote64" {
-        return false;
-    }
 
     if let Err(e) = thread::Builder::new()
         .name("libgui-analyze".into())
