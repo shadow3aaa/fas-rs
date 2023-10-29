@@ -8,7 +8,7 @@ set_targetdir("output")
 
 on_clean(function(target)
     os.exec("cargo clean")
-    os.rmdir("build")
+    os.rmdir("output")
 end)
 
 before_build(function(target)
