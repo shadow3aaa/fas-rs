@@ -56,17 +56,22 @@ impl<P: PerformanceController> Looper<P> {
         let normalized_release_scale =
             calculate_normalized_scale(target_fps, policy.tolerant_frame_jank);
 
-        debug!("target_fps: {target_fps}");
-        debug!("normalized frametime: {normalized_frame:?}");
-        debug!("normalized avg frametime: {normalized_avg_frame:?}");
-        debug!("simple jank scale: {normalized_jank_scale:?}");
-        debug!("big jank scale: {normalized_big_jank_scale:?}");
-        debug!("limit scale: {normalized_limit_scale:?}");
-        debug!("release scale: {normalized_release_scale:?}");
+        #[cfg(debug_assertions)]
+        {
+            debug!("target_fps: {target_fps}");
+            debug!("normalized frametime: {normalized_frame:?}");
+            debug!("normalized avg frametime: {normalized_avg_frame:?}");
+            debug!("simple jank scale: {normalized_jank_scale:?}");
+            debug!("big jank scale: {normalized_big_jank_scale:?}");
+            debug!("limit scale: {normalized_limit_scale:?}");
+            debug!("release scale: {normalized_release_scale:?}");
+        }
 
         if *normalized_frame > normalized_big_jank_scale {
             controller.release_max(config)?; // big jank
             buffer.counter = policy.jank_keep_count;
+
+            #[cfg(debug_assertions)]
             debug!("JANK: big jank");
         } else if *normalized_frame > normalized_jank_scale {
             *normalized_frame = Duration::from_secs(1);
@@ -81,8 +86,9 @@ impl<P: PerformanceController> Looper<P> {
 
             buffer.last_jank = Some(Instant::now());
             buffer.counter = policy.jank_keep_count;
-
             controller.release(config)?;
+
+            #[cfg(debug_assertions)]
             debug!("JANK: simp jank");
         } else if normalized_avg_frame <= normalized_limit_scale {
             if buffer.counter != 0 {
@@ -91,11 +97,14 @@ impl<P: PerformanceController> Looper<P> {
             }
 
             buffer.counter = policy.normal_keep_count;
-
             controller.limit(config)?;
+
+            #[cfg(debug_assertions)]
             debug!("JANK: no jank");
         } else if normalized_avg_frame > normalized_release_scale {
             controller.release(config)?;
+
+            #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
         }
 

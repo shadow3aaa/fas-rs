@@ -69,7 +69,10 @@ pub unsafe extern "C" fn _need_hook_(process: *const c_char) -> bool {
     );
 
     let process = CStr::from_ptr(process);
+
+    #[cfg(debug_assertions)]
     debug!("process: {process:?}");
+
     let Ok(process) = process.to_str() else {
         return false;
     };
@@ -86,10 +89,12 @@ pub unsafe extern "C" fn _need_hook_(process: *const c_char) -> bool {
     };
 
     let Some(list) = config.get("game_list") else {
+        #[cfg(debug_assertions)]
         debug!("Didn't find game_list in config");
         return false;
     };
 
+    #[cfg(debug_assertions)]
     debug!("{list:?}");
     list.get(&process).is_some()
 }
@@ -109,7 +114,9 @@ pub unsafe extern "C" fn _hook_handler_(process: *const c_char) -> bool {
         return false;
     };
     let process = process_name(process);
-    debug!("process: {process}");
+
+    #[cfg(debug_assertions)]
+    debug!("Try to hook process: {process}");
 
     if let Err(e) = thread::Builder::new()
         .name("libgui-analyze".into())
@@ -118,8 +125,6 @@ pub unsafe extern "C" fn _hook_handler_(process: *const c_char) -> bool {
                 error!("Failed to hook, reason: {e:#?}");
                 return;
             }
-
-            debug!("Hooked");
 
             let Ok(fas_service) = binder::get_interface::<dyn IRemoteService>("fas_rs_server")
             else {
@@ -159,8 +164,6 @@ unsafe fn hook() -> Result<()> {
 unsafe extern "C" fn post_hook(android_native_buffer_t: *mut c_void, fence_id: c_int) -> c_int {
     let ori_fun: extern "C" fn(*mut c_void, c_int) -> c_int = mem::transmute(OLD_FUNC_PTR); // trans ptr to ori func
     let result = ori_fun(android_native_buffer_t, fence_id);
-
-    debug!("queue buffer hook: buffer: {android_native_buffer_t:?}, result: {result}");
 
     if result == 0 {
         let _ = CHANNEL

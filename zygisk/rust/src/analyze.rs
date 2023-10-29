@@ -18,7 +18,7 @@ use std::{
 };
 
 use binder::Strong;
-use log::debug;
+use log::{debug, error};
 
 use crate::{IRemoteService::IRemoteService, CHANNEL};
 
@@ -32,7 +32,7 @@ pub fn thread(fas_service: &Strong<dyn IRemoteService>, process: &str) -> anyhow
         let (buffer_ptr, stamp) = match CHANNEL.rx.recv() {
             Ok(o) => o,
             Err(e) => {
-                debug!("End analyze thread, reason: {e:?}");
+                error!("End analyze thread, reason: {e:?}");
                 return Ok(());
             }
         };
@@ -49,9 +49,11 @@ pub fn thread(fas_service: &Strong<dyn IRemoteService>, process: &str) -> anyhow
             }
         };
 
+        #[cfg(debug_assertions)]
         debug!("process: [{process}] framtime: [{frametime:?}]");
 
         if Ok(false) == fas_service.sendData(process, pid, frametime.as_nanos() as i64) {
+            #[cfg(debug_assertions)]
             debug!("Exit analyze thread, since server prefer this is not a fas app anymore");
             return Ok(());
         }

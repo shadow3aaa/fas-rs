@@ -89,6 +89,7 @@ impl Buffer {
         let avg_time: Duration =
             self.frametimes.iter().sum::<Duration>() / BUFFER_MAX.try_into().unwrap();
 
+        #[cfg(debug_assertions)]
         debug!("avg_time: {avg_time:?}");
 
         if avg_time < Duration::from_micros(8130) {
@@ -138,6 +139,7 @@ impl Buffer {
             / cur_len as f64;
         let variance = Duration::from_secs_f64(variance);
 
+        #[cfg(debug_assertions)]
         debug!("variance: {variance:?}");
 
         Some(variance)
