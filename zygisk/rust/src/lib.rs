@@ -37,7 +37,9 @@ use std::{
 use android_logger::{self, Config};
 use dobby_api::Address;
 use libc::{c_char, c_int, c_void};
-use log::{debug, error, LevelFilter};
+#[cfg(debug_assertions)]
+use log::debug;
+use log::{error, LevelFilter};
 use once_cell::sync::Lazy;
 use toml::Value;
 

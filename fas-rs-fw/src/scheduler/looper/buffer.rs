@@ -16,6 +16,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+#[cfg(debug_assertions)]
 use log::debug;
 
 use super::window::FrameWindow;

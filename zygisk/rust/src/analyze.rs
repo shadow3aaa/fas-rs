@@ -18,7 +18,9 @@ use std::{
 };
 
 use binder::Strong;
-use log::{debug, error};
+#[cfg(debug_assertions)]
+use log::debug;
+use log::error;
 
 use crate::{IRemoteService::IRemoteService, CHANNEL};
 

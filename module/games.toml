@@ -18,17 +18,17 @@ keep_std = true
 "com.tencent.tmgp.sgame" = "auto"
 
 [powersave]
-tolerant_frame_limit = 1.5
-tolerant_frame_jank = 3.0
+tolerant_frame_limit = 0.1
+tolerant_frame_jank = 1.0
 
 [balance]
-tolerant_frame_limit = 1.0
-tolerant_frame_jank = 2.5
+tolerant_frame_limit = 0.08
+tolerant_frame_jank = 0.9
 
 [performance]
-tolerant_frame_limit = 0.8
-tolerant_frame_jank = 1.5
+tolerant_frame_limit = 0.05
+tolerant_frame_jank = 0.7
 
 [fast]
-tolerant_frame_limit = 0.8
-tolerant_frame_jank = 1.2
+tolerant_frame_limit = 0.01
+tolerant_frame_jank = 0.5
