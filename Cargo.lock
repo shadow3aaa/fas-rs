@@ -258,7 +258,7 @@ dependencies = [
 
 [[package]]
 name = "fas-rs"
-version = "0.3.5"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -277,7 +277,7 @@ dependencies = [
 
 [[package]]
 name = "fas-rs-fw"
-version = "0.3.1"
+version = "1.0.0"
 dependencies = [
  "async-trait",
  "binder_ndk",
