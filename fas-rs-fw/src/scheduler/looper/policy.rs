@@ -49,7 +49,7 @@ impl<P: PerformanceController> Looper<P> {
             return Ok(());
         };
 
-        let normalized_big_jank_scale = Duration::from_secs(2);
+        let normalized_big_jank_scale = Duration::from_secs(5);
         let normalized_jank_scale = Duration::from_millis(1700);
         let normalized_limit_scale =
             calculate_normalized_scale(target_fps, policy.tolerant_frame_limit);
@@ -69,6 +69,9 @@ impl<P: PerformanceController> Looper<P> {
             buffer.counter = policy.jank_keep_count;
             debug!("JANK: big jank");
         } else if *normalized_frame > normalized_jank_scale {
+            *normalized_frame = Duration::from_secs(1);
+            *buffer.frametimes.front_mut().unwrap() = Duration::from_secs(1) / target_fps;
+
             if let Some(stamp) = buffer.last_jank {
                 let normalized_last_jank = stamp.elapsed() * target_fps;
                 if normalized_last_jank < Duration::from_secs(30) {

@@ -13,7 +13,7 @@
 *  limitations under the License. */
 mod policy;
 
-use std::{cell::Cell, collections::BTreeSet, ffi::OsStr, fs};
+use std::{cell::Cell, collections::HashSet, ffi::OsStr, fs};
 
 use anyhow::Result;
 use fas_rs_fw::prelude::*;
@@ -24,10 +24,9 @@ use policy::Policy;
 pub type Freq = u32; // 单位: khz
 
 pub struct CpuCommon {
-    freqs: BTreeSet<Freq>,
-    cur_freq: Cell<Freq>,
+    freqs: Vec<Freq>,
+    cur_freq: Cell<usize>,
     policies: Vec<Policy>,
-    enable: Cell<bool>,
 }
 
 impl CpuCommon {
@@ -61,53 +60,53 @@ impl CpuCommon {
             }
         }
 
-        let freqs: BTreeSet<_> = policies
+        let mut freqs: Vec<_> = policies
             .iter()
             .flat_map(|p| p.freqs.iter().copied())
+            .collect::<HashSet<_>>()
+            .into_iter()
             .collect();
+        freqs.sort_unstable();
 
         Ok(Self {
-            cur_freq: freqs.last().copied().unwrap().into(),
+            cur_freq: Cell::new(freqs.len() - 1),
             freqs,
             policies,
-            enable: false.into(),
         })
     }
 }
 
 impl PerformanceController for CpuCommon {
     fn limit(&self, _c: &Config) -> fas_rs_fw::Result<()> {
-        let cur_freq = self.cur_freq.get();
-        let prev_freq = self
-            .freqs
-            .range(..cur_freq)
-            .next_back()
-            .copied()
-            .unwrap_or(cur_freq);
+        let mut cur_freq = self.cur_freq.get();
+
+        if cur_freq != 0 {
+            cur_freq -= 1;
+            self.cur_freq.set(cur_freq);
+        }
+
+        let prev_freq = self.freqs.get(cur_freq).copied().unwrap();
 
         for policy in &self.policies {
             let _ = policy.set_fas_freq(prev_freq);
         }
 
-        self.cur_freq.set(prev_freq);
-
         Ok(())
     }
 
     fn release(&self, _c: &Config) -> fas_rs_fw::Result<()> {
-        let cur_freq = self.cur_freq.get();
-        let next_freq = self
-            .freqs
-            .range(cur_freq..)
-            .nth(1)
-            .copied()
-            .unwrap_or(cur_freq);
+        let mut cur_freq = self.cur_freq.get();
+
+        if cur_freq < self.freqs.len() - 1 {
+            cur_freq += 1;
+            self.cur_freq.set(cur_freq);
+        }
+
+        let next_freq = self.freqs.get(cur_freq).copied().unwrap();
 
         for policy in &self.policies {
             let _ = policy.set_fas_freq(next_freq);
         }
-
-        self.cur_freq.set(next_freq);
 
         Ok(())
     }
@@ -119,14 +118,12 @@ impl PerformanceController for CpuCommon {
             let _ = policy.set_fas_freq(max_freq);
         }
 
-        self.cur_freq.set(max_freq);
+        self.cur_freq.set(self.freqs.len() - 1);
 
         Ok(())
     }
 
     fn init_game(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
-        self.enable.set(true);
-
         for policy in &self.policies {
             let _ = policy.init_game();
         }
@@ -135,8 +132,6 @@ impl PerformanceController for CpuCommon {
     }
 
     fn init_default(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
-        self.enable.set(false);
-
         for policy in &self.policies {
             let _ = policy.init_default();
         }

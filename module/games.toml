@@ -22,16 +22,13 @@ tolerant_frame_limit = 1.5
 tolerant_frame_jank = 3.0
 
 [balance]
-jank_rec_count = 10
 tolerant_frame_limit = 1.0
 tolerant_frame_jank = 2.5
 
 [performance]
-jank_rec_count = 16
 tolerant_frame_limit = 0.8
 tolerant_frame_jank = 1.5
 
 [fast]
-jank_rec_count = 16
 tolerant_frame_limit = 0.8
 tolerant_frame_jank = 1.2

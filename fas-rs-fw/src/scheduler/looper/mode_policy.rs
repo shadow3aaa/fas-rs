@@ -45,18 +45,18 @@ impl<P: PerformanceController> Looper<P> {
         let jank_keep_count;
         let normal_keep_count;
 
-        if variance > Duration::from_millis(100) {
+        if variance > Duration::from_millis(10) {
             jank_keep_count = 2;
             normal_keep_count = 1;
-        } else if variance > Duration::from_millis(75) {
+        } else if variance > Duration::from_millis(7) {
             jank_keep_count = 4;
             normal_keep_count = 2;
-        } else if variance > Duration::from_millis(40) {
+        } else if variance > Duration::from_millis(5) {
             jank_keep_count = 6;
             normal_keep_count = 3;
         } else {
-            jank_keep_count = 16;
-            normal_keep_count = 8;
+            jank_keep_count = 8;
+            normal_keep_count = 4;
         }
 
         Ok(PolicyConfig {

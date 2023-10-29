@@ -67,7 +67,7 @@ impl Buffer {
                 .or_insert_with(|| FrameWindow::new(fps, 5))
                 .update(d);
 
-            if self.timer.elapsed() * fps > Duration::from_secs(BUFFER_MAX.try_into().unwrap()) {
+            if self.timer.elapsed() * fps > Duration::from_secs(fps.into()) {
                 self.target_fps = self.calculate_fps();
                 self.variance = self.calculate_variance();
                 self.timer = Instant::now();
@@ -117,20 +117,21 @@ impl Buffer {
         }
     }
 
-    fn calculate_variance(&mut self) -> Option<Duration> {
-        let cur_len = self.frametimes.len();
-
-        if cur_len < BUFFER_MAX {
-            return None;
-        }
-
+    fn calculate_variance(&self) -> Option<Duration> {
         let Some(target_fps) = self.target_fps else {
             return None;
         };
 
+        let cur_len = self.frametimes.len();
+
+        if cur_len < target_fps as usize {
+            return None;
+        }
+
         let variance = self
             .frametimes
             .iter()
+            .take(target_fps as usize)
             .map(|t| (*t * target_fps).as_secs_f64())
             .map(|t| (t - 1.0).powi(2))
             .sum::<f64>()
