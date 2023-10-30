@@ -29,14 +29,14 @@ pub struct PolicyConfig {
 impl<P: PerformanceController> Looper<P> {
     pub fn policy_config(mode: Mode, variance: Duration, config: &Config) -> Result<PolicyConfig> {
         let tolerant_frame_limit = config.get_mode_conf(mode, "tolerant_frame_limit")?;
-        let mut tolerant_frame_limit = match tolerant_frame_limit {
+        let tolerant_frame_limit = match tolerant_frame_limit {
             Value::Float(f) => f,
             Value::Integer(i) => i as f64,
             _ => return Err(Error::ParseConfig),
         };
 
         let tolerant_frame_jank = config.get_mode_conf(mode, "tolerant_frame_jank")?;
-        let mut tolerant_frame_jank = match tolerant_frame_jank {
+        let tolerant_frame_jank = match tolerant_frame_jank {
             Value::Float(f) => f,
             Value::Integer(i) => i as f64,
             _ => return Err(Error::ParseConfig),
@@ -47,22 +47,13 @@ impl<P: PerformanceController> Looper<P> {
 
         if variance > Duration::from_millis(10) {
             jank_keep_count = 2;
-            normal_keep_count = 1;
-       
-            tolerant_frame_limit += 3.8;
-            tolerant_frame_jank += 4.3;
+            normal_keep_count = 0;
         } else if variance > Duration::from_millis(7) {
             jank_keep_count = 4;
             normal_keep_count = 2;
-
-            tolerant_frame_limit += 0.8;
-            tolerant_frame_jank += 1.3;
         } else if variance > Duration::from_millis(5) {
             jank_keep_count = 6;
             normal_keep_count = 3;
-
-            tolerant_frame_limit += 0.4;
-            tolerant_frame_jank += 0.8;
         } else {
             jank_keep_count = 8;
             normal_keep_count = 4;
