@@ -15,7 +15,7 @@
 # limitations under the License.
 MODDIR=${0%/*}
 DIR=/data/media/0/Android/fas-rs
-UPDATE_CONF=$MODDIR/update_games.toml
+UPDATE_CONF=$DIR/.merged.toml
 
 # update vtools support
 sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)

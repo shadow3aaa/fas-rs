@@ -17,6 +17,7 @@
 SKIPUNZIP=0
 DIR=/data/media/0/Android/fas-rs
 CONF=$DIR/games.toml
+UPDATE_CONF=$DIR/.merged.toml
 
 [ -v $KSU ] && KSU=false
 
@@ -63,8 +64,7 @@ ui_print "
 chmod +x $MODPATH/fas-rs
 
 if [ -f $CONF ]; then
-	local update_conf=$MODPATH/update_games.toml
-	$MODPATH/fas-rs --merge --local-profile $CONF --std-profile $MODPATH/games.toml >$update_conf
+	$MODPATH/fas-rs --merge --local-profile $CONF --std-profile $MODPATH/games.toml >$UPDATE_CONF
 else
 	mkdir -p $DIR
 	cp $MODPATH/games.toml $CONF
