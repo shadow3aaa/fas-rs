@@ -43,7 +43,7 @@ impl<P: PerformanceController> Looper<P> {
         }
 
         let process = (d.pkg.clone(), d.pid);
-        let target_fps = d.target_fps;
+        let target_fps = d.target_fps.clone();
 
         match self.buffers.entry(process) {
             Entry::Occupied(mut o) => o.get_mut().push_frametime(d.frametime),

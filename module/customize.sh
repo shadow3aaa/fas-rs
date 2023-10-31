@@ -15,8 +15,8 @@
 # limitations under the License.
 
 SKIPUNZIP=0
-dir=/sdcard/Android/fas-rs
-conf=$dir/games.toml
+DIR=/data/media/0/Android/fas-rs
+CONF=$DIR/games.toml
 
 [ -v $KSU ] && KSU=false
 
@@ -62,16 +62,16 @@ ui_print "
 # permission
 chmod +x $MODPATH/fas-rs
 
-if [ -f $conf ]; then
-	# merge local std
-	$MODPATH/fas-rs --merge --local-profile $conf --std-profile $MODPATH/games.toml
+if [ -f $CONF ]; then
+	local update_conf=$MODPATH/update_games.toml
+	$MODPATH/fas-rs --merge --local-profile $CONF --std-profile $MODPATH/games.toml >$update_conf
 else
-	# creat new config
-	mkdir -p $dir
-	cp $MODPATH/games.toml $conf
+	mkdir -p $DIR
+	cp $MODPATH/games.toml $CONF
 fi
 
-cp -f $MODPATH/README.md $dir/doc.md
+cp -f $MODPATH/README.md $DIR/doc.md
 
-# vtools support
 sh $MODPATH/vtools/init_vtools.sh $(realpath $MODPATH/module.prop)
+
+ui_print "Configuration folder: /sdcard/Android/fas-rs"

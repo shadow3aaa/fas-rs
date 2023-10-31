@@ -14,6 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 MODDIR=${0%/*}
+DIR=/data/media/0/Android/fas-rs
+UPDATE_CONF=$MODDIR/update_games.toml
 
 # update vtools support
 sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
+
+# wait until the sdcard is decrypted
+until [ -d $DIR ]; do
+	sleep 1
+done
+
+# update config
+if [ -f $UPDATE_CONF ]; then
+	mv $UPDATE_CONF $DIR/games.toml
+fi
+
+# start with user profile
+killall fas-rs
+nohup env FAS_LOG=info $MODDIR/fas-rs --run --local-profile $DIR/games.toml --std-profile $MODDIR/games.toml >$DIR/fas_log.txt 2>&1 &

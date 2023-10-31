@@ -68,7 +68,10 @@ impl Buffer {
                 .or_insert_with(|| FrameWindow::new(fps, 5))
                 .update(d);
 
-            if self.timer.elapsed() * fps > Duration::from_secs(fps.into()) {
+            let recaculate_time = fps / 2;
+            let recaculate_time = recaculate_time.clamp(5, 60);
+
+            if self.timer.elapsed() * fps > Duration::from_secs(recaculate_time.into()) {
                 self.target_fps = self.calculate_fps();
                 self.variance = self.calculate_variance();
                 self.timer = Instant::now();
@@ -83,40 +86,24 @@ impl Buffer {
             return None;
         }
 
-        if let TargetFps::Value(t) = self.target_fps_config {
-            return Some(t);
-        }
+        let target_fpses = match &self.target_fps_config {
+            TargetFps::Value(t) => return Some(*t),
+            TargetFps::Array(arr) => arr,
+        };
 
         let avg_time: Duration =
             self.frametimes.iter().sum::<Duration>() / BUFFER_MAX.try_into().unwrap();
-
         #[cfg(debug_assertions)]
         debug!("avg_time: {avg_time:?}");
 
-        if avg_time < Duration::from_micros(8130) {
-            // 123fps
-            Some(144)
-        } else if avg_time < Duration::from_micros(10638) {
-            // 94 fps
-            Some(120)
-        } else if avg_time < Duration::from_micros(16129) {
-            // 62 fps
-            Some(90)
-        } else if avg_time < Duration::from_micros(20408) {
-            // 49 fps
-            Some(60)
-        } else if avg_time < Duration::from_micros(21739) {
-            // 46 fps
-            Some(48)
-        } else if avg_time < Duration::from_micros(32258) {
-            // 31 fps
-            Some(45)
-        } else if avg_time < Duration::from_micros(50000) {
-            // 20 fps
-            Some(30)
-        } else {
-            None
+        for target_fps in target_fpses.iter().copied() {
+            let target_frametime = Duration::from_secs(1) / (target_fps + 3);
+            if avg_time > target_frametime {
+                return Some(target_fps);
+            }
         }
+
+        target_fpses.last().copied()
     }
 
     fn calculate_variance(&self) -> Option<Duration> {

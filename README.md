@@ -116,5 +116,10 @@ git clone https://github.com/shadow3aaa/fas-rs
 apt install rust zip ndk* clang binutils-is-llvm xmake
 
 # build & package
+# release build
+xmake f -m release
+xmake
+# debug build
+xmake f -m debug
 xmake
 ```

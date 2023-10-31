@@ -28,15 +28,8 @@ pub struct PolicyConfig {
 
 impl<P: PerformanceController> Looper<P> {
     pub fn policy_config(mode: Mode, variance: Duration, config: &Config) -> Result<PolicyConfig> {
-        let tolerant_frame_limit = config.get_mode_conf(mode, "tolerant_frame_limit")?;
-        let tolerant_frame_limit = match tolerant_frame_limit {
-            Value::Float(f) => f,
-            Value::Integer(i) => i as f64,
-            _ => return Err(Error::ParseConfig),
-        };
-
-        let tolerant_frame_jank = config.get_mode_conf(mode, "tolerant_frame_jank")?;
-        let tolerant_frame_jank = match tolerant_frame_jank {
+        let tolerant_frame_offset = config.get_mode_conf(mode, "tolerant_frame_offset")?;
+        let tolerant_frame_offset = match tolerant_frame_offset {
             Value::Float(f) => f,
             Value::Integer(i) => i as f64,
             _ => return Err(Error::ParseConfig),
@@ -44,20 +37,38 @@ impl<P: PerformanceController> Looper<P> {
 
         let jank_keep_count;
         let normal_keep_count;
+        let tolerant_frame_limit;
+        let tolerant_frame_jank;
 
         if variance > Duration::from_millis(10) {
-            jank_keep_count = 2;
+            jank_keep_count = 0;
             normal_keep_count = 0;
-        } else if variance > Duration::from_millis(7) {
-            jank_keep_count = 4;
+
+            tolerant_frame_limit = 1.3;
+            tolerant_frame_jank = tolerant_frame_limit + 2.0;
+        } else if variance > Duration::from_millis(6) {
+            jank_keep_count = 3;
+            normal_keep_count = 1;
+
+            tolerant_frame_limit = 1.0;
+            tolerant_frame_jank = tolerant_frame_limit + 1.5;
+        } else if variance > Duration::from_millis(1) {
+            jank_keep_count = 3;
             normal_keep_count = 2;
-        } else if variance > Duration::from_millis(5) {
-            jank_keep_count = 6;
-            normal_keep_count = 3;
+
+            tolerant_frame_limit = 0.8;
+            tolerant_frame_jank = tolerant_frame_limit + 1.0;
         } else {
-            jank_keep_count = 8;
-            normal_keep_count = 4;
+            jank_keep_count = 5;
+            normal_keep_count = 3;
+
+            tolerant_frame_limit = 0.5;
+            tolerant_frame_jank = tolerant_frame_limit + 0.5;
         }
+
+        let tolerant_frame_limit = tolerant_frame_limit + tolerant_frame_offset;
+        let tolerant_frame_jank = tolerant_frame_jank + tolerant_frame_offset;
+        let tolerant_frame_limit = tolerant_frame_limit.clamp(0.5, 1.8);
 
         Ok(PolicyConfig {
             jank_keep_count,

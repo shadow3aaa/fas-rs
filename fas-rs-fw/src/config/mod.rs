@@ -17,7 +17,7 @@ mod read;
 use std::{fs, path::Path, sync::Arc, thread};
 
 use likely_stable::LikelyOption;
-use log::info;
+use log::{error, info};
 use parking_lot::RwLock;
 use toml::Value;
 
@@ -30,10 +30,10 @@ use read::wait_and_read;
 
 type ConfData = RwLock<Value>;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TargetFps {
-    Auto,
     Value(u32),
+    Array(Vec<u32>),
 }
 
 #[derive(Debug, Clone)]
@@ -76,20 +76,36 @@ impl Config {
             .and_then_likely(Value::as_table)
             .cloned()
             .unwrap();
-        let value = list.get(pkg)?;
+        let value = list.get(pkg)?.clone();
 
         drop(toml); // early-drop Rwlock
 
-        value.as_integer().map_or_else(
-            || {
-                if value.as_str() == Some("auto") {
-                    Some(TargetFps::Auto)
+        match value {
+            Value::Array(arr) => {
+                let mut arr: Vec<_> = arr
+                    .into_iter()
+                    .filter_map(|v| v.as_integer())
+                    .map(|i| i as u32)
+                    .collect();
+                arr.sort_unstable();
+                Some(TargetFps::Array(arr))
+            }
+            Value::Integer(i) => Some(TargetFps::Value(i as u32)),
+            Value::String(s) => {
+                if s == "auto" {
+                    Some(TargetFps::Array(vec![30, 45, 60, 90, 120, 144]))
                 } else {
+                    error!("Find target game {pkg} in config, but meet illegal data type");
+                    error!("Sugg: try \'{pkg} = \"auto\"\'");
                     None
                 }
-            },
-            |v| Some(TargetFps::Value(v.try_into().unwrap())),
-        )
+            }
+            _ => {
+                error!("Find target game {pkg} in config, but meet illegal data type");
+                error!("Sugg: try \'{pkg} = \"auto\"\'");
+                None
+            }
+        }
     }
 
     pub fn get_mode_conf<S: AsRef<str>>(&self, m: Mode, l: S) -> Result<Value> {

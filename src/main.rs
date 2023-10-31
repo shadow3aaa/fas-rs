@@ -36,7 +36,7 @@ use cpu_common::CpuCommon;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    #[arg(short, long, default_value = "/sdcard/Android/fas-rs/games.toml")]
+    #[arg(short, long, default_value = "/data/media/0/Android/fas-rs/games.toml")]
     local_profile: String,
     #[arg(short, long, default_value = "/data/adb/modules/fas_rs/games.toml")]
     std_profile: String,
@@ -47,29 +47,27 @@ struct Args {
 }
 
 fn main() -> Result<()> {
-    // 初始化Log
-    pretty_env_logger::init_custom_env("FAS_LOG");
-
-    // 绑定到小核
-    let self_pid = process::id();
-    let _ = fs::write("/dev/cpuset/background/tasks", self_pid.to_string());
-
     let args = Args::parse();
+    let local_path = args.local_profile;
+    let std_path = args.std_profile;
 
     if args.merge {
-        let local_path = args.local_profile.clone();
-        let std_path = args.std_profile.clone();
-
         let local = fs::read_to_string(&local_path)?;
-        let std = fs::read_to_string(std_path)?;
+        let std = fs::read_to_string(&std_path)?;
 
         let new = Config::merge(&local, &std).unwrap_or(std);
+        print!("{new}");
 
-        fs::write(local_path, new)?;
+        return Ok(());
     }
 
     if args.run {
-        let config = Config::new(args.local_profile, args.std_profile)?;
+        pretty_env_logger::init_custom_env("FAS_LOG");
+        
+        let self_pid = process::id();
+        let _ = fs::write("/dev/cpuset/background/tasks", self_pid.to_string());
+        
+        let config = Config::new(&local_path, &std_path)?;
         let cpu = CpuCommon::new(&config)?;
 
         thread::Builder::new()
