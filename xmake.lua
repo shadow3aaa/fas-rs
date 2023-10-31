@@ -5,11 +5,11 @@ target("fas-rs")
 on_clean(function(target)
     os.exec("cargo clean")
     os.rmdir("output")
-    os.rmdir("zygisk/output")
 end)
 
 before_build(function(target)
-    os.rm("output/.temp")
+    os.mkdir("output")
+    os.rm("output/*")
     os.cp("module", "output/.temp")
 end)
 

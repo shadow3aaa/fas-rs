@@ -7,14 +7,19 @@ set_filename("arm64-v8a.so")
 set_targetdir("output")
 
 on_clean(function(target)
+    local output = path.join(target:scriptdir(), "output/*")
+    local rust = path.join(target:scriptdir(), "rust")
+
+    os.rmdir(output)
+    os.cd(rust)
     os.exec("cargo clean")
-    os.rmdir("output")
 end)
 
 before_build(function(target)
-    os.mkdir("output")
-
+    local output = path.join(target:scriptdir(), "output/*")
     local rust = path.join(target:scriptdir(), "rust")
+    
+    os.rm(output)
     os.cd(rust)
 
     if is_mode("debug") then
