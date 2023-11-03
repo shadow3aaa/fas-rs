@@ -68,10 +68,7 @@ impl Buffer {
                 .or_insert_with(|| FrameWindow::new(fps, 5))
                 .update(d);
 
-            let recaculate_time = fps / 2;
-            let recaculate_time = recaculate_time.clamp(5, 60);
-
-            if self.timer.elapsed() * fps > Duration::from_secs(recaculate_time.into()) {
+            if self.timer.elapsed() * fps > Duration::from_secs(30) {
                 self.target_fps = self.calculate_fps();
                 self.variance = self.calculate_variance();
                 self.timer = Instant::now();
@@ -97,7 +94,7 @@ impl Buffer {
         debug!("avg_time: {avg_time:?}");
 
         for target_fps in target_fpses.iter().copied() {
-            let target_frametime = Duration::from_secs(1) / (target_fps + 3);
+            let target_frametime = Duration::from_secs(1) / (target_fps + 2);
             if avg_time > target_frametime {
                 return Some(target_fps);
             }

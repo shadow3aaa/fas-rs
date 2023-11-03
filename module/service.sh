@@ -15,7 +15,7 @@
 # limitations under the License.
 MODDIR=${0%/*}
 DIR=/data/media/0/Android/fas-rs
-UPDATE_CONF=$DIR/.merged.toml
+MERGE_FLAG=$DIR/.need_merge
 
 # update vtools support
 sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
@@ -26,8 +26,9 @@ until [ -d $DIR ]; do
 done
 
 # update config
-if [ -f $UPDATE_CONF ]; then
-	mv $UPDATE_CONF $DIR/games.toml
+if [ -f $MERGE_FLAG ]; then
+    $MODDIR/fas-rs --merge --local-profile $DIR/games.toml --std-profile $MODDIR/games.toml >$DIR/games.toml
+    rm $MERGE_FLAG
 fi
 
 # start with user profile

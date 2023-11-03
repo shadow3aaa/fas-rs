@@ -63,10 +63,10 @@ fn main() -> Result<()> {
 
     if args.run {
         pretty_env_logger::init_custom_env("FAS_LOG");
-        
+
         let self_pid = process::id();
         let _ = fs::write("/dev/cpuset/background/tasks", self_pid.to_string());
-        
+
         let config = Config::new(&local_path, &std_path)?;
         let cpu = CpuCommon::new(&config)?;
 

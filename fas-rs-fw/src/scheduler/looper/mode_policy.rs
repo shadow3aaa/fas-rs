@@ -41,34 +41,32 @@ impl<P: PerformanceController> Looper<P> {
         let tolerant_frame_jank;
 
         if variance > Duration::from_millis(10) {
-            jank_keep_count = 0;
+            jank_keep_count = 1;
             normal_keep_count = 0;
 
             tolerant_frame_limit = 1.3;
-            tolerant_frame_jank = tolerant_frame_limit + 2.0;
+            tolerant_frame_jank = 1.8;
         } else if variance > Duration::from_millis(6) {
-            jank_keep_count = 3;
-            normal_keep_count = 1;
-
-            tolerant_frame_limit = 1.0;
-            tolerant_frame_jank = tolerant_frame_limit + 1.5;
-        } else if variance > Duration::from_millis(1) {
             jank_keep_count = 3;
             normal_keep_count = 2;
 
-            tolerant_frame_limit = 0.8;
-            tolerant_frame_jank = tolerant_frame_limit + 1.0;
+            tolerant_frame_limit = 1.0;
+            tolerant_frame_jank = 1.5;
+        } else if variance > Duration::from_millis(3) {
+            jank_keep_count = 3;
+            normal_keep_count = 2;
+
+            tolerant_frame_limit = 0.75;
+            tolerant_frame_jank = 1.25;
         } else {
             jank_keep_count = 5;
             normal_keep_count = 3;
 
             tolerant_frame_limit = 0.5;
-            tolerant_frame_jank = tolerant_frame_limit + 0.5;
+            tolerant_frame_jank = 1.0;
         }
 
-        let tolerant_frame_limit = tolerant_frame_limit + tolerant_frame_offset;
         let tolerant_frame_jank = tolerant_frame_jank + tolerant_frame_offset;
-        let tolerant_frame_limit = tolerant_frame_limit.clamp(0.5, 1.8);
 
         Ok(PolicyConfig {
             jank_keep_count,
