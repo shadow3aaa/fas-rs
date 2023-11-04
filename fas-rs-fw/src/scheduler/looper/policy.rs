@@ -51,10 +51,8 @@ impl<P: PerformanceController> Looper<P> {
 
         let normalized_big_jank_scale = Duration::from_secs(5);
         let normalized_jank_scale = Duration::from_millis(1700);
-        let normalized_limit_scale =
-            calculate_normalized_scale(target_fps, policy.tolerant_frame_limit);
-        let normalized_release_scale =
-            calculate_normalized_scale(target_fps, policy.tolerant_frame_jank);
+        let normalized_limit_scale = Duration::from_secs(1) + policy.tolerant_frame_limit;
+        let normalized_release_scale = Duration::from_secs(1) + policy.tolerant_frame_limit;
 
         #[cfg(debug_assertions)]
         {
@@ -110,8 +108,4 @@ impl<P: PerformanceController> Looper<P> {
 
         Ok(())
     }
-}
-
-fn calculate_normalized_scale(t: u32, d: f64) -> Duration {
-    Duration::from_secs(1).div_f64((f64::from(t) - d).max(1.0)) * t
 }

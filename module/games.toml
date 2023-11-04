@@ -14,13 +14,13 @@ keep_std = true
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
 [powersave]
-tolerant_frame_offset = 0.3
+tolerant_frame_offset = 3
 
 [balance]
-tolerant_frame_offset = 0.2
+tolerant_frame_offset = 2
 
 [performance]
-tolerant_frame_offset = 0.1
+tolerant_frame_offset = 1
 
 [fast]
-tolerant_frame_offset = 0.0
+tolerant_frame_offset = 0
