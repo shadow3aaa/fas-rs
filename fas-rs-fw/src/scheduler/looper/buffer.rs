@@ -27,6 +27,7 @@ const BUFFER_MAX: usize = 144;
 #[derive(Debug)]
 pub struct Buffer {
     pub target_fps: Option<u32>,
+    pub current_fps: Option<f64>,
     target_fps_config: TargetFps,
     timer: Instant,
     pub variance: Option<Duration>,
@@ -40,6 +41,7 @@ impl Buffer {
     pub fn new(t: TargetFps) -> Self {
         Self {
             target_fps: None,
+            current_fps: None,
             target_fps_config: t,
             timer: Instant::now(),
             variance: None,
@@ -69,22 +71,25 @@ impl Buffer {
                 .update(d);
 
             if self.timer.elapsed() * fps > Duration::from_secs(30) {
-                self.target_fps = self.calculate_fps();
-                self.variance = self.calculate_variance();
+                self.calculate_fps();
+                self.calculate_variance();
                 self.timer = Instant::now();
             }
         } else {
-            self.target_fps = self.calculate_fps();
+            self.calculate_fps();
         }
     }
 
-    fn calculate_fps(&self) -> Option<u32> {
+    fn calculate_fps(&mut self) {
         if self.frametimes.len() < BUFFER_MAX {
-            return None;
+            return;
         }
 
         let target_fpses = match &self.target_fps_config {
-            TargetFps::Value(t) => return Some(*t),
+            TargetFps::Value(t) => {
+                self.target_fps = Some(*t);
+                return;
+            }
             TargetFps::Array(arr) => arr,
         };
 
@@ -93,25 +98,31 @@ impl Buffer {
         #[cfg(debug_assertions)]
         debug!("avg_time: {avg_time:?}");
 
+        let current_fps = 1.0 / avg_time.as_secs_f64();
+        self.current_fps = Some(current_fps);
+        #[cfg(debug_assertions)]
+        debug!("current_fps: {:.2}", current_fps);
+
         for target_fps in target_fpses.iter().copied() {
             let target_frametime = Duration::from_secs(1) / (target_fps + 2);
             if avg_time > target_frametime {
-                return Some(target_fps);
+                self.target_fps = Some(target_fps);
+                return;
             }
         }
 
-        target_fpses.last().copied()
+        self.target_fps = target_fpses.last().copied();
     }
 
-    fn calculate_variance(&self) -> Option<Duration> {
+    fn calculate_variance(&mut self) {
         let Some(target_fps) = self.target_fps else {
-            return None;
+            return;
         };
 
         let cur_len = self.frametimes.len();
 
         if cur_len < target_fps as usize {
-            return None;
+            return;
         }
 
         let variance = self
@@ -127,6 +138,6 @@ impl Buffer {
         #[cfg(debug_assertions)]
         debug!("variance: {variance:?}");
 
-        Some(variance)
+        self.variance = Some(variance);
     }
 }

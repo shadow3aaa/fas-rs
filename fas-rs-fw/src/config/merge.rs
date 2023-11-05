@@ -15,7 +15,7 @@ use std::convert::AsRef;
 
 use likely_stable::LikelyOption;
 use serde_derive::{Deserialize, Serialize};
-use toml::Table;
+use toml::{Table, Value};
 
 use super::Config;
 use crate::error::{Error, Result};
@@ -47,7 +47,7 @@ impl Config {
         if local_conf
             .config
             .get("keep_std")
-            .and_then_likely(toml::Value::as_bool)
+            .and_then_likely(Value::as_bool)
             .ok_or(Error::ParseConfig)?
         {
             let new_conf = ConfigData {
@@ -76,7 +76,7 @@ impl Config {
             fast,
         };
 
-        Ok(toml::to_string_pretty(&new_conf)?)
+        Ok(toml::to_string(&new_conf)?)
     }
 
     fn table_merge(mut s: Table, l: Table) -> Table {

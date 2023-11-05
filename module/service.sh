@@ -27,8 +27,9 @@ done
 
 # update config
 if [ -f $MERGE_FLAG ]; then
-    $MODDIR/fas-rs --merge --local-profile $DIR/games.toml --std-profile $MODDIR/games.toml >$DIR/games.toml
+    $MODDIR/fas-rs --merge --local-profile $DIR/games.toml --std-profile $MODDIR/games.toml >$DIR/.update_games.toml
     rm $MERGE_FLAG
+    mv $DIR/.update_games.toml $DIR/games.toml
 fi
 
 # start with user profile

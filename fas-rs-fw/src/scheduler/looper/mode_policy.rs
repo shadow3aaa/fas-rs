@@ -15,7 +15,7 @@ use std::time::Duration;
 
 use toml::Value;
 
-use super::Looper;
+use super::{Buffer, Looper};
 use crate::{error::Result, node::Mode, Config, Error, PerformanceController};
 
 #[derive(Debug)]
@@ -27,7 +27,11 @@ pub struct PolicyConfig {
 }
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn policy_config(mode: Mode, variance: Duration, config: &Config) -> Result<PolicyConfig> {
+    pub fn policy_config(mode: Mode, buffer: &Buffer, config: &Config) -> Result<PolicyConfig> {
+        let variance = buffer.variance.unwrap_or_default();
+        let target_fps = buffer.target_fps.unwrap_or_default();
+        let current_fps = buffer.current_fps.unwrap_or_default() as u32;
+
         let tolerant_frame_offset = config.get_mode_conf(mode, "tolerant_frame_offset")?;
         let tolerant_frame_offset = match tolerant_frame_offset {
             Value::Float(f) => f as u64,
@@ -41,30 +45,30 @@ impl<P: PerformanceController> Looper<P> {
         let tolerant_frame_limit;
         let tolerant_frame_jank;
 
-        if variance > Duration::from_millis(10) {
+        if target_fps - current_fps > 3 {
+            jank_keep_count = 16;
+            normal_keep_count = 8;
+
+            tolerant_frame_limit = Duration::from_millis(7);
+            tolerant_frame_jank = Duration::from_millis(11);
+        } else if variance > Duration::from_millis(10) {
             jank_keep_count = 1;
             normal_keep_count = 0;
 
             tolerant_frame_limit = Duration::from_millis(10);
             tolerant_frame_jank = Duration::from_millis(14);
-        } else if variance > Duration::from_millis(6) {
+        } else if variance > Duration::from_millis(5) {
             jank_keep_count = 3;
             normal_keep_count = 2;
 
             tolerant_frame_limit = Duration::from_millis(8);
             tolerant_frame_jank = Duration::from_millis(12);
-        } else if variance > Duration::from_millis(3) {
-            jank_keep_count = 3;
+        } else {
+            jank_keep_count = 4;
             normal_keep_count = 2;
 
-            tolerant_frame_limit = Duration::from_millis(6);
-            tolerant_frame_jank = Duration::from_millis(10);
-        } else {
-            jank_keep_count = 5;
-            normal_keep_count = 3;
-
-            tolerant_frame_limit = Duration::from_millis(4);
-            tolerant_frame_jank = Duration::from_millis(8);
+            tolerant_frame_limit = Duration::from_millis(7);
+            tolerant_frame_jank = Duration::from_millis(11);
         }
 
         let tolerant_frame_jank = tolerant_frame_jank + tolerant_frame_offset;

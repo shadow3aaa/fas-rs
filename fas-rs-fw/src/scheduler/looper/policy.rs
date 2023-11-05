@@ -13,6 +13,7 @@
 *  limitations under the License. */
 use std::time::{Duration, Instant};
 
+#[cfg(debug_assertions)]
 use log::debug;
 
 use super::{Buffer, Looper};
@@ -29,17 +30,14 @@ impl<P: PerformanceController> Looper<P> {
             return Ok(());
         };
 
-        let Some(variance) = buffer.variance else {
-            return Ok(());
-        };
+        let mode = node.get_mode()?;
+        let policy = Self::policy_config(mode, buffer, config)?;
+        #[cfg(debug_assertions)]
+        debug!("mode policy: {policy:?}");
 
         let Some(window) = buffer.windows.get_mut(&target_fps) else {
             return Ok(());
         };
-
-        let mode = node.get_mode()?;
-        let policy = Self::policy_config(mode, variance, config)?;
-        debug!("mode policy: {policy:?}");
 
         let Some(normalized_avg_frame) = window.avg() else {
             return Ok(());
