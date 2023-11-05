@@ -8,19 +8,19 @@ keep_std = true
 "com.miHoYo.enterprise.NGHSoD" = [30, 60, 90]
 "com.miHoYo.hkrpg" = [30, 60]
 "com.mojang.minecraftpe" = [60, 120]
-"com.netease.party" = [30, 6]
+"com.netease.party" = [30, 60]
 "com.shangyoo.neon" = 60
 "com.tencent.tmgp.pubgmhd" = [60, 90, 120]
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
 [powersave]
-tolerant_frame_offset = 3
-
-[balance]
-tolerant_frame_offset = 2
-
-[performance]
 tolerant_frame_offset = 1
 
-[fast]
+[balance]
 tolerant_frame_offset = 0
+
+[performance]
+tolerant_frame_offset = -0.5
+
+[fast]
+tolerant_frame_offset = -1
