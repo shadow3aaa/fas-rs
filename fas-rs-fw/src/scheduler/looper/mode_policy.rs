@@ -45,7 +45,7 @@ impl<P: PerformanceController> Looper<P> {
         let tolerant_frame_limit;
         let tolerant_frame_jank;
 
-        if target_fps - current_fps > 3 {
+        if target_fps - current_fps >= 3 {
             jank_keep_count = 16;
             normal_keep_count = 8;
 

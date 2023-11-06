@@ -85,14 +85,6 @@ impl Buffer {
             return;
         }
 
-        let target_fpses = match &self.target_fps_config {
-            TargetFps::Value(t) => {
-                self.target_fps = Some(*t);
-                return;
-            }
-            TargetFps::Array(arr) => arr,
-        };
-
         let avg_time: Duration =
             self.frametimes.iter().sum::<Duration>() / BUFFER_MAX.try_into().unwrap();
         #[cfg(debug_assertions)]
@@ -102,6 +94,14 @@ impl Buffer {
         self.current_fps = Some(current_fps);
         #[cfg(debug_assertions)]
         debug!("current_fps: {:.2}", current_fps);
+
+        let target_fpses = match &self.target_fps_config {
+            TargetFps::Value(t) => {
+                self.target_fps = Some(*t);
+                return;
+            }
+            TargetFps::Array(arr) => arr,
+        };
 
         for target_fps in target_fpses.iter().copied() {
             let target_frametime = Duration::from_secs(1) / (target_fps + 2);
