@@ -31,6 +31,9 @@ use anyhow::Result;
 use clap::Parser;
 use log::{info, warn};
 
+#[cfg(debug_assertions)]
+use log::debug;
+
 use cpu_common::CpuCommon;
 
 #[derive(Parser, Debug)]
@@ -69,6 +72,9 @@ fn main() -> Result<()> {
 
         let config = Config::new(&local_path, &std_path)?;
         let cpu = CpuCommon::new(&config)?;
+
+        #[cfg(debug_assertions)]
+        debug!("{cpu:#?}");
 
         thread::Builder::new()
             .name("CleanerThead".into())

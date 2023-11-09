@@ -39,7 +39,13 @@ impl Interface for FasServer {}
 
 impl IRemoteService::IRemoteService for FasServer {
     #[allow(non_snake_case)]
-    fn sendData(&self, pkg: &str, pid: i32, frametime_ns: i64) -> binder::Result<bool> {
+    fn sendData(
+        &self,
+        buffer: i64,
+        pkg: &str,
+        pid: i32,
+        frametime_ns: i64,
+    ) -> binder::Result<bool> {
         let Some(target_fps) = self.config.target_fps(pkg) else {
             return Ok(false);
         };
@@ -47,6 +53,7 @@ impl IRemoteService::IRemoteService for FasServer {
         let frametime = Duration::from_nanos(frametime_ns as u64);
 
         let data = FasData {
+            buffer,
             target_fps,
             pid,
             pkg: pkg.to_string(),

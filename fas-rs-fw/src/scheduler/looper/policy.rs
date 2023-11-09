@@ -19,15 +19,18 @@ use log::debug;
 use super::{Buffer, Looper};
 use crate::{error::Result, node::Node, Config, PerformanceController};
 
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub enum Event {
+    Release,
+    ReleaseMax,
+    Limit,
+    None,
+}
+
 impl<P: PerformanceController> Looper<P> {
-    pub fn do_policy(
-        buffer: &mut Buffer,
-        controller: &P,
-        config: &Config,
-        node: &mut Node,
-    ) -> Result<()> {
+    pub fn get_event(buffer: &mut Buffer, config: &Config, node: &mut Node) -> Result<Event> {
         let Some(target_fps) = buffer.target_fps else {
-            return Ok(());
+            return Ok(Event::None);
         };
 
         let mode = node.get_mode()?;
@@ -36,21 +39,21 @@ impl<P: PerformanceController> Looper<P> {
         debug!("mode policy: {policy:?}");
 
         let Some(window) = buffer.windows.get_mut(&target_fps) else {
-            return Ok(());
+            return Ok(Event::None);
         };
 
         let Some(normalized_avg_frame) = window.avg() else {
-            return Ok(());
+            return Ok(Event::None);
         };
 
         let Some(normalized_frame) = window.last() else {
-            return Ok(());
+            return Ok(Event::None);
         };
 
         let normalized_big_jank_scale = Duration::from_secs(5);
         let normalized_jank_scale = Duration::from_millis(1700);
-        let normalized_limit_scale = Duration::from_secs(1) + policy.tolerant_frame_limit;
-        let normalized_release_scale = Duration::from_secs(1) + policy.tolerant_frame_limit;
+        let normalized_limit_scale = Duration::from_secs(1) - policy.tolerant_frame_limit;
+        let normalized_release_scale = Duration::from_secs(1) + policy.tolerant_frame_jank;
 
         #[cfg(debug_assertions)]
         {
@@ -64,11 +67,13 @@ impl<P: PerformanceController> Looper<P> {
         }
 
         if *normalized_frame > normalized_big_jank_scale {
-            controller.release_max(config)?; // big jank
-            buffer.counter = policy.jank_keep_count;
+            buffer.release_counter = 0;
+            buffer.limit_counter = 0;
 
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
+
+            Ok(Event::ReleaseMax)
         } else if *normalized_frame > normalized_jank_scale {
             *normalized_frame = Duration::from_secs(1);
             *buffer.frametimes.front_mut().unwrap() = Duration::from_secs(1) / target_fps;
@@ -76,34 +81,44 @@ impl<P: PerformanceController> Looper<P> {
             if let Some(stamp) = buffer.last_jank {
                 let normalized_last_jank = stamp.elapsed() * target_fps;
                 if normalized_last_jank < Duration::from_secs(30) {
-                    return Ok(());
+                    return Ok(Event::None);
                 }
             } // one jank is allow in 30 frames at least
 
             buffer.last_jank = Some(Instant::now());
-            buffer.counter = policy.jank_keep_count;
-            controller.release(config)?;
+            buffer.release_counter = 0;
+            buffer.limit_counter = 0;
 
             #[cfg(debug_assertions)]
             debug!("JANK: simp jank");
+
+            Ok(Event::Release)
         } else if normalized_avg_frame <= normalized_limit_scale {
-            if buffer.counter != 0 {
-                buffer.counter -= 1;
-                return Ok(());
+            if buffer.limit_counter < policy.keep_count {
+                buffer.limit_counter += 1;
+                return Ok(Event::None);
             }
 
-            buffer.counter = policy.normal_keep_count;
-            controller.limit(config)?;
+            buffer.limit_counter = 0;
 
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
+
+            Ok(Event::Limit)
         } else if normalized_avg_frame > normalized_release_scale {
-            controller.release(config)?;
+            if buffer.release_counter < policy.keep_count {
+                buffer.release_counter += 1;
+                return Ok(Event::None);
+            }
+
+            buffer.release_counter = 0;
 
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
-        }
 
-        Ok(())
+            Ok(Event::Release)
+        } else {
+            Ok(Event::None)
+        }
     }
 }

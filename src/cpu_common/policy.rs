@@ -26,7 +26,7 @@ use likely_stable::LikelyOption;
 use super::Freq;
 use crate::error::Error;
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Policy {
     pub num: u8,
     pub path: PathBuf,

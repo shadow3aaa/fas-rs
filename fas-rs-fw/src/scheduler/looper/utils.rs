@@ -42,15 +42,18 @@ impl<P: PerformanceController> Looper<P> {
             panic!("Target fps must be bigger than zero");
         }
 
-        let process = (d.pkg.clone(), d.pid);
+        let process = (d.buffer, d.pid);
+        let frametime = d.frametime;
         let target_fps = d.target_fps.clone();
 
         match self.buffers.entry(process) {
-            Entry::Occupied(mut o) => o.get_mut().push_frametime(d.frametime),
+            Entry::Occupied(mut o) => {
+                o.get_mut().push_frametime(frametime);
+            }
             Entry::Vacant(v) => {
-                info!("Loaded fas on {:?}", v.key());
+                info!("Loaded fas on game: [{}] pid: [{}]", d.pkg, d.pid);
                 let mut buffer = Buffer::new(target_fps);
-                buffer.push_frametime(d.frametime);
+                buffer.push_frametime(frametime);
                 v.insert(buffer);
             }
         }

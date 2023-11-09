@@ -23,9 +23,12 @@ use policy::Policy;
 
 pub type Freq = u32; // 单位: khz
 
+const STEP: Freq = 50000;
+
+#[derive(Debug)]
 pub struct CpuCommon {
     freqs: Vec<Freq>,
-    cur_freq: Cell<usize>,
+    cur_freq: Cell<Freq>,
     policies: Vec<Policy>,
 }
 
@@ -69,7 +72,7 @@ impl CpuCommon {
         freqs.sort_unstable();
 
         Ok(Self {
-            cur_freq: Cell::new(freqs.len() - 1),
+            cur_freq: Cell::new(freqs.last().copied().unwrap()),
             freqs,
             policies,
         })
@@ -80,15 +83,13 @@ impl PerformanceController for CpuCommon {
     fn limit(&self, _c: &Config) -> fas_rs_fw::Result<()> {
         let mut cur_freq = self.cur_freq.get();
 
-        if cur_freq != 0 {
-            cur_freq -= 1;
+        if cur_freq >= self.freqs.first().unwrap() + STEP {
+            cur_freq -= STEP;
             self.cur_freq.set(cur_freq);
         }
 
-        let prev_freq = self.freqs.get(cur_freq).copied().unwrap();
-
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(prev_freq);
+            let _ = policy.set_fas_freq(cur_freq);
         }
 
         Ok(())
@@ -97,15 +98,13 @@ impl PerformanceController for CpuCommon {
     fn release(&self, _c: &Config) -> fas_rs_fw::Result<()> {
         let mut cur_freq = self.cur_freq.get();
 
-        if cur_freq < self.freqs.len() - 1 {
-            cur_freq += 1;
+        if cur_freq <= self.freqs.last().unwrap() - STEP {
+            cur_freq += STEP;
             self.cur_freq.set(cur_freq);
         }
 
-        let next_freq = self.freqs.get(cur_freq).copied().unwrap();
-
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(next_freq);
+            let _ = policy.set_fas_freq(cur_freq);
         }
 
         Ok(())
@@ -118,12 +117,14 @@ impl PerformanceController for CpuCommon {
             let _ = policy.set_fas_freq(max_freq);
         }
 
-        self.cur_freq.set(self.freqs.len() - 1);
+        self.cur_freq.set(max_freq);
 
         Ok(())
     }
 
-    fn init_game(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
+    fn init_game(&self, c: &Config) -> Result<(), fas_rs_fw::Error> {
+        self.release_max(c)?;
+
         for policy in &self.policies {
             let _ = policy.init_game();
         }
@@ -131,7 +132,9 @@ impl PerformanceController for CpuCommon {
         Ok(())
     }
 
-    fn init_default(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
+    fn init_default(&self, c: &Config) -> Result<(), fas_rs_fw::Error> {
+        self.release_max(c)?;
+
         for policy in &self.policies {
             let _ = policy.init_default();
         }

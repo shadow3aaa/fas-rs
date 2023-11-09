@@ -34,7 +34,8 @@ pub struct Buffer {
     pub frametimes: VecDeque<Duration>,
     pub windows: HashMap<u32, FrameWindow>,
     pub last_jank: Option<Instant>,
-    pub counter: u8,
+    pub limit_counter: u8,
+    pub release_counter: u8,
 }
 
 impl Buffer {
@@ -48,7 +49,8 @@ impl Buffer {
             frametimes: VecDeque::with_capacity(BUFFER_MAX),
             windows: HashMap::new(),
             last_jank: None,
-            counter: 0,
+            limit_counter: 0,
+            release_counter: 0,
         }
     }
 
@@ -104,8 +106,8 @@ impl Buffer {
         };
 
         for target_fps in target_fpses.iter().copied() {
-            let target_frametime = Duration::from_secs(1) / (target_fps + 2);
-            if avg_time > target_frametime {
+            let target_frametime = Duration::from_secs(1) / (target_fps + 3);
+            if avg_time >= target_frametime {
                 self.target_fps = Some(target_fps);
                 return;
             }

@@ -55,8 +55,8 @@ static CHANNEL: Lazy<Channel> = Lazy::new(|| {
 });
 
 struct Channel {
-    sx: SyncSender<(*mut c_void, Instant)>,
-    rx: Receiver<(*mut c_void, Instant)>,
+    sx: SyncSender<(i64, Instant)>,
+    rx: Receiver<(i64, Instant)>,
 }
 
 unsafe impl Sync for Channel {}
@@ -165,13 +165,11 @@ unsafe fn hook() -> Result<()> {
 *  This function is called every time a new frame is added to the buffer */
 unsafe extern "C" fn post_hook(android_native_buffer_t: *mut c_void, fence_id: c_int) -> c_int {
     let ori_fun: extern "C" fn(*mut c_void, c_int) -> c_int = mem::transmute(OLD_FUNC_PTR); // trans ptr to ori func
-    let result = ori_fun(android_native_buffer_t, fence_id);
 
-    if result == 0 {
-        let _ = CHANNEL
-            .sx
-            .try_send((android_native_buffer_t, Instant::now()));
-    }
+    let result = ori_fun(android_native_buffer_t, fence_id);
+    let _ = CHANNEL
+        .sx
+        .try_send((android_native_buffer_t as i64, Instant::now()));
 
     result
 }

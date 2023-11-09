@@ -32,9 +32,10 @@ use crate::{
 };
 
 use buffer::Buffer;
+use policy::Event;
 
-pub type Buffers = HashMap<Process, Buffer>; // Process, (jank_scale, total_jank_time_ns)
-pub type Process = (String, i32); // process, pid
+pub type Producer = (i64, i32); // buffer, pid
+pub type Buffers = HashMap<Producer, Buffer>; // Process, (jank_scale, total_jank_time_ns)
 
 pub struct Looper<P: PerformanceController> {
     rx: Receiver<FasData>,
@@ -81,9 +82,20 @@ impl<P: PerformanceController> Looper<P> {
             self.retain_topapp()?;
             self.buffer_update(&data);
 
-            let process = (data.pkg.clone(), data.pid);
-            if let Some(buffer) = self.buffers.get_mut(&process) {
-                Self::do_policy(buffer, &self.controller, &self.config, &mut self.node)?;
+            let events: Vec<_> = self
+                .buffers
+                .values_mut()
+                .map(|buffer| {
+                    Self::get_event(buffer, &self.config, &mut self.node).unwrap_or(Event::None)
+                })
+                .collect();
+
+            if events.contains(&Event::ReleaseMax) {
+                self.controller.release_max(&self.config)?;
+            } else if events.contains(&Event::Release) {
+                self.controller.release(&self.config)?;
+            } else if events.contains(&Event::Limit) {
+                self.controller.limit(&self.config)?;
             }
         }
     }

@@ -29,6 +29,7 @@ use looper::Looper;
 
 #[derive(Debug, Clone)]
 pub struct FasData {
+    pub buffer: i64,
     pub target_fps: TargetFps,
     pub pkg: String,
     pub pid: i32,

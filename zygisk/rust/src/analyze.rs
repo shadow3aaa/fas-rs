@@ -11,11 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{
-    collections::hash_map::{Entry, HashMap},
-    process,
-    time::{Duration, Instant},
-};
+use std::{collections::hash_map::HashMap, process};
 
 use binder::Strong;
 #[cfg(debug_assertions)]
@@ -26,12 +22,10 @@ use crate::{IRemoteService::IRemoteService, CHANNEL};
 
 pub fn thread(fas_service: &Strong<dyn IRemoteService>, process: &str) -> anyhow::Result<()> {
     let pid = process::id() as i32;
-    let mut buffer_stamp: HashMap<_, Instant> = HashMap::new();
+    let mut stamps = HashMap::new();
 
     loop {
-        buffer_stamp.retain(|_, s| s.elapsed() < Duration::from_secs(10)); // buffer gc
-
-        let (buffer_ptr, stamp) = match CHANNEL.rx.recv() {
+        let (ptr, stamp) = match CHANNEL.rx.recv() {
             Ok(o) => o,
             Err(e) => {
                 error!("End analyze thread, reason: {e:?}");
@@ -39,22 +33,14 @@ pub fn thread(fas_service: &Strong<dyn IRemoteService>, process: &str) -> anyhow
             }
         };
 
-        if buffer_ptr.is_null() {
-            continue;
-        }
-
-        let frametime = match buffer_stamp.entry(buffer_ptr) {
-            Entry::Occupied(mut o) => o.insert(stamp).elapsed(),
-            Entry::Vacant(v) => {
-                v.insert(stamp);
-                continue;
-            }
-        };
+        let last_stamp = stamps.entry(ptr).or_insert(stamp);
+        let frametime = stamp - *last_stamp;
+        *last_stamp = stamp;
 
         #[cfg(debug_assertions)]
         debug!("process: [{process}] framtime: [{frametime:?}]");
 
-        if Ok(false) == fas_service.sendData(process, pid, frametime.as_nanos() as i64) {
+        if Ok(false) == fas_service.sendData(ptr, process, pid, frametime.as_nanos() as i64) {
             #[cfg(debug_assertions)]
             debug!("Exit analyze thread, since server prefer this is not a fas app anymore");
             return Ok(());
