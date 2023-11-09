@@ -11,18 +11,24 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{collections::hash_map::HashMap, process};
+use std::{
+    collections::hash_map::HashMap,
+    process,
+    time::{Duration, Instant},
+};
 
 use binder::Strong;
+use log::error;
+
 #[cfg(debug_assertions)]
 use log::debug;
-use log::error;
 
 use crate::{IRemoteService::IRemoteService, CHANNEL};
 
 pub fn thread(fas_service: &Strong<dyn IRemoteService>, process: &str) -> anyhow::Result<()> {
     let pid = process::id() as i32;
     let mut stamps = HashMap::new();
+    let mut gc_timer = Instant::now();
 
     loop {
         let (ptr, stamp) = match CHANNEL.rx.recv() {
@@ -36,6 +42,11 @@ pub fn thread(fas_service: &Strong<dyn IRemoteService>, process: &str) -> anyhow
         let last_stamp = stamps.entry(ptr).or_insert(stamp);
         let frametime = stamp - *last_stamp;
         *last_stamp = stamp;
+
+        if gc_timer.elapsed() > Duration::from_secs(7) {
+            stamps.retain(|_, i| i.elapsed() < Duration::from_secs(7));
+            gc_timer = Instant::now();
+        }
 
         #[cfg(debug_assertions)]
         debug!("process: [{process}] framtime: [{frametime:?}]");

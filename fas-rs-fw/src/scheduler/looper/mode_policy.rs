@@ -40,8 +40,8 @@ impl<P: PerformanceController> Looper<P> {
         let tolerant_frame_offset = tolerant_frame_offset / 1000.0; // to ms
 
         let keep_count;
-        let tolerant_frame_limit = Duration::from_millis(2);
-        let tolerant_frame_jank = Duration::from_millis(4);
+        let tolerant_frame_limit = Duration::from_millis(1);
+        let tolerant_frame_jank = Duration::from_millis(1);
 
         if target_fps - current_fps >= 3 {
             keep_count = 1;
