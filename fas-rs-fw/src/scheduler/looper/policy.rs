@@ -32,6 +32,7 @@ impl<P: PerformanceController> Looper<P> {
         let Some(target_fps) = buffer.target_fps else {
             return Ok(Event::None);
         };
+        let current_fps = buffer.current_fps.unwrap_or_default() as u32;
 
         let mode = node.get_mode()?;
         let policy = Self::policy_config(mode, buffer, config)?;
@@ -67,14 +68,13 @@ impl<P: PerformanceController> Looper<P> {
         }
 
         if *normalized_frame > normalized_big_jank_scale {
-            buffer.release_counter = 0;
-            buffer.limit_counter = 0;
+            buffer.limit_acc = Duration::ZERO;
 
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
 
             Ok(Event::ReleaseMax)
-        } else if *normalized_frame > normalized_jank_scale {
+        } else if *normalized_frame > normalized_jank_scale || target_fps - current_fps >= 3 {
             *normalized_frame = Duration::from_secs(1);
             *buffer.frametimes.front_mut().unwrap() = Duration::from_secs(1) / target_fps;
 
@@ -86,32 +86,33 @@ impl<P: PerformanceController> Looper<P> {
             } // one jank is allow in 30 frames at least
 
             buffer.last_jank = Some(Instant::now());
-            buffer.release_counter = 0;
-            buffer.limit_counter = 0;
+            buffer.limit_acc = Duration::ZERO;
 
             #[cfg(debug_assertions)]
             debug!("JANK: simp jank");
 
             Ok(Event::Release)
         } else if normalized_avg_frame <= normalized_limit_scale {
-            if buffer.limit_counter < policy.keep_count {
-                buffer.limit_counter += 1;
+            if buffer.limit_acc < policy.scale_time {
+                let diff = normalized_limit_scale - normalized_avg_frame;
+                buffer.limit_acc += diff;
                 return Ok(Event::None);
             }
 
-            buffer.limit_counter = 0;
+            buffer.limit_acc = Duration::ZERO;
 
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
 
             Ok(Event::Limit)
         } else if normalized_avg_frame > normalized_release_scale {
-            if buffer.release_counter < policy.keep_count {
-                buffer.release_counter += 1;
+            if buffer.release_acc < policy.scale_time {
+                let diff = normalized_avg_frame - normalized_release_scale;
+                buffer.release_acc += diff;
                 return Ok(Event::None);
             }
 
-            buffer.release_counter = 0;
+            buffer.release_acc = Duration::ZERO;
 
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");

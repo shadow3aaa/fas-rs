@@ -47,9 +47,7 @@ impl<P: PerformanceController> Looper<P> {
         let target_fps = d.target_fps.clone();
 
         match self.buffers.entry(process) {
-            Entry::Occupied(mut o) => {
-                o.get_mut().push_frametime(frametime);
-            }
+            Entry::Occupied(mut o) => o.get_mut().push_frametime(frametime),
             Entry::Vacant(v) => {
                 info!("Loaded fas on game: [{}] pid: [{}]", d.pkg, d.pid);
                 let mut buffer = Buffer::new(target_fps);

@@ -20,7 +20,7 @@ use crate::{error::Result, node::Mode, Config, Error, PerformanceController};
 
 #[derive(Debug)]
 pub struct PolicyConfig {
-    pub keep_count: u8,
+    pub scale_time: Duration,
     pub tolerant_frame_limit: Duration,
     pub tolerant_frame_jank: Duration,
 }
@@ -28,8 +28,6 @@ pub struct PolicyConfig {
 impl<P: PerformanceController> Looper<P> {
     pub fn policy_config(mode: Mode, buffer: &Buffer, config: &Config) -> Result<PolicyConfig> {
         let variance = buffer.variance.unwrap_or_default();
-        let target_fps = buffer.target_fps.unwrap_or_default();
-        let current_fps = buffer.current_fps.unwrap_or_default() as u32;
 
         let tolerant_frame_offset = config.get_mode_conf(mode, "tolerant_frame_offset")?;
         let tolerant_frame_offset = match tolerant_frame_offset {
@@ -39,18 +37,16 @@ impl<P: PerformanceController> Looper<P> {
         };
         let tolerant_frame_offset = tolerant_frame_offset / 1000.0; // to ms
 
-        let keep_count;
-        let tolerant_frame_limit = Duration::from_millis(1);
-        let tolerant_frame_jank = Duration::from_millis(1);
+        let scale_time;
+        let tolerant_frame_limit = Duration::from_millis(2);
+        let tolerant_frame_jank = Duration::from_millis(4);
 
-        if target_fps - current_fps >= 3 {
-            keep_count = 1;
-        } else if variance > Duration::from_millis(10) {
-            keep_count = 4;
-        } else if variance > Duration::from_millis(5) {
-            keep_count = 2;
+        if variance > Duration::from_millis(10) {
+            scale_time = Duration::from_secs(1);
+        } else if variance > Duration::from_millis(4) {
+            scale_time = Duration::from_millis(200);
         } else {
-            keep_count = 1;
+            scale_time = Duration::from_millis(10);
         }
 
         let tolerant_frame_jank_offseted =
@@ -62,7 +58,7 @@ impl<P: PerformanceController> Looper<P> {
         let tolerant_frame_jank = Duration::from_secs_f64(tolerant_frame_jank_offseted);
 
         Ok(PolicyConfig {
-            keep_count,
+            scale_time,
             tolerant_frame_limit,
             tolerant_frame_jank,
         })

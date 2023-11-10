@@ -85,12 +85,13 @@ impl<P: PerformanceController> Looper<P> {
             let Some(cur_buffer) = self.buffers.get_mut(&(data.buffer, data.pid)) else {
                 continue;
             };
-            let cur_event =
+            let current_event =
                 Self::get_event(cur_buffer, &self.config, &mut self.node).unwrap_or(Event::None);
 
             let events: Vec<_> = self
                 .buffers
                 .values_mut()
+                .filter(|buffer| buffer.last_update.elapsed() < Duration::from_secs(1))
                 .map(|buffer| {
                     Self::get_event(buffer, &self.config, &mut self.node).unwrap_or(Event::None)
                 })
@@ -100,7 +101,7 @@ impl<P: PerformanceController> Looper<P> {
                 self.controller.release_max(&self.config)?;
             } else if events.contains(&Event::Release) {
                 self.controller.release(&self.config)?;
-            } else if cur_event == Event::Limit {
+            } else if current_event == Event::Limit {
                 self.controller.limit(&self.config)?;
             }
         }

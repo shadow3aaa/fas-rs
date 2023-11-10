@@ -30,12 +30,13 @@ pub struct Buffer {
     pub current_fps: Option<f64>,
     target_fps_config: TargetFps,
     timer: Instant,
+    pub last_update: Instant,
     pub variance: Option<Duration>,
     pub frametimes: VecDeque<Duration>,
     pub windows: HashMap<u32, FrameWindow>,
     pub last_jank: Option<Instant>,
-    pub limit_counter: u8,
-    pub release_counter: u8,
+    pub limit_acc: Duration,
+    pub release_acc: Duration,
 }
 
 impl Buffer {
@@ -45,16 +46,19 @@ impl Buffer {
             current_fps: None,
             target_fps_config: t,
             timer: Instant::now(),
+            last_update: Instant::now(),
             variance: None,
             frametimes: VecDeque::with_capacity(BUFFER_MAX),
             windows: HashMap::new(),
             last_jank: None,
-            limit_counter: 0,
-            release_counter: 0,
+            limit_acc: Duration::ZERO,
+            release_acc: Duration::ZERO,
         }
     }
 
     pub fn push_frametime(&mut self, d: Duration) {
+        self.last_update = Instant::now();
+
         let cur_len = self.frametimes.len();
         if cur_len >= BUFFER_MAX {
             self.frametimes.pop_back();
