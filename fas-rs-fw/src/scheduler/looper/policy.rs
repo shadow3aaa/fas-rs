@@ -68,7 +68,7 @@ impl<P: PerformanceController> Looper<P> {
         }
 
         if *normalized_frame > normalized_big_jank_scale {
-            buffer.limit_acc = Duration::ZERO;
+            buffer.nanos_acc = 0;
 
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
@@ -86,33 +86,37 @@ impl<P: PerformanceController> Looper<P> {
             } // one jank is allow in 30 frames at least
 
             buffer.last_jank = Some(Instant::now());
-            buffer.limit_acc = Duration::ZERO;
+            buffer.nanos_acc = 0;
 
             #[cfg(debug_assertions)]
             debug!("JANK: simp jank");
 
             Ok(Event::Release)
         } else if normalized_avg_frame <= normalized_limit_scale {
-            if buffer.limit_acc < policy.scale_time {
+            if buffer.nanos_acc < policy.scale_time.as_nanos().try_into().unwrap() {
                 let diff = normalized_limit_scale - normalized_avg_frame;
-                buffer.limit_acc += diff;
+                buffer.nanos_acc = buffer
+                    .nanos_acc
+                    .saturating_add(diff.as_nanos().try_into().unwrap());
                 return Ok(Event::None);
             }
 
-            buffer.limit_acc = Duration::ZERO;
+            buffer.nanos_acc = 0;
 
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
 
             Ok(Event::Limit)
         } else if normalized_avg_frame > normalized_release_scale {
-            if buffer.release_acc < policy.scale_time {
+            if -buffer.nanos_acc < policy.scale_time.as_nanos().try_into().unwrap() {
                 let diff = normalized_avg_frame - normalized_release_scale;
-                buffer.release_acc += diff;
+                buffer.nanos_acc = buffer
+                    .nanos_acc
+                    .saturating_sub(diff.as_nanos().try_into().unwrap());
                 return Ok(Event::None);
             }
 
-            buffer.release_acc = Duration::ZERO;
+            buffer.nanos_acc = 0;
 
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
