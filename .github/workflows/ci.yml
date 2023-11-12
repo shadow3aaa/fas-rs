@@ -30,6 +30,6 @@ jobs:
              i686-linux-android
     - run: cargo install cargo-ndk
     - name: check codes
-      run: cargo ndk check --verbose --target aarch64-linux-android
+      run: cargo ndk -t arm64-v8a --platform=29 check --verbose --target aarch64-linux-android
     - name: run tests
-      run: cargo ndk test --verbose --target aarch64-linux-android
+      run: cargo ndk -t arm64-v8a --platform=29 test --verbose --target aarch64-linux-android
