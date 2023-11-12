@@ -24,7 +24,8 @@ jobs:
         toolchain: nightly
         override: true
         target: aarch64-linux-android
+    - run: cargo install cargo-ndk
     - name: check codes
-      run: cargo check --verbose --target aarch64-linux-android
+      run: cargo ndk check --verbose --target aarch64-linux-android
     - name: run tests
-      run: cargo test --verbose --target aarch64-linux-android
+      run: cargo ndk test --verbose --target aarch64-linux-android
