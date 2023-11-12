@@ -36,6 +36,4 @@ jobs:
     - name: check codes
       run: cargo ndk -t arm64-v8a --platform=29 check --verbose --target aarch64-linux-android
     - name: build
-      run: |
-        xmake f -p android
-        xmake
+      run: sh build.sh
