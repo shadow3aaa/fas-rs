@@ -1,5 +1,4 @@
 set_languages("c++2b")
-set_defaultarchs("arm64")
 add_rules("mode.release", "mode.debug")
 
 target("zygisk")
