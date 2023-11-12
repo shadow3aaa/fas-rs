@@ -1,0 +1,25 @@
+name: ci-build
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: nttld/setup-ndk@v1.4.1
+      with:
+        ndk-version: r26b
+    - name: check codes
+      run: cargo check --verbose --target aarch64-linux-android
+    - name: run tests
+      run: cargo test --verbose --target aarch64-linux-android
