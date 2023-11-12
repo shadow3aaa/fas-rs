@@ -23,9 +23,9 @@ jobs:
       with:
         toolchain: nightly
         override: true
-        target: aarch64-linux-android
-                armv7-linux-android
-                x86_64-linux-android
+        target: aarch64-linux-android \
+                armv7-linux-android \
+                x86_64-linux-android \
                 i686-linux-android
     - run: cargo install cargo-ndk
     - name: check codes
