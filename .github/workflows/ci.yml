@@ -19,15 +19,9 @@ jobs:
     - uses: nttld/setup-ndk@v1.4.1
       with:
         ndk-version: r26b
-    - uses: actions-rs/toolchain@v1.0.6
-      with:
-        toolchain: nightly
-        override: true
-    - run: rustup target add
-             aarch64-linux-android
-             armv7-linux-androideabi
-             x86_64-linux-android
-             i686-linux-android
+    - run: |
+        rustup default nightly
+        rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
     - run: cargo install cargo-ndk
     - run: |
         sudo add-apt-repository ppa:xmake-io/xmake
@@ -36,4 +30,4 @@ jobs:
     - name: check codes
       run: cargo ndk -t arm64-v8a --platform=29 check --verbose --target aarch64-linux-android
     - name: build
-      run: sh build.sh
+      run: sh build.sh release
