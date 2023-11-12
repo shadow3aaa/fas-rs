@@ -19,6 +19,11 @@ jobs:
     - uses: nttld/setup-ndk@v1.4.1
       with:
         ndk-version: r26b
+    - uses: actions-rs/toolchain@v1.0.6
+      with:
+        toolchain: nightly
+        override: true
+        target: aarch64-linux-android
     - name: check codes
       run: cargo check --verbose --target aarch64-linux-android
     - name: run tests
