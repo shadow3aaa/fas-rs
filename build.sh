@@ -24,6 +24,8 @@ cd $SHDIR
 mkdir -p output
 cp -r module output/.temp
 
+set -e
+
 case $1 in
 clean | --clean)
     rm -rf output

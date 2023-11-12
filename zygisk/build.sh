@@ -21,6 +21,8 @@ fi
 
 mkdir -p $SHDIR/output
 
+set -e
+
 case $1 in
 clean | --clean)
     cd $SHDIR/rust
