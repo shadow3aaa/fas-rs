@@ -6,6 +6,4 @@
 /module/module.prop
 
 # build
-/build
-/.xmake
 /output
