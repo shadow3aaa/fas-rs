@@ -11,7 +11,7 @@ crate-type = ["staticlib"]
 [dependencies]
 android_logger = "0.13.3"
 cpp_demangle = "0.4.3"
-dobby-api = "0.1.6"
+dobby-api = "0.1.7"
 goblin = "0.7.1"
 libc = "0.2.149"
 log = "0.4.20"
