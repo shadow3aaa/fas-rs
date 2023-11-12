@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-SHDIR=${0%/*}
+SHDIR="$(dirname $(readlink -f "$0"))"
 
 if [ "$TERMUX_VERSION" = "" ]; then
     alias cargo='cargo ndk -t arm64-v8a'

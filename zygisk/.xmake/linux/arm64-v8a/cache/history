@@ -1,0 +1,8 @@
+{
+    cmdlines = {
+        "xmake lua /data/data/com.termux/files/usr/share/xmake/modules/private/utils/statistics.lua",
+        "xmake ",
+        "xmake ",
+        "xmake "
+    }
+}

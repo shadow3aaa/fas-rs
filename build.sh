@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-SHDIR=${0%/*}
+SHDIR="$(dirname $(readlink -f "$0"))"
 TEMPDIR=$SHDIR/output/.temp
 
 if [ "$TERMUX_VERSION" = "" ]; then
@@ -27,13 +27,13 @@ cp -r module output/.temp
 case $1 in
 clean | --clean)
     rm -rf output
-    sh zygisk/build.sh --clean
+    zygisk/build.sh --clean
 
     exit
     ;;
 r | -r | release | --release)
     cargo build --release
-    sh zygisk/build.sh --release
+    zygisk/build.sh --release
 
     cp -f target/aarch64-linux-android/release/fas-rs $TEMPDIR/fas-rs
     cp -f zygisk/output/arm64-v8a.so $TEMPDIR/zygisk/arm64-v8a.so
@@ -45,7 +45,7 @@ r | -r | release | --release)
     ;;
 d | -d | debug | --debug)
     cargo build --debug
-    sh zygisk/build.sh --debug
+    zygisk/build.sh --debug
 
     cp -f target/aarch64-linux-android/debug/fas-rs $TEMPDIR/fas-rs
     cp -f zygisk/output/arm64-v8a.so $TEMPDIR/zygisk/arm64-v8a.so
