@@ -17,7 +17,7 @@ SHDIR="$(dirname $(readlink -f "$0"))"
 TEMPDIR=$SHDIR/output/.temp
 
 if [ "$TERMUX_VERSION" = "" ]; then
-    alias cargo='cargo ndk -t arm64-v8a'
+	alias cargo='cargo ndk -t arm64-v8a'
 fi
 
 cd $SHDIR
@@ -28,33 +28,33 @@ set -e
 
 case $1 in
 clean | --clean)
-    rm -rf output
-    zygisk/build.sh --clean
+	rm -rf output
+	zygisk/build.sh --clean
 
-    exit
-    ;;
+	exit
+	;;
 r | -r | release | --release)
-    cargo build --release
-    zygisk/build.sh --release
+	cargo build --release
+	zygisk/build.sh --release
 
-    cp -f target/aarch64-linux-android/release/fas-rs $TEMPDIR/fas-rs
-    cp -f zygisk/output/arm64-v8a.so $TEMPDIR/zygisk/arm64-v8a.so
+	cp -f target/aarch64-linux-android/release/fas-rs $TEMPDIR/fas-rs
+	cp -f zygisk/output/arm64-v8a.so $TEMPDIR/zygisk/arm64-v8a.so
 
-    cd $TEMPDIR
-    zip -9 -rq ../fas-rs.zip .
+	cd $TEMPDIR
+	zip -9 -rq ../fas-rs.zip .
 
-    echo Flashable Module Packaged: output/fas-rs.zip
-    ;;
+	echo Flashable Module Packaged: output/fas-rs.zip
+	;;
 d | -d | debug | --debug)
-    cargo build --debug
-    zygisk/build.sh --debug
+	cargo build --debug
+	zygisk/build.sh --debug
 
-    cp -f target/aarch64-linux-android/debug/fas-rs $TEMPDIR/fas-rs
-    cp -f zygisk/output/arm64-v8a.so $TEMPDIR/zygisk/arm64-v8a.so
+	cp -f target/aarch64-linux-android/debug/fas-rs $TEMPDIR/fas-rs
+	cp -f zygisk/output/arm64-v8a.so $TEMPDIR/zygisk/arm64-v8a.so
 
-    cd $TEMPDIR
-    zip -9 -rq ../fas-rs.zip .
+	cd $TEMPDIR
+	zip -9 -rq ../fas-rs.zip .
 
-    echo Flashable Module Packaged: output/fas-rs.zip
-    ;;
+	echo Flashable Module Packaged: output/fas-rs.zip
+	;;
 esac
