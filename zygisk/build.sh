@@ -30,6 +30,7 @@ if [ "$TERMUX_VERSION" = "" ]; then
 		clang_latest=$(ls $dir | grep aarch64-linux-android | grep clang | tail -n 1)
 
 		alias clang++="$dir/$clang_latest"
+		which clang++
 	fi
 fi
 
