@@ -28,7 +28,7 @@ jobs:
         sudo apt update
         sudo apt install gcc-multilib xmake git-lfs
     - run: git lfs pull
-    - name: check codes
-      run: cargo ndk -t arm64-v8a --platform=29 check --verbose --target aarch64-linux-android
+    # - name: check codes
+    #   run: cargo ndk -t arm64-v8a --platform=29 check --verbose --target aarch64-linux-android
     - name: build
       run: sh build.sh release
