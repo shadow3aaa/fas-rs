@@ -24,9 +24,8 @@ jobs:
         rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
     - run: cargo install cargo-ndk
     - run: |
-        sudo add-apt-repository ppa:xmake-io/xmake
         sudo apt update
-        sudo apt install gcc-multilib xmake git-lfs
+        sudo apt install gcc-multilib git-lfs
     - run: git lfs pull
     # - name: check codes
     #   run: cargo ndk -t arm64-v8a --platform=29 check --verbose --target aarch64-linux-android

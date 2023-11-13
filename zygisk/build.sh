@@ -31,7 +31,7 @@ if [ "$TERMUX_VERSION" = "" ]; then
 
         echo Find clang: $dir/$clang_latest
 		alias clang++="$dir/$clang_latest"
-		echo Use clang: $(which clang++)
+		clang++ -v
 	fi
 fi
 
