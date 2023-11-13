@@ -29,6 +29,7 @@ if [ "$TERMUX_VERSION" = "" ]; then
 		dir=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin
 		clang_latest=$(ls $dir | grep aarch64-linux-android | grep clang | tail -n 1)
 
+        echo Find clang: $dir/$clang_latest
 		alias clang++="$dir/$clang_latest"
 		echo Use clang: $(which clang++)
 	fi
