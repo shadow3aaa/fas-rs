@@ -17,22 +17,22 @@
 # fast commands on termux(android)
 
 run() {
-    su -c 'killall fas-rs 2>&1 >/dev/null; FAS_LOG=debug output/.temp/fas-rs -r'
+	su -c 'killall fas-rs 2>&1 >/dev/null; FAS_LOG=debug output/.temp/fas-rs -r'
 }
 
 if [ ! -f output/fas-rs.zip ]; then
-    echo "Run xmake first"
-    exit 1
+	echo "Run xmake first"
+	exit 1
 elif [ "$1" = "" ]; then
-    echo "Required an argument: --install, --run or --install-and-run"
-    exit 1
+	echo "Required an argument: --install, --run or --install-and-run"
+	exit 1
 elif [ "$1" = "--install" ]; then
-    su -c magisk --install-module output/fas-rs.zip
+	su -c magisk --install-module output/fas-rs.zip
 elif [ "$1" = "--run" ]; then
-    run
+	run
 elif [ "$1" = "--install-and-run" ]; then
-    su -c magisk --install-module output/fas-rs.zip
-    run
+	su -c magisk --install-module output/fas-rs.zip
+	run
 else
-    echo "Undefined argument, Required an argument: --install, --run or --install-and-run"
+	echo "Undefined argument, Required an argument: --install, --run or --install-and-run"
 fi

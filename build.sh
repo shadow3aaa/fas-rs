@@ -40,6 +40,9 @@ r | -r | release | --release)
 	cp -f target/aarch64-linux-android/release/fas-rs $TEMPDIR/fas-rs
 	cp -f zygisk/output/arm64-v8a.so $TEMPDIR/zygisk/arm64-v8a.so
 
+	strip $TEMPDIR/fas-rs
+	strip $TEMPDIR/zygisk/arm64-v8a.so
+
 	cd $TEMPDIR
 	zip -9 -rq ../fas-rs.zip .
 
@@ -56,5 +59,12 @@ d | -d | debug | --debug)
 	zip -9 -rq ../fas-rs.zip .
 
 	echo Flashable Module Packaged: output/fas-rs.zip
+	;;
+*)
+	echo -n "Help:
+    build.sh --release / release / -r / r:
+        release build
+    build.sh --debug / debug / -d / d:
+        debug build"
 	;;
 esac

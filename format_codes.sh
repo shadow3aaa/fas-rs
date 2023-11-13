@@ -14,7 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 cargo fmt -v
+shfmt -w -s *.sh
 cd zygisk
+shfmt -w -s *.sh
 clang-format -i src/*.cpp
 cd rust
 cargo fmt -v

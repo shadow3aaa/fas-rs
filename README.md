@@ -97,20 +97,27 @@ tolerant_frame_offset = 0.0
     fas-rs --merge --local-profile /path/to/local/config --std-profile /path/to/std/config
     ```
 
-## **编译(termux)**
+## **编译**
 
 ```bash
-# clone
+# Deps(termux):
+apt install rust zip ndk* clang binutils-is-llvm shfmt git-lfs
+
+# Deps(Other linux):
+# Android NDK(https://developer.android.google.com/ndk/downloads)
+# Rust(https://www.rust-lang.org)
+# cargo-ndk(https://github.com/bbqsrc/cargo-ndk) for compile
+cargo install cargo-ndk
+
+# Clone
 git clone https://github.com/shadow3aaa/fas-rs
+cd fas-rs
 
-# install deps
-apt install rust zip ndk* clang binutils-is-llvm xmake
-
-# build & package
-# release build
-xmake f -m release
-xmake
-# debug build
-xmake f -m debug
-xmake
+# Compile:
+# build.sh --release / release / -r / r:
+#   release build
+# build.sh --debug / debug / -d / d:
+#   debug build
+chmod +x ./build.sh
+./build.sh --release
 ```
