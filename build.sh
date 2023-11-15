@@ -24,6 +24,7 @@ if [ "$TERMUX_VERSION" = "" ]; then
 		exit 1
 	else
 		dir="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+		ls -lh $dir
 		alias strip="$dir/aarch64-linux-android-strip"
 	fi
 else
