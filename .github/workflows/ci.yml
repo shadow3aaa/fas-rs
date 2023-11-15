@@ -20,19 +20,27 @@ jobs:
       run: |
         ndk_url=$(wget -qO- https://github.com/android/ndk/releases/latest | grep -e 'https://dl.google.com/android/repository/android-ndk-.*-linux.zip' | sed -n 's/.*<a href="\([^"]*\)".*/\1/p')
         wget -O ndk.zip $ndk_url -nv
-        mkdir ndk_temp
-        unzip ndk.zip -d ndk_temp 2>&1 > /dev/null
-        mv ./ndk_temp/*/* ./ndk_temp
+        mkdir ~/ndk_temp
+        unzip ndk.zip -d ~/ndk_temp 2>&1 > /dev/null
+        mv ~/ndk_temp/*/* ~/ndk_temp
+
+    - name: Setup rust toolchains
     - run: |
         rustup default nightly
         rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+
+    - name: Install cargo ndk
     - run: cargo install cargo-ndk
+    
+    - name: Other deps
     - run: |
         sudo apt update
         sudo apt install gcc-multilib git-lfs
-    - run: git lfs pull
+        git lfs pull
+
     - name: build
       run: |
-        export ANDROID_NDK_HOME=$(realpath ./ndk_temp)
+        export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
+        export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
         chmod +x ./build.sh
         ./build.sh --release
