@@ -20,7 +20,7 @@ CFLAGS="
 -std=c++2b -Wall -lc++"
 
 if [ "$TERMUX_VERSION" = "" ]; then
-	alias cargo='cargo ndk -t arm64-v8a'
+	alias RR='cargo ndk -t arm64-v8a'
 
 	if [ "$ANDROID_NDK_HOME" = "" ]; then
 		echo Missing ANDROID_NDK_HOME
@@ -33,6 +33,8 @@ if [ "$TERMUX_VERSION" = "" ]; then
 		alias clang++="$dir/$clang_latest"
 		clang++ -v
 	fi
+else
+    alias RR=cargo
 fi
 
 mkdir -p $SHDIR/output
@@ -51,12 +53,12 @@ clean | --clean)
 	;;
 r | -r | release | --release)
 	cd $SHDIR/rust
-	cargo build --release --target aarch64-linux-android
+	RR build --release --target aarch64-linux-android
 
 	cd $SHDIR
 	cp -f rust/target/aarch64-linux-android/release/librust.a output/librust.a
 
-	clang++ --shared src/*.cpp \
+	clang++ -v --shared src/*.cpp \
 		-I rust/include \
 		-L output -L ../prebuilt \
 		-fPIC -nostdlib++ -Wl,-lrust,-llog,-lbinder_ndk \
@@ -65,12 +67,12 @@ r | -r | release | --release)
 	;;
 d | -d | debug | --debug)
 	cd $SHDIR/rust
-	cargo build --target aarch64-linux-android
+	RR build --target aarch64-linux-android
 
 	cd $SHDIR
 	cp -f rust/target/aarch64-linux-android/debug/librust.a output/librust.a
 
-	clang++ --shared src/*.cpp \
+	clang++ -v --shared src/*.cpp \
 		-I rust/include \
 		-L output -L ../prebuilt \
 		-fPIC -nostdlib++ -Wl,-lrust,-llog,-lbinder_ndk \

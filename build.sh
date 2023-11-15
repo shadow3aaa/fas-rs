@@ -17,7 +17,9 @@ SHDIR="$(dirname $(readlink -f "$0"))"
 TEMPDIR=$SHDIR/output/.temp
 
 if [ "$TERMUX_VERSION" = "" ]; then
-	alias cargo='cargo ndk -t arm64-v8a'
+	alias RR='cargo ndk -t arm64-v8a'
+else
+    alias RR=cargo
 fi
 
 cd $SHDIR
@@ -29,12 +31,14 @@ set -e
 case $1 in
 clean | --clean)
 	rm -rf output
+	cargo clean
+
 	zygisk/build.sh --clean
 
 	exit
 	;;
 r | -r | release | --release)
-	cargo build --release --target aarch64-linux-android
+	RR build --release --target aarch64-linux-android
 	zygisk/build.sh --release
 
 	cp -f target/aarch64-linux-android/release/fas-rs $TEMPDIR/fas-rs
@@ -49,7 +53,7 @@ r | -r | release | --release)
 	echo Flashable Module Packaged: output/fas-rs.zip
 	;;
 d | -d | debug | --debug)
-	cargo build --target aarch64-linux-android
+	RR build --target aarch64-linux-android
 	zygisk/build.sh --debug
 
 	cp -f target/aarch64-linux-android/debug/fas-rs $TEMPDIR/fas-rs
