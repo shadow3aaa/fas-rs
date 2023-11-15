@@ -31,5 +31,5 @@ jobs:
       run: |
         cargo ndk -t arm64-v8a --platform=29 check --verbose --target aarch64-linux-android
         cd zygisk/rust && cargo ndk -t arm64-v8a --platform=29 check --verbose --target aarch64-linux-android
-    # - name: build
-    #   run: sh build.sh release
+    - name: build
+      run: sh build.sh release
