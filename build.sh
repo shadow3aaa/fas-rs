@@ -24,7 +24,8 @@ fi
 
 cd $SHDIR
 mkdir -p output
-cp -r module output/.temp
+cp -r module $TEMPDIR
+mkdir $TEMPDIR/zygisk
 
 set -e
 
