@@ -18,8 +18,16 @@ TEMPDIR=$SHDIR/output/.temp
 
 if [ "$TERMUX_VERSION" = "" ]; then
 	alias RR='cargo ndk -t arm64-v8a'
+
+	if [ "$ANDROID_NDK_HOME" = "" ]; then
+		echo Missing ANDROID_NDK_HOME
+		exit 1
+	else
+		dir="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+		alias strip="$dir/aarch64-linux-android-strip"
+	fi
 else
-    alias RR=cargo
+	alias RR=cargo
 fi
 
 cd $SHDIR

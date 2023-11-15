@@ -26,7 +26,7 @@ if [ "$TERMUX_VERSION" = "" ]; then
 		echo Missing ANDROID_NDK_HOME
 		exit 1
 	else
-		dir=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin
+		dir="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
 		clang_latest=$(ls $dir | grep aarch64-linux-android | grep clang | tail -n 1)
 
 		echo Find clang: $dir/$clang_latest
@@ -34,7 +34,7 @@ if [ "$TERMUX_VERSION" = "" ]; then
 		clang++ -v
 	fi
 else
-    alias RR=cargo
+	alias RR=cargo
 fi
 
 mkdir -p $SHDIR/output
