@@ -25,6 +25,7 @@ jobs:
     - run: cargo install cargo-ndk
     - run: |
         sudo apt update
+        sudo apt upgrade
         sudo apt install gcc-multilib git-lfs
     - run: git lfs pull
     - name: check codes

@@ -34,7 +34,7 @@ clean | --clean)
 	exit
 	;;
 r | -r | release | --release)
-	cargo build --release
+	cargo build --release --target aarch64-linux-android
 	zygisk/build.sh --release
 
 	cp -f target/aarch64-linux-android/release/fas-rs $TEMPDIR/fas-rs
@@ -49,7 +49,7 @@ r | -r | release | --release)
 	echo Flashable Module Packaged: output/fas-rs.zip
 	;;
 d | -d | debug | --debug)
-	cargo build --debug
+	cargo build --target aarch64-linux-android
 	zygisk/build.sh --debug
 
 	cp -f target/aarch64-linux-android/debug/fas-rs $TEMPDIR/fas-rs

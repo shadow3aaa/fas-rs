@@ -51,7 +51,7 @@ clean | --clean)
 	;;
 r | -r | release | --release)
 	cd $SHDIR/rust
-	cargo build --release
+	cargo build --release --target aarch64-linux-android
 
 	cd $SHDIR
 	cp -f rust/target/aarch64-linux-android/release/librust.a output/librust.a
@@ -65,7 +65,7 @@ r | -r | release | --release)
 	;;
 d | -d | debug | --debug)
 	cd $SHDIR/rust
-	cargo build
+	cargo build --target aarch64-linux-android
 
 	cd $SHDIR
 	cp -f rust/target/aarch64-linux-android/debug/librust.a output/librust.a
