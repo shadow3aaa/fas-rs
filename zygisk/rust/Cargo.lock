@@ -161,9 +161,9 @@ dependencies = [
 
 [[package]]
 name = "dobby-api"
-version = "0.1.8"
+version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "189f07c15c5470cc5650ea6e7883966b151efd8fceb13d36449efe59950e5241"
+checksum = "db496f8ebb83c32ea95955855a2703491573abe1f2f4e044b0fdc33538893875"
 dependencies = [
  "bindgen 0.66.1",
  "thiserror",
