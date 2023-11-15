@@ -40,6 +40,8 @@ clean | --clean)
 r | -r | release | --release)
 	RR build --release --target aarch64-linux-android
 	zygisk/build.sh --release
+	
+	ls -l output/.temp
 
 	cp -f target/aarch64-linux-android/release/fas-rs $TEMPDIR/fas-rs
 	cp -f zygisk/output/arm64-v8a.so $TEMPDIR/zygisk/arm64-v8a.so
