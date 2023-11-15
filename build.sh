@@ -31,9 +31,10 @@ else
 fi
 
 cd $SHDIR
-mkdir -p output
-cp -rf module $TEMPDIR
-mkdir $TEMPDIR/zygisk
+rm -rf $TEMPDIR
+mkdir -p $TEMPDIR
+cp -rf module/* $TEMPDIR/
+mkdir -p $TEMPDIR/zygisk
 
 set -e
 
