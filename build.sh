@@ -76,7 +76,7 @@ chmod +x zygisk/build.sh
 
 if $HELP || $NOARG; then
 	echo -n "./build.sh:
-	--release / release / -r / r:
+    --release / release / -r / r:
         release build
     --debug / debug / -d / d:
         debug build
