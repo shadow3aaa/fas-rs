@@ -1,7 +1,0 @@
-{
-    find_program = {
-        gcc = "/data/data/com.termux/files/usr/bin/gcc",
-        zig = "/data/data/com.termux/files/usr/bin/zig",
-        xrepo = "/data/data/com.termux/files/usr/bin/xrepo"
-    }
-}

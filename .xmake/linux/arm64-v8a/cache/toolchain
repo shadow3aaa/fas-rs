@@ -1,8 +1,0 @@
-{
-    zig_arch_arm64_plat_linux = {
-        plat = "linux",
-        arch = "arm64",
-        __global = true,
-        zig = "/data/data/com.termux/files/usr/bin/zig"
-    }
-}

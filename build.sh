@@ -15,12 +15,26 @@
 # limitations under the License.
 SHDIR="$(dirname $(readlink -f "$0"))"
 TEMPDIR=$SHDIR/output/.temp
+NOARG=true
+HELP=false
+CLEAN=false
+DEBUG_BUILD=false
+RELEASE_BUILD=false
+VERBOSE=false
+
+init_package() {
+	cd $SHDIR
+	rm -rf $TEMPDIR
+	mkdir -p $TEMPDIR
+	cp -rf module/* $TEMPDIR/
+	mkdir -p $TEMPDIR/zygisk
+}
 
 if [ "$TERMUX_VERSION" = "" ]; then
 	alias RR='cargo ndk -t arm64-v8a'
 
 	if [ "$ANDROID_NDK_HOME" = "" ]; then
-		echo Missing ANDROID_NDK_HOME
+		echo Missing ANDROID_NDK_HOME >&2
 		exit 1
 	else
 		dir="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -30,27 +44,84 @@ else
 	alias RR=cargo
 fi
 
-cd $SHDIR
-rm -rf $TEMPDIR
-mkdir -p $TEMPDIR
-cp -rf module/* $TEMPDIR/
-mkdir -p $TEMPDIR/zygisk
+for arg in $@; do
+	case $arg in
+	clean | --clean)
+		CLEAN=true
+		;;
+	r | -r | release | --release)
+		RELEASE_BUILD=true
+		;;
+	d | -d | debug | --debug)
+		DEBUG_BUILD=true
+		;;
+	-h | h | help | --help)
+		HELP=true
+		;;
+	v | -v | verbose | --verbose)
+		VERBOSE=true
+		;;
+	*)
+		echo Illegal parameter: $arg >&2
+		echo Try ./build.sh --help >&2
+		exit 1
+		;;
+	esac
+
+	NOARG=false
+done
 
 set -e
+chmod +x zygisk/build.sh
 
-case $1 in
-clean | --clean)
+if $HELP || $NOARG; then
+	echo -n "./build.sh:
+	--release / release / -r / r:
+        release build
+    --debug / debug / -d / d:
+        debug build
+    --verbose / verbose / -v / v:
+        print details of build"
+
+	exit
+elif $CLEAN; then
 	rm -rf output
 	cargo clean
 
 	zygisk/build.sh --clean
 
 	exit
-	;;
-r | -r | release | --release)
-	RR build --release --target aarch64-linux-android
-	zygisk/build.sh --release
+fi
 
+if $DEBUG_BUILD; then
+	if $VERBOSE; then
+		RR build --target aarch64-linux-android -v
+		zygisk/build.sh --debug -v
+	else
+		RR build --target aarch64-linux-android
+		zygisk/build.sh --debug
+	fi
+
+	init_package
+	cp -f target/aarch64-linux-android/debug/fas-rs $TEMPDIR/fas-rs
+	cp -f zygisk/output/arm64-v8a.so $TEMPDIR/zygisk/arm64-v8a.so
+
+	cd $TEMPDIR
+	zip -9 -rq "../fas-rs(debug).zip" .
+
+	echo "Module Packaged: output/fas-rs(debug).zip"
+fi
+
+if $RELEASE_BUILD; then
+	if $VERBOSE; then
+		RR build --release --target aarch64-linux-android -v
+		zygisk/build.sh --release -v
+	else
+		RR build --release --target aarch64-linux-android
+		zygisk/build.sh --release
+	fi
+
+	init_package
 	cp -f target/aarch64-linux-android/release/fas-rs $TEMPDIR/fas-rs
 	cp -f zygisk/output/arm64-v8a.so $TEMPDIR/zygisk/arm64-v8a.so
 
@@ -58,27 +129,7 @@ r | -r | release | --release)
 	strip $TEMPDIR/zygisk/arm64-v8a.so
 
 	cd $TEMPDIR
-	zip -9 -rq ../fas-rs.zip .
+	zip -9 -rq "../fas-rs(release).zip" .
 
-	echo Flashable Module Packaged: output/fas-rs.zip
-	;;
-d | -d | debug | --debug)
-	RR build --target aarch64-linux-android
-	zygisk/build.sh --debug
-
-	cp -f target/aarch64-linux-android/debug/fas-rs $TEMPDIR/fas-rs
-	cp -f zygisk/output/arm64-v8a.so $TEMPDIR/zygisk/arm64-v8a.so
-
-	cd $TEMPDIR
-	zip -9 -rq ../fas-rs.zip .
-
-	echo Flashable Module Packaged: output/fas-rs.zip
-	;;
-*)
-	echo -n "Help:
-    build.sh --release / release / -r / r:
-        release build
-    build.sh --debug / debug / -d / d:
-        debug build"
-	;;
-esac
+	echo "Module Packaged: output/fas-rs(release).zip"
+fi
