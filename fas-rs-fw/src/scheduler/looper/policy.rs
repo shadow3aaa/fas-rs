@@ -68,7 +68,7 @@ impl<P: PerformanceController> Looper<P> {
         }
 
         if *normalized_frame > normalized_big_jank_scale {
-            buffer.nanos_acc = 0;
+            buffer.limit_acc = Duration::ZERO;
 
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
@@ -86,37 +86,33 @@ impl<P: PerformanceController> Looper<P> {
             } // one jank is allow in 30 frames at least
 
             buffer.last_jank = Some(Instant::now());
-            buffer.nanos_acc = 0;
+            buffer.limit_acc = Duration::ZERO;
 
             #[cfg(debug_assertions)]
             debug!("JANK: simp jank");
 
             Ok(Event::Release)
         } else if normalized_avg_frame <= normalized_limit_scale {
-            if buffer.nanos_acc < policy.scale_time.as_nanos().try_into().unwrap() {
+            if buffer.limit_acc < policy.scale_time {
                 let diff = normalized_limit_scale - normalized_avg_frame;
-                buffer.nanos_acc = buffer
-                    .nanos_acc
-                    .saturating_add(diff.as_nanos().try_into().unwrap());
+                buffer.limit_acc = buffer.limit_acc.saturating_add(diff);
                 return Ok(Event::None);
             }
 
-            buffer.nanos_acc = 0;
+            buffer.limit_acc = Duration::ZERO;
 
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
 
             Ok(Event::Limit)
         } else if normalized_avg_frame > normalized_release_scale {
-            if -buffer.nanos_acc < policy.scale_time.as_nanos().try_into().unwrap() {
+            if buffer.release_acc < policy.scale_time {
                 let diff = normalized_avg_frame - normalized_release_scale;
-                buffer.nanos_acc = buffer
-                    .nanos_acc
-                    .saturating_sub(diff.as_nanos().try_into().unwrap());
+                buffer.release_acc = buffer.release_acc.saturating_add(diff);
                 return Ok(Event::None);
             }
 
-            buffer.nanos_acc = 0;
+            buffer.release_acc = Duration::ZERO;
 
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
