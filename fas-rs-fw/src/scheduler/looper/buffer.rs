@@ -106,8 +106,20 @@ impl Buffer {
                 self.target_fps = Some(*t);
                 return;
             }
-            TargetFps::Array(arr) => arr,
+            TargetFps::Array(arr) => {
+                if arr.len() == 1 {
+                    self.target_fps = arr.first().copied();
+                    return;
+                }
+
+                arr
+            }
         };
+
+        if current_fps < (target_fpses[0] / 2).into() {
+            self.target_fps = None;
+            return;
+        }
 
         for target_fps in target_fpses.iter().copied() {
             let target_frametime = Duration::from_secs(1) / (target_fps + 3);

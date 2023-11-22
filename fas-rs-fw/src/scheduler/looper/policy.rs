@@ -30,7 +30,7 @@ pub enum Event {
 impl<P: PerformanceController> Looper<P> {
     pub fn get_event(buffer: &mut Buffer, config: &Config, node: &mut Node) -> Result<Event> {
         let Some(target_fps) = buffer.target_fps else {
-            return Ok(Event::None);
+            return Ok(Event::ReleaseMax);
         };
         let current_fps = buffer.current_fps.unwrap_or_default() as u32;
 
@@ -40,20 +40,20 @@ impl<P: PerformanceController> Looper<P> {
         debug!("mode policy: {policy:?}");
 
         let Some(window) = buffer.windows.get_mut(&target_fps) else {
-            return Ok(Event::None);
+            return Ok(Event::ReleaseMax);
         };
 
         let Some(normalized_avg_frame) = window.avg() else {
-            return Ok(Event::None);
+            return Ok(Event::ReleaseMax);
         };
 
         let Some(normalized_frame) = window.last() else {
-            return Ok(Event::None);
+            return Ok(Event::ReleaseMax);
         };
 
         let normalized_big_jank_scale = Duration::from_secs(5);
         let normalized_jank_scale = Duration::from_millis(1700);
-        let normalized_limit_scale = Duration::from_secs(1) - policy.tolerant_frame_limit;
+        let normalized_limit_scale = Duration::from_secs(1) + policy.tolerant_frame_limit;
         let normalized_release_scale = Duration::from_secs(1) + policy.tolerant_frame_jank;
 
         #[cfg(debug_assertions)]
@@ -67,14 +67,16 @@ impl<P: PerformanceController> Looper<P> {
             debug!("release scale: {normalized_release_scale:?}");
         }
 
-        if *normalized_frame > normalized_big_jank_scale {
+        if policy.allow_big_jank && *normalized_frame > normalized_big_jank_scale {
             buffer.limit_acc = Duration::ZERO;
 
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
 
             Ok(Event::ReleaseMax)
-        } else if *normalized_frame > normalized_jank_scale || target_fps - current_fps >= 3 {
+        } else if policy.allow_simp_jank && *normalized_frame > normalized_jank_scale
+            || target_fps - current_fps >= 3
+        {
             *normalized_frame = Duration::from_secs(1);
             *buffer.frametimes.front_mut().unwrap() = Duration::from_secs(1) / target_fps;
 
@@ -93,26 +95,30 @@ impl<P: PerformanceController> Looper<P> {
 
             Ok(Event::Release)
         } else if normalized_avg_frame <= normalized_limit_scale {
+            let diff = normalized_limit_scale - normalized_avg_frame;
+
             if buffer.limit_acc < policy.scale_time {
-                let diff = normalized_limit_scale - normalized_avg_frame;
                 buffer.limit_acc = buffer.limit_acc.saturating_add(diff);
                 return Ok(Event::None);
             }
 
-            buffer.limit_acc = Duration::ZERO;
+            buffer.limit_acc = buffer.limit_acc.saturating_sub(Duration::from_millis(100));
 
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
 
             Ok(Event::Limit)
         } else if normalized_avg_frame > normalized_release_scale {
+            let diff = normalized_avg_frame - normalized_release_scale;
+
             if buffer.release_acc < policy.scale_time {
-                let diff = normalized_avg_frame - normalized_release_scale;
                 buffer.release_acc = buffer.release_acc.saturating_add(diff);
                 return Ok(Event::None);
             }
 
-            buffer.release_acc = Duration::ZERO;
+            buffer.release_acc = buffer
+                .release_acc
+                .saturating_sub(Duration::from_millis(100));
 
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");

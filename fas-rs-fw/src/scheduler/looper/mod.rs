@@ -85,21 +85,37 @@ impl<P: PerformanceController> Looper<P> {
             let Some(cur_buffer) = self.buffers.get_mut(&(data.buffer, data.pid)) else {
                 continue;
             };
-            let current_event =
-                Self::get_event(cur_buffer, &self.config, &mut self.node).unwrap_or(Event::None);
+
+            let current_event = Self::get_event(cur_buffer, &self.config, &mut self.node)
+                .unwrap_or(Event::ReleaseMax);
+
+            match current_event {
+                Event::ReleaseMax => {
+                    self.controller.release_max(&self.config)?;
+                    continue;
+                }
+                Event::Release => {
+                    self.controller.release(&self.config)?;
+
+                    continue;
+                }
+                _ => (),
+            }
 
             let events: Vec<_> = self
                 .buffers
                 .values_mut()
                 .filter(|buffer| buffer.last_update.elapsed() < Duration::from_secs(1))
                 .map(|buffer| {
-                    Self::get_event(buffer, &self.config, &mut self.node).unwrap_or(Event::None)
+                    Self::get_event(buffer, &self.config, &mut self.node)
+                        .unwrap_or(Event::ReleaseMax)
                 })
                 .collect();
 
-            if events.contains(&Event::ReleaseMax) {
-                self.controller.release_max(&self.config)?;
-            } else if events.contains(&Event::Release) {
+            if events
+                .iter()
+                .any(|e| matches!(e, Event::ReleaseMax | Event::Release))
+            {
                 self.controller.release(&self.config)?;
             } else if current_event == Event::Limit {
                 self.controller.limit(&self.config)?;

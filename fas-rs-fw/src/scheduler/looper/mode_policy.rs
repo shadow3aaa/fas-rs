@@ -23,11 +23,13 @@ pub struct PolicyConfig {
     pub scale_time: Duration,
     pub tolerant_frame_limit: Duration,
     pub tolerant_frame_jank: Duration,
+    pub allow_big_jank: bool,
+    pub allow_simp_jank: bool,
 }
 
 impl<P: PerformanceController> Looper<P> {
     pub fn policy_config(mode: Mode, buffer: &Buffer, config: &Config) -> Result<PolicyConfig> {
-        let variance = buffer.variance.unwrap_or_default();
+        let _variance = buffer.variance.unwrap_or_default();
 
         let tolerant_frame_offset = config.get_mode_conf(mode, "tolerant_frame_offset")?;
         let tolerant_frame_offset = match tolerant_frame_offset {
@@ -37,17 +39,18 @@ impl<P: PerformanceController> Looper<P> {
         };
         let tolerant_frame_offset = tolerant_frame_offset / 1000.0; // to ms
 
-        let scale_time;
-        let tolerant_frame_limit = Duration::from_millis(2);
-        let tolerant_frame_jank = Duration::from_millis(4);
+        let scale_time = Duration::from_millis(225);
+        let tolerant_frame_limit = Duration::from_millis(10);
+        let tolerant_frame_jank = Duration::from_millis(15);
+        let allow_big_jank = true;
+        let allow_simp_jank = true;
 
-        if variance > Duration::from_millis(10) {
-            scale_time = Duration::from_secs(1);
-        } else if variance > Duration::from_millis(4) {
-            scale_time = Duration::from_millis(200);
-        } else {
-            scale_time = Duration::from_millis(10);
-        }
+        /* if variance > Duration::from_millis(25) {
+            allow_big_jank = false;
+            allow_simp_jank = false;
+        } else if variance > Duration::from_millis(5) {
+            allow_big_jank = false;
+        } */
 
         let tolerant_frame_jank_offseted =
             tolerant_frame_jank.as_secs_f64() + tolerant_frame_offset;
@@ -61,6 +64,8 @@ impl<P: PerformanceController> Looper<P> {
             scale_time,
             tolerant_frame_limit,
             tolerant_frame_jank,
+            allow_big_jank,
+            allow_simp_jank,
         })
     }
 }
