@@ -63,7 +63,7 @@ for arg in $@; do
 		;;
 	*)
 		echo Illegal parameter: $arg >&2
-		echo Try ./build.sh --help >&2
+		echo Try \'./build.sh --help\' >&2
 		exit 1
 		;;
 	esac
