@@ -66,13 +66,6 @@ impl Policy {
     }
 
     pub fn init_default(&self) -> Result<()> {
-        let path = self.path.join("scaling_governor");
-        if let Some(ref gov) = *self.gov_snapshot.borrow() {
-            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
-            fs::write(&path, gov)?;
-            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
-        }
-
         if let Some(ref p) = self.force_bound {
             self.force_freq_bound(
                 self.freqs.first().copied().unwrap(),
@@ -81,46 +74,53 @@ impl Policy {
             )?;
         }
 
-        self.set_min_freq(self.freqs.first().copied().unwrap())?;
+        self.set_min_freq(self.freqs[0])?;
         self.set_max_freq(self.freqs.last().copied().unwrap())?;
-
-        Ok(())
+        self.reset_gov()
     }
 
     pub fn init_game(&self) -> Result<()> {
-        if !self.is_little.get() {
-            let path = self.path.join("scaling_governor");
-
-            let cur_gov = fs::read_to_string(&path)?;
-            self.gov_snapshot.replace(Some(cur_gov));
-
-            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
-            fs::write(&path, "performance")?;
-            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
-
-            if let Some(ref p) = self.force_bound {
-                self.force_freq_bound(
-                    self.freqs.last().copied().unwrap(),
-                    self.freqs.last().copied().unwrap(),
-                    p,
-                )?;
-            }
-        }
-
-        self.set_min_freq(self.freqs.first().copied().unwrap())?;
-        self.set_max_freq(self.freqs.last().copied().unwrap())?;
-
-        Ok(())
+        self.set_fas_gov()?;
+        self.set_fas_freq(self.freqs.last().copied().unwrap())
     }
 
     pub fn set_fas_freq(&self, f: Freq) -> Result<()> {
         self.set_max_freq(f)?;
 
         if !self.is_little.get() {
-            self.set_min_freq(f)?;
+            self.set_min_freq(self.freqs[0])?;
             if let Some(ref p) = self.force_bound {
-                self.force_freq_bound(f, f, p)?;
+                self.force_freq_bound(self.freqs[0], f, p)?;
             }
+        }
+
+        Ok(())
+    }
+
+    pub fn reset_gov(&self) -> Result<()> {
+        if let Some(ref gov) = *self.gov_snapshot.borrow() {
+            let path = self.path.join("scaling_governor");
+
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
+            fs::write(&path, gov)?;
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
+        }
+
+        Ok(())
+    }
+
+    pub fn set_fas_gov(&self) -> Result<()> {
+        if !self.is_little.get() {
+            let path = self.path.join("scaling_governor");
+
+            let cur_gov = fs::read_to_string(&path)?;
+            if cur_gov.trim() != "performance" {
+                self.gov_snapshot.replace(Some(cur_gov));
+            }
+
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
+            fs::write(&path, "performance")?;
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
         }
 
         Ok(())
