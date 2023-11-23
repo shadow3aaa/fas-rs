@@ -105,7 +105,6 @@ impl<P: PerformanceController> Looper<P> {
             let events: Vec<_> = self
                 .buffers
                 .values_mut()
-                .filter(|buffer| buffer.last_update.elapsed() < Duration::from_secs(1))
                 .map(|buffer| {
                     Self::get_event(buffer, &self.config, &mut self.node)
                         .unwrap_or(Event::ReleaseMax)
