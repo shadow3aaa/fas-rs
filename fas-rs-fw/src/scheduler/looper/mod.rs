@@ -23,7 +23,7 @@ use std::{
     time::Duration,
 };
 
-use super::{topapp::TimedWatcher, FasData};
+use super::{topapp::TimedWatcher, BinderMessage};
 use crate::{
     config::Config,
     error::{Error, Result},
@@ -38,7 +38,7 @@ pub type Producer = (i64, i32); // buffer, pid
 pub type Buffers = HashMap<Producer, Buffer>; // Process, (jank_scale, total_jank_time_ns)
 
 pub struct Looper<P: PerformanceController> {
-    rx: Receiver<FasData>,
+    rx: Receiver<BinderMessage>,
     config: Config,
     node: Node,
     controller: P,
@@ -48,7 +48,7 @@ pub struct Looper<P: PerformanceController> {
 }
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn new(rx: Receiver<FasData>, config: Config, node: Node, controller: P) -> Self {
+    pub fn new(rx: Receiver<BinderMessage>, config: Config, node: Node, controller: P) -> Self {
         Self {
             rx,
             config,
@@ -62,8 +62,8 @@ impl<P: PerformanceController> Looper<P> {
 
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
-            let data = match self.rx.recv_timeout(Duration::from_secs(1)) {
-                Ok(d) => d,
+            let message = match self.rx.recv_timeout(Duration::from_secs(1)) {
+                Ok(m) => m,
                 Err(e) => {
                     if e == RecvTimeoutError::Disconnected {
                         return Err(Error::Other("Binder Server Disconnected"));
@@ -75,6 +75,14 @@ impl<P: PerformanceController> Looper<P> {
                         self.controller.release_max(&self.config)?;
                     }
 
+                    continue;
+                }
+            };
+
+            let data = match message {
+                BinderMessage::Data(d) => d,
+                BinderMessage::RemoveBuffer(k) => {
+                    self.buffers.remove(&k);
                     continue;
                 }
             };
@@ -105,6 +113,7 @@ impl<P: PerformanceController> Looper<P> {
             let events: Vec<_> = self
                 .buffers
                 .values_mut()
+                .filter(|buffer| buffer.last_update.elapsed() < Duration::from_secs(10))
                 .map(|buffer| {
                     Self::get_event(buffer, &self.config, &mut self.node)
                         .unwrap_or(Event::ReleaseMax)

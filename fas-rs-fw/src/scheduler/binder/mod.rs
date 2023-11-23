@@ -11,6 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+#![allow(non_snake_case)]
 mod IRemoteService;
 
 use std::{
@@ -23,7 +24,7 @@ use binder::{BinderFeatures, Interface};
 use log::{error, info};
 use parking_lot::Mutex;
 
-use super::FasData;
+use super::{BinderMessage, FasData};
 use crate::{
     config::Config,
     error::{Error, Result},
@@ -32,13 +33,12 @@ use IRemoteService::BnRemoteService;
 
 pub struct FasServer {
     config: Config,
-    sx: Mutex<Sender<FasData>>,
+    sx: Mutex<Sender<BinderMessage>>,
 }
 
 impl Interface for FasServer {}
 
 impl IRemoteService::IRemoteService for FasServer {
-    #[allow(non_snake_case)]
     fn sendData(
         &self,
         buffer: i64,
@@ -60,16 +60,28 @@ impl IRemoteService::IRemoteService for FasServer {
             frametime,
         };
 
-        if let Err(e) = self.sx.lock().send(data) {
+        if let Err(e) = self.sx.lock().send(BinderMessage::Data(data)) {
             error!("{e:?}");
         }
 
         Ok(true)
     }
+
+    fn removeBuffer(&self, buffer: i64, pid: i32) -> binder::Result<()> {
+        if let Err(e) = self
+            .sx
+            .lock()
+            .send(BinderMessage::RemoveBuffer((buffer, pid)))
+        {
+            error!("{e:?}");
+        }
+
+        Ok(())
+    }
 }
 
 impl FasServer {
-    pub fn run_server(config: Config) -> Result<Receiver<FasData>> {
+    pub fn run_server(config: Config) -> Result<Receiver<BinderMessage>> {
         let (sx, rx) = mpsc::channel();
 
         thread::Builder::new()
@@ -79,7 +91,7 @@ impl FasServer {
         Ok(rx)
     }
 
-    fn run(sx: Sender<FasData>, config: Config) -> Result<()> {
+    fn run(sx: Sender<BinderMessage>, config: Config) -> Result<()> {
         let server = Self {
             config,
             sx: Mutex::new(sx),

@@ -43,15 +43,24 @@ pub fn thread(fas_service: &Strong<dyn IRemoteService>, process: &str) -> anyhow
         let frametime = stamp - *last_stamp;
         *last_stamp = stamp;
 
-        if gc_timer.elapsed() > Duration::from_secs(7) {
-            stamps.retain(|_, i| i.elapsed() < Duration::from_secs(7));
+        if gc_timer.elapsed() > Duration::from_millis(500) {
+            stamps.retain(|p, _| {
+                if p.is_null() {
+                    let _ = fas_service.removeBuffer(*p as i64, pid);
+                    false
+                } else {
+                    true
+                }
+            });
+
             gc_timer = Instant::now();
         }
 
         #[cfg(debug_assertions)]
         debug!("process: [{process}] framtime: [{frametime:?}]");
 
-        if Ok(false) == fas_service.sendData(ptr, process, pid, frametime.as_nanos() as i64) {
+        if Ok(false) == fas_service.sendData(ptr as i64, process, pid, frametime.as_nanos() as i64)
+        {
             #[cfg(debug_assertions)]
             debug!("Exit analyze thread, since server prefer this is not a fas app anymore");
             return Ok(());

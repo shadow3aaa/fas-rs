@@ -55,8 +55,8 @@ static CHANNEL: Lazy<Channel> = Lazy::new(|| {
 });
 
 struct Channel {
-    sx: SyncSender<(i64, Instant)>,
-    rx: Receiver<(i64, Instant)>,
+    sx: SyncSender<(Address, Instant)>,
+    rx: Receiver<(Address, Instant)>,
 }
 
 unsafe impl Sync for Channel {}
@@ -169,7 +169,7 @@ unsafe extern "C" fn post_hook(android_native_buffer_t: *mut c_void, fence_id: c
     let result = ori_fun(android_native_buffer_t, fence_id);
     let _ = CHANNEL
         .sx
-        .try_send((android_native_buffer_t as i64, Instant::now()));
+        .try_send((android_native_buffer_t, Instant::now()));
 
     result
 }

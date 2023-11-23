@@ -28,6 +28,12 @@ use self::binder::FasServer;
 use looper::Looper;
 
 #[derive(Debug, Clone)]
+pub enum BinderMessage {
+    Data(FasData),
+    RemoveBuffer((i64, i32)),
+}
+
+#[derive(Debug, Clone)]
 pub struct FasData {
     pub buffer: i64,
     pub target_fps: TargetFps,
