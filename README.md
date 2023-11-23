@@ -100,13 +100,15 @@ tolerant_frame_offset = 0.0
 ## **编译**
 
 ```bash
-# Deps(termux):
+# Termux
 apt install rust zip ndk* clang binutils-is-llvm shfmt git-lfs
 
-# Deps(Other linux):
-# Android NDK(https://developer.android.google.com/ndk/downloads)
-# Rust(https://www.rust-lang.org)
-# cargo-ndk(https://github.com/bbqsrc/cargo-ndk) for compile
+# Ubuntu(NDK is required)
+apt install gcc-multilib git-lfs
+# Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+# Cargo-ndk
 cargo install cargo-ndk
 
 # Clone
