@@ -23,8 +23,6 @@ pub struct PolicyConfig {
     pub scale_time: Duration,
     pub tolerant_frame_limit: Duration,
     pub tolerant_frame_jank: Duration,
-    pub allow_big_jank: bool,
-    pub allow_simp_jank: bool,
 }
 
 impl<P: PerformanceController> Looper<P> {
@@ -39,18 +37,9 @@ impl<P: PerformanceController> Looper<P> {
         };
         let tolerant_frame_offset = tolerant_frame_offset / 1000.0; // to ms
 
-        let scale_time = Duration::from_millis(225);
+        let scale_time = Duration::from_millis(200);
         let tolerant_frame_limit = Duration::from_millis(10);
-        let tolerant_frame_jank = Duration::from_millis(15);
-        let allow_big_jank = true;
-        let allow_simp_jank = true;
-
-        /* if variance > Duration::from_millis(25) {
-            allow_big_jank = false;
-            allow_simp_jank = false;
-        } else if variance > Duration::from_millis(5) {
-            allow_big_jank = false;
-        } */
+        let tolerant_frame_jank = Duration::from_millis(13);
 
         let tolerant_frame_jank_offseted =
             tolerant_frame_jank.as_secs_f64() + tolerant_frame_offset;
@@ -64,8 +53,6 @@ impl<P: PerformanceController> Looper<P> {
             scale_time,
             tolerant_frame_limit,
             tolerant_frame_jank,
-            allow_big_jank,
-            allow_simp_jank,
         })
     }
 }

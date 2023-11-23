@@ -67,16 +67,14 @@ impl<P: PerformanceController> Looper<P> {
             debug!("release scale: {normalized_release_scale:?}");
         }
 
-        if policy.allow_big_jank && *normalized_frame > normalized_big_jank_scale {
+        if *normalized_frame > normalized_big_jank_scale {
             buffer.limit_acc = Duration::ZERO;
 
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
 
             Ok(Event::ReleaseMax)
-        } else if policy.allow_simp_jank && *normalized_frame > normalized_jank_scale
-            || target_fps - current_fps >= 3
-        {
+        } else if *normalized_frame > normalized_jank_scale || target_fps - current_fps >= 3 {
             *normalized_frame = Duration::from_secs(1);
             *buffer.frametimes.front_mut().unwrap() = Duration::from_secs(1) / target_fps;
 
