@@ -71,7 +71,6 @@ cp -f $MODPATH/README.md $DIR/doc.md
 sh $MODPATH/vtools/init_vtools.sh $(realpath $MODPATH/module.prop)
 
 set_perm_recursive $MODPATH 0 0 0755 0644
-set_perm_recursive $DIR 1023 1023 0755 0644
 set_perm $MODPATH/fas-rs 0 0 0755
 
 ui_print "Configuration folder: /sdcard/Android/fas-rs"
