@@ -13,7 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 SKIPUNZIP=0
 DIR=/data/media/0/Android/fas-rs
 CONF=$DIR/games.toml
@@ -60,9 +59,6 @@ ui_print "
     there is indeed no malicious code in it.
 "
 
-# permission
-chmod +x $MODPATH/fas-rs
-
 if [ -f $CONF ]; then
 	touch $MERGE_FLAG
 else
@@ -73,5 +69,9 @@ fi
 cp -f $MODPATH/README.md $DIR/doc.md
 
 sh $MODPATH/vtools/init_vtools.sh $(realpath $MODPATH/module.prop)
+
+set_perm_recursive $MODPATH 0 0 0755 0644
+set_perm_recursive $DIR 1023 1023 0755 0644
+set_perm $MODPATH/fas-rs 0 0 0755
 
 ui_print "Configuration folder: /sdcard/Android/fas-rs"
