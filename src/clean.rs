@@ -31,9 +31,7 @@ pub fn cleaner() -> ! {
             "/sys/module/mtk_fpsgo/parameters/perfmgr_enable",
             "/sys/module/perfmgr/parameters/perfmgr_enable",
             "/sys/module/perfmgr_policy/parameters/perfmgr_enable",
-            "/sys/module/perfmgr_mtk/parameters/perfmgr_enable",
-            "/sys/kernel/fpsgo/common/fpsgo_enable",
-            "/sys/kernel/fpsgo/common/force_onoff"
+            "/sys/module/perfmgr_mtk/parameters/perfmgr_enable"
         );
 
         thread::sleep(Duration::from_secs(10));

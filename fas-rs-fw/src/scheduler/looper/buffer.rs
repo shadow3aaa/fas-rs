@@ -22,7 +22,7 @@ use log::debug;
 use super::window::FrameWindow;
 use crate::config::TargetFps;
 
-const BUFFER_MAX: usize = 144;
+const BUFFER_MAX: usize = 30;
 
 #[derive(Debug)]
 pub struct Buffer {
