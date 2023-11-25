@@ -30,16 +30,14 @@ mkdir -p $SHDIR/output
 
 if [ "$TERMUX_VERSION" = "" ]; then
 	alias RR='cargo ndk -t arm64-v8a'
+	export CARGO_NDK_ANDROID_PLATFORM=31
 
 	if [ "$ANDROID_NDK_HOME" = "" ]; then
 		echo Missing ANDROID_NDK_HOME
 		exit 1
 	else
 		dir="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
-		clang_latest=$(ls $dir | grep aarch64-linux-android | grep clang | tail -n 1)
-
-		echo Find ndk clang: $dir/$clang_latest
-		alias clang++="$dir/$clang_latest"
+		alias clang++="$dir/aarch64-linux-android31-clang++"
 		clang++ -v
 	fi
 else
