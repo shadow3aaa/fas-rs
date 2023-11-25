@@ -46,8 +46,8 @@ impl<P: PerformanceController> Looper<P> {
                 tolerant_frame_jank = Duration::from_millis(60);
             }
             Mode::Balance => {
-                scale_time = Duration::from_millis(10);
-                tolerant_frame_limit = Duration::from_millis(10);
+                scale_time = Duration::from_millis(15);
+                tolerant_frame_limit = Duration::from_millis(15);
                 tolerant_frame_jank = Duration::from_millis(20);
             }
             Mode::Performance => {
