@@ -1,5 +1,8 @@
 # **FAS-RS**
 
+- ![Github stars](https://img.shields.io/github/stars/shadow3aaa/fas-rs)
+- ![CI build](https://img.shields.io/github/actions/workflow/status/shadow3aaa/fas-rs/ci.yml)
+
 ## **简介**
 
   > 假如肉眼看到的画面能直接反映在调度上, 也就是说以把调度器放在观看者的角度来决定性能, 是否就能实现完美的性能控制和最大化体验? `FAS(Frame Aware Scheduling)`就是这种调度概念, 通过监视画面渲染来尽量控制性能以在保证渲染时间的同时实现最小化开销
