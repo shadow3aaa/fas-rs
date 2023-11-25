@@ -104,7 +104,7 @@ tolerant_frame_offset = 0.0
 apt install rust zip ndk* clang binutils-is-llvm shfmt git-lfs
 
 # Ubuntu(NDK is required)
-apt install gcc-multilib git-lfs
+apt install gcc-multilib git-lfs clang
 # Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
