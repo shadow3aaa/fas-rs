@@ -29,8 +29,7 @@ rm -rf $SHDIR/output
 mkdir -p $SHDIR/output
 
 if [ "$TERMUX_VERSION" = "" ]; then
-	alias RR='cargo ndk -t arm64-v8a'
-	export CARGO_NDK_ANDROID_PLATFORM=31
+	alias RR='cargo ndk -p 31 -t arm64-v8a'
 
 	if [ "$ANDROID_NDK_HOME" = "" ]; then
 		echo Missing ANDROID_NDK_HOME
