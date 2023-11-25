@@ -31,10 +31,11 @@ pub struct Buffer {
     target_fps_config: TargetFps,
     timer: Instant,
     pub last_update: Instant,
-    pub variance: Option<Duration>,
+    // pub variance: Option<Duration>,
     pub frametimes: VecDeque<Duration>,
     pub windows: HashMap<u32, FrameWindow>,
     pub last_jank: Option<Instant>,
+    pub last_limit: Option<Instant>,
     pub release_acc: Duration,
     pub limit_acc: Duration,
 }
@@ -47,10 +48,11 @@ impl Buffer {
             target_fps_config: t,
             timer: Instant::now(),
             last_update: Instant::now(),
-            variance: None,
+            // variance: None,
             frametimes: VecDeque::with_capacity(BUFFER_MAX),
             windows: HashMap::new(),
             last_jank: None,
+            last_limit: None,
             release_acc: Duration::ZERO,
             limit_acc: Duration::ZERO,
         }
@@ -78,7 +80,7 @@ impl Buffer {
 
             if self.timer.elapsed() * fps > Duration::from_secs(30) {
                 self.calculate_fps();
-                self.calculate_variance();
+                // self.calculate_variance();
                 self.timer = Instant::now();
             }
         } else {
@@ -132,7 +134,7 @@ impl Buffer {
         self.target_fps = target_fpses.last().copied();
     }
 
-    fn calculate_variance(&mut self) {
+    /* fn calculate_variance(&mut self) {
         let Some(target_fps) = self.target_fps else {
             return;
         };
@@ -157,5 +159,5 @@ impl Buffer {
         debug!("variance: {variance:?}");
 
         self.variance = Some(variance);
-    }
+    } */
 }
