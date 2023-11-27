@@ -15,6 +15,8 @@
 # limitations under the License.
 cargo fmt -v
 shfmt -w -s *.sh
+shfmt -w -s fas_rs_fw/*.sh
+shfmt -w -s module/*.sh
 cd zygisk
 shfmt -w -s *.sh
 clang-format -i src/*.cpp

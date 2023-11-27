@@ -20,6 +20,8 @@ MERGE_FLAG=$DIR/.need_merge
 # update vtools support
 sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
 
+resetprop fas_rs_installed true
+
 # wait until the sdcard is decrypted
 until [ -d $DIR ]; do
 	sleep 1
@@ -27,9 +29,9 @@ done
 
 # update config
 if [ -f $MERGE_FLAG ]; then
-    $MODDIR/fas-rs --merge --local-profile $DIR/games.toml --std-profile $MODDIR/games.toml >$DIR/.update_games.toml
-    rm $MERGE_FLAG
-    mv $DIR/.update_games.toml $DIR/games.toml
+	$MODDIR/fas-rs --merge --local-profile $DIR/games.toml --std-profile $MODDIR/games.toml >$DIR/.update_games.toml
+	rm $MERGE_FLAG
+	mv $DIR/.update_games.toml $DIR/games.toml
 fi
 
 # start with user profile

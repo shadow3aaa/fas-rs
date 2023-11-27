@@ -261,12 +261,16 @@ name = "fas-rs"
 version = "1.2.0"
 dependencies = [
  "anyhow",
+ "async-trait",
+ "binder_ndk",
  "clap",
  "fas-rs-fw",
  "inotify",
+ "lazy_static",
  "libc",
  "likely_stable",
  "log",
+ "once_cell",
  "parking_lot",
  "pretty_env_logger",
  "serde",

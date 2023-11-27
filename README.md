@@ -24,12 +24,6 @@
     - `true` : 永远在配置合并时保持标准配置的profile, 保留本地配置的应用列表, 其它地方和false相同 *
     - `false` : 见[配置合并的默认行为](#配置合并)
 
-  - **ignore_little**
-
-    - 类型 : `Bool`
-    - `true` : 在机器至少有3个及以上的集簇时, `fas-rs`只控制非小核集簇
-    - `false` : `fas-rs`始终控制所有集群 *
-
   - `*` : 默认配置
 
 - ### **游戏列表(`game_list`)说明 :**
@@ -51,7 +45,6 @@
 
 ```toml
 [config]
-ignore_little = false
 keep_std = true
 
 [game_list]

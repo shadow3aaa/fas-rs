@@ -71,7 +71,7 @@ fn main() -> Result<()> {
         let _ = fs::write("/dev/cpuset/background/tasks", self_pid.to_string());
 
         let config = Config::new(&local_path, &std_path)?;
-        let cpu = CpuCommon::new(&config)?;
+        let cpu = CpuCommon::new()?;
 
         #[cfg(debug_assertions)]
         debug!("{cpu:#?}");

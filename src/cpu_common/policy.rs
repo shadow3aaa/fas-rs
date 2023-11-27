@@ -31,7 +31,7 @@ pub struct Policy {
     pub num: u8,
     pub path: PathBuf,
     pub freqs: Vec<Freq>,
-    pub is_little: Cell<bool>,
+    pub uperf_ext: Cell<bool>,
     gov_snapshot: RefCell<Option<String>>,
     force_bound: Option<PathBuf>,
 }
@@ -59,7 +59,7 @@ impl Policy {
                 .ok_or(Error::Other("Failed to parse cpufreq policy num"))?,
             path: p.to_path_buf(),
             freqs,
-            is_little: false.into(),
+            uperf_ext: false.into(),
             gov_snapshot: RefCell::new(None),
             force_bound,
         })
@@ -87,20 +87,22 @@ impl Policy {
     pub fn set_fas_freq(&self, f: Freq) -> Result<()> {
         self.set_max_freq(f)?;
 
-        if !self.is_little.get() {
-            self.set_min_freq(self.freqs[0])?;
-            if let Some(ref p) = self.force_bound {
-                self.force_freq_bound(self.freqs[0], f, p)?;
-            }
+        self.set_min_freq(self.freqs[0])?;
+        if let Some(ref p) = self.force_bound {
+            self.force_freq_bound(self.freqs[0], f, p)?;
         }
 
         Ok(())
     }
 
     pub fn reset_gov(&self) -> Result<()> {
-        if let Some(ref gov) = *self.gov_snapshot.borrow() {
-            let path = self.path.join("scaling_governor");
+        let path = self.path.join("scaling_governor");
 
+        if self.uperf_ext.get() {
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
+            fs::write(&path, "performance")?;
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
+        } else if let Some(ref gov) = *self.gov_snapshot.borrow() {
             let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
             fs::write(&path, gov)?;
             let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
@@ -110,9 +112,13 @@ impl Policy {
     }
 
     pub fn set_fas_gov(&self) -> Result<()> {
-        if !self.is_little.get() {
-            let path = self.path.join("scaling_governor");
+        let path = self.path.join("scaling_governor");
 
+        if self.uperf_ext.get() {
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
+            fs::write(&path, "performance")?;
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
+        } else {
             let cur_gov = fs::read_to_string(&path)?;
             if cur_gov.trim() != "performance" {
                 self.gov_snapshot.replace(Some(cur_gov));

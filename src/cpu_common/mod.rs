@@ -11,14 +11,25 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+mod binder;
 mod policy;
 
-use std::{cell::Cell, collections::HashSet, ffi::OsStr, fs};
+use std::{
+    cell::Cell,
+    collections::HashSet,
+    ffi::OsStr,
+    fs,
+    process::Command,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+};
 
 use anyhow::Result;
 use fas_rs_fw::prelude::*;
 
-use crate::error::Error;
+use binder::UperfExtension;
 use policy::Policy;
 
 pub type Freq = usize; // 单位: khz
@@ -28,10 +39,11 @@ pub struct CpuCommon {
     freqs: Vec<Freq>,
     pos: Cell<usize>,
     policies: Vec<Policy>,
+    fas_status: Option<Arc<AtomicBool>>,
 }
 
 impl CpuCommon {
-    pub fn new(config: &Config) -> Result<Self> {
+    pub fn new() -> Result<Self> {
         let mut policies: Vec<_> = fs::read_dir("/sys/devices/system/cpu/cpufreq")?
             .filter_map(|d| Some(d.ok()?.path()))
             .filter(|p| p.is_dir())
@@ -47,20 +59,6 @@ impl CpuCommon {
 
         policies.sort_unstable();
 
-        let ignore = config
-            .get_conf("ignore_little")?
-            .as_bool()
-            .ok_or(Error::ParseConfig)?;
-
-        // 设置了忽略小核则去掉第一个
-        if policies.len() > 2 {
-            if ignore {
-                policies.remove(0);
-            } else {
-                policies[0].is_little = true.into();
-            }
-        }
-
         let mut freqs: Vec<_> = policies
             .iter()
             .flat_map(|p| p.freqs.iter().copied())
@@ -69,10 +67,26 @@ impl CpuCommon {
             .collect();
         freqs.sort_unstable();
 
+        let mut fas_status = None;
+        if let Ok(prop) = Command::new("getprop").arg("uperf_patched_fas_rs").output() {
+            let prop = String::from_utf8_lossy(&prop.stdout).into_owned();
+
+            if prop.trim() == "true" {
+                let status = Arc::new(AtomicBool::new(false));
+                fas_status = Some(status.clone());
+                UperfExtension::run_server(status)?;
+
+                for policy in &policies {
+                    policy.uperf_ext.set(true);
+                }
+            }
+        }
+
         Ok(Self {
             pos: Cell::new(freqs.len() - 1),
             freqs,
             policies,
+            fas_status,
         })
     }
 }
@@ -90,6 +104,10 @@ impl PerformanceController for CpuCommon {
         for policy in &self.policies {
             let _ = policy.set_fas_freq(freq);
             let _ = policy.set_fas_gov();
+        }
+
+        if let Some(ref status) = self.fas_status {
+            status.store(true, Ordering::Release);
         }
 
         Ok(())
@@ -122,6 +140,10 @@ impl PerformanceController for CpuCommon {
             let _ = policy.reset_gov();
         }
 
+        if let Some(ref status) = self.fas_status {
+            status.store(false, Ordering::Release);
+        }
+
         Ok(())
     }
 
@@ -132,6 +154,10 @@ impl PerformanceController for CpuCommon {
             let _ = policy.init_game();
         }
 
+        if let Some(ref status) = self.fas_status {
+            status.store(true, Ordering::Release);
+        }
+
         Ok(())
     }
 
@@ -140,6 +166,10 @@ impl PerformanceController for CpuCommon {
 
         for policy in &self.policies {
             let _ = policy.init_default();
+        }
+
+        if let Some(ref status) = self.fas_status {
+            status.store(false, Ordering::Release);
         }
 
         Ok(())

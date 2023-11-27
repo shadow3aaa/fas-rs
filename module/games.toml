@@ -1,5 +1,4 @@
 [config]
-ignore_little = false
 keep_std = true
 
 [game_list]
