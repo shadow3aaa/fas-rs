@@ -1,3 +1,4 @@
 interface IRemoteService {
-    void writeFreq(long freq, String path);
+    void connectServer();
+    void writeFile(String path, String Value);
 }

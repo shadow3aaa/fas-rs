@@ -59,10 +59,15 @@ impl UperfExtension {
 impl Interface for UperfExtension {}
 
 impl IRemoteService::IRemoteService for UperfExtension {
-    fn writeFreq(&self, freq: i64, path: &str) -> binder::Result<()> {
+    fn connectServer(&self) -> binder::Result<()> {
+        info!("Connected with uperf-patch");
+        Ok(())
+    }
+
+    fn writeFile(&self, path: &str, value: &str) -> binder::Result<()> {
         if !self.fas_status.load(Ordering::Acquire) {
             let _ = fs::set_permissions(path, PermissionsExt::from_mode(0o644));
-            let _ = fs::write(path, freq.to_string());
+            let _ = fs::write(path, value);
             let _ = fs::set_permissions(path, PermissionsExt::from_mode(0o444));
         }
 
