@@ -15,6 +15,7 @@
 mod IRemoteService;
 
 use std::{
+    ffi::OsStr,
     fs,
     os::unix::fs::PermissionsExt,
     sync::{
@@ -61,6 +62,24 @@ impl Interface for UperfExtension {}
 impl IRemoteService::IRemoteService for UperfExtension {
     fn connectServer(&self) -> binder::Result<()> {
         info!("Connected with uperf-patch");
+
+        for path in fs::read_dir("/sys/devices/system/cpu/cpufreq")
+            .unwrap()
+            .filter_map(|d| Some(d.ok()?.path()))
+            .filter(|p| p.is_dir())
+            .filter(|p| {
+                p.file_name()
+                    .and_then(OsStr::to_str)
+                    .unwrap()
+                    .contains("policy")
+            })
+        {
+            let path = path.join("scaling_governor");
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
+            let _ = fs::write(&path, "performance");
+            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
+        }
+
         Ok(())
     }
 
