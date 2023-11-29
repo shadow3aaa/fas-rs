@@ -4,7 +4,7 @@
 ## 更新日志
 - 优化参数
 - 移除无意义的配置
-- 支持在非fas状态下使用特定的(uperf)[https://github.com/shadow3aaa/uperf-patch/releases]
+- 支持在非fas状态下使用特定的[uperf-v3](https://github.com/shadow3aaa/uperf-patch/releases)
 
 ## 运行要求
 - soc平台无要求
