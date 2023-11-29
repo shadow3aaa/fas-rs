@@ -14,4 +14,4 @@
 ## 特殊说明
 - 对开启fas的游戏使用shamiko会导致不生效
 - 采用zygisk注入劫持libgui获取frametime，存在部分被检测风险
-- 支持使用特殊的(uperf)[https://github.com/shadow3aaa/uperf-patch/releases]，请注意fas-rs支持并且仅支持和此uperf共存，其它版本(包括官方版本)都不支持
+- 支持使用特殊的[uperf](https://github.com/shadow3aaa/uperf-patch/releases)，请注意fas-rs支持并且仅支持和此uperf共存，其它版本(包括官方版本)都不支持
