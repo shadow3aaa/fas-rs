@@ -100,14 +100,6 @@ impl<P: PerformanceController> Looper<P> {
                 return Ok(Event::None);
             }
 
-            /* if let Some(stamp) = buffer.last_limit {
-                let normalized_last_limit = stamp.elapsed() * target_fps;
-                if normalized_last_limit < Duration::from_secs(3) {
-                    return Ok(Event::None);
-                }
-            } // one jank is allow in 3 frames at least */
-
-            buffer.last_limit = Some(Instant::now());
             buffer.limit_acc = buffer.limit_acc.saturating_sub(Duration::from_millis(100));
 
             #[cfg(debug_assertions)]
