@@ -41,19 +41,19 @@ impl<P: PerformanceController> Looper<P> {
 
         match mode {
             Mode::Powersave => {
-                scale_time = Duration::from_millis(15);
+                scale_time = Duration::from_millis(20);
                 tolerant_frame_limit = Duration::from_millis(10);
                 tolerant_frame_jank = Duration::from_millis(15);
             }
             Mode::Balance => {
-                scale_time = Duration::from_millis(10);
-                tolerant_frame_limit = Duration::from_millis(6);
-                tolerant_frame_jank = Duration::from_millis(10);
+                scale_time = Duration::from_millis(20);
+                tolerant_frame_limit = Duration::from_millis(9);
+                tolerant_frame_jank = Duration::from_millis(15);
             }
             Mode::Performance | Mode::Fast => {
                 scale_time = Duration::from_millis(10);
                 tolerant_frame_limit = Duration::from_millis(5);
-                tolerant_frame_jank = Duration::from_millis(10);
+                tolerant_frame_jank = Duration::from_millis(8);
             }
         }
 

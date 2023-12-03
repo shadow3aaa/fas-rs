@@ -100,7 +100,8 @@ impl<P: PerformanceController> Looper<P> {
                 return Ok(Event::None);
             }
 
-            buffer.limit_acc = buffer.limit_acc.saturating_sub(Duration::from_millis(100));
+            buffer.limit_acc = Duration::ZERO;
+            buffer.release_acc = Duration::ZERO;
 
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
@@ -114,9 +115,8 @@ impl<P: PerformanceController> Looper<P> {
                 return Ok(Event::None);
             }
 
-            buffer.release_acc = buffer
-                .release_acc
-                .saturating_sub(Duration::from_millis(100));
+            buffer.limit_acc = Duration::ZERO;
+            buffer.release_acc = Duration::ZERO;
 
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
