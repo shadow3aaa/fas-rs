@@ -43,7 +43,7 @@ jobs:
         export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
         export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
         chmod +x ./build.sh
-        ./build.sh --release -v
+        ./make.sh build --release -v
 
     - name: Upload
       uses: actions/upload-artifact@v3.1.3
