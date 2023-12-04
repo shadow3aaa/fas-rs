@@ -42,7 +42,7 @@ jobs:
       run: |
         export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
         export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
-        chmod +x ./build.sh
+        chmod +x ./make.sh
         ./make.sh build --release -v
 
     - name: Upload
