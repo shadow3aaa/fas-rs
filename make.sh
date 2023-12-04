@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright 2023 shadow3aaa@gitbub.com
 #
@@ -13,12 +13,36 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-cargo fmt -v
-shfmt -w -s *.sh
-shfmt -w -s fas_rs_fw/*.sh
-shfmt -w -s module/*.sh
-cd zygisk
-shfmt -w -s *.sh
-clang-format -i src/*.cpp
-cd rust
-cargo fmt -v
+SHDIR="$(dirname $(readlink -f "$0"))"
+SCRIPT=$SHDIR/script
+
+case $1 in
+build)
+	source $SCRIPT/build.sh
+	shift
+	build $@
+	;;
+format | fmt)
+	source $SCRIPT/format.sh
+	format_codes
+	;;
+fix)
+	source $SCRIPT/fix.sh
+	fix_codes
+	;;
+help)
+	echo "./make.sh:
+    build:
+        build and package fas-rs module
+        sugg: try ./make.sh build --help to get details
+    format:
+        format codes of fas-rs
+    fix:
+        fix codes of fas-rs"
+	;;
+*)
+	echo Illegal parameter: $arg >&2
+	echo Try \'./make.sh help\' >&2
+	exit 1
+	;;
+esac
