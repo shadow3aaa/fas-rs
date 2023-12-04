@@ -116,11 +116,7 @@ cargo install cargo-ndk
 git clone https://github.com/shadow3aaa/fas-rs
 cd fas-rs
 
-# Compile:
-# build.sh --release / release / -r / r:
-#   release build
-# build.sh --debug / debug / -d / d:
-#   debug build
-chmod +x ./build.sh
-./build.sh --release
+# Compile
+chmod +x ./make.sh
+./make.sh build --release
 ```
