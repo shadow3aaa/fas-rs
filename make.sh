@@ -41,7 +41,7 @@ help)
         fix codes of fas-rs"
 	;;
 *)
-	echo Illegal parameter: $arg >&2
+	echo Illegal parameter: $1 >&2
 	echo Try \'./make.sh help\' >&2
 	exit 1
 	;;
