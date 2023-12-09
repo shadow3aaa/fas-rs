@@ -103,7 +103,6 @@ impl PerformanceController for CpuCommon {
         let freq = self.freqs[pos];
         for policy in &self.policies {
             let _ = policy.set_fas_freq(freq);
-            let _ = policy.set_fas_gov();
         }
 
         if let Some(ref status) = self.fas_status {
@@ -137,7 +136,6 @@ impl PerformanceController for CpuCommon {
 
         for policy in &self.policies {
             let _ = policy.set_fas_freq(freq);
-            let _ = policy.reset_gov();
         }
 
         if let Some(ref status) = self.fas_status {

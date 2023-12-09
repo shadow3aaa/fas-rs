@@ -35,11 +35,11 @@ impl<P: PerformanceController> Looper<P> {
         };
         let tolerant_frame_offset = tolerant_frame_offset / 1000.0; // to ms
 
-        let scale_time;
-        let tolerant_frame_limit;
-        let tolerant_frame_jank;
+        let scale_time = Duration::from_millis(10);
+        let tolerant_frame_limit = Duration::from_millis(5);
+        let tolerant_frame_jank = Duration::from_millis(10);
 
-        match mode {
+        /* match mode {
             Mode::Powersave => {
                 scale_time = Duration::from_millis(20);
                 tolerant_frame_limit = Duration::from_millis(10);
@@ -53,9 +53,9 @@ impl<P: PerformanceController> Looper<P> {
             Mode::Performance | Mode::Fast => {
                 scale_time = Duration::from_millis(10);
                 tolerant_frame_limit = Duration::from_millis(5);
-                tolerant_frame_jank = Duration::from_millis(8);
+                tolerant_frame_jank = Duration::from_millis(10);
             }
-        }
+        } */
 
         let tolerant_frame_jank_offseted =
             tolerant_frame_jank.as_secs_f64() + tolerant_frame_offset;
