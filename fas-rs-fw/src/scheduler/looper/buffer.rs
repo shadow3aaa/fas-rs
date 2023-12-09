@@ -31,6 +31,7 @@ pub struct Buffer {
     target_fps_config: TargetFps,
     timer: Instant,
     pub last_update: Instant,
+    pub dispersion: Option<f64>,
     pub frametimes: VecDeque<Duration>,
     pub windows: HashMap<u32, FrameWindow>,
     pub last_jank: Option<Instant>,
@@ -46,7 +47,7 @@ impl Buffer {
             target_fps_config: t,
             timer: Instant::now(),
             last_update: Instant::now(),
-            // variance: None,
+            dispersion: None,
             frametimes: VecDeque::with_capacity(BUFFER_MAX),
             windows: HashMap::new(),
             last_jank: None,
@@ -77,6 +78,7 @@ impl Buffer {
 
             if self.timer.elapsed() * fps > Duration::from_secs(BUFFER_MAX as u64) {
                 self.calculate_fps();
+                self.calculate_dispersion();
                 self.timer = Instant::now();
             }
         } else {
@@ -128,5 +130,24 @@ impl Buffer {
         }
 
         self.target_fps = target_fpses.last().copied();
+    }
+
+    fn calculate_dispersion(&mut self) {
+        if self.frametimes.len() < BUFFER_MAX {
+            return;
+        }
+
+        if let Some(target_fps) = self.target_fps {
+            let dispersion: f64 = self
+                .frametimes
+                .iter()
+                .copied()
+                .map(|d| d * target_fps)
+                .map(|d| d.as_secs_f64())
+                .map(|f| (f - 1.0).abs())
+                .sum();
+            let dispersion = dispersion / BUFFER_MAX as f64;
+            self.dispersion = Some(dispersion);
+        }
     }
 }

@@ -20,13 +20,13 @@ use crate::{error::Result, node::Mode, Config, Error, PerformanceController};
 
 #[derive(Debug)]
 pub struct PolicyConfig {
-    pub scale_time: Duration,
-    pub tolerant_frame_limit: Duration,
-    pub tolerant_frame_jank: Duration,
+    pub scale_time: Duration,           // 控制频率总变化速度，越大越慢
+    pub tolerant_frame_limit: Duration, // 控制降频速度，越大越快
+    pub tolerant_frame_jank: Duration,  // 控制升频速度，越大越快
 }
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn policy_config(mode: Mode, _buffer: &Buffer, config: &Config) -> Result<PolicyConfig> {
+    pub fn policy_config(mode: Mode, buffer: &Buffer, config: &Config) -> Result<PolicyConfig> {
         let tolerant_frame_offset = config.get_mode_conf(mode, "tolerant_frame_offset")?;
         let tolerant_frame_offset = match tolerant_frame_offset {
             Value::Float(f) => f,
@@ -35,27 +35,15 @@ impl<P: PerformanceController> Looper<P> {
         };
         let tolerant_frame_offset = tolerant_frame_offset / 1000.0; // to ms
 
-        let scale_time = Duration::from_millis(10);
-        let tolerant_frame_limit = Duration::from_millis(5);
-        let tolerant_frame_jank = Duration::from_millis(10);
+        let dispersion = buffer.dispersion.unwrap_or_default();
+        let dispersion = dispersion.min(1.0);
 
-        /* match mode {
-            Mode::Powersave => {
-                scale_time = Duration::from_millis(20);
-                tolerant_frame_limit = Duration::from_millis(10);
-                tolerant_frame_jank = Duration::from_millis(15);
-            }
-            Mode::Balance => {
-                scale_time = Duration::from_millis(20);
-                tolerant_frame_limit = Duration::from_millis(9);
-                tolerant_frame_jank = Duration::from_millis(15);
-            }
-            Mode::Performance | Mode::Fast => {
-                scale_time = Duration::from_millis(10);
-                tolerant_frame_limit = Duration::from_millis(5);
-                tolerant_frame_jank = Duration::from_millis(10);
-            }
-        } */
+        let basic = 10.0 * (1.0 - dispersion);
+        let basic = basic as u64;
+
+        let scale_time = Duration::from_millis(basic);
+        let tolerant_frame_limit = Duration::from_millis(basic);
+        let tolerant_frame_jank = Duration::from_millis(basic);
 
         let tolerant_frame_jank_offseted =
             tolerant_frame_jank.as_secs_f64() + tolerant_frame_offset;
