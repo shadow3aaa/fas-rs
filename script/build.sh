@@ -30,21 +30,6 @@ build() {
 	local RELEASE_BUILD=false
 	local VERBOSE=false
 
-	if [ "$TERMUX_VERSION" = "" ]; then
-		RR='cargo ndk -p 31 -t arm64-v8a'
-
-		if [ "$ANDROID_NDK_HOME" = "" ]; then
-			echo Missing ANDROID_NDK_HOME >&2
-			exit 1
-		else
-			dir="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
-			STRIP="$dir/llvm-strip"
-		fi
-	else
-		RR=cargo
-		STRIP=strip
-	fi
-
 	for arg in $@; do
 		case $arg in
 		clean | --clean)
@@ -71,6 +56,8 @@ build() {
 
 		NOARG=false
 	done
+
+	source $SHDIR/script/toolchains.sh
 
 	set -e
 	chmod +x zygisk/build.sh

@@ -14,10 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 format_codes() {
+	source $SHDIR/script/toolchains.sh
+
 	find -type f -name "*.sh" -not -path ".git/*" -exec shfmt -w -s {} \;
-	cargo fmt -v
+	$RR fmt -v
 	cd zygisk
 	clang-format -i src/*.cpp
 	cd rust
-	cargo fmt -v
+	$RR fmt -v
 }
