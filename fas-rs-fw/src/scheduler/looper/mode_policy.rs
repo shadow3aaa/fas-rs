@@ -13,50 +13,57 @@
 *  limitations under the License. */
 use std::time::Duration;
 
-use toml::Value;
-
 use super::{Buffer, Looper};
-use crate::{error::Result, node::Mode, Config, Error, PerformanceController};
+use crate::{node::Mode, Config, PerformanceController};
 
 #[derive(Debug)]
 pub struct PolicyConfig {
-    pub scale_time: Duration,           // 控制频率总变化速度，越大越慢
-    pub tolerant_frame_limit: Duration, // 控制降频速度，越大越快
-    pub tolerant_frame_jank: Duration,  // 控制升频速度，越大越快
+    pub scale_time: Duration, // 控制频率总变化速度，越大越慢
+    pub tolerant_frame: Duration,
 }
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn policy_config(mode: Mode, buffer: &Buffer, config: &Config) -> Result<PolicyConfig> {
-        let tolerant_frame_offset = config.get_mode_conf(mode, "tolerant_frame_offset")?;
-        let tolerant_frame_offset = match tolerant_frame_offset {
-            Value::Float(f) => f,
-            Value::Integer(i) => i as f64,
-            _ => return Err(Error::ParseConfig),
-        };
-        let tolerant_frame_offset = tolerant_frame_offset / 1000.0; // to ms
+    pub fn policy_config(mode: Mode, buffer: &Buffer, _config: &Config) -> PolicyConfig {
+        let basic_scale;
+        let basic_step;
+
+        match mode {
+            Mode::Powersave => {
+                basic_scale = 0.05;
+                basic_step = 0.025;
+            }
+            Mode::Balance => {
+                basic_scale = 0.03;
+                basic_step = 0.015;
+            }
+            Mode::Performance => {
+                basic_scale = 0.02;
+                basic_step = 0.01;
+            }
+            Mode::Fast => {
+                basic_scale = 0.01;
+                basic_step = 0.005;
+            }
+        }
 
         let dispersion = buffer.dispersion.unwrap_or_default();
-        let dispersion = dispersion.min(1.0);
+        let rhs = 2.5 / dispersion.clamp(0.1, 1.0);
+        let scale = basic_scale * rhs;
 
-        let basic = 10.0 * (1.0 - dispersion);
-        let basic = basic as u64;
+        /* let rhs = (buffer.current_fps.unwrap_or_default()
+            - f64::from(buffer.target_fps.unwrap_or_default()))
+            / 3.0;
+        let rhs = 1.0 - rhs.abs();
+        let rhs = rhs.clamp(0.5, 1.0); */
 
-        let scale_time = Duration::from_millis(basic);
-        let tolerant_frame_limit = Duration::from_millis(basic);
-        let tolerant_frame_jank = Duration::from_millis(basic);
+        let step = basic_step;
 
-        let tolerant_frame_jank_offseted =
-            tolerant_frame_jank.as_secs_f64() + tolerant_frame_offset;
-        let tolerant_frame_jank_offseted = tolerant_frame_jank_offseted.clamp(
-            tolerant_frame_limit.as_secs_f64(),
-            tolerant_frame_jank.as_secs_f64() + 0.005,
-        );
-        let tolerant_frame_jank = Duration::from_secs_f64(tolerant_frame_jank_offseted);
+        let scale_time = Duration::from_secs_f64(scale);
+        let tolerant_frame = Duration::from_secs_f64(step);
 
-        Ok(PolicyConfig {
+        PolicyConfig {
             scale_time,
-            tolerant_frame_limit,
-            tolerant_frame_jank,
-        })
+            tolerant_frame,
+        }
     }
 }

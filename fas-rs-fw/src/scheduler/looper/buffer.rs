@@ -22,19 +22,17 @@ use log::debug;
 use super::window::FrameWindow;
 use crate::config::TargetFps;
 
-const BUFFER_MAX: usize = 60;
-
 #[derive(Debug)]
 pub struct Buffer {
     pub target_fps: Option<u32>,
     pub current_fps: Option<f64>,
     target_fps_config: TargetFps,
-    timer: Instant,
     pub last_update: Instant,
     pub dispersion: Option<f64>,
     pub frametimes: VecDeque<Duration>,
     pub windows: HashMap<u32, FrameWindow>,
     pub last_jank: Option<Instant>,
+    pub last_limit: Option<Instant>,
     pub release_acc: Duration,
     pub limit_acc: Duration,
 }
@@ -45,12 +43,12 @@ impl Buffer {
             target_fps: None,
             current_fps: None,
             target_fps_config: t,
-            timer: Instant::now(),
             last_update: Instant::now(),
             dispersion: None,
-            frametimes: VecDeque::with_capacity(BUFFER_MAX),
+            frametimes: VecDeque::new(),
             windows: HashMap::new(),
             last_jank: None,
+            last_limit: None,
             release_acc: Duration::ZERO,
             limit_acc: Duration::ZERO,
         }
@@ -59,40 +57,26 @@ impl Buffer {
     pub fn push_frametime(&mut self, d: Duration) {
         self.last_update = Instant::now();
 
-        let cur_len = self.frametimes.len();
-        if cur_len >= BUFFER_MAX {
-            self.frametimes.pop_back();
+        if let Some(fps) = self.target_fps {
+            self.frametimes.truncate(fps as usize);
         }
 
         self.frametimes.push_front(d);
-
-        if cur_len < BUFFER_MAX {
-            return;
-        }
 
         if let Some(fps) = self.target_fps {
             self.windows
                 .entry(fps)
                 .or_insert_with(|| FrameWindow::new(fps, 5))
                 .update(d);
-
-            if self.timer.elapsed() * fps > Duration::from_secs(BUFFER_MAX as u64) {
-                self.calculate_fps();
-                self.calculate_dispersion();
-                self.timer = Instant::now();
-            }
-        } else {
-            self.calculate_fps();
         }
+
+        self.calculate_fps();
+        self.calculate_dispersion();
     }
 
     fn calculate_fps(&mut self) {
-        if self.frametimes.len() < BUFFER_MAX {
-            return;
-        }
-
         let avg_time: Duration =
-            self.frametimes.iter().sum::<Duration>() / BUFFER_MAX.try_into().unwrap();
+            self.frametimes.iter().sum::<Duration>() / self.frametimes.len().try_into().unwrap();
         #[cfg(debug_assertions)]
         debug!("avg_time: {avg_time:?}");
 
@@ -133,20 +117,25 @@ impl Buffer {
     }
 
     fn calculate_dispersion(&mut self) {
-        if self.frametimes.len() < BUFFER_MAX {
-            return;
-        }
-
         if let Some(target_fps) = self.target_fps {
+            if (self.frametimes.len() as u32) < target_fps {
+                return;
+            }
+
             let dispersion: f64 = self
                 .frametimes
                 .iter()
                 .copied()
                 .map(|d| d * target_fps)
                 .map(|d| d.as_secs_f64())
-                .map(|f| (f - 1.0).abs())
+                .map(|f| (f - 1.0).powi(2))
                 .sum();
-            let dispersion = dispersion / BUFFER_MAX as f64;
+
+            let dispersion = dispersion / f64::from(target_fps);
+            let dispersion = dispersion.sqrt();
+
+            println!("{dispersion:.2}");
+
             self.dispersion = Some(dispersion);
         }
     }

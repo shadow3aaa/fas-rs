@@ -90,43 +90,28 @@ impl<P: PerformanceController> Looper<P> {
             self.retain_topapp()?;
             self.buffer_update(&data);
 
-            let Some(cur_buffer) = self.buffers.get_mut(&(data.buffer, data.pid)) else {
-                continue;
-            };
+            let target_fps = self.buffers.values().filter_map(|b| b.target_fps).max();
 
-            let current_event = Self::get_event(cur_buffer, &self.config, &mut self.node)
-                .unwrap_or(Event::ReleaseMax);
+            let event = self
+                .buffers
+                .values_mut()
+                .filter(|b| b.last_update.elapsed() < Duration::from_secs(5))
+                .filter(|b| b.target_fps == target_fps)
+                .map(|b| {
+                    Self::get_event(b, &self.config, &mut self.node).unwrap_or(Event::ReleaseMax)
+                })
+                .max()
+                .unwrap_or(Event::None);
 
-            match current_event {
+            match event {
                 Event::ReleaseMax => {
                     self.controller.release_max(&self.config)?;
-                    continue;
                 }
                 Event::Release => {
                     self.controller.release(&self.config)?;
-
-                    continue;
                 }
-                _ => (),
-            }
-
-            let events: Vec<_> = self
-                .buffers
-                .values_mut()
-                .filter(|buffer| buffer.last_update.elapsed() < Duration::from_secs(10))
-                .map(|buffer| {
-                    Self::get_event(buffer, &self.config, &mut self.node)
-                        .unwrap_or(Event::ReleaseMax)
-                })
-                .collect();
-
-            if events
-                .iter()
-                .any(|e| matches!(e, Event::ReleaseMax | Event::Release))
-            {
-                self.controller.release(&self.config)?;
-            } else if current_event == Event::Limit {
-                self.controller.limit(&self.config)?;
+                Event::Limit => self.controller.limit(&self.config)?,
+                Event::None => (),
             }
         }
     }

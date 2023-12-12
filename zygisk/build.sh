@@ -100,11 +100,11 @@ if $DEBUG_BUILD; then
 		cd $SHDIR
 		cp -f rust/target/aarch64-linux-android/debug/librust.a output/librust.a
 		clang++ -v --shared src/*.cpp \
-		-I rust/include \
-		-L output -L ../prebuilt \
-		-fPIC -nostdlib++ -Wl,-lrust,-llog,-lbinder_ndk \
-		$CFLAGS \
-		-o output/arm64-v8a.so
+			-I rust/include \
+			-L output -L ../prebuilt \
+			-fPIC -nostdlib++ -Wl,-lrust,-llog,-lbinder_ndk \
+			$CFLAGS \
+			-o output/arm64-v8a.so
 	else
 		cd $SHDIR/rust
 		RR build --target aarch64-linux-android
@@ -112,11 +112,11 @@ if $DEBUG_BUILD; then
 		cd $SHDIR
 		cp -f rust/target/aarch64-linux-android/debug/librust.a output/librust.a
 		clang++ --shared src/*.cpp \
-		-I rust/include \
-		-L output -L ../prebuilt \
-		-fPIC -nostdlib++ -Wl,-lrust,-llog,-lbinder_ndk \
-		$CFLAGS \
-		-o output/arm64-v8a.so
+			-I rust/include \
+			-L output -L ../prebuilt \
+			-fPIC -nostdlib++ -Wl,-lrust,-llog,-lbinder_ndk \
+			$CFLAGS \
+			-o output/arm64-v8a.so
 	fi
 fi
 
@@ -128,11 +128,11 @@ if $RELEASE_BUILD; then
 		cd $SHDIR
 		cp -f rust/target/aarch64-linux-android/release/librust.a output/librust.a
 		clang++ -v --shared src/*.cpp \
-		-I rust/include \
-		-L output -L ../prebuilt \
-		-fPIC -nostdlib++ -Wl,-lrust,-llog,-lbinder_ndk \
-		$CFLAGS \
-		-o output/arm64-v8a.so
+			-I rust/include \
+			-L output -L ../prebuilt \
+			-fPIC -nostdlib++ -Wl,-lrust,-llog,-lbinder_ndk \
+			$CFLAGS \
+			-o output/arm64-v8a.so
 	else
 		cd $SHDIR/rust
 		RR build --release --target aarch64-linux-android
@@ -140,10 +140,10 @@ if $RELEASE_BUILD; then
 		cd $SHDIR
 		cp -f rust/target/aarch64-linux-android/release/librust.a output/librust.a
 		clang++ --shared src/*.cpp \
-		-I rust/include \
-		-L output -L ../prebuilt \
-		-fPIC -nostdlib++ -Wl,-lrust,-llog,-lbinder_ndk \
-		$CFLAGS \
-		-o output/arm64-v8a.so
+			-I rust/include \
+			-L output -L ../prebuilt \
+			-fPIC -nostdlib++ -Wl,-lrust,-llog,-lbinder_ndk \
+			$CFLAGS \
+			-o output/arm64-v8a.so
 	fi
 fi
