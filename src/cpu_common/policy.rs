@@ -28,6 +28,7 @@ use crate::error::Error;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Policy {
+    pub little: bool,
     pub num: u8,
     pub path: PathBuf,
     pub freqs: Vec<Freq>,
@@ -55,6 +56,7 @@ impl Policy {
         };
 
         Ok(Self {
+            little: false,
             num: Self::parse_policy(p.file_name().and_then_likely(OsStr::to_str).unwrap())
                 .ok_or(Error::Other("Failed to parse cpufreq policy num"))?,
             path: p.to_path_buf(),
@@ -118,7 +120,7 @@ impl Policy {
             let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
             fs::write(&path, "performance")?;
             let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
-        } else {
+        } else if !self.little {
             let cur_gov = fs::read_to_string(&path)?;
             if cur_gov.trim() != "performance" {
                 self.gov_snapshot.replace(Some(cur_gov));

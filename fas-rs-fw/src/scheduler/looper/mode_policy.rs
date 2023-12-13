@@ -18,16 +18,19 @@ use crate::{node::Mode, Config, PerformanceController};
 
 #[derive(Debug)]
 pub struct PolicyConfig {
-    pub scale_time: Duration, // 控制频率总变化速度，越大越慢
-    pub tolerant_frame: Duration,
+    pub scale: Duration,    // 触发控制器操作水位线
+    pub step_min: Duration, // 累计器每次最少增加量
 }
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn policy_config(mode: Mode, buffer: &Buffer, _config: &Config) -> PolicyConfig {
-        let basic_scale;
-        let basic_step;
+    pub fn policy_config(_mode: Mode, buffer: &Buffer, _config: &Config) -> PolicyConfig {
+        let dispersion = buffer.dispersion.unwrap_or_default();
+        let rhs = 1.0 / dispersion.clamp(0.5, 1.5);
 
-        match mode {
+        let step_min = Duration::from_millis(0);
+        let scale = Duration::from_millis(10).mul_f64(rhs);
+
+        /* match mode {
             Mode::Powersave => {
                 basic_scale = 0.05;
                 basic_step = 0.025;
@@ -44,26 +47,8 @@ impl<P: PerformanceController> Looper<P> {
                 basic_scale = 0.01;
                 basic_step = 0.005;
             }
-        }
+        } */
 
-        let dispersion = buffer.dispersion.unwrap_or_default();
-        let rhs = 2.5 / dispersion.clamp(0.1, 1.0);
-        let scale = basic_scale * rhs;
-
-        /* let rhs = (buffer.current_fps.unwrap_or_default()
-            - f64::from(buffer.target_fps.unwrap_or_default()))
-            / 3.0;
-        let rhs = 1.0 - rhs.abs();
-        let rhs = rhs.clamp(0.5, 1.0); */
-
-        let step = basic_step;
-
-        let scale_time = Duration::from_secs_f64(scale);
-        let tolerant_frame = Duration::from_secs_f64(step);
-
-        PolicyConfig {
-            scale_time,
-            tolerant_frame,
-        }
+        PolicyConfig { scale, step_min }
     }
 }

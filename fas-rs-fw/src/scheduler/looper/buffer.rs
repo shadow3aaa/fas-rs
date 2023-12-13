@@ -33,8 +33,10 @@ pub struct Buffer {
     pub windows: HashMap<u32, FrameWindow>,
     pub last_jank: Option<Instant>,
     pub last_limit: Option<Instant>,
+    pub limit_counter: usize,
     pub release_acc: Duration,
     pub limit_acc: Duration,
+    timer: Instant,
 }
 
 impl Buffer {
@@ -49,32 +51,35 @@ impl Buffer {
             windows: HashMap::new(),
             last_jank: None,
             last_limit: None,
+            limit_counter: 0,
             release_acc: Duration::ZERO,
             limit_acc: Duration::ZERO,
+            timer: Instant::now(),
         }
     }
 
     pub fn push_frametime(&mut self, d: Duration) {
         self.last_update = Instant::now();
 
+        self.frametimes.push_front(d);
+        self.calculate_current_fps();
+
         if let Some(fps) = self.target_fps {
             self.frametimes.truncate(fps as usize);
-        }
-
-        self.frametimes.push_front(d);
-
-        if let Some(fps) = self.target_fps {
             self.windows
                 .entry(fps)
                 .or_insert_with(|| FrameWindow::new(fps, 5))
                 .update(d);
         }
 
-        self.calculate_fps();
-        self.calculate_dispersion();
+        if self.timer.elapsed() >= Duration::from_secs(1) {
+            self.calculate_target_fps();
+            self.calculate_dispersion();
+            self.timer = Instant::now();
+        }
     }
 
-    fn calculate_fps(&mut self) {
+    fn calculate_current_fps(&mut self) {
         let avg_time: Duration =
             self.frametimes.iter().sum::<Duration>() / self.frametimes.len().try_into().unwrap();
         #[cfg(debug_assertions)]
@@ -84,6 +89,14 @@ impl Buffer {
         self.current_fps = Some(current_fps);
         #[cfg(debug_assertions)]
         debug!("current_fps: {:.2}", current_fps);
+    }
+
+    fn calculate_target_fps(&mut self) {
+        let Some(current_fps) = self.current_fps else {
+            return;
+        };
+
+        let avg_time = Duration::from_secs(1).div_f64(current_fps);
 
         let target_fpses = match &self.target_fps_config {
             TargetFps::Value(t) => {
@@ -133,8 +146,6 @@ impl Buffer {
 
             let dispersion = dispersion / f64::from(target_fps);
             let dispersion = dispersion.sqrt();
-
-            println!("{dispersion:.2}");
 
             self.dispersion = Some(dispersion);
         }

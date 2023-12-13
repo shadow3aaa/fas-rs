@@ -53,7 +53,6 @@ impl<P: PerformanceController> Looper<P> {
 
         let normalized_big_jank_scale = Duration::from_secs(5);
         let normalized_jank_scale = Duration::from_millis(1700);
-        let normalized_scale = Duration::from_secs(1) + policy.tolerant_frame;
 
         #[cfg(debug_assertions)]
         {
@@ -62,7 +61,6 @@ impl<P: PerformanceController> Looper<P> {
             debug!("normalized avg frametime: {normalized_avg_frame:?}");
             debug!("simple jank scale: {normalized_jank_scale:?}");
             debug!("big jank scale: {normalized_big_jank_scale:?}");
-            debug!("frame scale: {normalized_scale:?}");
         }
 
         if *normalized_frame > normalized_big_jank_scale {
@@ -86,38 +84,42 @@ impl<P: PerformanceController> Looper<P> {
             debug!("JANK: simp jank");
 
             Ok(Event::Release)
-        } else if normalized_avg_frame > normalized_scale {
-            let diff = duration_abs(normalized_scale, normalized_avg_frame);
+        } else if normalized_avg_frame > Duration::from_secs(1) {
+            let diff = normalized_avg_frame - Duration::from_secs(1);
+            let diff = diff.max(policy.step_min);
 
-            if buffer.release_acc < policy.scale_time {
+            if buffer.release_acc < policy.scale {
                 buffer.release_acc = buffer.release_acc.saturating_add(diff);
                 return Ok(Event::None);
             }
 
-            buffer.release_acc -= policy.scale_time;
+            buffer.release_acc -= policy.scale;
 
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
 
             Ok(Event::Release)
-        } else if normalized_avg_frame <= normalized_scale {
-            let diff = duration_abs(normalized_scale, normalized_avg_frame);
+        } else if normalized_avg_frame <= Duration::from_secs(1) {
+            let diff = Duration::from_secs(1) - normalized_avg_frame;
+            let diff = diff.max(policy.step_min);
 
-            if buffer.limit_acc < policy.scale_time {
+            if buffer.limit_acc < policy.scale && buffer.limit_counter < 10 {
                 buffer.limit_acc = buffer.limit_acc.saturating_add(diff);
+                buffer.limit_counter += 1;
                 return Ok(Event::None);
             }
 
-            buffer.limit_acc -= policy.scale_time;
+            buffer.limit_counter = 0;
+            buffer.limit_acc -= policy.scale;
 
             /* if let Some(stamp) = buffer.last_limit {
                 let normalized_last_limit = stamp.elapsed() * target_fps;
                 if normalized_last_limit < Duration::from_secs(3) {
                     return Ok(Event::None);
                 }
-            } // one limit is allow in 3 frames at least */
+            } // one limit is allow in 3 frames at least
 
-            buffer.last_limit = Some(Instant::now());
+            buffer.last_limit = Some(Instant::now()); */
 
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
@@ -126,13 +128,5 @@ impl<P: PerformanceController> Looper<P> {
         } else {
             Ok(Event::None)
         }
-    }
-}
-
-fn duration_abs(da: Duration, db: Duration) -> Duration {
-    if da > db {
-        da - db
-    } else {
-        db - da
     }
 }

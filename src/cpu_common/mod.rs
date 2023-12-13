@@ -58,6 +58,9 @@ impl CpuCommon {
             .collect();
 
         policies.sort_unstable();
+        if policies.len() > 2 {
+            policies[0].little = true;
+        }
 
         let mut freqs: Vec<_> = policies
             .iter()

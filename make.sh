@@ -30,6 +30,10 @@ fix)
 	source $SCRIPT/fix.sh
 	fix_codes
 	;;
+update)
+	source $SCRIPT/update.sh
+	update_deps
+	;;
 help)
 	echo "./make.sh:
     build:
@@ -38,7 +42,9 @@ help)
     format:
         format codes of fas-rs
     fix:
-        fix codes of fas-rs"
+        fix codes of fas-rs
+    update:
+        recursive update all depended crates"
 	;;
 *)
 	echo Illegal parameter: $1 >&2
