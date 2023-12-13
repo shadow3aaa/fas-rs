@@ -1,7 +1,7 @@
 # **FAS-RS**
 
-- ![Github stars](https://img.shields.io/github/stars/shadow3aaa/fas-rs)
-- ![CI build](https://img.shields.io/github/actions/workflow/status/shadow3aaa/fas-rs/ci.yml)
+- [![Github stars](https://img.shields.io/github/stars/shadow3aaa/fas-rs)](https://github.com/shadow3aaa/fas-rs)
+- [![CI build](https://img.shields.io/github/actions/workflow/status/shadow3aaa/fas-rs/ci.yml)](https://github.com/shadow3aaa/fas-rs/actions)
 
 ## **简介**
 
