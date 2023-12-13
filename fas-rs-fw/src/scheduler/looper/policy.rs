@@ -32,7 +32,6 @@ impl<P: PerformanceController> Looper<P> {
         let Some(target_fps) = buffer.target_fps else {
             return Ok(Event::ReleaseMax);
         };
-        let current_fps = buffer.current_fps.unwrap_or_default() as u32;
 
         let mode = node.get_mode()?;
         let policy = Self::policy_config(mode, buffer, config);
@@ -69,7 +68,7 @@ impl<P: PerformanceController> Looper<P> {
 
             buffer.limit_acc = Duration::ZERO;
             Ok(Event::ReleaseMax)
-        } else if *normalized_frame > normalized_jank_scale || target_fps - current_fps >= 3 {
+        } else if *normalized_frame > normalized_jank_scale {
             if let Some(stamp) = buffer.last_jank {
                 let normalized_last_jank = stamp.elapsed() * target_fps;
                 if normalized_last_jank < Duration::from_secs(30) {
@@ -86,14 +85,16 @@ impl<P: PerformanceController> Looper<P> {
             Ok(Event::Release)
         } else if normalized_avg_frame > Duration::from_secs(1) {
             let diff = normalized_avg_frame - Duration::from_secs(1);
-            let diff = diff.max(policy.step_min);
 
             if buffer.release_acc < policy.scale {
                 buffer.release_acc = buffer.release_acc.saturating_add(diff);
                 return Ok(Event::None);
             }
 
-            buffer.release_acc -= policy.scale;
+            buffer.release_acc = buffer
+                .release_acc
+                .saturating_sub(policy.scale)
+                .min(Duration::from_secs(1));
 
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
@@ -101,16 +102,20 @@ impl<P: PerformanceController> Looper<P> {
             Ok(Event::Release)
         } else if normalized_avg_frame <= Duration::from_secs(1) {
             let diff = Duration::from_secs(1) - normalized_avg_frame;
-            let diff = diff.max(policy.step_min);
 
-            if buffer.limit_acc < policy.scale && buffer.limit_counter < 10 {
+            if buffer.limit_acc < policy.scale
+                && buffer.limit_counter < (target_fps / 6).max(5) as usize
+            {
                 buffer.limit_acc = buffer.limit_acc.saturating_add(diff);
                 buffer.limit_counter += 1;
                 return Ok(Event::None);
             }
 
             buffer.limit_counter = 0;
-            buffer.limit_acc -= policy.scale;
+            buffer.limit_acc = buffer
+                .limit_acc
+                .saturating_sub(policy.scale)
+                .min(Duration::from_secs(1));
 
             /* if let Some(stamp) = buffer.last_limit {
                 let normalized_last_limit = stamp.elapsed() * target_fps;

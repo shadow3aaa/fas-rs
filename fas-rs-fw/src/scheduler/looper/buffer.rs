@@ -70,11 +70,17 @@ impl Buffer {
                 .entry(fps)
                 .or_insert_with(|| FrameWindow::new(fps, 5))
                 .update(d);
+
+            if let Some(current_fps) = self.current_fps {
+                let target_fps = f64::from(fps);
+                if current_fps >= target_fps - 0.1 {
+                    self.calculate_dispersion();
+                }
+            };
         }
 
         if self.timer.elapsed() >= Duration::from_secs(1) {
             self.calculate_target_fps();
-            self.calculate_dispersion();
             self.timer = Instant::now();
         }
     }

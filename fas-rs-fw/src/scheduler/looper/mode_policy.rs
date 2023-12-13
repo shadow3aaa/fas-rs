@@ -18,8 +18,7 @@ use crate::{node::Mode, Config, PerformanceController};
 
 #[derive(Debug)]
 pub struct PolicyConfig {
-    pub scale: Duration,    // 触发控制器操作水位线
-    pub step_min: Duration, // 累计器每次最少增加量
+    pub scale: Duration, // 触发控制器操作水位线
 }
 
 impl<P: PerformanceController> Looper<P> {
@@ -27,8 +26,7 @@ impl<P: PerformanceController> Looper<P> {
         let dispersion = buffer.dispersion.unwrap_or_default();
         let rhs = 1.0 / dispersion.clamp(0.5, 1.5);
 
-        let step_min = Duration::from_millis(0);
-        let scale = Duration::from_millis(10).mul_f64(rhs);
+        let scale = Duration::from_millis(50).mul_f64(rhs);
 
         /* match mode {
             Mode::Powersave => {
@@ -49,6 +47,6 @@ impl<P: PerformanceController> Looper<P> {
             }
         } */
 
-        PolicyConfig { scale, step_min }
+        PolicyConfig { scale }
     }
 }
