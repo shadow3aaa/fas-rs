@@ -7,3 +7,6 @@
 
 # build
 /output
+
+# vscode
+/.vscode
