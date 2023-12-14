@@ -1,6 +1,0 @@
-{
-    "rust-analyzer.linkedProjects": [
-        ".\\zygisk\\rust\\Cargo.toml",
-        ".\\fas-rs-fw\\Cargo.toml"
-    ]
-}
