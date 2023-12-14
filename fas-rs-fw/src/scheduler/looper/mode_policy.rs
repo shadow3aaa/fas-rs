@@ -22,30 +22,17 @@ pub struct PolicyConfig {
 }
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn policy_config(_mode: Mode, buffer: &Buffer, _config: &Config) -> PolicyConfig {
+    pub fn policy_config(mode: Mode, buffer: &Buffer, _config: &Config) -> PolicyConfig {
         let dispersion = buffer.dispersion.unwrap_or_default();
         let rhs = 1.0 / dispersion.clamp(0.5, 1.5);
 
-        let scale = Duration::from_millis(50).mul_f64(rhs);
-
-        /* match mode {
-            Mode::Powersave => {
-                basic_scale = 0.05;
-                basic_step = 0.025;
-            }
-            Mode::Balance => {
-                basic_scale = 0.03;
-                basic_step = 0.015;
-            }
-            Mode::Performance => {
-                basic_scale = 0.02;
-                basic_step = 0.01;
-            }
-            Mode::Fast => {
-                basic_scale = 0.01;
-                basic_step = 0.005;
-            }
-        } */
+        let scale = match mode {
+            Mode::Powersave => Duration::from_millis(130),
+            Mode::Balance => Duration::from_millis(90),
+            Mode::Performance => Duration::from_millis(75),
+            Mode::Fast => Duration::from_millis(50),
+        }
+        .mul_f64(rhs);
 
         PolicyConfig { scale }
     }

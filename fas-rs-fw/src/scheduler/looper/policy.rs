@@ -117,15 +117,6 @@ impl<P: PerformanceController> Looper<P> {
                 .saturating_sub(policy.scale)
                 .min(Duration::from_secs(1));
 
-            /* if let Some(stamp) = buffer.last_limit {
-                let normalized_last_limit = stamp.elapsed() * target_fps;
-                if normalized_last_limit < Duration::from_secs(3) {
-                    return Ok(Event::None);
-                }
-            } // one limit is allow in 3 frames at least
-
-            buffer.last_limit = Some(Instant::now()); */
-
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
 
