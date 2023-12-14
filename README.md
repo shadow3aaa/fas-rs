@@ -38,8 +38,7 @@
   - **mode :**
     - 目前`fas-rs`还没有官方的切换模式的管理器, 而是接入了[`scene`](https://www.coolapk.com/apk/com.omarea.vtools)的配置接口, 如果你不用scene则默认使用`balance`的配置
     - 如果你有在linux上编程的一些了解, 向`/dev/fas_rs/mode`节点写入4模式中的任意一个即可切换到对应模式, 同时读取它也可以知道现在`fas-rs`所处的模式
-  - **参数说明 :**
-    - tolerant_frame_offest : 偏移掉帧忍受度, 必须为浮点数(小数), 可以为负, 越小越激进
+  - **参数说明(暂无) :**
 
 ### **`games.toml`配置标准例 :**
 
@@ -53,22 +52,20 @@ keep_std = true
 "com.miHoYo.enterprise.NGHSoD" = [30, 60, 90]
 "com.miHoYo.hkrpg" = [30, 60]
 "com.mojang.minecraftpe" = [60, 120]
-"com.netease.party" = [30, 120]
+"com.netease.party" = [30, 60]
 "com.shangyoo.neon" = 60
 "com.tencent.tmgp.pubgmhd" = [60, 90, 120]
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
+# 目前没有可以配置的东西，但是还是预留着
 [powersave]
-tolerant_frame_offset = 0.3
 
 [balance]
-tolerant_frame_offset = 0.2
 
 [performance]
-tolerant_frame_offset = 0.1
 
 [fast]
-tolerant_frame_offset = 0.0
+
 ```
 
 ## **配置合并**

@@ -12,14 +12,11 @@ keep_std = true
 "com.tencent.tmgp.pubgmhd" = [60, 90, 120]
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
+# 目前没有可以配置的东西，但是还是预留着
 [powersave]
-tolerant_frame_offset = 1
 
 [balance]
-tolerant_frame_offset = 0
 
 [performance]
-tolerant_frame_offset = -0.5
 
 [fast]
-tolerant_frame_offset = -1
