@@ -10,3 +10,9 @@
 
 # vscode
 /.vscode
+
+# py
+/__pycache__
+
+# idea
+/.idea
