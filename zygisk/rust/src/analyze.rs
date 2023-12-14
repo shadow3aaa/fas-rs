@@ -13,22 +13,22 @@
 *  limitations under the License. */
 use std::{
     collections::hash_map::HashMap,
-    process,
+    process, thread,
     time::{Duration, Instant},
 };
 
-use binder::Strong;
-use log::error;
-
+use binder::{get_interface, Strong};
 #[cfg(debug_assertions)]
 use log::debug;
+use log::error;
 
 use crate::{IRemoteService::IRemoteService, CHANNEL};
 
-pub fn thread(fas_service: &Strong<dyn IRemoteService>, process: &str) -> anyhow::Result<()> {
+pub fn thread(process: &str) -> anyhow::Result<()> {
     let pid = process::id() as i32;
     let mut stamps = HashMap::new();
     let mut gc_timer = Instant::now();
+    let mut fas_service = get_server_interface();
 
     loop {
         let (ptr, stamp) = match CHANNEL.rx.recv() {
@@ -59,11 +59,27 @@ pub fn thread(fas_service: &Strong<dyn IRemoteService>, process: &str) -> anyhow
         #[cfg(debug_assertions)]
         debug!("process: [{process}] framtime: [{frametime:?}]");
 
-        if Ok(false) == fas_service.sendData(ptr as i64, process, pid, frametime.as_nanos() as i64)
+        if let Ok(send) =
+            fas_service.sendData(ptr as i64, process, pid, frametime.as_nanos() as i64)
         {
-            #[cfg(debug_assertions)]
-            debug!("Exit analyze thread, since server prefer this is not a fas app anymore");
-            return Ok(());
+            if !send {
+                #[cfg(debug_assertions)]
+                debug!("Exit analyze thread, since server prefer this is not a fas app anymore");
+                return Ok(());
+            }
+        } else {
+            fas_service = get_server_interface();
         }
+    }
+}
+
+fn get_server_interface() -> Strong<dyn IRemoteService> {
+    loop {
+        if let Ok(fas_service) = get_interface::<dyn IRemoteService>("fas_rs_server") {
+            return fas_service;
+        }
+
+        error!("Failed to get binder interface, fas-rs-server didn't started");
+        thread::sleep(Duration::from_secs(1));
     }
 }

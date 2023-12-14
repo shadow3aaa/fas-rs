@@ -103,8 +103,6 @@ pub unsafe extern "C" fn _need_hook_(process: *const c_char) -> bool {
 
 #[no_mangle]
 pub unsafe extern "C" fn _hook_handler_(process: *const c_char) -> bool {
-    use IRemoteService::IRemoteService;
-
     android_logger::init_once(
         Config::default()
             .with_max_level(LevelFilter::Trace)
@@ -128,13 +126,7 @@ pub unsafe extern "C" fn _hook_handler_(process: *const c_char) -> bool {
                 return;
             }
 
-            let Ok(fas_service) = binder::get_interface::<dyn IRemoteService>("fas_rs_server")
-            else {
-                error!("Failed to get binder interface, fas-rs-server didn't started");
-                return;
-            }; // get binder server interface
-
-            analyze::thread(&fas_service, &process).unwrap_or_else(|e| error!("{e:?}"));
+            analyze::thread(&process).unwrap_or_else(|e| error!("{e:?}"));
         })
     {
         error!("Failed to start analyze thread, reason: {e:?}");
