@@ -92,6 +92,16 @@ impl CpuCommon {
             fas_status,
         })
     }
+
+    fn reset_freq(&self) {
+        let pos = self.freqs.len() - 1;
+        self.pos.set(pos);
+        let freq = self.freqs[pos];
+
+        for policy in &self.policies {
+            let _ = policy.set_fas_freq(freq);
+        }
+    }
 }
 
 impl PerformanceController for CpuCommon {
@@ -133,23 +143,17 @@ impl PerformanceController for CpuCommon {
 
     fn release_max(&self, _c: &Config) -> fas_rs_fw::Result<()> {
         let pos = self.freqs.len() - 1;
-        self.pos.set(pos);
-
         let freq = self.freqs[pos];
 
         for policy in &self.policies {
             let _ = policy.set_fas_freq(freq);
         }
 
-        if let Some(ref status) = self.fas_status {
-            status.store(false, Ordering::Release);
-        }
-
         Ok(())
     }
 
-    fn init_game(&self, c: &Config) -> Result<(), fas_rs_fw::Error> {
-        self.release_max(c)?;
+    fn init_game(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
+        self.reset_freq();
 
         for policy in &self.policies {
             let _ = policy.init_game();
@@ -162,8 +166,8 @@ impl PerformanceController for CpuCommon {
         Ok(())
     }
 
-    fn init_default(&self, c: &Config) -> Result<(), fas_rs_fw::Error> {
-        self.release_max(c)?;
+    fn init_default(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
+        self.reset_freq();
 
         for policy in &self.policies {
             let _ = policy.init_default();

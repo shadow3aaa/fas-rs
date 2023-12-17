@@ -62,7 +62,10 @@ impl<P: PerformanceController> Looper<P> {
 
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
-            let message = match self.rx.recv_timeout(Duration::from_secs(1)) {
+            let target_fps = self.buffers.values().filter_map(|b| b.target_fps).max();
+            let timeout = Duration::from_secs(10) / target_fps.unwrap_or(10);
+
+            let message = match self.rx.recv_timeout(timeout) {
                 Ok(m) => m,
                 Err(e) => {
                     if e == RecvTimeoutError::Disconnected {
@@ -89,8 +92,6 @@ impl<P: PerformanceController> Looper<P> {
 
             self.retain_topapp()?;
             self.buffer_update(&data);
-
-            let target_fps = self.buffers.values().filter_map(|b| b.target_fps).max();
 
             let event = self
                 .buffers

@@ -11,7 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::time::{Instant, Duration};
+use std::time::{Duration, Instant};
 
 #[cfg(debug_assertions)]
 use log::debug;
@@ -37,7 +37,7 @@ impl<P: PerformanceController> Looper<P> {
         let Some(target_fps) = buffer.target_fps else {
             return Ok(Event::ReleaseMax);
         };
-        let target_fps_offseted = f64::from(target_fps) - policy.target_fps_offest;
+        let target_fps_offseted = f64::from(target_fps) - policy.target_fps_offset;
 
         let Some(window) = buffer.windows.get_mut(&target_fps) else {
             return Ok(Event::ReleaseMax);
@@ -80,9 +80,9 @@ impl<P: PerformanceController> Looper<P> {
                     return Ok(Event::None);
                 }
             }
-            
+
             buffer.last_jank = Some(Instant::now());
-        
+
             if buffer.diff_secs_acc < 0.0 {
                 buffer.diff_secs_acc = 0.0;
             }
@@ -92,25 +92,20 @@ impl<P: PerformanceController> Looper<P> {
 
             return Ok(Event::Release);
         }
-        
-        if normalized_avg_frame > Duration::from_secs(1) {
-            let diff = normalized_avg_frame - Duration::from_secs(1);
-            buffer.diff_secs_acc += diff.as_secs_f64();
-        } else if normalized_avg_frame < Duration::from_secs(1) {
-            let diff = Duration::from_secs(1) - normalized_avg_frame;
-            buffer.diff_secs_acc -= diff.as_secs_f64();
-        }
-        
+
+        let diff = normalized_avg_frame.as_secs_f64() - 1.0;
+        buffer.diff_secs_acc += diff;
+
         if buffer.diff_secs_acc >= policy.scale.as_secs_f64() {
-            buffer.diff_secs_acc = buffer.diff_secs_acc.min(policy.scale.as_secs_f64());
+            buffer.diff_secs_acc = 0.0;
 
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
-            
+
             Ok(Event::Release)
         } else if buffer.diff_secs_acc <= -policy.scale.as_secs_f64() {
             buffer.diff_secs_acc = 0.0;
-        
+
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
 
