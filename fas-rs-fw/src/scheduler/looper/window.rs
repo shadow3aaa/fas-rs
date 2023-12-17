@@ -15,39 +15,41 @@ use std::{collections::VecDeque, time::Duration};
 
 #[derive(Debug)]
 pub struct FrameWindow {
-    target_fps: u32,
     len: usize,
     frametimes: VecDeque<Duration>,
 }
 
 impl FrameWindow {
-    pub fn new(t: u32, w: usize) -> Self {
+    pub fn new(w: usize) -> Self {
         Self {
-            target_fps: t,
             len: w,
-            frametimes: VecDeque::with_capacity(t as usize),
+            frametimes: VecDeque::with_capacity(w),
         }
     }
 
     pub fn update(&mut self, d: Duration) {
-        let d = d * self.target_fps;
         self.frametimes.push_front(d);
-        self.frametimes.truncate(self.target_fps as usize);
+        self.frametimes.truncate(self.len);
     }
 
     pub fn last(&mut self) -> Option<&mut Duration> {
-        if self.frametimes.len() < self.target_fps as usize {
+        if self.frametimes.len() < self.len {
             None
         } else {
             self.frametimes.front_mut()
         }
     }
 
-    pub fn avg(&self) -> Option<Duration> {
+    pub fn avg_normalized(&self, target_fps: f64) -> Option<Duration> {
         if self.frametimes.len() < self.len {
             None
         } else {
-            let sum = self.frametimes.iter().take(self.len).sum::<Duration>();
+            let sum = self
+                .frametimes
+                .iter()
+                .copied()
+                .sum::<Duration>()
+                .mul_f64(target_fps);
             Some(sum / self.len as u32)
         }
     }

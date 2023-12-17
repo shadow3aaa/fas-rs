@@ -32,9 +32,7 @@ pub struct Buffer {
     pub frametimes: VecDeque<Duration>,
     pub windows: HashMap<u32, FrameWindow>,
     pub last_jank: Option<Instant>,
-    pub limit_counter: usize,
-    pub release_acc: Duration,
-    pub limit_acc: Duration,
+    pub diff_secs_acc: f64,
     timer: Instant,
 }
 
@@ -49,9 +47,7 @@ impl Buffer {
             frametimes: VecDeque::new(),
             windows: HashMap::new(),
             last_jank: None,
-            limit_counter: 0,
-            release_acc: Duration::ZERO,
-            limit_acc: Duration::ZERO,
+            diff_secs_acc: 0.0,
             timer: Instant::now(),
         }
     }
@@ -66,7 +62,7 @@ impl Buffer {
             self.frametimes.truncate(fps as usize);
             self.windows
                 .entry(fps)
-                .or_insert_with(|| FrameWindow::new(fps, 5))
+                .or_insert_with(|| FrameWindow::new(5))
                 .update(d);
 
             if let Some(current_fps) = self.current_fps {

@@ -95,7 +95,6 @@ impl<P: PerformanceController> Looper<P> {
             let event = self
                 .buffers
                 .values_mut()
-                .filter(|b| b.last_update.elapsed() < Duration::from_secs(1))
                 .filter(|b| b.target_fps == target_fps)
                 .map(|b| {
                     Self::get_event(b, &self.config, &mut self.node).unwrap_or(Event::ReleaseMax)

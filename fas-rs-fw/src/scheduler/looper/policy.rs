@@ -11,7 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::time::{Duration, Instant};
+use std::time::{Instant, Duration};
 
 #[cfg(debug_assertions)]
 use log::debug;
@@ -21,34 +21,36 @@ use crate::{error::Result, node::Node, Config, PerformanceController};
 
 #[derive(Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
 pub enum Event {
-    ReleaseMax,
-    Release,
-    Limit,
     None,
+    Limit,
+    Release,
+    ReleaseMax,
 }
 
 impl<P: PerformanceController> Looper<P> {
     pub fn get_event(buffer: &mut Buffer, config: &Config, node: &mut Node) -> Result<Event> {
-        let Some(target_fps) = buffer.target_fps else {
-            return Ok(Event::ReleaseMax);
-        };
-
         let mode = node.get_mode()?;
         let policy = Self::policy_config(mode, buffer, config);
         #[cfg(debug_assertions)]
         debug!("mode policy: {policy:?}");
 
+        let Some(target_fps) = buffer.target_fps else {
+            return Ok(Event::ReleaseMax);
+        };
+        let target_fps_offseted = f64::from(target_fps) - policy.target_fps_offest;
+
         let Some(window) = buffer.windows.get_mut(&target_fps) else {
             return Ok(Event::ReleaseMax);
         };
 
-        let Some(normalized_avg_frame) = window.avg() else {
+        let Some(normalized_avg_frame) = window.avg_normalized(target_fps_offseted) else {
             return Ok(Event::ReleaseMax);
         };
 
-        let Some(normalized_frame) = window.last() else {
+        let Some(last_frame) = window.last() else {
             return Ok(Event::ReleaseMax);
         };
+        let normalized_frame = last_frame.mul_f64(target_fps_offseted);
 
         let normalized_big_jank_scale = Duration::from_secs(5);
         let normalized_jank_scale = Duration::from_millis(1700);
@@ -56,67 +58,59 @@ impl<P: PerformanceController> Looper<P> {
         #[cfg(debug_assertions)]
         {
             debug!("target_fps: {target_fps}");
+            debug!("target_fps_offseted: {:.2}", target_fps_offseted);
             debug!("normalized frametime: {normalized_frame:?}");
             debug!("normalized avg frametime: {normalized_avg_frame:?}");
             debug!("simple jank scale: {normalized_jank_scale:?}");
             debug!("big jank scale: {normalized_big_jank_scale:?}");
         }
 
-        if *normalized_frame > normalized_big_jank_scale {
+        if normalized_frame > normalized_big_jank_scale {
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
 
-            buffer.limit_acc = Duration::ZERO;
-            Ok(Event::ReleaseMax)
-        } else if *normalized_frame > normalized_jank_scale {
+            if buffer.diff_secs_acc < 0.0 {
+                buffer.diff_secs_acc = 0.0;
+            }
+
+            return Ok(Event::ReleaseMax);
+        } else if normalized_frame > normalized_jank_scale {
             if let Some(stamp) = buffer.last_jank {
-                let normalized_last_jank = stamp.elapsed() * target_fps;
-                if normalized_last_jank < Duration::from_secs(30) {
+                if stamp.elapsed() * target_fps < Duration::from_secs(30) {
                     return Ok(Event::None);
                 }
-            } // one jank is allow in 30 frames at least
-
+            }
+            
             buffer.last_jank = Some(Instant::now());
-            buffer.limit_acc = Duration::ZERO;
+        
+            if buffer.diff_secs_acc < 0.0 {
+                buffer.diff_secs_acc = 0.0;
+            }
 
             #[cfg(debug_assertions)]
             debug!("JANK: simp jank");
 
-            Ok(Event::Release)
-        } else if normalized_avg_frame > Duration::from_secs(1) {
+            return Ok(Event::Release);
+        }
+        
+        if normalized_avg_frame > Duration::from_secs(1) {
             let diff = normalized_avg_frame - Duration::from_secs(1);
-
-            if buffer.release_acc < policy.scale {
-                buffer.release_acc = buffer.release_acc.saturating_add(diff);
-                return Ok(Event::None);
-            }
-
-            buffer.release_acc = buffer
-                .release_acc
-                .saturating_sub(policy.scale)
-                .min(Duration::from_secs(1));
+            buffer.diff_secs_acc += diff.as_secs_f64();
+        } else if normalized_avg_frame < Duration::from_secs(1) {
+            let diff = Duration::from_secs(1) - normalized_avg_frame;
+            buffer.diff_secs_acc -= diff.as_secs_f64();
+        }
+        
+        if buffer.diff_secs_acc >= policy.scale.as_secs_f64() {
+            buffer.diff_secs_acc = buffer.diff_secs_acc.min(policy.scale.as_secs_f64());
 
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
-
+            
             Ok(Event::Release)
-        } else if normalized_avg_frame <= Duration::from_secs(1) {
-            let diff = Duration::from_secs(1) - normalized_avg_frame;
-
-            if buffer.limit_acc < policy.scale
-                && buffer.limit_counter < (target_fps / 6).max(5) as usize
-            {
-                buffer.limit_acc = buffer.limit_acc.saturating_add(diff);
-                buffer.limit_counter += 1;
-                return Ok(Event::None);
-            }
-
-            buffer.limit_counter = 0;
-            buffer.limit_acc = buffer
-                .limit_acc
-                .saturating_sub(policy.scale)
-                .min(Duration::from_secs(1));
-
+        } else if buffer.diff_secs_acc <= -policy.scale.as_secs_f64() {
+            buffer.diff_secs_acc = 0.0;
+        
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
 
