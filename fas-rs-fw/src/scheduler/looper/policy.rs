@@ -96,15 +96,16 @@ impl<P: PerformanceController> Looper<P> {
         let diff = normalized_avg_frame.as_secs_f64() - 1.0;
         buffer.diff_secs_acc += diff;
 
-        if buffer.diff_secs_acc >= policy.scale.as_secs_f64() {
-            buffer.diff_secs_acc = 0.0;
+        let scale = policy.scale.as_secs_f64();
+        if buffer.diff_secs_acc >= scale {
+            buffer.diff_secs_acc = buffer.diff_secs_acc.min(scale * 5.0);
 
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
 
             Ok(Event::Release)
-        } else if buffer.diff_secs_acc <= -policy.scale.as_secs_f64() {
-            buffer.diff_secs_acc = 0.0;
+        } else if buffer.diff_secs_acc <= -scale {
+            buffer.diff_secs_acc = buffer.diff_secs_acc.max(-scale * 2.0);
 
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");

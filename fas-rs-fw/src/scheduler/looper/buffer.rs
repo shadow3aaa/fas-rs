@@ -57,20 +57,14 @@ impl Buffer {
 
         self.frametimes.push_front(d);
         self.calculate_current_fps();
+        self.calculate_dispersion();
 
         if let Some(fps) = self.target_fps {
-            self.frametimes.truncate(fps as usize);
+            self.frametimes.truncate(fps as usize * 10);
             self.windows
                 .entry(fps)
                 .or_insert_with(|| FrameWindow::new(5))
                 .update(d);
-
-            if let Some(current_fps) = self.current_fps {
-                let target_fps = f64::from(fps);
-                if current_fps >= target_fps - 0.1 {
-                    self.calculate_dispersion();
-                }
-            };
         }
 
         if self.timer.elapsed() >= Duration::from_secs(1) {
@@ -93,6 +87,7 @@ impl Buffer {
 
     fn calculate_target_fps(&mut self) {
         let Some(current_fps) = self.current_fps else {
+            self.target_fps = None;
             return;
         };
 
@@ -113,13 +108,13 @@ impl Buffer {
             }
         };
 
-        if current_fps < (target_fpses[0] / 2).into() {
+        if current_fps < (target_fpses[0].saturating_sub(10).max(10)).into() {
             self.target_fps = None;
             return;
         }
 
         for target_fps in target_fpses.iter().copied() {
-            let target_frametime = Duration::from_secs(1) / (target_fps + 3);
+            let target_frametime = Duration::from_secs(1) / (target_fps + 2);
             if avg_time >= target_frametime {
                 self.target_fps = Some(target_fps);
                 return;
@@ -130,10 +125,16 @@ impl Buffer {
     }
 
     fn calculate_dispersion(&mut self) {
+        let Some(fps) = self.current_fps else {
+            return;
+        };
+
         if let Some(target_fps) = self.target_fps {
             if (self.frametimes.len() as u32) < target_fps {
                 return;
-            }
+            };
+
+            let avg = fps / f64::from(target_fps);
 
             let dispersion: f64 = self
                 .frametimes
@@ -141,7 +142,7 @@ impl Buffer {
                 .copied()
                 .map(|d| d * target_fps)
                 .map(|d| d.as_secs_f64())
-                .map(|f| (f - 1.0).powi(2))
+                .map(|f| (f - avg).powi(2))
                 .sum();
 
             let dispersion = dispersion / f64::from(target_fps);
