@@ -25,7 +25,7 @@ pub struct PolicyConfig {
 impl<P: PerformanceController> Looper<P> {
     pub fn policy_config(mode: Mode, buffer: &Buffer, _config: &Config) -> PolicyConfig {
         let dispersion = buffer.dispersion.unwrap_or_default();
-        let rhs = 1.0 / dispersion.clamp(0.5, 1.0);
+        let rhs = 1.0 / dispersion.clamp(0.3, 2.0);
 
         let scale = Duration::from_millis(100).mul_f64(rhs);
         let target_fps_offset = match mode {
