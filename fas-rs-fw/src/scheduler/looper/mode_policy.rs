@@ -29,7 +29,7 @@ impl<P: PerformanceController> Looper<P> {
 
         let scale = Duration::from_millis(100).mul_f64(rhs);
         let target_fps_offset = match mode {
-            Mode::Powersave => 0.3,
+            Mode::Powersave => 1.0,
             Mode::Balance => 0.25,
             Mode::Performance => 0.2,
             Mode::Fast => 0.1,

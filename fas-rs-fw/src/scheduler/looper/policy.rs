@@ -93,10 +93,11 @@ impl<P: PerformanceController> Looper<P> {
             return Ok(Event::Release);
         }
 
+        let scale = policy.scale.as_secs_f64();
         let diff = normalized_avg_frame.as_secs_f64() - 1.0;
         buffer.diff_secs_acc += diff;
+        buffer.diff_secs_acc = buffer.diff_secs_acc.clamp(-scale, scale);
 
-        let scale = policy.scale.as_secs_f64();
         if buffer.diff_secs_acc >= scale {
             buffer.diff_secs_acc = 0.0;
 

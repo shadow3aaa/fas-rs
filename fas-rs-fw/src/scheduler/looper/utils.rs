@@ -23,11 +23,26 @@ impl<P: PerformanceController> Looper<P> {
         self.buffers
             .retain(|(_, p), _| self.topapp_checker.is_topapp(*p));
 
-        if self.buffers.is_empty() && self.started {
+        if self.buffers.is_empty() {
+            self.disable_fas()?;
+        } else {
+            self.enable_fas()?;
+        }
+
+        Ok(())
+    }
+
+    pub fn disable_fas(&mut self) -> Result<()> {
+        if self.started {
             self.controller.init_default(&self.config)?;
             self.started = false;
-            return Ok(());
-        } else if !self.buffers.is_empty() && !self.started {
+        }
+
+        Ok(())
+    }
+
+    pub fn enable_fas(&mut self) -> Result<()> {
+        if !self.started {
             self.controller.init_game(&self.config)?;
             self.started = true;
         }
@@ -35,9 +50,9 @@ impl<P: PerformanceController> Looper<P> {
         Ok(())
     }
 
-    pub fn buffer_update(&mut self, d: &FasData) {
+    pub fn buffer_update(&mut self, d: &FasData) -> bool {
         if !self.topapp_checker.is_topapp(d.pid) || d.frametime.is_zero() {
-            return;
+            return false;
         } else if d.target_fps == TargetFps::Value(0) {
             panic!("Target fps must be bigger than zero");
         }
@@ -47,12 +62,18 @@ impl<P: PerformanceController> Looper<P> {
         let target_fps = d.target_fps.clone();
 
         match self.buffers.entry(process) {
-            Entry::Occupied(mut o) => o.get_mut().push_frametime(frametime),
+            Entry::Occupied(mut o) => {
+                o.get_mut().push_frametime(frametime);
+                o.get().ready
+            }
             Entry::Vacant(v) => {
                 info!("Loaded fas on game: [{}] pid: [{}]", d.pkg, d.pid);
+
                 let mut buffer = Buffer::new(target_fps);
                 buffer.push_frametime(frametime);
                 v.insert(buffer);
+
+                false
             }
         }
     }

@@ -90,18 +90,35 @@ impl<P: PerformanceController> Looper<P> {
                 }
             };
 
-            self.retain_topapp()?;
-            self.buffer_update(&data);
-
-            let event = self
+            let skip_policy = !self.buffer_update(&data);
+            let mut event = Event::None;
+            let mut ready = false;
+            for buffer in self
                 .buffers
                 .values_mut()
                 .filter(|b| b.target_fps == target_fps)
-                .map(|b| {
-                    Self::get_event(b, &self.config, &mut self.node).unwrap_or(Event::ReleaseMax)
-                })
-                .max()
-                .unwrap_or(Event::None);
+            {
+                let current_event = Self::get_event(buffer, &self.config, &mut self.node)
+                    .unwrap_or(Event::ReleaseMax);
+                event = event.max(current_event);
+
+                if buffer.ready {
+                    ready = true;
+                }
+            }
+
+            if !ready {
+                self.disable_fas()?;
+                continue;
+            } else if skip_policy {
+                continue;
+            }
+
+            self.retain_topapp()?;
+
+            if !self.started {
+                continue;
+            }
 
             match event {
                 Event::ReleaseMax => {
