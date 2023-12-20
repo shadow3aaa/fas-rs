@@ -61,7 +61,7 @@ impl Buffer {
         self.calculate_current_fps();
         self.calculate_dispersion();
         self.frametimes
-            .truncate(self.target_fps.unwrap_or(60) as usize * 10);
+            .truncate(self.target_fps.unwrap_or(60) as usize * 3);
 
         if let Some(fps) = self.target_fps {
             self.ready = true;

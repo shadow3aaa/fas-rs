@@ -27,13 +27,15 @@ impl<P: PerformanceController> Looper<P> {
         let dispersion = buffer.dispersion.unwrap_or_default();
         let rhs = 1.0 / dispersion.clamp(0.3, 2.0);
 
-        let scale = Duration::from_millis(100).mul_f64(rhs);
-        let target_fps_offset = match mode {
-            Mode::Powersave => 1.0,
-            Mode::Balance => 0.25,
-            Mode::Performance => 0.2,
-            Mode::Fast => 0.1,
+        let scale = match mode {
+            Mode::Powersave => Duration::from_millis(110),
+            Mode::Balance => Duration::from_millis(100),
+            Mode::Performance => Duration::from_millis(90),
+            Mode::Fast => Duration::from_millis(80),
         };
+        let scale = scale.mul_f64(rhs);
+
+        let target_fps_offset = dispersion.min(1.0);
 
         PolicyConfig {
             scale,

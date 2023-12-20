@@ -47,10 +47,10 @@ impl<P: PerformanceController> Looper<P> {
             return Ok(Event::ReleaseMax);
         };
 
-        let Some(last_frame) = window.last() else {
+        let Some(last_frame) = window.last().copied() else {
             return Ok(Event::ReleaseMax);
         };
-        let normalized_frame = last_frame.mul_f64(target_fps_offseted);
+        let normalized_frame = last_frame * target_fps;
 
         let normalized_big_jank_scale = Duration::from_secs(5);
         let normalized_jank_scale = Duration::from_millis(1700);
@@ -96,18 +96,14 @@ impl<P: PerformanceController> Looper<P> {
         let scale = policy.scale.as_secs_f64();
         let diff = normalized_avg_frame.as_secs_f64() - 1.0;
         buffer.diff_secs_acc += diff;
-        buffer.diff_secs_acc = buffer.diff_secs_acc.clamp(-scale, scale);
+        buffer.diff_secs_acc = buffer.diff_secs_acc.clamp(-scale * 5.0, scale * 5.0);
 
         if buffer.diff_secs_acc >= scale {
-            buffer.diff_secs_acc = 0.0;
-
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
 
             Ok(Event::Release)
         } else if buffer.diff_secs_acc <= -scale {
-            buffer.diff_secs_acc = 0.0;
-
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
 
