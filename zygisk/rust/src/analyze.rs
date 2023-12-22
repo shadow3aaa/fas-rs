@@ -13,7 +13,7 @@
 *  limitations under the License. */
 use std::{
     collections::hash_map::HashMap,
-    process, thread,
+    thread,
     time::{Duration, Instant},
 };
 
@@ -25,23 +25,26 @@ use log::error;
 use crate::{IRemoteService::IRemoteService, CHANNEL};
 
 pub fn thread(process: &str) -> anyhow::Result<()> {
-    let pid = process::id() as i32;
+    let pid = unsafe { libc::getpid() };
     let mut stamps = HashMap::new();
     let mut gc_timer = Instant::now();
     let mut fas_service = get_server_interface();
 
     loop {
-        let (ptr, stamp) = match CHANNEL.rx.recv() {
-            Ok(o) => o,
+        let data = match CHANNEL.rx.recv() {
+            Ok(d) => d,
             Err(e) => {
                 error!("End analyze thread, reason: {e:?}");
                 return Ok(());
             }
         };
 
-        let last_stamp = stamps.entry(ptr).or_insert(stamp);
-        let frametime = stamp - *last_stamp;
-        *last_stamp = stamp;
+        #[cfg(debug_assertions)]
+        debug!("Rendering Data: {data:?}");
+
+        let last_stamp = stamps.entry(data.buffer).or_insert(data.instant);
+        let frametime = data.instant - *last_stamp;
+        *last_stamp = data.instant;
 
         if gc_timer.elapsed() > Duration::from_millis(500) {
             stamps.retain(|p, _| {
@@ -59,9 +62,13 @@ pub fn thread(process: &str) -> anyhow::Result<()> {
         #[cfg(debug_assertions)]
         debug!("process: [{process}] framtime: [{frametime:?}]");
 
-        if let Ok(send) =
-            fas_service.sendData(ptr as i64, process, pid, frametime.as_nanos() as i64)
-        {
+        if let Ok(send) = fas_service.sendData(
+            data.buffer as i64,
+            process,
+            pid,
+            frametime.as_nanos() as i64,
+            data.cpu,
+        ) {
             if !send {
                 #[cfg(debug_assertions)]
                 debug!("Exit analyze thread, since server prefer this is not a fas app anymore");

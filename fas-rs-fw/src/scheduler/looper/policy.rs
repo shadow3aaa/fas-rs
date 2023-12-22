@@ -69,9 +69,7 @@ impl<P: PerformanceController> Looper<P> {
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
 
-            if buffer.diff_secs_acc < 0.0 {
-                buffer.diff_secs_acc = 0.0;
-            }
+            buffer.limit_acc = 0.0;
 
             return Ok(Event::ReleaseMax);
         } else if normalized_frame > normalized_jank_scale {
@@ -82,10 +80,7 @@ impl<P: PerformanceController> Looper<P> {
             }
 
             buffer.last_jank = Some(Instant::now());
-
-            if buffer.diff_secs_acc < 0.0 {
-                buffer.diff_secs_acc = 0.0;
-            }
+            buffer.limit_acc = 0.0;
 
             #[cfg(debug_assertions)]
             debug!("JANK: simp jank");
@@ -95,21 +90,27 @@ impl<P: PerformanceController> Looper<P> {
 
         let scale = policy.scale.as_secs_f64();
         let diff = normalized_avg_frame.as_secs_f64() - 1.0;
-        buffer.diff_secs_acc += diff;
-        buffer.diff_secs_acc = buffer.diff_secs_acc.clamp(-scale * 5.0, scale * 5.0);
 
-        if buffer.diff_secs_acc >= scale {
+        buffer.release_acc += diff;
+        buffer.limit_acc -= diff;
+
+        let result = if buffer.release_acc >= scale {
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
 
-            Ok(Event::Release)
-        } else if buffer.diff_secs_acc <= -scale {
+            Event::Release
+        } else if buffer.limit_acc >= scale {
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
 
-            Ok(Event::Limit)
+            Event::Limit
         } else {
-            Ok(Event::None)
-        }
+            Event::None
+        };
+
+        buffer.release_acc = buffer.release_acc.clamp(0.0, 1.0);
+        buffer.limit_acc = buffer.limit_acc.clamp(0.0, 1.0);
+
+        Ok(result)
     }
 }

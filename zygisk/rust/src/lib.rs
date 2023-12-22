@@ -55,12 +55,22 @@ static CHANNEL: Lazy<Channel> = Lazy::new(|| {
 });
 
 struct Channel {
-    sx: SyncSender<(Address, Instant)>,
-    rx: Receiver<(Address, Instant)>,
+    sx: SyncSender<Data>,
+    rx: Receiver<Data>,
 }
 
 unsafe impl Sync for Channel {}
 unsafe impl Send for Channel {}
+
+#[derive(Debug)]
+pub struct Data {
+    buffer: Address,
+    instant: Instant,
+    cpu: c_int,
+}
+
+unsafe impl Sync for Data {}
+unsafe impl Send for Data {}
 
 #[no_mangle]
 pub unsafe extern "C" fn _need_hook_(process: *const c_char) -> bool {
@@ -157,11 +167,18 @@ unsafe fn hook() -> Result<()> {
 *  This function is called every time a new frame is added to the buffer */
 unsafe extern "C" fn post_hook(android_native_buffer_t: *mut c_void, fence_id: c_int) -> c_int {
     let ori_fun: extern "C" fn(*mut c_void, c_int) -> c_int = mem::transmute(OLD_FUNC_PTR); // trans ptr to ori func
-
     let result = ori_fun(android_native_buffer_t, fence_id);
-    let _ = CHANNEL
-        .sx
-        .try_send((android_native_buffer_t, Instant::now()));
+
+    let buffer = android_native_buffer_t;
+    let instant = Instant::now();
+    let cpu = libc::sched_getcpu();
+    let data = Data {
+        buffer,
+        instant,
+        cpu,
+    };
+
+    let _ = CHANNEL.sx.try_send(data);
 
     result
 }

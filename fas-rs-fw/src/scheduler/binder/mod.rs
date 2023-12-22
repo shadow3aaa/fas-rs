@@ -45,6 +45,7 @@ impl IRemoteService::IRemoteService for FasServer {
         pkg: &str,
         pid: i32,
         frametime_ns: i64,
+        cpu: i32,
     ) -> binder::Result<bool> {
         let Some(target_fps) = self.config.target_fps(pkg) else {
             return Ok(false);
@@ -58,6 +59,7 @@ impl IRemoteService::IRemoteService for FasServer {
             pid,
             pkg: pkg.to_string(),
             frametime,
+            cpu,
         };
 
         if let Err(e) = self.sx.lock().send(BinderMessage::Data(data)) {

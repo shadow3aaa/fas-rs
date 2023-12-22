@@ -40,6 +40,7 @@ pub struct FasData {
     pub pkg: String,
     pub pid: i32,
     pub frametime: Duration,
+    pub cpu: i32,
 }
 
 /// 调度器

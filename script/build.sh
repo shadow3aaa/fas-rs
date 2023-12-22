@@ -121,5 +121,4 @@ build() {
 
 		echo "Module Packaged: output/fas-rs(release).zip"
 	fi
-
 }
