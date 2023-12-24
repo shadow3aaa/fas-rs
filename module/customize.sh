@@ -19,17 +19,17 @@ CONF=$DIR/games.toml
 MERGE_FLAG=$DIR/.need_merge
 
 if [ $ARCH != "arm64" ]; then
-    ui_print "Only for arm64 device !"
-    ui_print "设备不支持, 非arm64设备"
-    abort
+	ui_print "Only for arm64 device !"
+	ui_print "设备不支持, 非arm64设备"
+	abort
 elif [ $API -le 30 ]; then
-    ui_print "Required A12+ !"
-    ui_print "系统版本过低, 需要安卓12及以上的系统版本版本"
-    abort
+	ui_print "Required A12+ !"
+	ui_print "系统版本过低, 需要安卓12及以上的系统版本版本"
+	abort
 elif [[ ! $KSU && $MAGISK_VER_CODE -lt 26000 ]]; then
-    ui_print "Required Magisk v26.0+, since we use Zygisk v4"
-    ui_print "Magisk版本过低, 需要Magisk v26.0及以上的Magisk版本"
-    abort
+	ui_print "Required Magisk v26.0+, since we use Zygisk v4"
+	ui_print "Magisk版本过低, 需要Magisk v26.0及以上的Magisk版本"
+	abort
 fi
 
 ui_print "
@@ -70,10 +70,10 @@ ui_print "
 "
 
 if [ -f $CONF ]; then
-    touch $MERGE_FLAG
+	touch $MERGE_FLAG
 else
-    mkdir -p $DIR
-    cp $MODPATH/games.toml $CONF
+	mkdir -p $DIR
+	cp $MODPATH/games.toml $CONF
 fi
 
 cp -f $MODPATH/README.md $DIR/doc.md
