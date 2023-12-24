@@ -89,10 +89,11 @@ keep_std = true
     ```bash
     fas-rs --merge --local-profile /path/to/local/config --std-profile /path/to/std/config
     ```
-    
+
 ## **Uperf v3支持**
 
 - ### `fas-rs`支持使用uperf-v3替代系统调速器在非fas场景生效
+
 - ### 但是, 必须使用特殊修改过的的[uperf-v3](https://github.com/shadow3aaa/uperf-patch)来实现这一点，其它任何版本(包括官方版本)都不支持
 
 ## **编译**
