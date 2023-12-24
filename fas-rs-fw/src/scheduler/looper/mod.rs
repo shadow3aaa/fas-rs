@@ -62,6 +62,7 @@ impl<P: PerformanceController> Looper<P> {
 
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
+            let mode = self.node.get_mode()?;
             let target_fps = self.buffers.values().filter_map(|b| b.target_fps).max();
             let timeout = Duration::from_secs(10) / target_fps.unwrap_or(10);
 
@@ -72,10 +73,10 @@ impl<P: PerformanceController> Looper<P> {
                         return Err(Error::Other("Binder Server Disconnected"));
                     }
 
-                    self.retain_topapp()?;
+                    self.retain_topapp(mode)?;
 
                     if self.started {
-                        self.controller.release_max(&self.config)?;
+                        self.controller.release_max(mode, &self.config)?;
                     }
 
                     continue;
@@ -98,8 +99,7 @@ impl<P: PerformanceController> Looper<P> {
                 .values_mut()
                 .filter(|b| b.target_fps == target_fps)
             {
-                let current_event = Self::get_event(buffer, &self.config, &mut self.node)
-                    .unwrap_or(Event::ReleaseMax);
+                let current_event = Self::get_event(buffer, &self.config, mode);
                 event = event.max(current_event);
 
                 if buffer.ready {
@@ -108,13 +108,13 @@ impl<P: PerformanceController> Looper<P> {
             }
 
             if !ready {
-                self.disable_fas()?;
+                self.disable_fas(mode)?;
                 continue;
             } else if skip_policy {
                 continue;
             }
 
-            self.retain_topapp()?;
+            self.retain_topapp(mode)?;
 
             if !self.started {
                 continue;
@@ -122,12 +122,12 @@ impl<P: PerformanceController> Looper<P> {
 
             match event {
                 Event::ReleaseMax => {
-                    self.controller.release_max(&self.config)?;
+                    self.controller.release_max(mode, &self.config)?;
                 }
                 Event::Release => {
-                    self.controller.release(&self.config)?;
+                    self.controller.release(mode, &self.config)?;
                 }
-                Event::Limit => self.controller.limit(&self.config)?,
+                Event::Limit => self.controller.limit(mode, &self.config)?,
                 Event::None => (),
             }
         }

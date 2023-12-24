@@ -13,7 +13,7 @@
 *  limitations under the License. */
 use std::{
     collections::hash_map::HashMap,
-    thread,
+    fs, thread,
     time::{Duration, Instant},
 };
 
@@ -29,6 +29,8 @@ pub fn thread(process: &str) -> anyhow::Result<()> {
     let mut stamps = HashMap::new();
     let mut gc_timer = Instant::now();
     let mut fas_service = get_server_interface();
+
+    let _ = fs::write("/dev/cpuset/background/tasks", pid.to_string());
 
     loop {
         let data = match CHANNEL.rx.recv() {

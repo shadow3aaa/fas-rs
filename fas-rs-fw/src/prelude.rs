@@ -13,4 +13,8 @@
 *  limitations under the License. */
 //! Api重导出
 
-pub use crate::{config::*, node::Node, PerformanceController, Scheduler};
+pub use crate::{
+    config::*,
+    node::{Mode, Node},
+    PerformanceController, Scheduler,
+};

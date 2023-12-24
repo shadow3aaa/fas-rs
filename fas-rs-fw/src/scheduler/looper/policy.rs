@@ -17,7 +17,7 @@ use std::time::{Duration, Instant};
 use log::debug;
 
 use super::{Buffer, Looper};
-use crate::{error::Result, node::Node, Config, PerformanceController};
+use crate::{node::Mode, Config, PerformanceController};
 
 #[derive(Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
 pub enum Event {
@@ -28,27 +28,26 @@ pub enum Event {
 }
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn get_event(buffer: &mut Buffer, config: &Config, node: &mut Node) -> Result<Event> {
-        let mode = node.get_mode()?;
+    pub fn get_event(buffer: &mut Buffer, config: &Config, mode: Mode) -> Event {
         let policy = Self::policy_config(mode, buffer, config);
         #[cfg(debug_assertions)]
         debug!("mode policy: {policy:?}");
 
         let Some(target_fps) = buffer.target_fps else {
-            return Ok(Event::ReleaseMax);
+            return Event::ReleaseMax;
         };
-        let target_fps_offseted = f64::from(target_fps) - policy.target_fps_offset;
+        let target_fps_offseted = f64::from(target_fps) - policy.offset;
 
         let Some(window) = buffer.windows.get_mut(&target_fps) else {
-            return Ok(Event::ReleaseMax);
+            return Event::ReleaseMax;
         };
 
         let Some(normalized_avg_frame) = window.avg_normalized(target_fps_offseted) else {
-            return Ok(Event::ReleaseMax);
+            return Event::ReleaseMax;
         };
 
         let Some(last_frame) = window.last().copied() else {
-            return Ok(Event::ReleaseMax);
+            return Event::ReleaseMax;
         };
         let normalized_frame = last_frame * target_fps;
 
@@ -58,7 +57,6 @@ impl<P: PerformanceController> Looper<P> {
         #[cfg(debug_assertions)]
         {
             debug!("target_fps: {target_fps}");
-            debug!("target_fps_offseted: {:.2}", target_fps_offseted);
             debug!("normalized frametime: {normalized_frame:?}");
             debug!("normalized avg frametime: {normalized_avg_frame:?}");
             debug!("simple jank scale: {normalized_jank_scale:?}");
@@ -69,48 +67,53 @@ impl<P: PerformanceController> Looper<P> {
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
 
-            buffer.limit_acc = 0.0;
-
-            return Ok(Event::ReleaseMax);
+            return Event::ReleaseMax;
         } else if normalized_frame > normalized_jank_scale {
             if let Some(stamp) = buffer.last_jank {
                 if stamp.elapsed() * target_fps < Duration::from_secs(30) {
-                    return Ok(Event::None);
+                    return Event::None;
                 }
             }
 
             buffer.last_jank = Some(Instant::now());
-            buffer.limit_acc = 0.0;
 
             #[cfg(debug_assertions)]
             debug!("JANK: simp jank");
 
-            return Ok(Event::Release);
+            return Event::Release;
         }
 
         let scale = policy.scale.as_secs_f64();
         let diff = normalized_avg_frame.as_secs_f64() - 1.0;
 
-        buffer.release_acc += diff;
-        buffer.limit_acc -= diff;
+        buffer.time_acc += diff;
 
-        let result = if buffer.release_acc >= scale {
+        let result = if buffer.time_acc >= scale {
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
 
             Event::Release
-        } else if buffer.limit_acc >= scale {
+        } else if buffer.time_acc <= scale {
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
 
-            Event::Limit
+            if let Some(stamp) = buffer.last_limit {
+                if stamp.elapsed() * target_fps < Duration::from_secs(3) {
+                    Event::None
+                } else {
+                    buffer.last_limit = Some(Instant::now());
+                    Event::Limit
+                }
+            } else {
+                buffer.last_limit = Some(Instant::now());
+                Event::Limit
+            }
         } else {
             Event::None
         };
 
-        buffer.release_acc = buffer.release_acc.clamp(0.0, 1.0);
-        buffer.limit_acc = buffer.limit_acc.clamp(0.0, 1.0);
+        buffer.time_acc = buffer.time_acc.clamp(0.0, scale);
 
-        Ok(result)
+        result
     }
 }

@@ -18,28 +18,24 @@ use crate::{node::Mode, Config, PerformanceController};
 
 #[derive(Debug)]
 pub struct PolicyConfig {
-    pub scale: Duration,        // 触发控制器操作水位线
-    pub target_fps_offset: f64, // 目标fps偏移量
+    pub scale: Duration,
+    pub offset: f64,
 }
 
 impl<P: PerformanceController> Looper<P> {
     pub fn policy_config(mode: Mode, buffer: &Buffer, _config: &Config) -> PolicyConfig {
-        let dispersion = buffer.dispersion_all.unwrap_or_default();
-        let rhs = 1.0 / dispersion.clamp(0.3, 1.5);
+        let offset = {
+            let current_fps = buffer.current_fps.unwrap_or_default();
+            let target_fps = f64::from(buffer.target_fps.unwrap_or_default());
+            (target_fps - current_fps).clamp(0.0, 0.7)
+        };
 
         let scale = match mode {
-            Mode::Powersave => Duration::from_millis(110),
+            Mode::Powersave => Duration::from_millis(105),
             Mode::Balance => Duration::from_millis(100),
-            Mode::Performance => Duration::from_millis(90),
-            Mode::Fast => Duration::from_millis(80),
-        }
-        .mul_f64(rhs);
-
-        let target_fps_offset = buffer.dispersion_normal.unwrap_or_default().min(0.7);
-
-        PolicyConfig {
-            scale,
-            target_fps_offset,
-        }
+            Mode::Performance => Duration::from_millis(95),
+            Mode::Fast => Duration::from_millis(90),
+        };
+        PolicyConfig { scale, offset }
     }
 }

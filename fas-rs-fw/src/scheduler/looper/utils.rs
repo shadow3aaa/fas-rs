@@ -16,34 +16,34 @@ use std::collections::hash_map::Entry;
 use log::info;
 
 use super::{super::FasData, Buffer, Looper};
-use crate::{config::TargetFps, error::Result, PerformanceController};
+use crate::{config::TargetFps, error::Result, node::Mode, PerformanceController};
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn retain_topapp(&mut self) -> Result<()> {
+    pub fn retain_topapp(&mut self, mode: Mode) -> Result<()> {
         self.buffers
             .retain(|(_, p), _| self.topapp_checker.is_topapp(*p));
 
         if self.buffers.is_empty() {
-            self.disable_fas()?;
+            self.disable_fas(mode)?;
         } else {
-            self.enable_fas()?;
+            self.enable_fas(mode)?;
         }
 
         Ok(())
     }
 
-    pub fn disable_fas(&mut self) -> Result<()> {
+    pub fn disable_fas(&mut self, mode: Mode) -> Result<()> {
         if self.started {
-            self.controller.init_default(&self.config)?;
+            self.controller.init_default(mode, &self.config)?;
             self.started = false;
         }
 
         Ok(())
     }
 
-    pub fn enable_fas(&mut self) -> Result<()> {
+    pub fn enable_fas(&mut self, mode: Mode) -> Result<()> {
         if !self.started {
-            self.controller.init_game(&self.config)?;
+            self.controller.init_game(mode, &self.config)?;
             self.started = true;
         }
 

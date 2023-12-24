@@ -29,13 +29,11 @@ pub struct Buffer {
     pub current_fps: Option<f64>,
     target_fps_config: TargetFps,
     pub last_update: Instant,
-    pub dispersion_all: Option<f64>,
-    pub dispersion_normal: Option<f64>,
     pub frametimes: VecDeque<Duration>,
     pub windows: HashMap<u32, FrameWindow>,
     pub last_jank: Option<Instant>,
-    pub release_acc: f64,
-    pub limit_acc: f64,
+    pub last_limit: Option<Instant>,
+    pub time_acc: f64,
     timer: Instant,
 }
 
@@ -47,13 +45,11 @@ impl Buffer {
             current_fps: None,
             target_fps_config: t,
             last_update: Instant::now(),
-            dispersion_all: None,
-            dispersion_normal: None,
             frametimes: VecDeque::new(),
             windows: HashMap::new(),
             last_jank: None,
-            release_acc: 0.0,
-            limit_acc: 0.0,
+            last_limit: None,
+            time_acc: 0.0,
             timer: Instant::now(),
         }
     }
@@ -63,7 +59,6 @@ impl Buffer {
 
         self.frametimes.push_front(d);
         self.calculate_current_fps();
-        self.calculate_dispersion();
         self.frametimes
             .truncate(self.target_fps.unwrap_or(60) as usize * 3);
 
@@ -132,38 +127,5 @@ impl Buffer {
         }
 
         self.target_fps = target_fpses.last().copied();
-    }
-
-    fn calculate_dispersion(&mut self) {
-        if let Some(target_fps) = self.target_fps {
-            let dispersion: f64 = self
-                .frametimes
-                .iter()
-                .copied()
-                .map(|d| d * target_fps)
-                .map(|d| d.as_secs_f64())
-                .map(|f| (f - 1.0).powi(2))
-                .sum();
-
-            let dispersion = dispersion / f64::from(target_fps);
-            let dispersion = dispersion.sqrt();
-
-            self.dispersion_all = Some(dispersion);
-
-            let dispersion: f64 = self
-                .frametimes
-                .iter()
-                .copied()
-                .filter(|d| 1.0 / d.as_secs_f64() >= f64::from(target_fps) - 0.5)
-                .map(|d| d * target_fps)
-                .map(|d| d.as_secs_f64())
-                .map(|f| (f - 1.0).powi(2))
-                .sum();
-
-            let dispersion = dispersion / f64::from(target_fps);
-            let dispersion = dispersion.sqrt();
-
-            self.dispersion_normal = Some(dispersion);
-        }
     }
 }

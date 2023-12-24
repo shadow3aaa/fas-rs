@@ -105,43 +105,38 @@ impl CpuCommon {
 }
 
 impl PerformanceController for CpuCommon {
-    fn limit(&self, _c: &Config) -> fas_rs_fw::Result<()> {
+    fn limit(&self, _m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
         let mut pos = self.pos.get();
 
         if pos > 0 {
             pos -= 1;
             self.pos.set(pos);
-        }
 
-        let freq = self.freqs[pos];
-        for policy in &self.policies {
-            let _ = policy.set_fas_freq(freq);
-        }
-
-        if let Some(ref status) = self.fas_status {
-            status.store(true, Ordering::Release);
+            let freq = self.freqs[pos];
+            for policy in &self.policies {
+                let _ = policy.set_fas_freq(freq);
+            }
         }
 
         Ok(())
     }
 
-    fn release(&self, _c: &Config) -> fas_rs_fw::Result<()> {
+    fn release(&self, _m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
         let mut pos = self.pos.get();
 
         if pos < self.freqs.len() - 1 {
             pos += 1;
             self.pos.set(pos);
-        }
-
-        let freq = self.freqs[pos];
-        for policy in &self.policies {
-            let _ = policy.set_fas_freq(freq);
+            let freq = self.freqs[pos];
+            for policy in &self.policies {
+                let _ = policy.set_fas_freq(freq);
+            }
         }
 
         Ok(())
     }
 
-    fn release_max(&self, _c: &Config) -> fas_rs_fw::Result<()> {
+    fn release_max(&self, _m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
         let pos = self.freqs.len() - 1;
         let freq = self.freqs[pos];
 
@@ -152,7 +147,7 @@ impl PerformanceController for CpuCommon {
         Ok(())
     }
 
-    fn init_game(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
+    fn init_game(&self, _m: Mode, _c: &Config) -> Result<(), fas_rs_fw::Error> {
         self.reset_freq();
 
         for policy in &self.policies {
@@ -166,7 +161,7 @@ impl PerformanceController for CpuCommon {
         Ok(())
     }
 
-    fn init_default(&self, _c: &Config) -> Result<(), fas_rs_fw::Error> {
+    fn init_default(&self, _m: Mode, _c: &Config) -> Result<(), fas_rs_fw::Error> {
         self.reset_freq();
 
         for policy in &self.policies {
