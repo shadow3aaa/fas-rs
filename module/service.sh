@@ -16,11 +16,25 @@
 MODDIR=${0%/*}
 DIR=/data/media/0/Android/fas-rs
 MERGE_FLAG=$DIR/.need_merge
+LOG=$DIR/fas_log.txt
 
 # update vtools support
 sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
 
 resetprop fas_rs_installed true
+
+if [ -f $MODDIR/zygisk/unloaded ]; then
+	touch $MODDIR/disable
+
+	echo "Error: Failed to load zygisk, fas-rs will be disabled" >$LOG
+	echo "Suggestions:" >$LOG
+	echo "Magisk: Please check if zygisk is turned on" >$LOG
+	echo "Magisk: 请检查zygisk是否开启" >$LOG
+	echo "Kernel Su: Please check if you have the latest version of zygisk-next installed" >$LOG
+	echo "Kernel Su: 请检查是否安装最新版本zygisk-next" >$LOG
+
+	exit 1
+fi
 
 # wait until the sdcard is decrypted
 until [ -d $DIR ]; do
@@ -36,4 +50,4 @@ fi
 
 # start with user profile
 killall fas-rs
-nohup env FAS_LOG=info $MODDIR/fas-rs --run --local-profile $DIR/games.toml --std-profile $MODDIR/games.toml >$DIR/fas_log.txt 2>&1 &
+nohup env FAS_LOG=info $MODDIR/fas-rs --run --local-profile $DIR/games.toml --std-profile $MODDIR/games.toml >$LOG 2>&1 &

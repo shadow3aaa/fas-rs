@@ -18,29 +18,24 @@ DIR=/data/media/0/Android/fas-rs
 CONF=$DIR/games.toml
 MERGE_FLAG=$DIR/.need_merge
 
-[ -v $KSU ] && KSU=false
-
 if [ $ARCH != "arm64" ]; then
-	ui_print "Only for arm64 device !"
-	abort
+    ui_print "Only for arm64 device !"
+    ui_print "设备不支持, 非arm64设备"
+    abort
 elif [ $API -le 30 ]; then
-	ui_print "Required A12+ !"
-	abort
-elif ! $KSU && [ $MAGISK_VER_CODE -lt 26000 ]; then
-	ui_print "Required magisk v26.0+, since we use zygisk api v4"
-	abort
-elif ! $KSU && [ $ZYGISK_ENABLED -ne 1 ]; then
-	ui_print "Required zygisk option to be opened"
-	abort
-elif $KSU; then
-	ui_print "⚠ KSU detected, make sure you has installed zygisk-on-ksu"
+    ui_print "Required A12+ !"
+    ui_print "系统版本过低, 需要安卓12及以上的系统版本版本"
+    abort
+elif [[ ! $KSU && $MAGISK_VER_CODE -lt 26000 ]]; then
+    ui_print "Required Magisk v26.0+, since we use Zygisk v4"
+    ui_print "Magisk版本过低, 需要Magisk v26.0及以上的Magisk版本"
+    abort
 fi
 
-# warnings
 ui_print "
     Disclaimer & Warning:
     
-    FAS-RS currently injects the game via Zygisk,
+    fas-rs currently injects the game via Zygisk,
     intercepting libgui's function calls to get
     frame rendering time.
     
@@ -57,13 +52,28 @@ ui_print "
     This project will always be open source,
     and anyone can review it to confirm that
     there is indeed no malicious code in it.
+    -------------------------
+    免责声明和警告：
+
+    fas-rs 目前通过 Zygisk 注入游戏，拦
+    截 libgui 的函数调用以获取帧渲染间隔。
+
+    但是，这也可能导致 root 检测或目标游
+    戏的注入检测被触发。
+
+    当这种情况发生时，你应该自己承担风险。
+    
+    同时，我保证 fas-rs 的Zygisk 注入仅
+    用于获取帧时间以进行帧感知调度。这个项
+    目将永远是开源的，任何人都可以查看它以
+    确认其中确实没有恶意代码。
 "
 
 if [ -f $CONF ]; then
-	touch $MERGE_FLAG
+    touch $MERGE_FLAG
 else
-	mkdir -p $DIR
-	cp $MODPATH/games.toml $CONF
+    mkdir -p $DIR
+    cp $MODPATH/games.toml $CONF
 fi
 
 cp -f $MODPATH/README.md $DIR/doc.md
