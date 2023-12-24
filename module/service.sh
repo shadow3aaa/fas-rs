@@ -23,6 +23,11 @@ sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
 
 resetprop fas_rs_installed true
 
+# wait until the sdcard is decrypted
+until [ -d $DIR ]; do
+	sleep 1
+done
+
 if [ -f $MODDIR/zygisk/unloaded ]; then
 	touch $MODDIR/disable
 
@@ -35,11 +40,6 @@ if [ -f $MODDIR/zygisk/unloaded ]; then
 
 	exit 1
 fi
-
-# wait until the sdcard is decrypted
-until [ -d $DIR ]; do
-	sleep 1
-done
 
 # update config
 if [ -f $MERGE_FLAG ]; then
