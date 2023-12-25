@@ -26,11 +26,12 @@ use crate::{IRemoteService::IRemoteService, CHANNEL};
 
 pub fn thread(process: &str) -> anyhow::Result<()> {
     let pid = unsafe { libc::getpid() };
+    let tid = unsafe { libc::gettid() };
     let mut stamps = HashMap::new();
     let mut gc_timer = Instant::now();
     let mut fas_service = get_server_interface();
 
-    let _ = fs::write("/dev/cpuset/background/tasks", pid.to_string());
+    let _ = fs::write("/dev/cpuset/background/tasks", tid.to_string());
 
     loop {
         let data = match CHANNEL.rx.recv() {
