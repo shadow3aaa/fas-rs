@@ -112,7 +112,7 @@ impl<P: PerformanceController> Looper<P> {
             Event::None
         };
 
-        buffer.time_acc = buffer.time_acc.clamp(0.0, scale);
+        buffer.time_acc = buffer.time_acc.clamp(-scale, scale);
 
         result
     }
