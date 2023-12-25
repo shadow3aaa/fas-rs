@@ -26,7 +26,7 @@ elif [ $API -le 30 ]; then
 	ui_print "Required A12+ !"
 	ui_print "系统版本过低, 需要安卓12及以上的系统版本版本"
 	abort
-elif [[ ! $KSU && $MAGISK_VER_CODE -lt 26000 ]]; then
+elif [[ ! $KSU == true && $MAGISK_VER_CODE -lt 26000 ]]; then
 	ui_print "Required Magisk v26.0+, since we use Zygisk v4"
 	ui_print "Magisk版本过低, 需要Magisk v26.0及以上的Magisk版本"
 	abort
@@ -86,3 +86,4 @@ set_perm $MODPATH/fas-rs 0 0 0755
 resetprop fas_rs_installed true
 
 ui_print "Configuration folder: /sdcard/Android/fas-rs"
+ui_print "配置文件夹：/sdcard/Android/fas-rs"
