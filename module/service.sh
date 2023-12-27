@@ -21,8 +21,6 @@ LOG=$DIR/fas_log.txt
 # update vtools support
 sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
 
-resetprop fas_rs_installed true
-
 # wait until the sdcard is decrypted
 until [ -d $DIR ]; do
 	sleep 1

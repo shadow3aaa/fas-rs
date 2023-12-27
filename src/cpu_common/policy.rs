@@ -37,6 +37,18 @@ pub struct Policy {
     force_bound: Option<PathBuf>,
 }
 
+impl Ord for Policy {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.num.cmp(&other.num)
+    }
+}
+
+impl PartialOrd for Policy {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 impl Policy {
     pub fn new<P: AsRef<Path>>(p: P) -> Result<Self> {
         let p = p.as_ref();
@@ -157,17 +169,5 @@ impl Policy {
     pub fn parse_policy<S: AsRef<str>>(p: S) -> Option<u8> {
         let p = p.as_ref();
         p.replace("policy", "").trim().parse().ok()
-    }
-}
-
-impl Ord for Policy {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.num.cmp(&other.num)
-    }
-}
-
-impl PartialOrd for Policy {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
     }
 }

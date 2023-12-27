@@ -83,7 +83,5 @@ sh $MODPATH/vtools/init_vtools.sh $(realpath $MODPATH/module.prop)
 set_perm_recursive $MODPATH 0 0 0755 0644
 set_perm $MODPATH/fas-rs 0 0 0755
 
-resetprop fas_rs_installed true
-
 ui_print "Configuration folder: /sdcard/Android/fas-rs"
 ui_print "配置文件夹：/sdcard/Android/fas-rs"
