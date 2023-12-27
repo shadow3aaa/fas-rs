@@ -12,8 +12,8 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 mod buffer;
-mod mode_policy;
 mod policy;
+mod policy_config;
 mod utils;
 mod window;
 
@@ -33,6 +33,7 @@ use crate::{
 
 use buffer::Buffer;
 use policy::Event;
+use policy_config::PolicyConfig;
 
 pub type Producer = (i64, i32); // buffer, pid
 pub type Buffers = HashMap<Producer, Buffer>; // Process, (jank_scale, total_jank_time_ns)
@@ -99,7 +100,8 @@ impl<P: PerformanceController> Looper<P> {
                 .values_mut()
                 .filter(|b| b.target_fps == target_fps)
             {
-                let current_event = Self::get_event(buffer, &self.config, mode);
+                let policy_config = PolicyConfig::new(mode, buffer);
+                let current_event = Self::get_event(buffer, policy_config);
                 event = event.max(current_event);
 
                 if buffer.ready {

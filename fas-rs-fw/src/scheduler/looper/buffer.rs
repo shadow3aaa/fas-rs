@@ -30,10 +30,12 @@ pub struct Buffer {
     target_fps_config: TargetFps,
     pub last_update: Instant,
     pub frametimes: VecDeque<Duration>,
+    pub deviation: f64,
     pub windows: HashMap<u32, FrameWindow>,
     pub last_jank: Option<Instant>,
     pub last_limit: Option<Instant>,
-    pub time_acc: f64,
+    pub acc_frame: f64,
+    pub acc_timer: Instant,
     timer: Instant,
 }
 
@@ -46,10 +48,12 @@ impl Buffer {
             target_fps_config: t,
             last_update: Instant::now(),
             frametimes: VecDeque::new(),
+            deviation: 0.0,
             windows: HashMap::new(),
             last_jank: None,
             last_limit: None,
-            time_acc: 0.0,
+            acc_frame: 0.0,
+            acc_timer: Instant::now(),
             timer: Instant::now(),
         }
     }
@@ -58,9 +62,10 @@ impl Buffer {
         self.last_update = Instant::now();
 
         self.frametimes.push_front(d);
-        self.calculate_current_fps();
         self.frametimes
             .truncate(self.target_fps.unwrap_or(60) as usize * 3);
+        self.calculate_current_fps();
+        self.calculate_deviation();
 
         if let Some(fps) = self.target_fps {
             self.ready = true;
@@ -127,5 +132,38 @@ impl Buffer {
         }
 
         self.target_fps = target_fpses.last().copied();
+    }
+
+    fn calculate_deviation(&mut self) {
+        if self.frametimes.is_empty() {
+            return;
+        }
+
+        let Some(current_fps) = self.current_fps else {
+            return;
+        };
+
+        if let Some(target_fps) = self.target_fps {
+            if current_fps < f64::from(target_fps) - 1.0 {
+                return;
+            }
+
+            let standard_deviation: f64 = {
+                let total: f64 = self
+                    .frametimes
+                    .iter()
+                    .copied()
+                    .map(|f| f.as_secs_f64() * f64::from(target_fps)) // normalization
+                    .map(|f| (f - 1.0).abs().powi(2))
+                    .sum();
+                let variance = total / self.frametimes.len() as f64;
+                variance.sqrt()
+            };
+
+            #[cfg(debug_assertions)]
+            debug!("standard deviation: {standard_deviation:.2}");
+
+            self.deviation = standard_deviation;
+        }
     }
 }
