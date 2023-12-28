@@ -24,8 +24,8 @@ pub struct PolicyConfig {
 
 impl PolicyConfig {
     pub fn new(mode: Mode, buffer: &Buffer) -> Self {
-        let _target_fps = buffer.target_fps.unwrap_or(10);
-        let deviation = buffer.deviation;
+        let target_fps = buffer.target_fps.unwrap_or(10);
+        let deviation = buffer.deviation.min(f64::from(target_fps));
         let acc_dur = Duration::from_secs_f64(deviation.ceil());
 
         let scale = match mode {
