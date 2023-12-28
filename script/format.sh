@@ -16,10 +16,11 @@
 format_codes() {
 	source $SHDIR/script/toolchains.sh
 
-	find -type f -name "*.sh" -not -path ".git/*" -exec shfmt -w -s {} \;
+	find -type f -name "*.sh" -not -path ".git/*" -exec shfmt -w -p -s {} \;
 	$RR fmt -v
 	cd zygisk
-	clang-format -i src/*.cpp
+	clang-format -i --verbose src/*.cpp
+	clang-format -i --verbose src/*.hpp
 	cd rust
 	$RR fmt -v
 }
