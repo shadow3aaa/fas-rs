@@ -26,9 +26,9 @@ elif [ $API -le 30 ]; then
 	ui_print "Required A12+ !"
 	ui_print "系统版本过低, 需要安卓12及以上的系统版本版本"
 	abort
-elif [[ ! $KSU == true && $MAGISK_VER_CODE -lt 26000 ]]; then
-	ui_print "Required Magisk v26.0+, since we use Zygisk v4"
-	ui_print "Magisk版本过低, 需要Magisk v26.0及以上的Magisk版本"
+elif [[ ! $KSU == true && $MAGISK_VER_CODE -lt 24000 ]]; then
+	ui_print "Required Magisk v24.0+, since we use Zygisk v2"
+	ui_print "Magisk版本过低, 需要Magisk v24.0及以上的Magisk版本"
 	abort
 fi
 
