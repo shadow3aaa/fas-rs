@@ -25,15 +25,18 @@ pub struct PolicyConfig {
 impl PolicyConfig {
     pub fn new(mode: Mode, buffer: &Buffer) -> Self {
         let target_fps = buffer.target_fps.unwrap_or(10);
-        let deviation = buffer.deviation.min(f64::from(target_fps));
+        let target_fps = f64::from(target_fps);
+
+        let deviation = buffer.deviation.min(target_fps);
         let acc_dur = Duration::from_secs_f64(deviation.ceil());
 
-        let scale = match mode {
-            Mode::Powersave => acc_dur.mul_f64(0.015),
-            Mode::Balance => acc_dur.mul_f64(0.01),
-            Mode::Performance => acc_dur.mul_f64(0.008),
-            Mode::Fast => acc_dur.mul_f64(0.005),
+        let allow_frame = match mode {
+            Mode::Powersave => 1.0,
+            Mode::Balance => 0.8,
+            Mode::Performance => 0.6,
+            Mode::Fast => 0.5,
         };
+        let scale = acc_dur.mul_f64(allow_frame / target_fps);
 
         Self { scale, acc_dur }
     }
