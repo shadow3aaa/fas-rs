@@ -1,6 +1,6 @@
 [package]
 name = "fas-rs"
-version = "1.4.5"
+version = "1.5.0"
 edition = "2021"
 description = "Frame-aware scheduling binary"
 authors = ["shadow3"]

@@ -1,13 +1,13 @@
-# fas-rs(此处放版本号)
+# fas-rs(v1.5.0)
 
 [项目主页](https://github.com/shadow3aaa/fas-rs)
 
 ## 更新日志
 
-- commit a
-- commit b
-- commit c
-- ...
+- 重写fas逻辑
+- 优化项目架构
+- 移除uperf-patch支持(因为太丑了)
+- 更新依赖
 
 ## 运行要求
 

@@ -1,6 +1,6 @@
 {
-    "versionCode": 145,
-    "version": "v1.4.5",
-    "zipUrl": "https://github.com/shadow3aaa/fas-rs/releases/download/v1.4.5/fas-rs.zip",
-    "changelog": "https://github.com/shadow3aaa/fas-rs/raw/master/update/changelog(v1.4.5).md"
+    "versionCode": 150,
+    "version": "v1.5.0",
+    "zipUrl": "https://github.com/shadow3aaa/fas-rs/releases/download/v1.5.0/fas-rs.zip",
+    "changelog": "https://github.com/shadow3aaa/fas-rs/raw/master/update/changelog(v1.5.0).md"
 }
