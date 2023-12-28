@@ -139,15 +139,7 @@ impl Buffer {
             return;
         }
 
-        let Some(current_fps) = self.current_fps else {
-            return;
-        };
-
         if let Some(target_fps) = self.target_fps {
-            if current_fps < f64::from(target_fps) - 1.0 {
-                return;
-            }
-
             let standard_deviation: f64 = {
                 let total: f64 = self
                     .frametimes

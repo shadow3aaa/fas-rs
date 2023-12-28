@@ -27,8 +27,8 @@ impl PolicyConfig {
         let target_fps = buffer.target_fps.unwrap_or(10);
         let target_fps = f64::from(target_fps);
 
-        let deviation = buffer.deviation.min(target_fps);
-        let acc_dur = Duration::from_secs_f64(deviation.ceil());
+        let deviation = buffer.deviation.ceil().clamp(1.0, target_fps);
+        let acc_dur = Duration::from_secs_f64(deviation);
 
         let allow_frame = match mode {
             Mode::Powersave => 1.0,
