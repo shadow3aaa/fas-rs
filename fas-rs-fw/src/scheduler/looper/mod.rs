@@ -64,7 +64,12 @@ impl<P: PerformanceController> Looper<P> {
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
             let mode = self.node.get_mode()?;
-            let target_fps = self.buffers.values().filter_map(|b| b.target_fps).max();
+            let target_fps = self
+                .buffers
+                .values()
+                .filter(|b| b.last_update.elapsed() > Duration::from_secs(1))
+                .filter_map(|b| b.target_fps)
+                .max();
             let timeout = Duration::from_secs(10) / target_fps.unwrap_or(10);
 
             let message = match self.rx.recv_timeout(timeout) {
@@ -98,6 +103,7 @@ impl<P: PerformanceController> Looper<P> {
             for buffer in self
                 .buffers
                 .values_mut()
+                .filter(|b| b.last_update.elapsed() < Duration::from_secs(1))
                 .filter(|b| b.target_fps == target_fps)
             {
                 let policy_config = PolicyConfig::new(mode, buffer);

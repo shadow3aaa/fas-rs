@@ -58,7 +58,10 @@ impl Config {
 
             thread::Builder::new()
                 .name("ConfigThread".into())
-                .spawn(move || wait_and_read(&path, &std_path, &toml))?;
+                .spawn(move || {
+                    wait_and_read(&path, &std_path, &toml).unwrap_or_else(|e| error!("{e:#?}"));
+                    panic!("An unrecoverable error occurred!");
+                })?;
         }
 
         info!("Config watcher started");

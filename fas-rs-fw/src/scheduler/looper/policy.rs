@@ -33,19 +33,31 @@ impl<P: PerformanceController> Looper<P> {
         debug!("policy config: {config:?}");
 
         let Some(target_fps) = buffer.target_fps else {
-            return Event::ReleaseMax;
+            #[cfg(debug_assertions)]
+            debug!("Failed to do policy: Missing target_fps");
+
+            return Event::None;
         };
 
         let Some(window) = buffer.windows.get_mut(&target_fps) else {
-            return Event::ReleaseMax;
+            #[cfg(debug_assertions)]
+            debug!("Failed to do policy: Missing target frame window");
+
+            return Event::None;
         };
 
         let Some(normalized_avg_frame) = window.avg_normalized(f64::from(target_fps)) else {
-            return Event::ReleaseMax;
+            #[cfg(debug_assertions)]
+            debug!("Failed to do policy: Missing avg_frame");
+
+            return Event::None;
         };
 
         let Some(last_frame) = window.last().copied() else {
-            return Event::ReleaseMax;
+            #[cfg(debug_assertions)]
+            debug!("Failed to do policy: Missing last_frame");
+
+            return Event::None;
         };
         let normalized_frame = last_frame * target_fps;
 

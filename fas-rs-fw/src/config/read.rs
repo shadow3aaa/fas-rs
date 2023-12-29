@@ -18,12 +18,13 @@ use log::{debug, error};
 use toml::Value;
 
 use super::ConfData;
+use crate::error::Result;
 
-pub(super) fn wait_and_read(path: &Path, std_path: &Path, toml: &Arc<ConfData>) {
+pub(super) fn wait_and_read(path: &Path, std_path: &Path, toml: &Arc<ConfData>) -> Result<()> {
     let mut retry_count = 0;
 
-    let std_config = fs::read_to_string(std_path).unwrap();
-    let std_config: Value = toml::from_str(&std_config).unwrap();
+    let std_config = fs::read_to_string(std_path)?;
+    let std_config: Value = toml::from_str(&std_config)?;
 
     loop {
         if retry_count > 10 {
@@ -48,7 +49,7 @@ pub(super) fn wait_and_read(path: &Path, std_path: &Path, toml: &Arc<ConfData>) 
                 continue;
             }
         };
-        *toml.write() = toml::from_str(&ori).unwrap();
+        *toml.write() = toml::from_str(&ori)?;
 
         // wait until file change
         let Ok(mut inotify) = Inotify::init() else {

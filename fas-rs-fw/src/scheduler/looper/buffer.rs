@@ -101,8 +101,6 @@ impl Buffer {
             return;
         };
 
-        let avg_time = Duration::from_secs(1).div_f64(current_fps);
-
         let target_fpses = match &self.target_fps_config {
             TargetFps::Value(t) => {
                 self.target_fps = Some(*t);
@@ -124,8 +122,10 @@ impl Buffer {
         }
 
         for target_fps in target_fpses.iter().copied() {
-            let target_frametime = Duration::from_secs(1) / (target_fps + 2);
-            if avg_time >= target_frametime {
+            if current_fps <= f64::from(target_fps) + 3.0 {
+                #[cfg(debug_assertions)]
+                debug!("Matched target_fps: current: {current_fps:.2} target_fps: {target_fps}");
+
                 self.target_fps = Some(target_fps);
                 return;
             }
