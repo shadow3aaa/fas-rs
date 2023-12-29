@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 use std::{
-    cell::{Cell, RefCell},
+    cell::RefCell,
     cmp::Ordering,
     ffi::OsStr,
     fs,
@@ -32,7 +32,6 @@ pub struct Policy {
     pub num: u8,
     pub path: PathBuf,
     pub freqs: Vec<Freq>,
-    pub uperf_ext: Cell<bool>,
     gov_snapshot: RefCell<Option<String>>,
     force_bound: Option<PathBuf>,
 }
@@ -73,7 +72,6 @@ impl Policy {
                 .ok_or(Error::Other("Failed to parse cpufreq policy num"))?,
             path: p.to_path_buf(),
             freqs,
-            uperf_ext: false.into(),
             gov_snapshot: RefCell::new(None),
             force_bound,
         })
@@ -112,11 +110,7 @@ impl Policy {
     pub fn reset_gov(&self) -> Result<()> {
         let path = self.path.join("scaling_governor");
 
-        if self.uperf_ext.get() {
-            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
-            fs::write(&path, "performance")?;
-            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
-        } else if let Some(ref gov) = *self.gov_snapshot.borrow() {
+        if let Some(ref gov) = *self.gov_snapshot.borrow() {
             let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
             fs::write(&path, gov)?;
             let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
@@ -128,11 +122,7 @@ impl Policy {
     pub fn set_fas_gov(&self) -> Result<()> {
         let path = self.path.join("scaling_governor");
 
-        if self.uperf_ext.get() {
-            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
-            fs::write(&path, "performance")?;
-            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
-        } else if !self.little {
+        if !self.little {
             let cur_gov = fs::read_to_string(&path)?;
             if cur_gov.trim() != "performance" {
                 self.gov_snapshot.replace(Some(cur_gov));

@@ -29,7 +29,7 @@ use fas_rs_fw::prelude::*;
 
 use anyhow::Result;
 use clap::Parser;
-use log::{info, warn};
+use log::{error, info, warn};
 
 #[cfg(debug_assertions)]
 use log::debug;
@@ -65,27 +65,37 @@ fn main() -> Result<()> {
     }
 
     if args.run {
-        pretty_env_logger::init_custom_env("FAS_LOG");
-
-        let self_pid = process::id();
-        let _ = fs::write("/dev/cpuset/background/cgroup.procs", self_pid.to_string());
-
-        let config = Config::new(&local_path, &std_path)?;
-        let cpu = CpuCommon::new()?;
-
-        #[cfg(debug_assertions)]
-        debug!("{cpu:#?}");
-
-        thread::Builder::new()
-            .name("CleanerThead".into())
-            .spawn(clean::cleaner)?;
-        info!("Cleaner thread started");
-
-        Scheduler::new()
-            .config(config)
-            .controller(cpu)
-            .start_run()?;
+        run(std_path, local_path).unwrap_or_else(|e| error!("{e:?}"));
+        panic!("An unrecoverable error occurred!");
     }
+
+    Ok(())
+}
+
+fn run<S: AsRef<str>>(std_path: S, local_path: S) -> Result<()> {
+    let std_path = std_path.as_ref();
+    let local_path = local_path.as_ref();
+
+    pretty_env_logger::init_custom_env("FAS_LOG");
+
+    let self_pid = process::id();
+    let _ = fs::write("/dev/cpuset/background/cgroup.procs", self_pid.to_string());
+
+    let config = Config::new(&local_path, &std_path)?;
+    let cpu = CpuCommon::new()?;
+
+    #[cfg(debug_assertions)]
+    debug!("{cpu:#?}");
+
+    thread::Builder::new()
+        .name("CleanerThead".into())
+        .spawn(clean::cleaner)?;
+    info!("Cleaner thread started");
+
+    Scheduler::new()
+        .config(config)
+        .controller(cpu)
+        .start_run()?;
 
     Ok(())
 }
