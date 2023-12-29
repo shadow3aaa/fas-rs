@@ -67,7 +67,7 @@ impl<P: PerformanceController> Looper<P> {
             let target_fps = self
                 .buffers
                 .values()
-                .filter(|b| b.last_update.elapsed() > Duration::from_secs(1))
+                .filter(|b| b.last_update.elapsed() < Duration::from_secs(1))
                 .filter_map(|b| b.target_fps)
                 .max();
             let timeout = Duration::from_secs(10) / target_fps.unwrap_or(10);
@@ -96,7 +96,7 @@ impl<P: PerformanceController> Looper<P> {
                     continue;
                 }
             };
-            
+
             self.buffer_update(&data);
             self.retain_topapp(mode)?;
             if !self.started {
