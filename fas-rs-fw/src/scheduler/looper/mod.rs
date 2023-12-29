@@ -96,36 +96,23 @@ impl<P: PerformanceController> Looper<P> {
                     continue;
                 }
             };
+            
+            self.buffer_update(&data);
+            self.retain_topapp(mode)?;
+            if !self.started {
+                continue;
+            }
 
-            let skip_policy = !self.buffer_update(&data);
             let mut event = Event::None;
-            let mut ready = false;
             for buffer in self
                 .buffers
                 .values_mut()
                 .filter(|b| b.last_update.elapsed() < Duration::from_secs(1))
-                .filter(|b| b.target_fps == target_fps)
+                .filter(|b| target_fps.is_none() || b.target_fps == target_fps)
             {
                 let policy_config = PolicyConfig::new(mode, buffer);
                 let current_event = Self::get_event(buffer, policy_config);
                 event = event.max(current_event);
-
-                if buffer.ready {
-                    ready = true;
-                }
-            }
-
-            if !ready {
-                self.disable_fas(mode)?;
-                continue;
-            } else if skip_policy {
-                continue;
-            }
-
-            self.retain_topapp(mode)?;
-
-            if !self.started {
-                continue;
             }
 
             match event {

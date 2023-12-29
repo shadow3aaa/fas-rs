@@ -24,7 +24,6 @@ use crate::config::TargetFps;
 
 #[derive(Debug)]
 pub struct Buffer {
-    pub ready: bool,
     pub target_fps: Option<u32>,
     pub current_fps: Option<f64>,
     target_fps_config: TargetFps,
@@ -42,7 +41,6 @@ pub struct Buffer {
 impl Buffer {
     pub fn new(t: TargetFps) -> Self {
         Self {
-            ready: false,
             target_fps: None,
             current_fps: None,
             target_fps_config: t,
@@ -68,13 +66,10 @@ impl Buffer {
         self.calculate_deviation();
 
         if let Some(fps) = self.target_fps {
-            self.ready = true;
             self.windows
                 .entry(fps)
                 .or_insert_with(|| FrameWindow::new(5))
                 .update(d);
-        } else {
-            self.ready = false;
         }
 
         if self.timer.elapsed() >= Duration::from_secs(1) {
