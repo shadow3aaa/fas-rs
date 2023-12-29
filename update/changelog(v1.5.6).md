@@ -1,4 +1,4 @@
-# fas-rs(v1.5.5)
+# fas-rs(v1.5.6)
 
 [项目主页](https://github.com/shadow3aaa/fas-rs)
 
