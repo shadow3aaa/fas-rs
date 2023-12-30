@@ -83,11 +83,9 @@ impl<P: PerformanceController> Looper<P> {
 
             self.consume_data(mode, &data)?;
 
-            if !self.started {
-                continue;
+            if self.started {
+                self.do_policy(mode, target_fps)?;
             }
-
-            self.do_policy(mode, target_fps)?;
         }
     }
 
