@@ -13,7 +13,7 @@
 *  limitations under the License. */
 use std::time::Duration;
 
-use super::Buffer;
+use super::super::Buffer;
 use crate::node::Mode;
 
 #[derive(Debug, Clone, Copy)]

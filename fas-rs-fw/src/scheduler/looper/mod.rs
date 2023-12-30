@@ -13,7 +13,6 @@
 *  limitations under the License. */
 mod buffer;
 mod policy;
-mod policy_config;
 mod utils;
 mod window;
 
@@ -23,17 +22,16 @@ use std::{
     time::Duration,
 };
 
-use super::{topapp::TimedWatcher, BinderMessage};
+use super::{topapp::TimedWatcher, BinderMessage, FasData};
 use crate::{
     config::Config,
     error::{Error, Result},
-    node::Node,
+    node::{Mode, Node},
     PerformanceController,
 };
 
 use buffer::Buffer;
 use policy::Event;
-use policy_config::PolicyConfig;
 
 pub type Producer = (i64, i32); // buffer, pid
 pub type Buffers = HashMap<Producer, Buffer>; // Process, (jank_scale, total_jank_time_ns)
@@ -70,23 +68,9 @@ impl<P: PerformanceController> Looper<P> {
                 .filter(|b| b.last_update.elapsed() < Duration::from_secs(1))
                 .filter_map(|b| b.target_fps)
                 .max();
-            let timeout = Duration::from_secs(10) / target_fps.unwrap_or(10);
 
-            let message = match self.rx.recv_timeout(timeout) {
-                Ok(m) => m,
-                Err(e) => {
-                    if e == RecvTimeoutError::Disconnected {
-                        return Err(Error::Other("Binder Server Disconnected"));
-                    }
-
-                    self.retain_topapp(mode)?;
-
-                    if self.started {
-                        self.controller.release_max(mode, &self.config)?;
-                    }
-
-                    continue;
-                }
+            let Some(message) = self.recv_message(mode, target_fps)? else {
+                continue;
             };
 
             let data = match message {
@@ -97,34 +81,71 @@ impl<P: PerformanceController> Looper<P> {
                 }
             };
 
-            self.buffer_update(&data);
-            self.retain_topapp(mode)?;
+            self.consume_data(mode, data)?;
+
             if !self.started {
                 continue;
             }
 
-            let mut event = Event::None;
-            for buffer in self
-                .buffers
-                .values_mut()
-                .filter(|b| b.last_update.elapsed() < Duration::from_secs(1))
-                .filter(|b| target_fps.is_none() || b.target_fps == target_fps)
-            {
-                let policy_config = PolicyConfig::new(mode, buffer);
-                let current_event = Self::get_event(buffer, policy_config);
-                event = event.max(current_event);
-            }
+            self.do_policy(mode, target_fps)?;
+        }
+    }
 
-            match event {
-                Event::ReleaseMax => {
+    fn recv_message(
+        &mut self,
+        mode: Mode,
+        target_fps: Option<u32>,
+    ) -> Result<Option<BinderMessage>> {
+        let timeout = target_fps
+            .and_then(|t| Some(Duration::from_secs(10) / t))
+            .unwrap_or(Duration::from_secs(1));
+
+        match self.rx.recv_timeout(timeout) {
+            Ok(m) => Ok(Some(m)),
+            Err(e) => {
+                if e == RecvTimeoutError::Disconnected {
+                    return Err(Error::Other("Binder Server Disconnected"));
+                }
+
+                self.retain_topapp(mode)?;
+
+                if self.started {
                     self.controller.release_max(mode, &self.config)?;
                 }
-                Event::Release => {
-                    self.controller.release(mode, &self.config)?;
-                }
-                Event::Limit => self.controller.limit(mode, &self.config)?,
-                Event::None => (),
+
+                Ok(None)
             }
         }
+    }
+
+    fn consume_data(&mut self, mode: Mode, data: FasData) -> Result<()> {
+        self.buffer_update(&data);
+        self.retain_topapp(mode)
+    }
+
+    fn do_policy(&mut self, mode: Mode, target_fps: Option<u32>) -> Result<()> {
+        let mut event = Event::None;
+        for buffer in self
+            .buffers
+            .values_mut()
+            .filter(|b| b.last_update.elapsed() < Duration::from_secs(1))
+            .filter(|b| target_fps.is_none() || b.target_fps == target_fps)
+        {
+            let current_event = Self::get_event(mode, buffer);
+            event = event.max(current_event);
+        }
+
+        match event {
+            Event::ReleaseMax => {
+                self.controller.release_max(mode, &self.config)?;
+            }
+            Event::Release => {
+                self.controller.release(mode, &self.config)?;
+            }
+            Event::Limit => self.controller.limit(mode, &self.config)?,
+            Event::None => (),
+        }
+
+        Ok(())
     }
 }

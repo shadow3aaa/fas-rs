@@ -32,11 +32,11 @@ impl FrameWindow {
         self.frametimes.truncate(self.len);
     }
 
-    pub fn last(&mut self) -> Option<&mut Duration> {
+    pub fn last(&self) -> Option<Duration> {
         if self.frametimes.len() < self.len {
             None
         } else {
-            self.frametimes.front_mut()
+            self.frametimes.front().copied()
         }
     }
 
