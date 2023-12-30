@@ -45,7 +45,7 @@ impl<P: PerformanceController> Looper<P> {
             debug!("policy config: {config:?}");
             debug!("policy data: {policy_data:?}");
         }
-        
+
         let result = Self::frame_analyze(buffer, config, policy_data);
         if let Some(event) = Self::jank_analyze(buffer, policy_data) {
             return event;
