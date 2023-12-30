@@ -81,7 +81,7 @@ impl<P: PerformanceController> Looper<P> {
                 }
             };
 
-            self.consume_data(mode, data)?;
+            self.consume_data(mode, &data)?;
 
             if !self.started {
                 continue;
@@ -96,9 +96,7 @@ impl<P: PerformanceController> Looper<P> {
         mode: Mode,
         target_fps: Option<u32>,
     ) -> Result<Option<BinderMessage>> {
-        let timeout = target_fps
-            .and_then(|t| Some(Duration::from_secs(10) / t))
-            .unwrap_or(Duration::from_secs(1));
+        let timeout = target_fps.map_or(Duration::from_secs(1), |t| Duration::from_secs(10) / t);
 
         match self.rx.recv_timeout(timeout) {
             Ok(m) => Ok(Some(m)),
@@ -118,8 +116,8 @@ impl<P: PerformanceController> Looper<P> {
         }
     }
 
-    fn consume_data(&mut self, mode: Mode, data: FasData) -> Result<()> {
-        self.buffer_update(&data);
+    fn consume_data(&mut self, mode: Mode, data: &FasData) -> Result<()> {
+        self.buffer_update(data);
         self.retain_topapp(mode)
     }
 
