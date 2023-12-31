@@ -13,7 +13,9 @@
 *  limitations under the License. */
 use std::{
     collections::hash_map::HashMap,
-    fs, thread,
+    fs,
+    sync::atomic::Ordering,
+    thread,
     time::{Duration, Instant},
 };
 
@@ -22,14 +24,16 @@ use binder::{get_interface, Strong};
 use log::debug;
 use log::error;
 
-use crate::{IRemoteService::IRemoteService, CHANNEL};
+use crate::{IRemoteService::IRemoteService, CHANNEL, IS_CHILD};
 
-pub fn thread(process: &str) -> anyhow::Result<()> {
-    let pid = unsafe { libc::getpid() };
-    let tid = unsafe { libc::gettid() };
+pub unsafe fn thread(process: &str) -> anyhow::Result<()> {
+    let pid = libc::getpid();
+    let tid = libc::gettid();
     let mut stamps = HashMap::new();
     let mut gc_timer = Instant::now();
-    let mut fas_service = get_server_interface();
+    let Some(mut fas_service) = get_server_interface() else {
+        return Ok(());
+    };
 
     let _ = fs::write("/dev/cpuset/background/tasks", tid.to_string());
 
@@ -65,6 +69,10 @@ pub fn thread(process: &str) -> anyhow::Result<()> {
         #[cfg(debug_assertions)]
         debug!("process: [{process}] framtime: [{frametime:?}]");
 
+        if IS_CHILD.load(Ordering::Acquire) {
+            return Ok(());
+        }
+
         if let Ok(send) = fas_service.sendData(
             data.buffer as i64,
             process,
@@ -77,16 +85,24 @@ pub fn thread(process: &str) -> anyhow::Result<()> {
                 debug!("Exit analyze thread, since server prefer this is not a fas app anymore");
                 return Ok(());
             }
+        } else if let Some(service) = get_server_interface() {
+            fas_service = service;
         } else {
-            fas_service = get_server_interface();
+            return Ok(());
         }
     }
 }
 
-fn get_server_interface() -> Strong<dyn IRemoteService> {
+fn get_server_interface() -> Option<Strong<dyn IRemoteService>> {
     loop {
+        unsafe {
+            if IS_CHILD.load(Ordering::Acquire) {
+                return None;
+            }
+        }
+
         if let Ok(fas_service) = get_interface::<dyn IRemoteService>("fas_rs_server") {
-            return fas_service;
+            return Some(fas_service);
         }
 
         error!("Failed to get binder interface, fas-rs-server didn't started");

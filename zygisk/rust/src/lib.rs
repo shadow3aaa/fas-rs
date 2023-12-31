@@ -29,7 +29,10 @@ mod hook;
 use std::{
     ffi::CStr,
     fs, mem, ptr,
-    sync::mpsc::{self, Receiver, SyncSender},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc::{self, Receiver, SyncSender},
+    },
     thread,
     time::Instant,
 };
@@ -49,6 +52,7 @@ use hook::SymbolHooker;
 const CONFIG: &str = "/data/media/0/Android/fas-rs/games.toml";
 
 static mut OLD_FUNC_PTR: Address = ptr::null_mut();
+static mut IS_CHILD: AtomicBool = AtomicBool::new(false);
 static CHANNEL: Lazy<Channel> = Lazy::new(|| {
     let (sx, rx) = mpsc::sync_channel(1024);
     Channel { sx, rx }
@@ -112,7 +116,7 @@ pub unsafe extern "C" fn _need_hook_(process: *const c_char) -> bool {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn _hook_handler_(process: *const c_char) -> bool {
+pub unsafe extern "C" fn _hook_handler_(process: *const c_char) {
     android_logger::init_once(
         Config::default()
             .with_max_level(LevelFilter::Trace)
@@ -121,12 +125,14 @@ pub unsafe extern "C" fn _hook_handler_(process: *const c_char) -> bool {
 
     let process = CStr::from_ptr(process);
     let Ok(process) = process.to_str() else {
-        return false;
+        return;
     };
     let process = process_name(process);
 
     #[cfg(debug_assertions)]
     debug!("Try to hook process: {process}");
+
+    libc::pthread_atfork(None, None, Some(at_fork));
 
     if let Err(e) = thread::Builder::new()
         .name("libgui-analyze".into())
@@ -141,8 +147,10 @@ pub unsafe extern "C" fn _hook_handler_(process: *const c_char) -> bool {
     {
         error!("Failed to start analyze thread, reason: {e:?}");
     }
+}
 
-    true
+unsafe extern "C" fn at_fork() {
+    IS_CHILD.store(true, Ordering::Release);
 }
 
 fn process_name<S: AsRef<str>>(process: S) -> String {
