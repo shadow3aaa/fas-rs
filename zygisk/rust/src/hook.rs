@@ -73,7 +73,7 @@ impl SymbolHooker {
                 }
             })
             .min_by_key(|sym| sym.len())
-            .ok_or(anyhow!("Symbol not found"))?;
+            .ok_or_else(|| anyhow!("Symbol not found"))?;
 
         Ok(resolve_func_addr(None, symbol)?)
     }

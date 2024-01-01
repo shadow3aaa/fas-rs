@@ -79,7 +79,7 @@ fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
     let self_pid = process::id();
     let _ = fs::write("/dev/cpuset/background/cgroup.procs", self_pid.to_string());
 
-    let config = Config::new(USER_CONFIG, &std_path)?;
+    let config = Config::new(USER_CONFIG, std_path)?;
     let cpu = CpuCommon::new()?;
 
     #[cfg(debug_assertions)]

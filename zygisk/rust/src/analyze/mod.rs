@@ -13,12 +13,7 @@
 *  limitations under the License. */
 mod info;
 
-use std::{
-    fs,
-    sync::atomic::Ordering,
-    thread,
-    time::Duration,
-};
+use std::{fs, sync::atomic::Ordering, thread, time::Duration};
 
 use anyhow::Result;
 use binder::{get_interface, Strong};
@@ -72,27 +67,24 @@ fn send_data_to_server(
     #[cfg(debug_assertions)]
     debug!("process: [{}] framtime: [{frametime:?}]", info.process);
 
-    if let Ok(send) = fas_service.sendData(
-        data.buffer as i64,
-        &info.process,
-        info.pid,
+    fas_service.sendData(
+         data.buffer as i64,
+         &info.process,
+         info.pid,
         frametime.as_nanos() as i64,
-        data.cpu,
-    ) {
+        data.cpu
+    ).map_or_else(|_| get_server_interface().map_or(false, |service| {
+        *fas_service = service;
+        send_data_to_server(fas_service, frametime, data, info)
+    }), |send| {
         #[cfg(debug_assertions)]
         {
             if !send {
                 debug!("Exit analyze thread, since server prefer this is not a fas app anymore");
             }
         }
-
-        send
-    } else if let Some(service) = get_server_interface() {
-        *fas_service = service;
-        send_data_to_server(fas_service, frametime, data, info)
-    } else {
-        false
-    }
+       send
+    })
 }
 
 fn get_server_interface() -> Option<Strong<dyn IRemoteService>> {
