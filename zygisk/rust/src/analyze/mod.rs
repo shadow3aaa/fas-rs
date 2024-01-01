@@ -11,31 +11,31 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+mod info;
+
 use std::{
-    collections::hash_map::HashMap,
     fs,
     sync::atomic::Ordering,
     thread,
-    time::{Duration, Instant},
+    time::Duration,
 };
 
+use anyhow::Result;
 use binder::{get_interface, Strong};
 #[cfg(debug_assertions)]
 use log::debug;
 use log::error;
 
-use crate::{IRemoteService::IRemoteService, CHANNEL, IS_CHILD};
+use crate::{channel::CHANNEL, data::Data, IRemoteService::IRemoteService, IS_CHILD};
+use info::Info;
 
-pub unsafe fn thread(process: &str) -> anyhow::Result<()> {
-    let pid = libc::getpid();
-    let tid = libc::gettid();
-    let mut stamps = HashMap::new();
-    let mut gc_timer = Instant::now();
+pub unsafe fn thread(process: String) -> Result<()> {
+    let mut info = Info::new(process);
     let Some(mut fas_service) = get_server_interface() else {
         return Ok(());
     };
 
-    let _ = fs::write("/dev/cpuset/background/tasks", tid.to_string());
+    let _ = fs::write("/dev/cpuset/background/tasks", info.tid.to_string());
 
     loop {
         let data = match CHANNEL.rx.recv() {
@@ -49,47 +49,49 @@ pub unsafe fn thread(process: &str) -> anyhow::Result<()> {
         #[cfg(debug_assertions)]
         debug!("Rendering Data: {data:?}");
 
-        let last_stamp = stamps.entry(data.buffer).or_insert(data.instant);
+        let last_stamp = info.stamps.entry(data.buffer).or_insert(data.instant);
         let frametime = data.instant - *last_stamp;
         *last_stamp = data.instant;
 
-        if gc_timer.elapsed() > Duration::from_millis(500) {
-            stamps.retain(|p, _| {
-                if p.is_null() {
-                    let _ = fas_service.removeBuffer(*p as i64, pid);
-                    false
-                } else {
-                    true
-                }
-            });
-
-            gc_timer = Instant::now();
+        if !send_data_to_server(&mut fas_service, frametime, data, &info) {
+            return Ok(());
         }
-
-        #[cfg(debug_assertions)]
-        debug!("process: [{process}] framtime: [{frametime:?}]");
 
         if IS_CHILD.load(Ordering::Acquire) {
             return Ok(());
         }
+    }
+}
 
-        if let Ok(send) = fas_service.sendData(
-            data.buffer as i64,
-            process,
-            pid,
-            frametime.as_nanos() as i64,
-            data.cpu,
-        ) {
+fn send_data_to_server(
+    fas_service: &mut Strong<dyn IRemoteService>,
+    frametime: Duration,
+    data: Data,
+    info: &Info,
+) -> bool {
+    #[cfg(debug_assertions)]
+    debug!("process: [{}] framtime: [{frametime:?}]", info.process);
+
+    if let Ok(send) = fas_service.sendData(
+        data.buffer as i64,
+        &info.process,
+        info.pid,
+        frametime.as_nanos() as i64,
+        data.cpu,
+    ) {
+        #[cfg(debug_assertions)]
+        {
             if !send {
-                #[cfg(debug_assertions)]
                 debug!("Exit analyze thread, since server prefer this is not a fas app anymore");
-                return Ok(());
             }
-        } else if let Some(service) = get_server_interface() {
-            fas_service = service;
-        } else {
-            return Ok(());
         }
+
+        send
+    } else if let Some(service) = get_server_interface() {
+        *fas_service = service;
+        send_data_to_server(fas_service, frametime, data, info)
+    } else {
+        false
     }
 }
 

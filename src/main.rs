@@ -36,11 +36,11 @@ use log::debug;
 
 use cpu_common::CpuCommon;
 
+const USER_CONFIG: &str = "/data/media/0/Android/fas-rs/games.toml";
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    #[arg(short, long, default_value = "/data/media/0/Android/fas-rs/games.toml")]
-    local_profile: String,
     #[arg(short, long, default_value = "/data/adb/modules/fas_rs/games.toml")]
     std_profile: String,
     #[arg(short, long)]
@@ -51,11 +51,10 @@ struct Args {
 
 fn main() -> Result<()> {
     let args = Args::parse();
-    let local_path = args.local_profile;
     let std_path = args.std_profile;
 
     if args.merge {
-        let local = fs::read_to_string(&local_path)?;
+        let local = fs::read_to_string(USER_CONFIG)?;
         let std = fs::read_to_string(&std_path)?;
 
         let new = Config::merge(&local, &std).unwrap_or(std);
@@ -65,23 +64,22 @@ fn main() -> Result<()> {
     }
 
     if args.run {
-        run(std_path, local_path).unwrap_or_else(|e| error!("{e:?}"));
+        run(std_path).unwrap_or_else(|e| error!("{e:?}"));
         panic!("An unrecoverable error occurred!");
     }
 
     Ok(())
 }
 
-fn run<S: AsRef<str>>(std_path: S, local_path: S) -> Result<()> {
+fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
     let std_path = std_path.as_ref();
-    let local_path = local_path.as_ref();
 
     pretty_env_logger::init_custom_env("FAS_LOG");
 
     let self_pid = process::id();
     let _ = fs::write("/dev/cpuset/background/cgroup.procs", self_pid.to_string());
 
-    let config = Config::new(&local_path, &std_path)?;
+    let config = Config::new(USER_CONFIG, &std_path)?;
     let cpu = CpuCommon::new()?;
 
     #[cfg(debug_assertions)]

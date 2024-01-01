@@ -13,11 +13,10 @@
 *  limitations under the License. */
 use std::{fs, path::Path, ptr};
 
+use anyhow::{anyhow, Result};
 use cpp_demangle::Symbol;
 use dobby_api::{hook, resolve_func_addr, undo_hook, Address};
 use goblin::Object;
-
-use crate::error::{Error, Result};
 
 pub struct SymbolHooker {
     symbols: Vec<String>,
@@ -29,11 +28,11 @@ impl SymbolHooker {
         let buffer = fs::read(p)?;
 
         let Object::Elf(lib) = Object::parse(&buffer)? else {
-            return Err(Error::Other("Not an elf lib"));
+            return Err(anyhow!("Not an elf lib"));
         };
 
         if !lib.is_lib {
-            return Err(Error::Other("Not an elf lib"))?;
+            return Err(anyhow!("Not an elf lib"));
         }
 
         let symbols = lib
@@ -74,7 +73,7 @@ impl SymbolHooker {
                 }
             })
             .min_by_key(|sym| sym.len())
-            .ok_or(Error::Symbol)?;
+            .ok_or(anyhow!("Symbol not found"))?;
 
         Ok(resolve_func_addr(None, symbol)?)
     }
