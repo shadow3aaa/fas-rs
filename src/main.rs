@@ -41,7 +41,7 @@ const USER_CONFIG: &str = "/data/media/0/Android/fas-rs/games.toml";
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    #[arg(short, long, default_value = "/data/adb/modules/fas_rs/games.toml")]
+    #[arg(short, long)]
     std_profile: String,
     #[arg(short, long)]
     run: bool,
