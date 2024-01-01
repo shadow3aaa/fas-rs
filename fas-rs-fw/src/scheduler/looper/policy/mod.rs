@@ -72,17 +72,7 @@ impl<P: PerformanceController> Looper<P> {
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
 
-            if let Some(stamp) = buffer.last_limit {
-                if stamp.elapsed() * policy_data.target_fps < Duration::from_secs(3) {
-                    Event::None
-                } else {
-                    buffer.last_limit = Some(Instant::now());
-                    Event::Limit
-                }
-            } else {
-                buffer.last_limit = Some(Instant::now());
-                Event::Limit
-            }
+            Event::Limit
         } else {
             Event::None
         };
