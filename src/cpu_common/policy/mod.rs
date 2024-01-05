@@ -120,7 +120,7 @@ impl Policy {
         let path = self.path.join("scaling_governor");
 
         if !self.little {
-            let cur_gov = fs::read_to_string(&path)?;
+            let cur_gov = fs::read_to_string(path)?;
             if cur_gov.trim() != "performance" {
                 self.gov_snapshot.replace(Some(cur_gov));
             }

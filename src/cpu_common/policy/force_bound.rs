@@ -41,7 +41,7 @@ impl Bounder {
     }
 
     pub fn force_freq(&self, num: u8, l: Freq, r: Freq) -> Result<()> {
-        let message = format!("{} {l} {r}", num);
+        let message = format!("{num} {l} {r}");
         fs::write(&self.freq_debug, message)?;
         Ok(())
     }

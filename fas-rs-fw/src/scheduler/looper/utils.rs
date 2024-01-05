@@ -61,7 +61,7 @@ impl<P: PerformanceController> Looper<P> {
         let frametime = d.frametime;
         let target_fps = d.target_fps.clone();
 
-        for (process, buffer) in self.buffers.iter_mut() {
+        for (process, buffer) in &mut self.buffers {
             if *process != producer {
                 buffer.frame_prepare(); // 其它buffer计算额外超时时间
             }
