@@ -63,7 +63,7 @@ impl Policy {
         let num = path
             .file_name()
             .and_then_likely(OsStr::to_str)
-            .and_then_likely(|p| p.trim().parse().ok())
+            .and_then_likely(|p| p.replace("policy", "").trim().parse().ok())
             .ok_or(Error::Other("Failed to parse cpufreq policy num"))?;
 
         let force_bound = Bounder::new();
