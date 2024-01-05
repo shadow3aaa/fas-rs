@@ -11,20 +11,23 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+mod force_bound;
+mod utils;
+
 use std::{
     cell::RefCell,
     cmp::Ordering,
     ffi::OsStr,
     fs,
-    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
 
-use anyhow::{Ok, Result};
+use anyhow::Result;
 use likely_stable::LikelyOption;
 
 use super::Freq;
 use crate::error::Error;
+use force_bound::Bounder;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Policy {
@@ -33,7 +36,7 @@ pub struct Policy {
     pub path: PathBuf,
     pub freqs: Vec<Freq>,
     gov_snapshot: RefCell<Option<String>>,
-    force_bound: Option<PathBuf>,
+    force_bound: Option<Bounder>,
 }
 
 impl Ord for Policy {
@@ -50,27 +53,25 @@ impl PartialOrd for Policy {
 
 impl Policy {
     pub fn new<P: AsRef<Path>>(p: P) -> Result<Self> {
-        let p = p.as_ref();
+        let path = p.as_ref();
 
-        let mut freqs: Vec<Freq> = fs::read_to_string(p.join("scaling_available_frequencies"))?
+        let mut freqs: Vec<Freq> = fs::read_to_string(path.join("scaling_available_frequencies"))?
             .split_whitespace()
             .map(|s| s.parse().unwrap())
             .collect();
-
         freqs.sort_unstable();
+        let num = path
+            .file_name()
+            .and_then_likely(OsStr::to_str)
+            .and_then_likely(|p| p.trim().parse().ok())
+            .ok_or(Error::Other("Failed to parse cpufreq policy num"))?;
 
-        let bound_path = Path::new("/proc/cpudvfs/cpufreq_debug");
-        let force_bound = if bound_path.exists() {
-            Some(bound_path.to_path_buf())
-        } else {
-            None
-        };
+        let force_bound = Bounder::new();
 
         Ok(Self {
             little: false,
-            num: Self::parse_policy(p.file_name().and_then_likely(OsStr::to_str).unwrap())
-                .ok_or(Error::Other("Failed to parse cpufreq policy num"))?,
-            path: p.to_path_buf(),
+            num,
+            path: path.to_path_buf(),
             freqs,
             gov_snapshot: RefCell::new(None),
             force_bound,
@@ -78,16 +79,16 @@ impl Policy {
     }
 
     pub fn init_default(&self) -> Result<()> {
-        if let Some(ref p) = self.force_bound {
-            self.force_freq_bound(
+        if let Some(ref bounder) = self.force_bound {
+            bounder.force_freq(
+                self.num,
                 self.freqs.first().copied().unwrap(),
                 self.freqs.last().copied().unwrap(),
-                p,
             )?;
         }
 
-        self.set_min_freq(self.freqs[0])?;
-        self.set_max_freq(self.freqs.last().copied().unwrap())?;
+        self.unlock_min_freq(self.freqs[0])?;
+        self.unlock_max_freq(self.freqs.last().copied().unwrap())?;
         self.reset_gov()
     }
 
@@ -97,23 +98,19 @@ impl Policy {
     }
 
     pub fn set_fas_freq(&self, f: Freq) -> Result<()> {
-        self.set_max_freq(f)?;
+        self.lock_max_freq(f)?;
+        self.lock_min_freq(self.freqs[0])?;
 
-        self.set_min_freq(self.freqs[0])?;
-        if let Some(ref p) = self.force_bound {
-            self.force_freq_bound(self.freqs[0], f, p)?;
+        if let Some(ref bounder) = self.force_bound {
+            bounder.force_freq(self.num, self.freqs[0], f)?;
         }
 
         Ok(())
     }
 
     pub fn reset_gov(&self) -> Result<()> {
-        let path = self.path.join("scaling_governor");
-
-        if let Some(ref gov) = *self.gov_snapshot.borrow() {
-            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
-            fs::write(&path, gov)?;
-            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
+        if let Some(ref governor) = *self.gov_snapshot.borrow() {
+            self.unlock_governor(governor)?;
         }
 
         Ok(())
@@ -128,36 +125,9 @@ impl Policy {
                 self.gov_snapshot.replace(Some(cur_gov));
             }
 
-            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
-            fs::write(&path, "performance")?;
-            let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o444));
+            self.lock_governor("performance")?;
         }
 
         Ok(())
-    }
-
-    fn set_max_freq(&self, f: Freq) -> Result<()> {
-        let path = self.path.join("scaling_max_freq");
-        let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
-        fs::write(path, f.to_string())?;
-        Ok(())
-    }
-
-    fn set_min_freq(&self, f: Freq) -> Result<()> {
-        let path = self.path.join("scaling_min_freq");
-        let _ = fs::set_permissions(&path, PermissionsExt::from_mode(0o644));
-        fs::write(path, f.to_string())?;
-        Ok(())
-    }
-
-    fn force_freq_bound<P: AsRef<Path>>(&self, l: Freq, r: Freq, p: P) -> Result<()> {
-        let message = format!("{} {l} {r}", self.num);
-        fs::write(p, message)?;
-        Ok(())
-    }
-
-    pub fn parse_policy<S: AsRef<str>>(p: S) -> Option<u8> {
-        let p = p.as_ref();
-        p.replace("policy", "").trim().parse().ok()
     }
 }

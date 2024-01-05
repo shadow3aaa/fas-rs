@@ -73,7 +73,7 @@ impl<P: PerformanceController> Looper<P> {
                 .values()
                 .filter(|b| b.last_update.elapsed() < Duration::from_secs(1))
                 .filter_map(|b| b.target_fps)
-                .max();
+                .max(); // 只处理目标fps最大的buffer
 
             let Some(message) = self.recv_message(mode, target_fps)? else {
                 continue;
@@ -111,7 +111,7 @@ impl<P: PerformanceController> Looper<P> {
                 self.retain_topapp(mode)?;
 
                 if self.started {
-                    self.controller.release_max(mode, &self.config)?;
+                    self.controller.release_max(mode, &self.config)?; // 超时10帧时拉满频率以加快游戏加载
                 }
 
                 Ok(None)

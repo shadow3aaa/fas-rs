@@ -61,8 +61,10 @@ impl<P: PerformanceController> Looper<P> {
         let frametime = d.frametime;
         let target_fps = d.target_fps.clone();
 
-        for (_, buffer) in self.buffers.iter_mut().filter(|(k, _)| **k != producer) {
-            buffer.frame_prepare();
+        for (process, buffer) in self.buffers.iter_mut() {
+            if *process != producer {
+                buffer.frame_prepare(); // 其它buffer计算额外超时时间
+            }
         }
 
         match self.buffers.entry(producer) {
@@ -70,7 +72,7 @@ impl<P: PerformanceController> Looper<P> {
                 o.get_mut().push_frametime(frametime);
             }
             Entry::Vacant(v) => {
-                info!("Loaded fas on game: [{}] pid: [{}]", d.pkg, d.pid);
+                info!("New fas buffer on game: [{}] pid: [{}]", d.pkg, d.pid);
 
                 let mut buffer = Buffer::new(target_fps);
                 buffer.push_frametime(frametime);
