@@ -19,7 +19,7 @@ mod window;
 use std::{
     collections::HashMap,
     sync::mpsc::{Receiver, RecvTimeoutError},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use super::{topapp::TimedWatcher, BinderMessage, FasData};
@@ -44,6 +44,9 @@ pub struct Looper<P: PerformanceController> {
     topapp_checker: TimedWatcher,
     buffers: Buffers,
     started: bool,
+    last_jank: Instant,
+    last_limit: Instant,
+    last_release: Instant,
 }
 
 impl<P: PerformanceController> Looper<P> {
@@ -56,6 +59,9 @@ impl<P: PerformanceController> Looper<P> {
             topapp_checker: TimedWatcher::new(),
             buffers: Buffers::new(),
             started: false,
+            last_jank: Instant::now(),
+            last_limit: Instant::now(),
+            last_release: Instant::now(),
         }
     }
 
@@ -82,9 +88,8 @@ impl<P: PerformanceController> Looper<P> {
             };
 
             self.consume_data(mode, &data)?;
-
             if self.started {
-                self.do_policy(mode, target_fps)?;
+                self.do_policy(mode, &data, target_fps)?;
             }
         }
     }
@@ -119,26 +124,59 @@ impl<P: PerformanceController> Looper<P> {
         self.retain_topapp(mode)
     }
 
-    fn do_policy(&mut self, mode: Mode, target_fps: Option<u32>) -> Result<()> {
-        let mut event = Event::None;
-        for buffer in self
+    fn do_policy(&mut self, mode: Mode, data: &FasData, target_fps: Option<u32>) -> Result<()> {
+        let producer = (data.buffer, data.pid);
+
+        let Some(target_fps) = target_fps else {
+            return Ok(());
+        };
+
+        let event = {
+            let Some(buffer) = self.buffers.get_mut(&producer) else {
+                return Ok(());
+            };
+
+            if buffer.target_fps != Some(target_fps) {
+                return Ok(());
+            }
+
+            Self::get_event(mode, buffer)
+        };
+
+        if let Some(max_event) = self
             .buffers
             .values_mut()
-            .filter(|b| b.last_update.elapsed() < Duration::from_secs(1))
-            .filter(|b| target_fps.is_none() || b.target_fps == target_fps)
+            .map(|buffer| Self::get_event(mode, buffer))
+            .max()
         {
-            let current_event = Self::get_event(mode, buffer);
-            event = event.max(current_event);
+            if event < max_event {
+                return Ok(());
+            }
         }
 
         match event {
-            Event::ReleaseMax => {
+            Event::BigJank => {
                 self.controller.release_max(mode, &self.config)?;
+                self.last_limit = Instant::now();
+            }
+            Event::Jank => {
+                if self.last_jank.elapsed() * target_fps > Duration::from_secs(30) {
+                    self.last_jank = Instant::now();
+                    self.controller.release(mode, &self.config)?;
+                }
             }
             Event::Release => {
-                self.controller.release(mode, &self.config)?;
+                if self.last_release.elapsed() * target_fps > Duration::from_secs(1) {
+                    self.last_release = Instant::now();
+                    self.controller.release(mode, &self.config)?;
+                }
             }
-            Event::Limit => self.controller.limit(mode, &self.config)?,
+            Event::Restrictable => {
+                if self.last_limit.elapsed() * target_fps > Duration::from_secs(1) {
+                    self.last_limit = Instant::now();
+                    self.controller.limit(mode, &self.config)?;
+                }
+            }
             Event::None => (),
         }
 

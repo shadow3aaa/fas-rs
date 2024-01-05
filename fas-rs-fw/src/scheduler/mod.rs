@@ -43,7 +43,6 @@ pub struct FasData {
     pub cpu: i32,
 }
 
-/// 调度器
 pub struct Scheduler<P: PerformanceController> {
     controller: Option<P>,
     config: Option<Config>,

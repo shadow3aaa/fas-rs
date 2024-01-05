@@ -25,15 +25,15 @@ use crate::config::TargetFps;
 #[derive(Debug)]
 pub struct Buffer {
     pub target_fps: Option<u32>,
-    pub current_fps: Option<f64>,
-    target_fps_config: TargetFps,
-    pub last_update: Instant,
+    pub current_fps: f64,
     pub frametimes: VecDeque<Duration>,
+    pub frame_prepare: Duration,
     pub deviation: f64,
     pub windows: HashMap<u32, FrameWindow>,
-    pub last_jank: Option<Instant>,
+    pub last_update: Instant,
     pub acc_frame: f64,
     pub acc_timer: Instant,
+    target_fps_config: TargetFps,
     timer: Instant,
 }
 
@@ -41,27 +41,27 @@ impl Buffer {
     pub fn new(t: TargetFps) -> Self {
         Self {
             target_fps: None,
-            current_fps: None,
-            target_fps_config: t,
-            last_update: Instant::now(),
+            current_fps: 0.0,
             frametimes: VecDeque::new(),
+            frame_prepare: Duration::ZERO,
             deviation: 0.0,
             windows: HashMap::new(),
-            last_jank: None,
+            last_update: Instant::now(),
             acc_frame: 0.0,
             acc_timer: Instant::now(),
             timer: Instant::now(),
+            target_fps_config: t,
         }
     }
 
     pub fn push_frametime(&mut self, d: Duration) {
         self.last_update = Instant::now();
+        self.frame_prepare = Duration::ZERO;
 
         self.frametimes.push_front(d);
         self.frametimes
             .truncate(self.target_fps.unwrap_or(60) as usize * 3);
         self.calculate_current_fps();
-        self.calculate_deviation();
 
         if let Some(fps) = self.target_fps {
             self.windows
@@ -76,48 +76,46 @@ impl Buffer {
         }
     }
 
+    pub fn frame_prepare(&mut self) {
+        self.frame_prepare = self.last_update.elapsed();
+        self.calculate_current_fps();
+        self.calculate_target_fps();
+    }
+
     fn calculate_current_fps(&mut self) {
-        let avg_time: Duration =
-            self.frametimes.iter().sum::<Duration>() / self.frametimes.len().try_into().unwrap();
+        let avg_time: Duration = self
+            .frametimes
+            .iter()
+            .sum::<Duration>()
+            .saturating_add(self.frame_prepare)
+            / self.frametimes.len().try_into().unwrap();
         #[cfg(debug_assertions)]
         debug!("avg_time: {avg_time:?}");
 
         let current_fps = 1.0 / avg_time.as_secs_f64();
-        self.current_fps = Some(current_fps);
+        self.current_fps = current_fps;
         #[cfg(debug_assertions)]
         debug!("current_fps: {:.2}", current_fps);
     }
 
     fn calculate_target_fps(&mut self) {
-        let Some(current_fps) = self.current_fps else {
-            self.target_fps = None;
-            return;
-        };
-
         let target_fpses = match &self.target_fps_config {
-            TargetFps::Value(t) => {
-                self.target_fps = Some(*t);
-                return;
-            }
-            TargetFps::Array(arr) => {
-                if arr.len() == 1 {
-                    self.target_fps = arr.first().copied();
-                    return;
-                }
-
-                arr
-            }
+            TargetFps::Value(t) => vec![*t],
+            TargetFps::Array(arr) => arr.clone(),
         };
 
-        if current_fps < (target_fpses[0].saturating_sub(10).max(10)).into() {
+        if self.current_fps < (target_fpses[0].saturating_sub(10).max(10)).into() {
             self.target_fps = None;
             return;
         }
 
         for target_fps in target_fpses.iter().copied() {
-            if current_fps <= f64::from(target_fps) + 3.0 {
+            if self.current_fps <= f64::from(target_fps) + 3.0 {
                 #[cfg(debug_assertions)]
-                debug!("Matched target_fps: current: {current_fps:.2} target_fps: {target_fps}");
+                debug!(
+                    "Matched target_fps: current: {:.2} target_fps: {target_fps}",
+                    self.current_fps
+                );
 
                 self.target_fps = Some(target_fps);
                 return;
@@ -127,7 +125,7 @@ impl Buffer {
         self.target_fps = target_fpses.last().copied();
     }
 
-    fn calculate_deviation(&mut self) {
+    pub fn calculate_deviation(&mut self) {
         if self.frametimes.is_empty() {
             return;
         }

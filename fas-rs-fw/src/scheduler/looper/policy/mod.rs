@@ -14,7 +14,7 @@
 pub mod config;
 mod extract;
 
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 #[cfg(debug_assertions)]
 use log::debug;
@@ -28,9 +28,10 @@ use extract::PolicyData;
 #[derive(Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
 pub enum Event {
     None,
-    Limit,
+    Restrictable,
     Release,
-    ReleaseMax,
+    Jank,
+    BigJank,
 }
 
 impl<P: PerformanceController> Looper<P> {
@@ -47,7 +48,7 @@ impl<P: PerformanceController> Looper<P> {
         }
 
         let result = Self::frame_analyze(buffer, config, policy_data);
-        if let Some(event) = Self::jank_analyze(buffer, policy_data) {
+        if let Some(event) = Self::jank_analyze(policy_data) {
             return event;
         }
 
@@ -68,40 +69,31 @@ impl<P: PerformanceController> Looper<P> {
             debug!("JANK: unit jank");
 
             Event::Release
-        } else if buffer.acc_frame <= scale {
+        } else {
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
 
-            Event::Limit
-        } else {
-            Event::None
+            Event::Restrictable
         };
 
         buffer.acc_frame = 0.0;
         buffer.acc_timer = Instant::now();
+        buffer.calculate_deviation();
 
         result
     }
 
-    fn jank_analyze(buffer: &mut Buffer, policy_data: PolicyData) -> Option<Event> {
+    fn jank_analyze(policy_data: PolicyData) -> Option<Event> {
         if policy_data.normalized_frame > policy_data.normalized_big_jank_scale {
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
 
-            Some(Event::ReleaseMax)
+            Some(Event::BigJank)
         } else if policy_data.normalized_frame > policy_data.normalized_jank_scale {
-            if let Some(stamp) = buffer.last_jank {
-                if stamp.elapsed() * policy_data.target_fps < Duration::from_secs(30) {
-                    return Some(Event::None);
-                }
-            }
-
-            buffer.last_jank = Some(Instant::now());
-
             #[cfg(debug_assertions)]
             debug!("JANK: simp jank");
 
-            Some(Event::Release)
+            Some(Event::Jank)
         } else {
             None
         }

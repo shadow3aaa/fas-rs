@@ -32,14 +32,6 @@ impl FrameWindow {
         self.frametimes.truncate(self.len);
     }
 
-    pub fn last(&self) -> Option<Duration> {
-        if self.frametimes.len() < self.len {
-            None
-        } else {
-            self.frametimes.front().copied()
-        }
-    }
-
     pub fn avg_normalized(&self, target_fps: f64) -> Option<Duration> {
         if self.frametimes.len() < self.len {
             None

@@ -57,11 +57,15 @@ impl<P: PerformanceController> Looper<P> {
             panic!("Target fps must be bigger than zero");
         }
 
-        let process = (d.buffer, d.pid);
+        let producer = (d.buffer, d.pid);
         let frametime = d.frametime;
         let target_fps = d.target_fps.clone();
 
-        match self.buffers.entry(process) {
+        for (_, buffer) in self.buffers.iter_mut().filter(|(k, _)| **k != producer) {
+            buffer.frame_prepare();
+        }
+
+        match self.buffers.entry(producer) {
             Entry::Occupied(mut o) => {
                 o.get_mut().push_frametime(frametime);
             }
