@@ -40,15 +40,13 @@ pub struct Looper<P: PerformanceController> {
     rx: Receiver<BinderMessage>,
     config: Config,
     node: Node,
+    mode: Mode,
     controller: P,
     topapp_checker: TimedWatcher,
     buffers: Buffers,
     start: bool,
     start_delayed: bool,
     delay_timer: Instant,
-    last_jank: Instant,
-    last_limit: Instant,
-    last_release: Instant,
 }
 
 impl<P: PerformanceController> Looper<P> {
@@ -57,21 +55,19 @@ impl<P: PerformanceController> Looper<P> {
             rx,
             config,
             node,
+            mode: Mode::Balance,
             controller,
             topapp_checker: TimedWatcher::new(),
             buffers: Buffers::new(),
             start: false,
             start_delayed: false,
             delay_timer: Instant::now(),
-            last_jank: Instant::now(),
-            last_limit: Instant::now(),
-            last_release: Instant::now(),
         }
     }
 
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
-            let mode = self.node.get_mode()?;
+            self.mode = self.node.get_mode()?;
             let target_fps = self
                 .buffers
                 .values()
@@ -79,7 +75,7 @@ impl<P: PerformanceController> Looper<P> {
                 .filter_map(|b| b.target_fps)
                 .max(); // 只处理目标fps最大的buffer
 
-            let Some(message) = self.recv_message(mode, target_fps)? else {
+            let Some(message) = self.recv_message(target_fps)? else {
                 continue;
             };
 
@@ -91,18 +87,14 @@ impl<P: PerformanceController> Looper<P> {
                 }
             };
 
-            self.consume_data(mode, &data)?;
+            self.consume_data(&data)?;
             if self.start_delayed {
-                self.do_policy(mode, target_fps)?;
+                self.do_policy(target_fps)?;
             }
         }
     }
 
-    fn recv_message(
-        &mut self,
-        mode: Mode,
-        target_fps: Option<u32>,
-    ) -> Result<Option<BinderMessage>> {
+    fn recv_message(&mut self, target_fps: Option<u32>) -> Result<Option<BinderMessage>> {
         let timeout = target_fps.map_or(Duration::from_secs(1), |t| Duration::from_secs(10) / t);
 
         match self.rx.recv_timeout(timeout) {
@@ -112,10 +104,10 @@ impl<P: PerformanceController> Looper<P> {
                     return Err(Error::Other("Binder Server Disconnected"));
                 }
 
-                self.retain_topapp(mode)?;
+                self.retain_topapp()?;
 
                 if self.start_delayed {
-                    self.controller.release_max(mode, &self.config)?; // 超时10帧时拉满频率以加快游戏加载
+                    self.disable_fas()?;
                     self.buffers.values_mut().for_each(Buffer::frame_prepare);
                 }
 
@@ -124,51 +116,32 @@ impl<P: PerformanceController> Looper<P> {
         }
     }
 
-    fn consume_data(&mut self, mode: Mode, data: &FasData) -> Result<()> {
+    fn consume_data(&mut self, data: &FasData) -> Result<()> {
         self.buffer_update(data);
-        self.retain_topapp(mode)
+        self.retain_topapp()
     }
 
-    fn do_policy(&mut self, mode: Mode, target_fps: Option<u32>) -> Result<()> {
-        let event = self
+    fn do_policy(&mut self, target_fps: Option<u32>) -> Result<()> {
+        let Some(event) = self
             .buffers
             .values_mut()
-            .filter(|buffer| buffer.target_fps == target_fps)
-            .map(|buffer| Self::get_event(mode, buffer))
+            .filter(|buffer| buffer.target_fps == target_fps && !buffer.done_policy)
+            .map(|buffer| buffer.event(self.mode))
             .max()
-            .unwrap_or(Event::None);
+        else {
+            self.disable_fas()?;
+            return Ok(());
+        };
 
-        let Some(target_fps) = target_fps else {
+        let Some(_target_fps) = target_fps else {
             return Ok(());
         };
 
         match event {
-            Event::BigJank => {
-                self.controller.release_max(mode, &self.config)?;
-                self.last_limit = Instant::now();
-            }
-            Event::Jank => {
-                if self.last_jank.elapsed() * target_fps > Duration::from_secs(30) {
-                    self.last_jank = Instant::now();
-                    self.controller.release(mode, &self.config)?;
-                }
-            }
-            Event::Release => {
-                if self.last_release.elapsed() * target_fps > Duration::from_secs(1) {
-                    self.last_release = Instant::now();
-                    self.controller.release(mode, &self.config)?;
-                }
-
-                self.controller.release(mode, &self.config)?;
-            }
-            Event::Restrictable => {
-                if self.last_limit.elapsed() * target_fps > Duration::from_secs(1) {
-                    self.last_limit = Instant::now();
-                    self.controller.limit(mode, &self.config)?;
-                }
-
-                self.controller.limit(mode, &self.config)?;
-            }
+            Event::BigJank => self.controller.release_max(self.mode, &self.config)?,
+            Event::Jank => self.controller.release(self.mode, &self.config)?,
+            Event::Release => self.controller.release(self.mode, &self.config)?,
+            Event::Restrictable => self.controller.limit(self.mode, &self.config)?,
             Event::None => (),
         }
 

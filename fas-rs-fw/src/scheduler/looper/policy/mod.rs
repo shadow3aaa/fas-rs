@@ -19,8 +19,8 @@ use std::time::Instant;
 #[cfg(debug_assertions)]
 use log::debug;
 
-use super::{Buffer, Looper};
-use crate::{Mode, PerformanceController};
+use super::Buffer;
+use crate::Mode;
 
 use config::PolicyConfig;
 use extract::PolicyData;
@@ -34,12 +34,14 @@ pub enum Event {
     BigJank,
 }
 
-impl<P: PerformanceController> Looper<P> {
-    pub fn get_event(mode: Mode, buffer: &mut Buffer) -> Event {
-        let config = PolicyConfig::new(mode, buffer);
-        let Some(policy_data) = PolicyData::extract(buffer) else {
+impl Buffer {
+    pub fn event(&mut self, mode: Mode) -> Event {
+        let config = PolicyConfig::new(mode, self);
+        let Some(policy_data) = PolicyData::extract(self) else {
             return Event::None;
         };
+
+        self.done_policy = true;
 
         #[cfg(debug_assertions)]
         {
@@ -47,7 +49,7 @@ impl<P: PerformanceController> Looper<P> {
             debug!("policy data: {policy_data:?}");
         }
 
-        let result = Self::frame_analyze(buffer, config, policy_data);
+        let result = self.frame_analyze(config, policy_data);
         if let Some(event) = Self::jank_analyze(policy_data) {
             return event;
         }
@@ -55,22 +57,20 @@ impl<P: PerformanceController> Looper<P> {
         result
     }
 
-    fn frame_analyze(buffer: &mut Buffer, config: PolicyConfig, policy_data: PolicyData) -> Event {
+    fn frame_analyze(&mut self, config: PolicyConfig, policy_data: PolicyData) -> Event {
         let diff = policy_data.normalized_avg_frame.as_secs_f64() - 1.0;
-        buffer.acc_frame += diff;
+        self.acc_frame += diff;
 
-        if buffer.acc_timer.elapsed() * policy_data.target_fps < config.acc_dur {
+        if self.acc_timer.elapsed() * policy_data.target_fps < config.acc_dur {
             return Event::None;
         }
 
         let scale = config.scale.as_secs_f64();
-        let result = if buffer.acc_frame >= scale {
+        let result = if self.acc_frame >= scale {
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
 
             Event::Release
-        } else if buffer.acc_frame >= scale / 2.0 {
-            Event::None
         } else {
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
@@ -78,9 +78,9 @@ impl<P: PerformanceController> Looper<P> {
             Event::Restrictable
         };
 
-        buffer.acc_frame = 0.0;
-        buffer.acc_timer = Instant::now();
-        buffer.calculate_deviation();
+        self.acc_frame = 0.0;
+        self.acc_timer = Instant::now();
+        self.calculate_deviation();
 
         result
     }

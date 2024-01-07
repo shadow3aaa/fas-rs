@@ -19,25 +19,25 @@ use std::{
 use log::info;
 
 use super::{super::FasData, Buffer, Looper};
-use crate::{config::TargetFps, error::Result, node::Mode, PerformanceController};
+use crate::{config::TargetFps, error::Result, PerformanceController};
 
 impl<P: PerformanceController> Looper<P> {
-    pub fn retain_topapp(&mut self, mode: Mode) -> Result<()> {
+    pub fn retain_topapp(&mut self) -> Result<()> {
         self.buffers
             .retain(|(_, p), _| self.topapp_checker.is_topapp(*p));
 
         if self.buffers.is_empty() {
-            self.disable_fas(mode)?;
+            self.disable_fas()?;
         } else {
-            self.enable_fas(mode)?;
+            self.enable_fas()?;
         }
 
         Ok(())
     }
 
-    pub fn disable_fas(&mut self, mode: Mode) -> Result<()> {
+    pub fn disable_fas(&mut self) -> Result<()> {
         if self.start {
-            self.controller.init_default(mode, &self.config)?;
+            self.controller.init_default(self.mode, &self.config)?;
             self.start = false;
             self.start_delayed = false;
         }
@@ -45,7 +45,7 @@ impl<P: PerformanceController> Looper<P> {
         Ok(())
     }
 
-    pub fn enable_fas(&mut self, mode: Mode) -> Result<()> {
+    pub fn enable_fas(&mut self) -> Result<()> {
         if !self.start {
             self.delay_timer = Instant::now();
             self.start = true;
@@ -54,7 +54,7 @@ impl<P: PerformanceController> Looper<P> {
 
         // 延迟10秒启动fas
         if !self.start_delayed && self.delay_timer.elapsed() > Duration::from_secs(10) {
-            self.controller.init_game(mode, &self.config)?;
+            self.controller.init_game(self.mode, &self.config)?;
             self.start_delayed = true;
         }
 

@@ -33,6 +33,7 @@ pub struct Buffer {
     pub last_update: Instant,
     pub acc_frame: f64,
     pub acc_timer: Instant,
+    pub done_policy: bool,
     target_fps_config: TargetFps,
     timer: Instant,
 }
@@ -49,6 +50,7 @@ impl Buffer {
             last_update: Instant::now(),
             acc_frame: 0.0,
             acc_timer: Instant::now(),
+            done_policy: false,
             timer: Instant::now(),
             target_fps_config: t,
         }
@@ -57,10 +59,11 @@ impl Buffer {
     pub fn push_frametime(&mut self, d: Duration) {
         self.last_update = Instant::now();
         self.frame_prepare = Duration::ZERO;
+        self.done_policy = false;
 
         self.frametimes.push_front(d);
         self.frametimes
-            .truncate(self.target_fps.unwrap_or(60) as usize);
+            .truncate(self.target_fps.unwrap_or(60) as usize * 10);
         self.calculate_current_fps();
 
         if let Some(fps) = self.target_fps {
