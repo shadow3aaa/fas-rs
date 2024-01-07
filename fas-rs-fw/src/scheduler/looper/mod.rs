@@ -89,7 +89,7 @@ impl<P: PerformanceController> Looper<P> {
 
             self.consume_data(mode, &data)?;
             if self.started {
-                self.do_policy(mode, &data, target_fps)?;
+                self.do_policy(mode, target_fps)?;
             }
         }
     }
@@ -112,6 +112,7 @@ impl<P: PerformanceController> Looper<P> {
 
                 if self.started {
                     self.controller.release_max(mode, &self.config)?; // 超时10帧时拉满频率以加快游戏加载
+                    self.buffers.values_mut().for_each(Buffer::frame_prepare);
                 }
 
                 Ok(None)
@@ -124,35 +125,18 @@ impl<P: PerformanceController> Looper<P> {
         self.retain_topapp(mode)
     }
 
-    fn do_policy(&mut self, mode: Mode, data: &FasData, target_fps: Option<u32>) -> Result<()> {
-        let producer = (data.buffer, data.pid);
+    fn do_policy(&mut self, mode: Mode, target_fps: Option<u32>) -> Result<()> {
+        let event = self
+            .buffers
+            .values_mut()
+            .filter(|buffer| buffer.target_fps == target_fps)
+            .map(|buffer| Self::get_event(mode, buffer))
+            .max()
+            .unwrap_or(Event::None);
 
         let Some(target_fps) = target_fps else {
             return Ok(());
         };
-
-        let event = {
-            let Some(buffer) = self.buffers.get_mut(&producer) else {
-                return Ok(());
-            };
-
-            if buffer.target_fps != Some(target_fps) {
-                return Ok(());
-            }
-
-            Self::get_event(mode, buffer)
-        };
-
-        if let Some(max_event) = self
-            .buffers
-            .values_mut()
-            .map(|buffer| Self::get_event(mode, buffer))
-            .max()
-        {
-            if event < max_event {
-                return Ok(());
-            }
-        }
 
         match event {
             Event::BigJank => {
@@ -170,12 +154,16 @@ impl<P: PerformanceController> Looper<P> {
                     self.last_release = Instant::now();
                     self.controller.release(mode, &self.config)?;
                 }
+
+                self.controller.release(mode, &self.config)?;
             }
             Event::Restrictable => {
                 if self.last_limit.elapsed() * target_fps > Duration::from_secs(1) {
                     self.last_limit = Instant::now();
                     self.controller.limit(mode, &self.config)?;
                 }
+
+                self.controller.limit(mode, &self.config)?;
             }
             Event::None => (),
         }

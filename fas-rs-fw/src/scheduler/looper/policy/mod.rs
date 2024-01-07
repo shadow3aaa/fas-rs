@@ -27,8 +27,8 @@ use extract::PolicyData;
 
 #[derive(Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
 pub enum Event {
-    None,
     Restrictable,
+    None,
     Release,
     Jank,
     BigJank,
@@ -69,6 +69,8 @@ impl<P: PerformanceController> Looper<P> {
             debug!("JANK: unit jank");
 
             Event::Release
+        } else if buffer.acc_frame >= scale / 2.0 {
+            Event::None
         } else {
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");

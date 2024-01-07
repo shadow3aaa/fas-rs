@@ -27,13 +27,10 @@ pub struct PolicyData {
 impl PolicyData {
     pub fn extract(buffer: &Buffer) -> Option<Self> {
         let target_fps = buffer.target_fps?;
-        let current_fps = buffer.current_fps;
         let window = buffer.windows.get(&target_fps)?;
 
-        let target_fps_fixed =
-            current_fps.clamp(f64::from(target_fps), f64::from(target_fps) + 3.0);
-
-        let normalized_avg_frame = window.avg_normalized(target_fps_fixed)?;
+        let window_fps = window.fps().max(f64::from(target_fps));
+        let normalized_avg_frame = window.avg_normalized(window_fps)?;
         let last_frame = buffer.frametimes.front().copied()?;
         let normalized_frame = last_frame * target_fps;
 

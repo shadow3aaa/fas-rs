@@ -60,7 +60,7 @@ impl Buffer {
 
         self.frametimes.push_front(d);
         self.frametimes
-            .truncate(self.target_fps.unwrap_or(60) as usize * 3);
+            .truncate(self.target_fps.unwrap_or(60) as usize);
         self.calculate_current_fps();
 
         if let Some(fps) = self.target_fps {
@@ -131,6 +131,10 @@ impl Buffer {
         }
 
         if let Some(target_fps) = self.target_fps {
+            if self.current_fps < f64::from(target_fps) - 0.7 {
+                return;
+            }
+
             let standard_deviation: f64 = {
                 let total: f64 = self
                     .frametimes
