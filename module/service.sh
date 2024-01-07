@@ -18,10 +18,8 @@ DIR=/data/media/0/Android/fas-rs
 MERGE_FLAG=$DIR/.need_merge
 LOG=$DIR/fas_log.txt
 
-# update vtools support
 sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
 
-# wait until the sdcard is decrypted
 until [ -d $DIR ]; do
 	sleep 1
 done
@@ -39,13 +37,11 @@ if [ -f $MODDIR/zygisk/unloaded ]; then
 	exit 1
 fi
 
-# update config
 if [ -f $MERGE_FLAG ]; then
-	$MODDIR/fas-rs --merge --std-profile $MODDIR/games.toml >$DIR/.update_games.toml
+	$MODDIR/fas-rs merge $MODDIR/games.toml >$DIR/.update_games.toml
 	rm $MERGE_FLAG
 	mv $DIR/.update_games.toml $DIR/games.toml
 fi
 
-# start with user profile
 killall fas-rs
-nohup env FAS_LOG=info $MODDIR/fas-rs --run --std-profile $MODDIR/games.toml >$LOG 2>&1 &
+nohup $MODDIR/fas-rs run $MODDIR/games.toml >$LOG 2>&1 &
