@@ -30,6 +30,7 @@ flexi_logger = "0.27.3"
 path = "fas-rs-fw"
 
 [build-dependencies]
+anyhow = "1.0.79"
 toml = "0.8.8"
 serde = "1.0.193"
 serde_derive = "1.0.193"
