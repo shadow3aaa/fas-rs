@@ -47,6 +47,7 @@ pub struct Looper<P: PerformanceController> {
     start: bool,
     start_delayed: bool,
     delay_timer: Instant,
+    last_limit: Instant,
 }
 
 impl<P: PerformanceController> Looper<P> {
@@ -62,6 +63,7 @@ impl<P: PerformanceController> Looper<P> {
             start: false,
             start_delayed: false,
             delay_timer: Instant::now(),
+            last_limit: Instant::now(),
         }
     }
 
@@ -133,15 +135,26 @@ impl<P: PerformanceController> Looper<P> {
             return Ok(());
         };
 
-        let Some(_target_fps) = target_fps else {
+        let Some(target_fps) = target_fps else {
             return Ok(());
         };
 
         match event {
-            Event::BigJank => self.controller.release_max(self.mode, &self.config)?,
-            Event::Jank => self.controller.release(self.mode, &self.config)?,
+            Event::BigJank => {
+                self.controller.release_max(self.mode, &self.config)?;
+                self.last_limit = Instant::now();
+            }
+            Event::Jank => {
+                self.controller.release(self.mode, &self.config)?;
+                self.last_limit = Instant::now();
+            }
             Event::Release => self.controller.release(self.mode, &self.config)?,
-            Event::Restrictable => self.controller.limit(self.mode, &self.config)?,
+            Event::Restrictable => {
+                if self.last_limit.elapsed() * target_fps > Duration::from_secs(1) {
+                    self.last_limit = Instant::now();
+                    self.controller.limit(self.mode, &self.config)?;
+                }
+            }
             Event::None => (),
         }
 
