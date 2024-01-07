@@ -23,12 +23,12 @@ mod cpu_common;
 mod error;
 mod misc;
 
-use std::{fs, process, thread};
+use std::{env, fs, process, thread};
 
 use fas_rs_fw::prelude::*;
 
 use anyhow::Result;
-use clap::Parser;
+use flexi_logger::{LogSpecification, Logger};
 use log::{error, info, warn};
 
 #[cfg(debug_assertions)]
@@ -38,33 +38,19 @@ use cpu_common::CpuCommon;
 
 const USER_CONFIG: &str = "/data/media/0/Android/fas-rs/games.toml";
 
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    #[arg(short, long)]
-    std_profile: String,
-    #[arg(short, long)]
-    run: bool,
-    #[arg(short, long)]
-    merge: bool,
-}
-
 fn main() -> Result<()> {
-    let args = Args::parse();
-    let std_path = args.std_profile;
+    let args: Vec<_> = env::args().collect();
 
-    if args.merge {
+    if args[1] == "merge" {
         let local = fs::read_to_string(USER_CONFIG)?;
-        let std = fs::read_to_string(&std_path)?;
+        let std = fs::read_to_string(&args[2])?;
 
         let new = Config::merge(&local, &std).unwrap_or(std);
-        print!("{new}");
+        println!("{new}");
 
         return Ok(());
-    }
-
-    if args.run {
-        run(std_path).unwrap_or_else(|e| error!("{e:?}"));
+    } else if args[1] == "run" {
+        run(&args[2]).unwrap_or_else(|e| error!("{e:?}"));
         panic!("An unrecoverable error occurred!");
     }
 
@@ -72,9 +58,15 @@ fn main() -> Result<()> {
 }
 
 fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
-    let std_path = std_path.as_ref();
+    #[cfg(not(debug_assertions))]
+    let logger_spec = LogSpecification::info();
 
-    pretty_env_logger::init_custom_env("FAS_LOG");
+    #[cfg(debug_assertions)]
+    let logger_spec = LogSpecification::debug();
+
+    Logger::with(logger_spec).log_to_stdout().start()?;
+
+    let std_path = std_path.as_ref();
 
     let self_pid = process::id();
     let _ = fs::write("/dev/cpuset/background/cgroup.procs", self_pid.to_string());
