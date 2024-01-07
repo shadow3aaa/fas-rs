@@ -127,7 +127,7 @@ impl<P: PerformanceController> Looper<P> {
         let Some(event) = self
             .buffers
             .values_mut()
-            .filter(|buffer| buffer.target_fps == target_fps && !buffer.done_policy)
+            .filter(|buffer| buffer.target_fps == target_fps)
             .map(|buffer| buffer.event(self.mode))
             .max()
         else {

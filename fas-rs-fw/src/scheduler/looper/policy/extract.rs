@@ -30,9 +30,10 @@ impl PolicyData {
         let window = buffer.windows.get(&target_fps)?;
 
         let window_fps = window.fps().max(f64::from(target_fps));
-        let normalized_avg_frame = window.avg_normalized(window_fps)?;
+        let normalized_prepare_frame = buffer.frame_prepare * target_fps;
+        let normalized_avg_frame = window.avg_normalized(window_fps)? + normalized_prepare_frame;
         let last_frame = buffer.frametimes.front().copied()?;
-        let normalized_frame = last_frame * target_fps;
+        let normalized_frame = last_frame * target_fps + normalized_prepare_frame;
 
         let normalized_big_jank_scale = Duration::from_secs(5);
         let normalized_jank_scale = Duration::from_millis(1700);

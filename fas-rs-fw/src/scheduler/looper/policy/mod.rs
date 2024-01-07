@@ -41,8 +41,6 @@ impl Buffer {
             return Event::None;
         };
 
-        self.done_policy = true;
-
         #[cfg(debug_assertions)]
         {
             debug!("policy config: {config:?}");
