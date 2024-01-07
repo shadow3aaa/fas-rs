@@ -89,7 +89,7 @@ keep_std = true
   - 手动例
 
     ```bash
-    fas-rs --merge --std-profile /path/to/std/profile
+    fas-rs merge /path/to/std/profile
     ```
 
 ## **编译**
