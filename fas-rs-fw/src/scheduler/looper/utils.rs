@@ -11,7 +11,10 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::collections::hash_map::Entry;
+use std::{
+    collections::hash_map::Entry,
+    time::{Duration, Instant},
+};
 
 use log::info;
 
@@ -33,18 +36,26 @@ impl<P: PerformanceController> Looper<P> {
     }
 
     pub fn disable_fas(&mut self, mode: Mode) -> Result<()> {
-        if self.started {
+        if self.start {
             self.controller.init_default(mode, &self.config)?;
-            self.started = false;
+            self.start = false;
+            self.start_delayed = false;
         }
 
         Ok(())
     }
 
     pub fn enable_fas(&mut self, mode: Mode) -> Result<()> {
-        if !self.started {
+        if !self.start {
+            self.delay_timer = Instant::now();
+            self.start = true;
+            return Ok(());
+        }
+
+        // 延迟10秒启动fas
+        if !self.start_delayed && self.delay_timer.elapsed() > Duration::from_secs(10) {
             self.controller.init_game(mode, &self.config)?;
-            self.started = true;
+            self.start_delayed = true;
         }
 
         Ok(())

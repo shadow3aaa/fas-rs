@@ -43,7 +43,9 @@ pub struct Looper<P: PerformanceController> {
     controller: P,
     topapp_checker: TimedWatcher,
     buffers: Buffers,
-    started: bool,
+    start: bool,
+    start_delayed: bool,
+    delay_timer: Instant,
     last_jank: Instant,
     last_limit: Instant,
     last_release: Instant,
@@ -58,7 +60,9 @@ impl<P: PerformanceController> Looper<P> {
             controller,
             topapp_checker: TimedWatcher::new(),
             buffers: Buffers::new(),
-            started: false,
+            start: false,
+            start_delayed: false,
+            delay_timer: Instant::now(),
             last_jank: Instant::now(),
             last_limit: Instant::now(),
             last_release: Instant::now(),
@@ -88,7 +92,7 @@ impl<P: PerformanceController> Looper<P> {
             };
 
             self.consume_data(mode, &data)?;
-            if self.started {
+            if self.start_delayed {
                 self.do_policy(mode, target_fps)?;
             }
         }
@@ -110,7 +114,7 @@ impl<P: PerformanceController> Looper<P> {
 
                 self.retain_topapp(mode)?;
 
-                if self.started {
+                if self.start_delayed {
                     self.controller.release_max(mode, &self.config)?; // 超时10帧时拉满频率以加快游戏加载
                     self.buffers.values_mut().for_each(Buffer::frame_prepare);
                 }
