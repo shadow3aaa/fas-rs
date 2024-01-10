@@ -46,12 +46,14 @@ jobs:
         ./make.sh build --release
         ./make.sh build --debug
 
-    - name: Upload
+    - name: Upload release-ci
       uses: actions/upload-artifact@v4
       with:
         name: fas-rs(release-ci)
         compression-level: 9
         path: output/.temp/release
+
+    - name: Upload debug-ci
       uses: actions/upload-artifact@v4
       with:
         name: fas-rs(debug-ci)
