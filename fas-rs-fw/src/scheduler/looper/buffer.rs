@@ -66,6 +66,7 @@ impl Buffer {
         self.frametimes
             .truncate(self.target_fps.unwrap_or(60) as usize * BUFFER_LEN_SECS);
         self.calculate_current_fps();
+        self.calculate_deviation();
 
         if let Some(fps) = self.target_fps {
             self.windows

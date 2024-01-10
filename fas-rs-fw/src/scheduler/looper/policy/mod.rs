@@ -78,7 +78,7 @@ impl Buffer {
 
         self.acc_frame = 0.0;
         self.acc_timer = Instant::now();
-        self.calculate_deviation();
+        // self.calculate_deviation();
 
         result
     }
