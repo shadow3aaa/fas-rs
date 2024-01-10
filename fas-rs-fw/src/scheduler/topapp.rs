@@ -16,7 +16,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-const REFRESH_TIME: Duration = Duration::from_secs(2);
+const REFRESH_TIME: Duration = Duration::from_secs(1);
 
 pub struct TimedWatcher {
     cache: Vec<i32>,
