@@ -32,16 +32,6 @@ impl FrameWindow {
         self.frametimes.truncate(self.len);
     }
 
-    pub fn fps(&self) -> f64 {
-        if self.frametimes.len() < self.len {
-            0.0
-        } else {
-            let sum: Duration = self.frametimes.iter().copied().sum();
-
-            self.len as f64 / sum.as_secs_f64()
-        }
-    }
-
     pub fn avg_normalized(&self, target_fps: f64) -> Option<Duration> {
         if self.frametimes.len() < self.len {
             None

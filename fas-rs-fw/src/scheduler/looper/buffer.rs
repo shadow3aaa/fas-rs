@@ -22,10 +22,13 @@ use log::debug;
 use super::window::FrameWindow;
 use crate::config::TargetFps;
 
+const BUFFER_LEN_SECS: usize = 3;
+
 #[derive(Debug)]
 pub struct Buffer {
     pub target_fps: Option<u32>,
     pub current_fps: f64,
+    pub avg_time: Duration,
     pub frametimes: VecDeque<Duration>,
     pub frame_prepare: Duration,
     pub deviation: f64,
@@ -42,6 +45,7 @@ impl Buffer {
         Self {
             target_fps: None,
             current_fps: 0.0,
+            avg_time: Duration::ZERO,
             frametimes: VecDeque::new(),
             frame_prepare: Duration::ZERO,
             deviation: 0.0,
@@ -60,7 +64,7 @@ impl Buffer {
 
         self.frametimes.push_front(d);
         self.frametimes
-            .truncate(self.target_fps.unwrap_or(60) as usize * 10);
+            .truncate(self.target_fps.unwrap_or(60) as usize * BUFFER_LEN_SECS);
         self.calculate_current_fps();
 
         if let Some(fps) = self.target_fps {
@@ -70,9 +74,9 @@ impl Buffer {
                 .update(d);
         }
 
-        if self.timer.elapsed() >= Duration::from_secs(1) {
-            self.calculate_target_fps();
+        if self.timer.elapsed() >= Duration::from_secs(BUFFER_LEN_SECS as u64) {
             self.timer = Instant::now();
+            self.calculate_target_fps();
         }
     }
 
@@ -92,10 +96,14 @@ impl Buffer {
         #[cfg(debug_assertions)]
         debug!("avg_time: {avg_time:?}");
 
+        self.avg_time = avg_time;
+
         let current_fps = 1.0 / avg_time.as_secs_f64();
-        self.current_fps = current_fps;
+
         #[cfg(debug_assertions)]
         debug!("current_fps: {:.2}", current_fps);
+
+        self.current_fps = current_fps;
     }
 
     fn calculate_target_fps(&mut self) {
@@ -131,9 +139,7 @@ impl Buffer {
         }
 
         if let Some(target_fps) = self.target_fps {
-            if self.current_fps < f64::from(target_fps) - 0.7 {
-                return;
-            }
+            let avg = self.avg_time * target_fps;
 
             let standard_deviation: f64 = {
                 let total: f64 = self
@@ -141,10 +147,9 @@ impl Buffer {
                     .iter()
                     .copied()
                     .map(|f| f.as_secs_f64() * f64::from(target_fps)) // normalization
-                    .map(|f| (f - 1.0).abs().powi(2))
+                    .map(|f| (f - avg.as_secs_f64()).abs())
                     .sum();
-                let variance = total / self.frametimes.len() as f64;
-                variance.sqrt()
+                total / self.frametimes.len() as f64
             };
 
             #[cfg(debug_assertions)]
