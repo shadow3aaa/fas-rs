@@ -15,14 +15,13 @@
 # limitations under the License.
 init_package() {
 	cd $SHDIR
-	rm -rf $TEMPDIR
 	mkdir -p $TEMPDIR
+	rm -rf $TEMPDIR/*
 	cp -rf module/* $TEMPDIR/
-	mkdir -p $TEMPDIR/zygisk
+	mkdir $TEMPDIR/zygisk
 }
 
 build() {
-	local TEMPDIR=$SHDIR/output/.temp
 	local NOARG=true
 	local HELP=false
 	local CLEAN=false
@@ -82,6 +81,8 @@ build() {
 	fi
 
 	if $DEBUG_BUILD; then
+		local TEMPDIR=$SHDIR/output/.temp/debug
+
 		if $VERBOSE; then
 			$RR build --target aarch64-linux-android -v
 			zygisk/build.sh --debug -v
@@ -94,13 +95,18 @@ build() {
 		cp -f target/aarch64-linux-android/debug/fas-rs $TEMPDIR/fas-rs
 		cp -f zygisk/output/arm64-v8a.so $TEMPDIR/zygisk/arm64-v8a.so
 
+		$STRIP $TEMPDIR/fas-rs
+		$STRIP $TEMPDIR/zygisk/arm64-v8a.so
+
 		cd $TEMPDIR
-		zip -9 -rq "../fas-rs(debug).zip" .
+		zip -9 -rq "../../fas-rs(debug).zip" .
 
 		echo "Module Packaged: output/fas-rs(debug).zip"
 	fi
 
 	if $RELEASE_BUILD; then
+		local TEMPDIR=$SHDIR/output/.temp/release
+
 		if $VERBOSE; then
 			$RR build --release --target aarch64-linux-android -v
 			zygisk/build.sh --release -v
@@ -117,7 +123,7 @@ build() {
 		$STRIP $TEMPDIR/zygisk/arm64-v8a.so
 
 		cd $TEMPDIR
-		zip -9 -rq "../fas-rs(release).zip" .
+		zip -9 -rq "../../fas-rs(release).zip" .
 
 		echo "Module Packaged: output/fas-rs(release).zip"
 	fi

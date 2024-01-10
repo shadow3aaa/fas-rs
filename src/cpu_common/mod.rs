@@ -25,7 +25,7 @@ pub type Freq = usize; // 单位: khz
 #[derive(Debug)]
 pub struct CpuCommon {
     freqs: Vec<Freq>,
-    pos: Cell<usize>,
+    fas_freq: Cell<Freq>,
     policies: Vec<Policy>,
 }
 
@@ -57,62 +57,59 @@ impl CpuCommon {
             .collect();
         freqs.sort_unstable();
 
+        let last_freq = freqs.last().copied().unwrap();
+        let fas_freq = Cell::new(last_freq);
+
         Ok(Self {
-            pos: Cell::new(freqs.len() - 1),
             freqs,
+            fas_freq,
             policies,
         })
     }
 
     fn reset_freq(&self) {
-        let pos = self.freqs.len() - 1;
-        self.pos.set(pos);
-        let freq = self.freqs[pos];
+        let last_freq = self.freqs.last().copied().unwrap();
+        self.fas_freq.set(last_freq);
 
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(freq);
+            let _ = policy.set_fas_freq(last_freq);
         }
     }
 }
 
 impl PerformanceController for CpuCommon {
     fn limit(&self, _m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
-        let mut pos = self.pos.get();
+        let current_freq = self.fas_freq.get();
+        let limited_freq = current_freq.saturating_sub(50000).max(self.freqs[0]);
+        self.fas_freq.set(limited_freq);
 
-        if pos > 0 {
-            pos -= 1;
-            self.pos.set(pos);
-
-            let freq = self.freqs[pos];
-            for policy in &self.policies {
-                let _ = policy.set_fas_freq(freq);
-            }
+        for policy in &self.policies {
+            let _ = policy.set_fas_freq(limited_freq);
         }
 
         Ok(())
     }
 
     fn release(&self, _m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
-        let mut pos = self.pos.get();
+        let current_freq = self.fas_freq.get();
+        let released_freq = current_freq
+            .saturating_add(50000)
+            .min(self.freqs.last().copied().unwrap());
+        self.fas_freq.set(released_freq);
 
-        if pos < self.freqs.len() - 1 {
-            pos += 1;
-            self.pos.set(pos);
-            let freq = self.freqs[pos];
-            for policy in &self.policies {
-                let _ = policy.set_fas_freq(freq);
-            }
+        for policy in &self.policies {
+            let _ = policy.set_fas_freq(released_freq);
         }
 
         Ok(())
     }
 
     fn release_max(&self, _m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
-        let pos = self.freqs.len() - 1;
-        let freq = self.freqs[pos];
+        let max_freq = self.freqs.last().copied().unwrap();
+        self.fas_freq.set(max_freq);
 
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(freq);
+            let _ = policy.set_fas_freq(max_freq);
         }
 
         Ok(())

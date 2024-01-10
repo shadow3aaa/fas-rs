@@ -48,6 +48,7 @@ pub struct Looper<P: PerformanceController> {
     start_delayed: bool,
     delay_timer: Instant,
     last_limit: Instant,
+    last_release: Instant,
 }
 
 impl<P: PerformanceController> Looper<P> {
@@ -64,6 +65,7 @@ impl<P: PerformanceController> Looper<P> {
             start_delayed: false,
             delay_timer: Instant::now(),
             last_limit: Instant::now(),
+            last_release: Instant::now(),
         }
     }
 
@@ -148,7 +150,12 @@ impl<P: PerformanceController> Looper<P> {
                 self.controller.release(self.mode, &self.config)?;
                 self.last_limit = Instant::now();
             }
-            Event::Release => self.controller.release(self.mode, &self.config)?,
+            Event::Release => {
+                if self.last_release.elapsed() * target_fps > Duration::from_secs(1) {
+                    self.last_release = Instant::now();
+                    self.controller.release(self.mode, &self.config)?;
+                }
+            }
             Event::Restrictable => {
                 if self.last_limit.elapsed() * target_fps > Duration::from_secs(1) {
                     self.last_limit = Instant::now();
