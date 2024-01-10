@@ -121,7 +121,10 @@ impl Policy {
 
         if !self.little {
             let cur_gov = fs::read_to_string(path)?;
-            self.gov_snapshot.replace(Some(cur_gov));
+
+            if cur_gov.trim() != "performance" {
+                self.gov_snapshot.replace(Some(cur_gov));
+            }
 
             self.lock_governor("performance")?;
         }
