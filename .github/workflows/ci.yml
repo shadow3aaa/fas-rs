@@ -43,10 +43,17 @@ jobs:
         export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
         export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
         chmod +x ./make.sh
-        ./make.sh build --release -v
+        ./make.sh build --release
+        ./make.sh build --debug
 
     - name: Upload
-      uses: actions/upload-artifact@v3.1.3
+      uses: actions/upload-artifact@v4
       with:
-        name: fas-rs(ci-build)
-        path: output/.temp
+        name: fas-rs(release-ci)
+        compression-level: 9
+        path: output/.temp/release
+      uses: actions/upload-artifact@v4
+      with:
+        name: fas-rs(debug-ci)
+        compression-level: 9
+        path: output/.temp/debug
