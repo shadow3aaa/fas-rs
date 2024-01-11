@@ -20,7 +20,6 @@ use toml::{Table, Value};
 use super::Config;
 use crate::error::{Error, Result};
 
-/// fas配置
 #[derive(Deserialize, Serialize)]
 struct ConfigData {
     pub config: Table,
@@ -32,11 +31,6 @@ struct ConfigData {
 }
 
 impl Config {
-    /// 合并标准配置和本地配置
-    ///
-    /// # Errors
-    ///
-    /// 解析错误
     pub fn merge<S: AsRef<str>>(l: S, s: S) -> Result<String> {
         let local_conf = l.as_ref();
         let std_conf = s.as_ref();

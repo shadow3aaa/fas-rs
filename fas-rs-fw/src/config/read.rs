@@ -15,16 +15,20 @@ use std::{fs, path::Path, sync::Arc, thread, time::Duration};
 
 use inotify::{Inotify, WatchMask};
 use log::{debug, error};
-use toml::Value;
+use parking_lot::RwLock;
 
-use super::ConfData;
+use super::ConfigData;
 use crate::error::Result;
 
-pub(super) fn wait_and_read(path: &Path, std_path: &Path, toml: &Arc<ConfData>) -> Result<()> {
+pub(super) fn wait_and_read(
+    path: &Path,
+    std_path: &Path,
+    toml: &Arc<RwLock<ConfigData>>,
+) -> Result<()> {
     let mut retry_count = 0;
 
     let std_config = fs::read_to_string(std_path)?;
-    let std_config: Value = toml::from_str(&std_config)?;
+    let std_config: ConfigData = toml::from_str(&std_config)?;
 
     loop {
         if retry_count > 10 {

@@ -23,8 +23,6 @@ pub enum Error {
     ParseConfig,
     #[error("Got an error when parsing node")]
     ParseNode,
-    #[error("No such a config")]
-    ConfigValueNotFound,
     #[error("No such a node")]
     NodeNotFound,
     #[error("Got an error when parsing config: {source:?}")]

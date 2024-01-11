@@ -11,24 +11,19 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+mod data;
 mod merge;
 mod read;
 
 use std::{fs, path::Path, sync::Arc, thread};
 
-use likely_stable::LikelyOption;
 use log::{error, info};
 use parking_lot::RwLock;
 use toml::Value;
 
-use crate::{
-    error::{Error, Result},
-    node::Mode,
-};
-
+use crate::{error::Result, node::Mode};
+pub use data::*;
 use read::wait_and_read;
-
-type ConfData = RwLock<Value>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TargetFps {
@@ -38,7 +33,7 @@ pub enum TargetFps {
 
 #[derive(Debug, Clone)]
 pub struct Config {
-    toml: Arc<ConfData>,
+    toml: Arc<RwLock<ConfigData>>,
 }
 
 impl Config {
@@ -48,7 +43,7 @@ impl Config {
 
         let ori = fs::read_to_string(path)?;
 
-        let toml = toml::from_str(&ori)?;
+        let toml: ConfigData = toml::from_str(&ori)?;
         let toml = Arc::new(RwLock::new(toml));
 
         {
@@ -74,11 +69,7 @@ impl Config {
         let pkg = pkg.split(':').next()?;
 
         let toml = self.toml.read();
-        let list = toml
-            .get("game_list")
-            .and_then_likely(Value::as_table)
-            .cloned()
-            .unwrap();
+        let list = toml.game_list.clone();
         let value = list.get(pkg)?.clone();
 
         drop(toml); // early-drop Rwlock
@@ -111,22 +102,20 @@ impl Config {
         }
     }
 
-    pub fn get_mode_conf<S: AsRef<str>>(&self, m: Mode, l: S) -> Result<Value> {
-        let label = l.as_ref();
-        let mode = m.to_string();
+    #[must_use]
+    pub fn mode_config(&self, m: Mode) -> ModeConfig {
         let toml = self.toml.read();
 
-        toml.get(mode)
-            .and_then_likely(|t| t.get(label).cloned())
-            .ok_or(Error::ConfigValueNotFound)
+        match m {
+            Mode::Powersave => toml.powersave,
+            Mode::Balance => toml.balance,
+            Mode::Performance => toml.performance,
+            Mode::Fast => toml.fast,
+        }
     }
 
-    pub fn get_conf<S: AsRef<str>>(&self, l: S) -> Result<Value> {
-        let label = l.as_ref();
-        let toml = self.toml.read();
-
-        toml.get("config")
-            .and_then_likely(|t| t.get(label).cloned())
-            .ok_or(Error::ConfigValueNotFound)
+    #[must_use]
+    pub fn config<S: AsRef<str>>(&self) -> ConfigData {
+        self.toml.read().clone()
     }
 }
