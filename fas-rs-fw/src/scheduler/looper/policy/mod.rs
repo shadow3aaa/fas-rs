@@ -48,7 +48,7 @@ impl Buffer {
         }
 
         let result = self.frame_analyze(config, policy_data);
-        if let Some(event) = Self::jank_analyze(policy_data) {
+        if let Some(event) = self.jank_analyze(policy_data) {
             return event;
         }
 
@@ -78,20 +78,23 @@ impl Buffer {
 
         self.acc_frame = 0.0;
         self.acc_timer = Instant::now();
-        // self.calculate_deviation();
 
         result
     }
 
-    fn jank_analyze(policy_data: PolicyData) -> Option<Event> {
+    fn jank_analyze(&mut self, policy_data: PolicyData) -> Option<Event> {
         if policy_data.normalized_frame > policy_data.normalized_big_jank_scale {
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
+
+            self.acc_frame = 0.0;
 
             Some(Event::BigJank)
         } else if policy_data.normalized_frame > policy_data.normalized_jank_scale {
             #[cfg(debug_assertions)]
             debug!("JANK: simp jank");
+
+            self.acc_frame = 0.0;
 
             Some(Event::Jank)
         } else {
