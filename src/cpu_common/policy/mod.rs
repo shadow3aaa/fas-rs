@@ -15,7 +15,7 @@ mod force_bound;
 mod utils;
 
 use std::{
-    cell::{Cell, RefCell},
+    cell::RefCell,
     cmp::Ordering,
     ffi::OsStr,
     fs,

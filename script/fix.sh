@@ -18,6 +18,5 @@ fix_codes() {
 	FIX="$RR clippy --fix --allow-dirty --allow-staged -- --target aarch64-linux-android"
 
 	cd $SHDIR && $FIX
-	cd $SHDIR/fas-rs-fw && $FIX
 	cd $SHDIR/zygisk/rust && $FIX
 }

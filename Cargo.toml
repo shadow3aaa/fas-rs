@@ -9,7 +9,6 @@ readme = "README.md"
 repository = "https://github.com/shadow3aaa/fas-rs"
 
 [workspace]
-members = ["fas-rs-fw"]
 exclude = ["zygisk/rust"]
 
 [dependencies]
@@ -25,9 +24,9 @@ binder = { package = "binder_ndk", version = "0.2.0" }
 lazy_static = "1.4.0"
 once_cell = "1.19.0"
 flexi_logger = "0.27.3"
-
-[dependencies.fas-rs-fw]
-path = "fas-rs-fw"
+serde_derive = "1.0.193"
+toml = "0.8.8"
+serde = "1.0.193"
 
 [build-dependencies]
 anyhow = "1.0.79"

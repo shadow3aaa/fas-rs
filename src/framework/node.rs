@@ -19,7 +19,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::error::{Error, Result};
+use super::error::{Error, Result};
 
 const NODE_PATH: &str = "/dev/fas_rs";
 const REFRESH_TIME: Duration = Duration::from_secs(1);

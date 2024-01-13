@@ -19,7 +19,7 @@ use std::{
 use log::info;
 
 use super::{super::FasData, Buffer, Looper};
-use crate::{config::TargetFps, error::Result, PerformanceController};
+use crate::framework::{config::TargetFps, error::Result, PerformanceController};
 
 impl<P: PerformanceController> Looper<P> {
     pub fn retain_topapp(&mut self) -> Result<()> {

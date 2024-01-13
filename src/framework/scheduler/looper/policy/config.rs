@@ -14,7 +14,7 @@
 use std::time::Duration;
 
 use super::super::Buffer;
-use crate::node::Mode;
+use crate::framework::node::Mode;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PolicyConfig {

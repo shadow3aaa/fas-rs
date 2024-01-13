@@ -13,7 +13,7 @@
 *  limitations under the License. */
 use std::{ffi::CString, fs, path::Path, ptr};
 
-use fas_rs_fw::Result;
+use crate::framework::Result;
 use libc::{mount, umount, umount2, MS_BIND, MS_REC};
 
 pub fn lock_value<P: AsRef<Path>, S: AsRef<str>>(p: P, v: S) -> Result<()> {

@@ -17,7 +17,7 @@ mod topapp;
 
 use std::time::Duration;
 
-use crate::{
+use super::{
     config::{Config, TargetFps},
     error::{Error, Result},
     node::Node,

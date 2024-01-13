@@ -18,7 +18,7 @@ use log::{debug, error};
 use parking_lot::RwLock;
 
 use super::ConfigData;
-use crate::error::Result;
+use crate::framework::error::Result;
 
 pub(super) fn wait_and_read(
     path: &Path,

@@ -18,7 +18,7 @@ use serde_derive::{Deserialize, Serialize};
 use toml::{Table, Value};
 
 use super::Config;
-use crate::error::{Error, Result};
+use crate::framework::error::{Error, Result};
 
 #[derive(Deserialize, Serialize)]
 struct ConfigData {

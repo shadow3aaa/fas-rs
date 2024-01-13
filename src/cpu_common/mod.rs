@@ -15,15 +15,15 @@ mod policy;
 
 use std::{cell::Cell, collections::HashSet, ffi::OsStr, fs};
 
+use crate::framework::{prelude::*, Result as FrameworkResult};
 use anyhow::Result;
-use fas_rs_fw::prelude::*;
 
 use policy::Policy;
 
 pub type Freq = usize; // 单位: khz
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-enum FasMode {
+pub enum FasMode {
     Limit,
     Boost,
 }
@@ -106,7 +106,7 @@ impl CpuCommon {
 }
 
 impl PerformanceController for CpuCommon {
-    fn limit(&self, m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
+    fn limit(&self, m: Mode, _c: &Config) -> FrameworkResult<()> {
         let _ = self.switch_mode(m);
 
         let current_freq = self.fas_freq.get();
@@ -120,7 +120,7 @@ impl PerformanceController for CpuCommon {
         Ok(())
     }
 
-    fn release(&self, m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
+    fn release(&self, m: Mode, _c: &Config) -> FrameworkResult<()> {
         let _ = self.switch_mode(m);
 
         let current_freq = self.fas_freq.get();
@@ -136,7 +136,7 @@ impl PerformanceController for CpuCommon {
         Ok(())
     }
 
-    fn release_max(&self, m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
+    fn release_max(&self, m: Mode, _c: &Config) -> FrameworkResult<()> {
         let _ = self.switch_mode(m);
 
         let max_freq = self.freqs.last().copied().unwrap();
@@ -149,7 +149,7 @@ impl PerformanceController for CpuCommon {
         Ok(())
     }
 
-    fn init_game(&self, m: Mode, _c: &Config) -> Result<(), fas_rs_fw::Error> {
+    fn init_game(&self, m: Mode, _c: &Config) -> FrameworkResult<()> {
         let _ = self.switch_mode(m);
         self.reset_freq();
 
@@ -160,7 +160,7 @@ impl PerformanceController for CpuCommon {
         Ok(())
     }
 
-    fn init_default(&self, _m: Mode, _c: &Config) -> Result<(), fas_rs_fw::Error> {
+    fn init_default(&self, _m: Mode, _c: &Config) -> FrameworkResult<()> {
         self.reset_freq();
 
         for policy in &self.policies {

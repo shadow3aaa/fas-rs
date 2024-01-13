@@ -21,11 +21,12 @@ compile_error!("Only for aarch64 android");
 mod clean;
 mod cpu_common;
 mod error;
+mod framework;
 mod misc;
 
 use std::{env, fs, process, thread};
 
-use fas_rs_fw::prelude::*;
+use framework::prelude::*;
 
 use anyhow::Result;
 use flexi_logger::{LogSpecification, Logger};

@@ -20,7 +20,7 @@ use std::{
 use log::debug;
 
 use super::window::FrameWindow;
-use crate::config::TargetFps;
+use crate::framework::config::TargetFps;
 
 const BUFFER_LEN_SECS: usize = 3;
 

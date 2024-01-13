@@ -204,29 +204,10 @@ dependencies = [
  "anyhow",
  "async-trait",
  "binder_ndk",
- "fas-rs-fw",
  "flexi_logger",
  "inotify",
  "lazy_static",
  "libc",
- "likely_stable",
- "log",
- "once_cell",
- "parking_lot",
- "serde",
- "serde_derive",
- "thiserror",
- "toml",
-]
-
-[[package]]
-name = "fas-rs-fw"
-version = "1.0.0"
-dependencies = [
- "async-trait",
- "binder_ndk",
- "inotify",
- "lazy_static",
  "likely_stable",
  "log",
  "once_cell",
