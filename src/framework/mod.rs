@@ -20,8 +20,8 @@ pub mod prelude;
 mod scheduler;
 
 pub use config::Config;
-pub use error::{Error, Result};
-pub use node::{Mode, Node};
+pub use error::Result;
+pub use node::Mode;
 pub use scheduler::Scheduler;
 
 pub trait PerformanceController: Send {
