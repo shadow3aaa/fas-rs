@@ -8,7 +8,7 @@
 
 ## **简介**
 
-  > 假如肉眼看到的画面能直接反映在调度上, 也就是说以把调度器放在观看者的角度来决定性能, 是否就能实现完美的性能控制和最大化体验? `FAS(Frame Aware Scheduling)`就是这种调度概念, 通过监视画面渲染来尽量控制性能以在保证渲染时间的同时实现最小化开销
+  > 假如肉眼看到的画面能直接反映在调度上, 也就是说以把调度器放在观看者的角度来决定性能, 是否就能实现完美的性能控制和最大化体验? `FAS (Frame Aware Scheduling)`就是这种调度概念, 通过监视画面渲染来尽量控制性能以在保证渲染时间的同时实现最小化开销
 
 - ### **什么是`fas-rs`?**
 
@@ -121,16 +121,13 @@ chmod +x ./make.sh
 I'm here to introduce you the greatest thief @tryigitx !  
 So, what did he do?  
 
-1. He kept stealing FAS-RS module from me without any permission, and pretended to be co-developed with me.  
-In fact, he hasn't developed any kind of project, just because he is not able to.  
+- 1. He kept stealing FAS-RS module from me without any permission, and pretended to be co-developed with me.  
+In fact, he hasn't developed any kind of project, just because he is not able to.
+  From his homepage (<https://linktr.ee/tryigitx>), we can see he is an eXpErT! lmfao🤣🤣  
+  I just can't imagine how can a real expert do these things. If @tryigitx is a real expert, pLeAsE fOrGiVe Me😭😭  
 
-From his homepage (https://linktr.ee/tryigitx), we can see he is an eXpErT! lmfao🤣🤣  
-I just can't imagine how can a real expert do these things. If @tryigitx is a real expert, pLeAsE fOrGiVe Me😭😭  
-
-2. He also stole other modules, like "Play Integrity Fix".  
-He copied it and changed the author to his own, but that's not all.  
-
-Maybe it's some kind of self-deception, he also changed the name to "China Play Integrity Fix".  
-He seemed to want to express that this is for China Version ROMs, but everyone can see what he really wanted to do.  
-
-Now that you've all seen these, make your own judgment based on your own values.
+- 2. He also stole other modules, like "Play Integrity Fix".  
+  He copied it and changed the author to his own, but that's not all.  
+  Maybe it's some kind of self-deception, he also changed the name to "China Play Integrity Fix".  
+  He seemed to want to express that this is for China Version ROMs, but everyone can see what he really wanted to do.
+  Now that you've all seen these, make your own judgment based on your own values.
