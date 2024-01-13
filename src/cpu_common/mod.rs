@@ -22,10 +22,17 @@ use policy::Policy;
 
 pub type Freq = usize; // 单位: khz
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+enum FasMode {
+    Limit,
+    Boost,
+}
+
 #[derive(Debug)]
 pub struct CpuCommon {
     freqs: Vec<Freq>,
     fas_freq: Cell<Freq>,
+    mode: Cell<FasMode>,
     policies: Vec<Policy>,
 }
 
@@ -60,9 +67,12 @@ impl CpuCommon {
         let last_freq = freqs.last().copied().unwrap();
         let fas_freq = Cell::new(last_freq);
 
+        let mode = Cell::new(FasMode::Limit);
+
         Ok(Self {
             freqs,
             fas_freq,
+            mode,
             policies,
         })
     }
@@ -72,25 +82,47 @@ impl CpuCommon {
         self.fas_freq.set(last_freq);
 
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(last_freq);
+            let _ = policy.set_fas_freq(last_freq, self.mode.get());
         }
+    }
+
+    fn switch_mode(&self, m: Mode) -> Result<()> {
+        let target_mode = match m {
+            Mode::Fast => FasMode::Boost,
+            _ => FasMode::Limit,
+        };
+
+        if self.mode.get() == target_mode {
+            return Ok(());
+        }
+
+        self.mode.set(target_mode);
+        for policy in &self.policies {
+            policy.set_fas_gov(target_mode)?;
+        }
+
+        Ok(())
     }
 }
 
 impl PerformanceController for CpuCommon {
-    fn limit(&self, _m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
+    fn limit(&self, m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
+        let _ = self.switch_mode(m);
+
         let current_freq = self.fas_freq.get();
         let limited_freq = current_freq.saturating_sub(50000).max(self.freqs[0]);
         self.fas_freq.set(limited_freq);
 
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(limited_freq);
+            let _ = policy.set_fas_freq(limited_freq, self.mode.get());
         }
 
         Ok(())
     }
 
-    fn release(&self, _m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
+    fn release(&self, m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
+        let _ = self.switch_mode(m);
+
         let current_freq = self.fas_freq.get();
         let released_freq = current_freq
             .saturating_add(50000)
@@ -98,28 +130,31 @@ impl PerformanceController for CpuCommon {
         self.fas_freq.set(released_freq);
 
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(released_freq);
+            let _ = policy.set_fas_freq(released_freq, self.mode.get());
         }
 
         Ok(())
     }
 
-    fn release_max(&self, _m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
+    fn release_max(&self, m: Mode, _c: &Config) -> fas_rs_fw::Result<()> {
+        let _ = self.switch_mode(m);
+
         let max_freq = self.freqs.last().copied().unwrap();
         self.fas_freq.set(max_freq);
 
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(max_freq);
+            let _ = policy.set_fas_freq(max_freq, self.mode.get());
         }
 
         Ok(())
     }
 
-    fn init_game(&self, _m: Mode, _c: &Config) -> Result<(), fas_rs_fw::Error> {
+    fn init_game(&self, m: Mode, _c: &Config) -> Result<(), fas_rs_fw::Error> {
+        let _ = self.switch_mode(m);
         self.reset_freq();
 
         for policy in &self.policies {
-            let _ = policy.init_game();
+            let _ = policy.init_game(self.mode.get());
         }
 
         Ok(())

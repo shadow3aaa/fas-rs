@@ -15,7 +15,7 @@ mod force_bound;
 mod utils;
 
 use std::{
-    cell::RefCell,
+    cell::{Cell, RefCell},
     cmp::Ordering,
     ffi::OsStr,
     fs,
@@ -25,7 +25,7 @@ use std::{
 use anyhow::Result;
 use likely_stable::LikelyOption;
 
-use super::Freq;
+use super::{FasMode, Freq};
 use crate::error::Error;
 use force_bound::Bounder;
 
@@ -92,23 +92,36 @@ impl Policy {
         self.reset_gov()
     }
 
-    pub fn init_game(&self) -> Result<()> {
-        self.set_fas_gov()?;
-        self.set_fas_freq(self.freqs.last().copied().unwrap())
+    pub fn init_game(&self, m: FasMode) -> Result<()> {
+        self.set_fas_gov(m)?;
+        self.set_fas_freq(self.freqs.last().copied().unwrap(), m)
     }
 
-    pub fn set_fas_freq(&self, f: Freq) -> Result<()> {
-        self.lock_max_freq(f)?;
-        self.lock_min_freq(self.freqs[0])?;
+    pub fn set_fas_freq(&self, f: Freq, m: FasMode) -> Result<()> {
+        self.lock_min_freq(f)?;
 
-        if let Some(ref bounder) = self.force_bound {
-            bounder.force_freq(self.num, self.freqs[0], f)?;
+        match m {
+            FasMode::Limit => {
+                self.lock_max_freq(f)?;
+
+                if let Some(ref bounder) = self.force_bound {
+                    bounder.force_freq(self.num, self.freqs[0], f)?;
+                }
+            }
+            FasMode::Boost => {
+                let last_freq = self.freqs.last().copied().unwrap();
+                self.unlock_max_freq(last_freq)?;
+
+                if let Some(ref bounder) = self.force_bound {
+                    bounder.force_freq(self.num, f, last_freq)?;
+                }
+            }
         }
 
         Ok(())
     }
 
-    pub fn reset_gov(&self) -> Result<()> {
+    fn reset_gov(&self) -> Result<()> {
         if let Some(ref governor) = *self.gov_snapshot.borrow() {
             self.unlock_governor(governor)?;
         }
@@ -116,10 +129,13 @@ impl Policy {
         Ok(())
     }
 
-    pub fn set_fas_gov(&self) -> Result<()> {
-        let path = self.path.join("scaling_governor");
+    pub fn set_fas_gov(&self, m: FasMode) -> Result<()> {
+        if m == FasMode::Boost {
+            return self.reset_gov();
+        }
 
         if !self.little {
+            let path = self.path.join("scaling_governor");
             let cur_gov = fs::read_to_string(path)?;
 
             if cur_gov.trim() != "performance" {

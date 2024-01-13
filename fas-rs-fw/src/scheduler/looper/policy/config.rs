@@ -33,8 +33,8 @@ impl PolicyConfig {
         let allow_frame = match mode {
             Mode::Powersave => 1.0,
             Mode::Balance => 0.8,
-            Mode::Performance => 0.6,
-            Mode::Fast => 0.5,
+            Mode::Performance => 0.5,
+            Mode::Fast => 0.3,
         };
         let scale = acc_dur.mul_f64(allow_frame / target_fps);
 
