@@ -24,7 +24,7 @@ use super::error::{Error, Result};
 const NODE_PATH: &str = "/dev/fas_rs";
 const REFRESH_TIME: Duration = Duration::from_secs(1);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
     Powersave,
     Balance,

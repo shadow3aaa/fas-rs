@@ -69,7 +69,12 @@ impl<P: PerformanceController> Looper<P> {
 
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
-            self.mode = self.node.get_mode()?;
+            let new_mode = self.node.get_mode()?;
+            if self.mode != new_mode && self.start_delayed {
+                self.controller.init_game(new_mode, &self.config)?;
+                self.mode = new_mode;
+            }
+
             let target_fps = self
                 .buffers
                 .values()

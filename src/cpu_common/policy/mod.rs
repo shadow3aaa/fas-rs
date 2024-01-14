@@ -15,7 +15,7 @@ mod force_bound;
 mod utils;
 
 use std::{
-    cell::RefCell,
+    cell::{Cell, RefCell},
     cmp::Ordering,
     ffi::OsStr,
     fs,
@@ -25,8 +25,8 @@ use std::{
 use anyhow::Result;
 use likely_stable::LikelyOption;
 
-use super::{FasMode, Freq};
-use crate::error::Error;
+use super::Freq;
+use crate::{error::Error, framework::prelude::*};
 use force_bound::Bounder;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -35,6 +35,7 @@ pub struct Policy {
     pub num: u8,
     pub path: PathBuf,
     pub freqs: Vec<Freq>,
+    fas_boost: Cell<bool>,
     gov_snapshot: RefCell<Option<String>>,
     force_bound: Option<Bounder>,
 }
@@ -73,6 +74,7 @@ impl Policy {
             num,
             path: path.to_path_buf(),
             freqs,
+            fas_boost: Cell::new(false),
             gov_snapshot: RefCell::new(None),
             force_bound,
         })
@@ -92,29 +94,33 @@ impl Policy {
         self.reset_gov()
     }
 
-    pub fn init_game(&self, m: FasMode) -> Result<()> {
-        self.set_fas_gov(m)?;
-        self.set_fas_freq(self.freqs.last().copied().unwrap(), m)
+    pub fn init_game(&self, m: Mode, c: &Config) -> Result<()> {
+        self.fas_boost.set(c.mode_config(m).fas_boost);
+
+        self.set_fas_gov(m, c)?;
+        self.set_fas_freq(self.freqs.last().copied().unwrap())
     }
 
-    pub fn set_fas_freq(&self, f: Freq, m: FasMode) -> Result<()> {
-        self.lock_min_freq(f)?;
-
-        match m {
-            FasMode::Limit => {
-                self.lock_max_freq(f)?;
-
-                if let Some(ref bounder) = self.force_bound {
-                    bounder.force_freq(self.num, self.freqs[0], f)?;
-                }
+    pub fn set_fas_freq(&self, f: Freq) -> Result<()> {
+        if self.fas_boost.get() {
+            if self.little {
+                return Ok(());
             }
-            FasMode::Boost => {
-                let last_freq = self.freqs.last().copied().unwrap();
-                self.unlock_max_freq(last_freq)?;
 
-                if let Some(ref bounder) = self.force_bound {
-                    bounder.force_freq(self.num, f, last_freq)?;
-                }
+            self.lock_min_freq(f)?;
+            let last_freq = self.freqs.last().copied().unwrap();
+            self.lock_max_freq(last_freq)?;
+
+            if let Some(ref bounder) = self.force_bound {
+                bounder.force_freq(self.num, f, last_freq)?;
+            }
+        } else {
+            self.lock_max_freq(f)?;
+            let first_freq = self.freqs.first().copied().unwrap();
+            self.lock_min_freq(first_freq)?;
+
+            if let Some(ref bounder) = self.force_bound {
+                bounder.force_freq(self.num, first_freq, f)?;
             }
         }
 
@@ -129,8 +135,8 @@ impl Policy {
         Ok(())
     }
 
-    pub fn set_fas_gov(&self, m: FasMode) -> Result<()> {
-        if m == FasMode::Boost {
+    pub fn set_fas_gov(&self, mode: Mode, c: &Config) -> Result<()> {
+        if self.fas_boost.get() || !c.mode_config(mode).use_performance_governor {
             return self.reset_gov();
         }
 

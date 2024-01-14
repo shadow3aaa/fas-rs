@@ -13,9 +13,17 @@ keep_std = true
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
 [powersave]
+fas_boost = false
+use_performance_governor = false
 
 [balance]
+fas_boost = false
+use_performance_governor = true
 
 [performance]
+fas_boost = false
+use_performance_governor = true
 
 [fast]
+fas_boost = true
+use_performance_governor = false

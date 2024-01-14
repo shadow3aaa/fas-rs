@@ -30,4 +30,7 @@ pub struct Config {
 }
 
 #[derive(Debug, Deserialize, Clone, Copy)]
-pub struct ModeConfig {}
+pub struct ModeConfig {
+    pub fas_boost: bool,
+    pub use_performance_governor: bool,
+}
