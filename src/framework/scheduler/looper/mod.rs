@@ -133,7 +133,7 @@ impl<P: PerformanceController> Looper<P> {
             .buffers
             .values_mut()
             .filter(|buffer| buffer.target_fps == target_fps)
-            .map(|buffer| buffer.event(self.mode))
+            .map(|buffer| buffer.event(&self.config, self.mode))
             .max()
         else {
             self.disable_fas()?;
@@ -153,9 +153,12 @@ impl<P: PerformanceController> Looper<P> {
                 self.controller.release(self.mode, &self.config)?;
                 self.last_limit = Instant::now();
             }
-            Event::Release => self.controller.release(self.mode, &self.config)?,
+            Event::Release => {
+                self.controller.release(self.mode, &self.config)?;
+                self.last_limit = Instant::now();
+            }
             Event::Restrictable => {
-                if self.last_limit.elapsed() * target_fps > Duration::from_secs(1) {
+                if self.last_limit.elapsed() * target_fps > Duration::from_secs(3) {
                     self.last_limit = Instant::now();
                     self.controller.limit(self.mode, &self.config)?;
                 }

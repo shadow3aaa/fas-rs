@@ -14,7 +14,7 @@
 use std::time::Duration;
 
 use super::super::Buffer;
-use crate::framework::node::Mode;
+use crate::framework::{Config, node::Mode};
 
 #[derive(Debug, Clone, Copy)]
 pub struct PolicyConfig {
@@ -23,19 +23,14 @@ pub struct PolicyConfig {
 }
 
 impl PolicyConfig {
-    pub fn new(mode: Mode, buffer: &Buffer) -> Self {
+    pub fn new(config: &Config, mode: Mode, buffer: &Buffer) -> Self {
         let target_fps = buffer.target_fps.unwrap_or(10);
         let target_fps = f64::from(target_fps);
         let acc_dur = 1.0 / buffer.deviation;
         let acc_dur = acc_dur.clamp(1.0, 10.0);
         let acc_dur = Duration::from_secs_f64(acc_dur);
 
-        let allow_frame = match mode {
-            Mode::Powersave => 1.0,
-            Mode::Balance => 0.8,
-            Mode::Performance => 0.5,
-            Mode::Fast => 0.3,
-        };
+        let allow_frame = config.mode_config(mode).scale;
         let scale = acc_dur.mul_f64(allow_frame / target_fps);
 
         Self { scale, acc_dur }

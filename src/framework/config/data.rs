@@ -33,4 +33,5 @@ pub struct Config {
 pub struct ModeConfig {
     pub fas_boost: bool,
     pub use_performance_governor: bool,
+    pub scale: f64,
 }

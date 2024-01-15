@@ -20,7 +20,7 @@ use std::time::Instant;
 use log::debug;
 
 use super::Buffer;
-use crate::Mode;
+use crate::framework::{Config, Mode};
 
 use config::PolicyConfig;
 use extract::PolicyData;
@@ -35,8 +35,8 @@ pub enum Event {
 }
 
 impl Buffer {
-    pub fn event(&mut self, mode: Mode) -> Event {
-        let config = PolicyConfig::new(mode, self);
+    pub fn event(&mut self, config: &Config, mode: Mode) -> Event {
+        let config = PolicyConfig::new(config, mode, self);
         let Some(policy_data) = PolicyData::extract(self) else {
             return Event::None;
         };

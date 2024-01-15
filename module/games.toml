@@ -14,16 +14,20 @@ keep_std = true
 
 [powersave]
 fas_boost = false
+scale = 0.5
 use_performance_governor = false
 
 [balance]
 fas_boost = false
+scale = 0.25
 use_performance_governor = true
 
 [performance]
 fas_boost = false
+scale = 0.1
 use_performance_governor = true
 
 [fast]
 fas_boost = true
+scale = 0.1
 use_performance_governor = false
