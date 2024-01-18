@@ -106,7 +106,6 @@ impl PerformanceController for CpuCommon {
 
     fn release_max(&self, _m: Mode, _c: &Config) -> FrameworkResult<()> {
         let max_freq = self.freqs.last().copied().unwrap();
-        self.fas_freq.set(max_freq);
 
         for policy in &self.policies {
             let _ = policy.set_fas_freq(max_freq);
