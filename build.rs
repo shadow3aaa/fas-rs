@@ -30,10 +30,8 @@ struct TomlData {
 }
 
 fn main() -> Result<()> {
-    println!("cargo:rerun-if-changed=README.md");
     println!("cargo:rerun-if-changed=Cargo.lock");
     println!("cargo:rerun-if-changed=Cargo.toml");
-    println!("cargo:rerun-if-changed=LICENSE");
 
     println!("cargo:rustc-link-search=prebuilt");
     println!("cargo:rustc-link-lib=binder_ndk");
@@ -67,9 +65,6 @@ fn main() -> Result<()> {
         file,
         "updateJson=https://github.com/shadow3aaa/fas-rs/raw/master/update/update.json"
     )?;
-
-    let _ = fs::remove_file("module/README.md");
-    fs::copy("README.md", "module/README.md")?;
 
     Ok(())
 }

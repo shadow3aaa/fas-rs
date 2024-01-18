@@ -18,6 +18,8 @@ init_package() {
 	mkdir -p $TEMPDIR
 	rm -rf $TEMPDIR/*
 	cp -rf module/* $TEMPDIR/
+	cp -f README.md $TEMPDIR/
+	cp -f README_EN.md $TEMPDIR/
 	mkdir $TEMPDIR/zygisk
 }
 

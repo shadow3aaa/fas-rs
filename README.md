@@ -41,11 +41,16 @@
   - **mode :**
     - 目前`fas-rs`还没有官方的切换模式的管理器, 而是接入了[`scene`](https://www.coolapk.com/apk/com.omarea.vtools)的配置接口, 如果你不用scene则默认使用`balance`的配置
     - 如果你有在linux上编程的一些了解, 向`/dev/fas_rs/mode`节点写入4模式中的任意一个即可切换到对应模式, 同时读取它也可以知道现在`fas-rs`所处的模式
-  - **参数说明(暂无) :**
+  - **参数说明 :**
+    - fas_boost(bool): `fas-rs`的目的是限制功耗还是减少游戏掉帧, true时为减少掉帧模式
+    - scale(f64): `fas-rs`可以容忍的掉帧数
+    - jank_scale(f64): `fas-rs`判定小卡顿的掉帧数
+    - big_jank_scale(f64): `fas-rs`判定大卡顿的掉帧数
+    - use_performance_governor(bool): `fas-rs`是否在工作时使用performance内核cpufreq策略(fas_boost开启时此配置无效)
 
 ### **`games.toml`配置标准例 :**
 
-```toml
+```
 [config]
 keep_std = true
 
@@ -60,15 +65,33 @@ keep_std = true
 "com.tencent.tmgp.pubgmhd" = [60, 90, 120]
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
-# 目前没有可以配置的东西，但是还是预留着
 [powersave]
+fas_boost = false
+scale = 0.5
+jank_scale = 3.0
+big_jank_scale = 5.0
+use_performance_governor = false
 
 [balance]
+fas_boost = false
+scale = 0.25
+jank_scale= 3.0
+big_jank_scale = 5.0
+use_performance_governor = true
 
 [performance]
+fas_boost = false
+scale = 0.2
+jank_scale= 1.5
+big_jank_scale = 3.0
+use_performance_governor = true
 
 [fast]
-
+fas_boost = true
+scale = 0.1
+jank_scale= 1.5
+big_jank_scale = 3.0
+use_performance_governor = false
 ```
 
 ## **配置合并**
