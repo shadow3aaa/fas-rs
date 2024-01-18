@@ -15,19 +15,28 @@ keep_std = true
 [powersave]
 fas_boost = false
 scale = 0.5
+jank_scale= 3.0
+big_jank_scale = 5.0
 use_performance_governor = false
+
 
 [balance]
 fas_boost = false
 scale = 0.25
+jank_scale= 3.0
+big_jank_scale = 5.0
 use_performance_governor = true
 
 [performance]
 fas_boost = false
-scale = 0.1
+scale = 0.2
+jank_scale= 1.5
+big_jank_scale = 3.0
 use_performance_governor = true
 
 [fast]
 fas_boost = true
 scale = 0.1
+jank_scale= 1.5
+big_jank_scale = 3.0
 use_performance_governor = false

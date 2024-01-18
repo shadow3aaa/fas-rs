@@ -91,4 +91,12 @@ impl<P: PerformanceController> Looper<P> {
             }
         }
     }
+
+    pub fn latest_update_elapsed(&self) -> Duration {
+        self.buffers
+            .values()
+            .map(|buffer| buffer.last_update.elapsed())
+            .min()
+            .unwrap_or_default()
+    }
 }

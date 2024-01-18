@@ -26,19 +26,24 @@ use config::PolicyConfig;
 use extract::PolicyData;
 
 #[derive(Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
-pub enum Event {
+pub enum NormalEvent {
     Restrictable,
     None,
     Release,
+}
+
+#[derive(Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
+pub enum JankEvent {
+    None,
     Jank,
     BigJank,
 }
 
 impl Buffer {
-    pub fn event(&mut self, config: &Config, mode: Mode) -> Event {
+    pub fn normal_event(&mut self, config: &Config, mode: Mode) -> NormalEvent {
         let config = PolicyConfig::new(config, mode, self);
         let Some(policy_data) = PolicyData::extract(self) else {
-            return Event::None;
+            return NormalEvent::None;
         };
 
         #[cfg(debug_assertions)]
@@ -47,33 +52,42 @@ impl Buffer {
             debug!("policy data: {policy_data:?}");
         }
 
-        let result = self.frame_analyze(config, policy_data);
-        if let Some(event) = self.jank_analyze(policy_data) {
-            return event;
-        }
-
-        result
+        self.frame_analyze(config, policy_data)
     }
 
-    fn frame_analyze(&mut self, config: PolicyConfig, policy_data: PolicyData) -> Event {
-        let diff = policy_data.normalized_avg_frame.as_secs_f64() - 1.0;
+    pub fn jank_event(&mut self, config: &Config, mode: Mode) -> JankEvent {
+        let config = PolicyConfig::new(config, mode, self);
+        let Some(policy_data) = PolicyData::extract(self) else {
+            return JankEvent::None;
+        };
+
+        #[cfg(debug_assertions)]
+        {
+            debug!("policy config: {config:?}");
+            debug!("policy data: {policy_data:?}");
+        }
+
+        self.jank_analyze(config, policy_data)
+    }
+
+    fn frame_analyze(&mut self, config: PolicyConfig, policy_data: PolicyData) -> NormalEvent {
+        let diff = policy_data.normalized_frame.as_secs_f64() - 1.0;
         self.acc_frame += diff;
 
         if self.acc_timer.elapsed() * policy_data.target_fps < config.acc_dur {
-            return Event::None;
+            return NormalEvent::None;
         }
 
-        let scale = config.scale.as_secs_f64();
-        let result = if self.acc_frame >= scale {
+        let result = if self.acc_frame >= config.scale {
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
 
-            Event::Release
+            NormalEvent::Release
         } else {
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
 
-            Event::Restrictable
+            NormalEvent::Restrictable
         };
 
         self.acc_frame = 0.0;
@@ -82,23 +96,25 @@ impl Buffer {
         result
     }
 
-    fn jank_analyze(&mut self, policy_data: PolicyData) -> Option<Event> {
-        if policy_data.normalized_frame > policy_data.normalized_big_jank_scale {
+    fn jank_analyze(&mut self, config: PolicyConfig, policy_data: PolicyData) -> JankEvent {
+        let diff = policy_data.normalized_avg_frame.as_secs_f64() - 1.0;
+
+        if diff >= config.big_jank_scale {
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
 
             self.acc_frame = 0.0;
 
-            Some(Event::BigJank)
-        } else if policy_data.normalized_frame > policy_data.normalized_jank_scale {
+            JankEvent::BigJank
+        } else if diff >= config.jank_scale {
             #[cfg(debug_assertions)]
             debug!("JANK: simp jank");
 
             self.acc_frame = 0.0;
 
-            Some(Event::Jank)
+            JankEvent::Jank
         } else {
-            None
+            JankEvent::None
         }
     }
 }

@@ -12,14 +12,13 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 use std::{
-    collections::{HashMap, VecDeque},
+    collections::VecDeque,
     time::{Duration, Instant},
 };
 
 #[cfg(debug_assertions)]
 use log::debug;
 
-use super::window::FrameWindow;
 use crate::framework::config::TargetFps;
 
 const BUFFER_LEN_SECS: usize = 3;
@@ -32,7 +31,6 @@ pub struct Buffer {
     pub frametimes: VecDeque<Duration>,
     pub frame_prepare: Duration,
     pub deviation: f64,
-    pub windows: HashMap<u32, FrameWindow>,
     pub last_update: Instant,
     pub acc_frame: f64,
     pub acc_timer: Instant,
@@ -49,7 +47,6 @@ impl Buffer {
             frametimes: VecDeque::new(),
             frame_prepare: Duration::ZERO,
             deviation: 0.0,
-            windows: HashMap::new(),
             last_update: Instant::now(),
             acc_frame: 0.0,
             acc_timer: Instant::now(),
@@ -67,13 +64,6 @@ impl Buffer {
             .truncate(self.target_fps.unwrap_or(60) as usize * BUFFER_LEN_SECS);
         self.calculate_current_fps();
         self.calculate_deviation();
-
-        if let Some(fps) = self.target_fps {
-            self.windows
-                .entry(fps)
-                .or_insert_with(|| FrameWindow::new(5))
-                .update(d);
-        }
 
         if self.timer.elapsed() >= Duration::from_secs(BUFFER_LEN_SECS as u64) {
             self.timer = Instant::now();

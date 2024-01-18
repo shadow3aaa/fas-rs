@@ -14,12 +14,14 @@
 use std::time::Duration;
 
 use super::super::Buffer;
-use crate::framework::{Config, node::Mode};
+use crate::framework::{node::Mode, Config};
 
 #[derive(Debug, Clone, Copy)]
 pub struct PolicyConfig {
-    pub scale: Duration,
     pub acc_dur: Duration,
+    pub scale: f64,
+    pub jank_scale: f64,
+    pub big_jank_scale: f64,
 }
 
 impl PolicyConfig {
@@ -28,11 +30,21 @@ impl PolicyConfig {
         let target_fps = f64::from(target_fps);
         let acc_dur = 1.0 / buffer.deviation;
         let acc_dur = acc_dur.clamp(1.0, 10.0);
-        let acc_dur = Duration::from_secs_f64(acc_dur);
 
-        let allow_frame = config.mode_config(mode).scale;
-        let scale = acc_dur.mul_f64(allow_frame / target_fps);
+        let scale = config.mode_config(mode).scale;
+        let scale = acc_dur * scale / target_fps;
 
-        Self { scale, acc_dur }
+        let jank_scale = config.mode_config(mode).jank_scale;
+        let jank_scale = jank_scale / target_fps;
+
+        let big_jank_scale = config.mode_config(mode).big_jank_scale;
+        let big_jank_scale = big_jank_scale / target_fps;
+
+        Self {
+            acc_dur: Duration::from_secs_f64(acc_dur),
+            scale,
+            jank_scale,
+            big_jank_scale,
+        }
     }
 }

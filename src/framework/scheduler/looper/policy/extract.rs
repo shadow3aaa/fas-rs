@@ -18,8 +18,6 @@ use super::super::buffer::Buffer;
 #[derive(Debug, Clone, Copy)]
 pub struct PolicyData {
     pub target_fps: u32,
-    pub normalized_big_jank_scale: Duration,
-    pub normalized_jank_scale: Duration,
     pub normalized_frame: Duration,
     pub normalized_avg_frame: Duration,
 }
@@ -27,21 +25,16 @@ pub struct PolicyData {
 impl PolicyData {
     pub fn extract(buffer: &Buffer) -> Option<Self> {
         let target_fps = buffer.target_fps?;
-        let window = buffer.windows.get(&target_fps)?;
 
-        let normalized_prepare_frame = buffer.frame_prepare * target_fps;
-        let normalized_avg_frame =
-            window.avg_normalized(f64::from(target_fps))? + normalized_prepare_frame;
-        let last_frame = buffer.frametimes.front().copied()?;
-        let normalized_frame = last_frame * target_fps + normalized_prepare_frame;
+        let frames: Vec<_> = buffer.frametimes.iter().copied().take(5).collect();
+        let len = frames.len();
+        let frame = frames.into_iter().sum::<Duration>() / len as u32;
 
-        let normalized_big_jank_scale = Duration::from_secs(5);
-        let normalized_jank_scale = Duration::from_millis(1700);
+        let normalized_avg_frame = buffer.avg_time * target_fps;
+        let normalized_frame = frame * target_fps;
 
         Some(Self {
             target_fps,
-            normalized_big_jank_scale,
-            normalized_jank_scale,
             normalized_frame,
             normalized_avg_frame,
         })
