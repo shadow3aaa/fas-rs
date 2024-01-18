@@ -15,24 +15,28 @@ use std::{thread, time::Duration};
 
 use crate::misc::lock_value;
 
-macro_rules! disable {
-    ($($path: literal),*) => {
-        {
-            $(
-                let _ = lock_value($path, "0");
-            )*
-        }
+macro_rules! lock_values {
+    (($($path: literal),*), $value: literal) => {
+        $(
+            let _ = lock_value($path, $value);
+        )*
     }
 }
 
 pub fn cleaner() -> ! {
     loop {
-        disable!(
-            "/sys/module/mtk_fpsgo/parameters/perfmgr_enable",
-            "/sys/module/perfmgr/parameters/perfmgr_enable",
-            "/sys/module/perfmgr_policy/parameters/perfmgr_enable",
-            "/sys/module/perfmgr_mtk/parameters/perfmgr_enable"
+        lock_values!(
+            (
+                "/sys/module/mtk_fpsgo/parameters/perfmgr_enable",
+                "/sys/module/perfmgr/parameters/perfmgr_enable",
+                "/sys/module/perfmgr_policy/parameters/perfmgr_enable",
+                "/sys/module/perfmgr_mtk/parameters/perfmgr_enable",
+                "/sys/module/migt/parameters/glk_fbreak_enable"
+            ),
+            "0"
         );
+
+        lock_values!(("/sys/module/migt/parameters/glk_disable"), "1");
 
         thread::sleep(Duration::from_secs(10));
     }
