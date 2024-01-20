@@ -65,12 +65,14 @@ build() {
 
 	if $HELP || $NOARG; then
 		echo "./make.sh build:
-        --release / release / -r / r:
-            release build
-        --debug / debug / -d / d:
-            debug build
-        --verbose / verbose / -v / v:
-            print details of build"
+    --clean / clean:
+        clean up
+    --release / release / -r / r:
+        release build
+    --debug / debug / -d / d:
+        debug build
+    --verbose / verbose / -v / v:
+        print details of build"
 
 		exit
 	elif $CLEAN; then
