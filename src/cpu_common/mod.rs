@@ -104,7 +104,21 @@ impl PerformanceController for CpuCommon {
         Ok(())
     }
 
-    fn release_max(&self, _m: Mode, _c: &Config) -> FrameworkResult<()> {
+    fn jank(&self, _m: Mode, _c: &Config) -> FrameworkResult<()> {
+        let current_freq = self.fas_freq.get();
+        self.fas_freq.set(current_freq + 50000);
+        let released_freq = current_freq
+            .saturating_add(100_000)
+            .min(self.freqs.last().copied().unwrap());
+
+        for policy in &self.policies {
+            let _ = policy.set_fas_freq(released_freq);
+        }
+
+        Ok(())
+    }
+
+    fn big_jank(&self, _m: Mode, _c: &Config) -> FrameworkResult<()> {
         let max_freq = self.freqs.last().copied().unwrap();
 
         for policy in &self.policies {

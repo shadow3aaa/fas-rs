@@ -27,7 +27,8 @@ pub use scheduler::Scheduler;
 pub trait PerformanceController: Send {
     fn limit(&self, m: Mode, c: &Config) -> Result<()>;
     fn release(&self, m: Mode, c: &Config) -> Result<()>;
-    fn release_max(&self, m: Mode, c: &Config) -> Result<()>;
+    fn jank(&self, m: Mode, c: &Config) -> Result<()>;
+    fn big_jank(&self, m: Mode, c: &Config) -> Result<()>;
     fn init_game(&self, m: Mode, c: &Config) -> Result<()>;
     fn init_default(&self, m: Mode, c: &Config) -> Result<()>;
 }

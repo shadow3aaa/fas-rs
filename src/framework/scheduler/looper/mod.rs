@@ -35,6 +35,13 @@ use policy::{JankEvent, NormalEvent};
 pub type Producer = (i64, i32); // buffer, pid
 pub type Buffers = HashMap<Producer, Buffer>; // Process, (jank_scale, total_jank_time_ns)
 
+#[derive(PartialEq)]
+enum State {
+    NotWorking,
+    Waiting,
+    Working,
+}
+
 pub struct Looper<P: PerformanceController> {
     rx: Receiver<BinderMessage>,
     config: Config,
@@ -43,10 +50,10 @@ pub struct Looper<P: PerformanceController> {
     controller: P,
     topapp_checker: TimedWatcher,
     buffers: Buffers,
-    start: bool,
-    start_delayed: bool,
+    state: State,
+    jank_state: JankEvent,
     delay_timer: Instant,
-    last_control: Instant,
+    last_limit: Instant,
     limit_delay: Duration,
 }
 
@@ -60,10 +67,10 @@ impl<P: PerformanceController> Looper<P> {
             controller,
             topapp_checker: TimedWatcher::new(),
             buffers: Buffers::new(),
-            start: false,
-            start_delayed: false,
+            state: State::NotWorking,
+            jank_state: JankEvent::None,
             delay_timer: Instant::now(),
-            last_control: Instant::now(),
+            last_limit: Instant::now(),
             limit_delay: Duration::from_secs(1),
         }
     }
@@ -71,7 +78,7 @@ impl<P: PerformanceController> Looper<P> {
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
             let new_mode = self.node.get_mode()?;
-            if self.mode != new_mode && self.start_delayed {
+            if self.mode != new_mode && self.state == State::Working {
                 self.controller.init_game(new_mode, &self.config)?;
                 self.mode = new_mode;
             }
@@ -93,9 +100,9 @@ impl<P: PerformanceController> Looper<P> {
                         self.buffers.remove(&k);
                     }
                 }
-            } else {
-                self.do_jank_policy(target_fps)?;
             }
+
+            self.do_jank_policy(target_fps)?;
         }
     }
 
@@ -113,7 +120,7 @@ impl<P: PerformanceController> Looper<P> {
 
                 self.retain_topapp()?;
 
-                if self.start_delayed && self.latest_update_elapsed() > timeout_error {
+                if self.state == State::Working && self.latest_update_elapsed() > timeout_error {
                     self.disable_fas()?;
                 }
 
@@ -128,7 +135,7 @@ impl<P: PerformanceController> Looper<P> {
     }
 
     fn do_normal_policy(&mut self, target_fps: Option<u32>) -> Result<()> {
-        if !self.start_delayed {
+        if self.state != State::Working {
             return Ok(());
         }
 
@@ -149,15 +156,14 @@ impl<P: PerformanceController> Looper<P> {
 
         match event {
             NormalEvent::Release => {
-                if self.last_control.elapsed() * target_fps > Duration::from_secs(1) {
-                    self.last_control = Instant::now();
-                    self.limit_delay = Duration::from_secs(1);
-                    self.controller.release(self.mode, &self.config)?;
-                }
+                self.last_limit = Instant::now();
+                self.controller.release(self.mode, &self.config)?;
             }
             NormalEvent::Restrictable => {
-                if self.last_control.elapsed() * target_fps > self.limit_delay {
-                    self.last_control = Instant::now();
+                if self.jank_state == JankEvent::None
+                    && self.last_limit.elapsed() * target_fps > self.limit_delay
+                {
+                    self.last_limit = Instant::now();
                     self.limit_delay = Duration::from_secs(1);
                     self.controller.limit(self.mode, &self.config)?;
                 }
@@ -169,7 +175,7 @@ impl<P: PerformanceController> Looper<P> {
     }
 
     fn do_jank_policy(&mut self, target_fps: Option<u32>) -> Result<()> {
-        if !self.start_delayed {
+        if self.state != State::Working {
             return Ok(());
         }
 
@@ -186,26 +192,22 @@ impl<P: PerformanceController> Looper<P> {
             return Ok(());
         };
 
-        let Some(target_fps) = target_fps else {
-            return Ok(());
-        };
-
-        match event {
-            JankEvent::BigJank => {
-                if self.last_control.elapsed() * target_fps > Duration::from_secs(1) {
-                    self.last_control = Instant::now();
+        if self.jank_state != event {
+            match event {
+                JankEvent::BigJank => {
+                    self.last_limit = Instant::now();
                     self.limit_delay = Duration::from_secs(5);
-                    self.controller.release_max(self.mode, &self.config)?;
+                    self.controller.big_jank(self.mode, &self.config)?;
                 }
-            }
-            JankEvent::Jank => {
-                if self.last_control.elapsed() * target_fps > Duration::from_secs(1) {
-                    self.last_control = Instant::now();
+                JankEvent::Jank => {
+                    self.last_limit = Instant::now();
                     self.limit_delay = Duration::from_secs(3);
-                    self.controller.release(self.mode, &self.config)?;
+                    self.controller.jank(self.mode, &self.config)?;
                 }
+                JankEvent::None => (),
             }
-            JankEvent::None => (),
+
+            self.jank_state = event;
         }
 
         Ok(())

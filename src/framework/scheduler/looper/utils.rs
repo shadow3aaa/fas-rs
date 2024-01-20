@@ -18,7 +18,7 @@ use std::{
 
 use log::info;
 
-use super::{super::FasData, Buffer, Looper};
+use super::{super::FasData, policy::JankEvent, Buffer, Looper, State};
 use crate::framework::{config::TargetFps, error::Result, PerformanceController};
 
 impl<P: PerformanceController> Looper<P> {
@@ -36,26 +36,28 @@ impl<P: PerformanceController> Looper<P> {
     }
 
     pub fn disable_fas(&mut self) -> Result<()> {
-        if self.start {
+        if self.state != State::NotWorking {
             self.controller.init_default(self.mode, &self.config)?;
-            self.start = false;
-            self.start_delayed = false;
+            self.state = State::NotWorking;
+            self.jank_state = JankEvent::None;
         }
 
         Ok(())
     }
 
     pub fn enable_fas(&mut self) -> Result<()> {
-        if !self.start {
-            self.delay_timer = Instant::now();
-            self.start = true;
-            return Ok(());
-        }
-
-        // 延迟10秒启动fas
-        if !self.start_delayed && self.delay_timer.elapsed() > Duration::from_secs(10) {
-            self.controller.init_game(self.mode, &self.config)?;
-            self.start_delayed = true;
+        match self.state {
+            State::NotWorking => {
+                self.delay_timer = Instant::now();
+                self.state = State::Waiting;
+            }
+            State::Waiting => {
+                if self.delay_timer.elapsed() > Duration::from_secs(10) {
+                    self.controller.init_game(self.mode, &self.config)?;
+                    self.state = State::Working;
+                }
+            }
+            State::Working => (),
         }
 
         Ok(())
