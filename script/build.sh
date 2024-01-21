@@ -103,6 +103,7 @@ build() {
 		$STRIP $TEMPDIR/zygisk/arm64-v8a.so
 
 		cd $TEMPDIR
+		rm -f "../../fas-rs(debug).zip"
 		zip -9 -rq "../../fas-rs(debug).zip" .
 
 		echo "Module Packaged: output/fas-rs(debug).zip"
@@ -127,6 +128,7 @@ build() {
 		$STRIP $TEMPDIR/zygisk/arm64-v8a.so
 
 		cd $TEMPDIR
+		rm -f "../../fas-rs(release).zip"
 		zip -9 -rq "../../fas-rs(release).zip" .
 
 		echo "Module Packaged: output/fas-rs(release).zip"
