@@ -18,7 +18,8 @@ use super::super::buffer::Buffer;
 #[derive(Debug, Clone, Copy)]
 pub struct PolicyData {
     pub target_fps: u32,
-    pub normalized_frame: Duration,
+    pub normalized_last_frame: Duration,
+    pub normalized_unit_frame: Duration,
     pub normalized_avg_frame: Duration,
 }
 
@@ -30,12 +31,18 @@ impl PolicyData {
         let len = frames.len();
         let frame = frames.into_iter().sum::<Duration>() / len as u32;
 
+        let normalized_last_frame = buffer.frametimes.front().copied()?;
         let normalized_avg_frame = buffer.avg_time * target_fps;
-        let normalized_frame = frame * target_fps;
+        let normalized_unit_frame = frame.mul_f64(
+            buffer
+                .current_fps
+                .clamp(f64::from(target_fps) - 1.0, f64::from(target_fps)),
+        );
 
         Some(Self {
             target_fps,
-            normalized_frame,
+            normalized_last_frame,
+            normalized_unit_frame,
             normalized_avg_frame,
         })
     }

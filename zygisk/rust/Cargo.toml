@@ -30,6 +30,6 @@ overflow-checks = false
 overflow-checks = false
 codegen-units = 1
 lto = 'fat'
-opt-level = 's'
+opt-level = 'z'
 strip = true
 panic = 'abort'

@@ -106,10 +106,10 @@ impl PerformanceController for CpuCommon {
 
     fn jank(&self, _m: Mode, _c: &Config) -> FrameworkResult<()> {
         let current_freq = self.fas_freq.get();
-        self.fas_freq.set(current_freq + 50000);
         let released_freq = current_freq
             .saturating_add(100_000)
             .min(self.freqs.last().copied().unwrap());
+        self.fas_freq.set(released_freq);
 
         for policy in &self.policies {
             let _ = policy.set_fas_freq(released_freq);

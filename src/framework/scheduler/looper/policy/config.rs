@@ -29,7 +29,7 @@ impl PolicyConfig {
         let target_fps = buffer.target_fps.unwrap_or(10);
         let target_fps = f64::from(target_fps);
         let acc_dur = 1.0 / buffer.deviation;
-        let acc_dur = acc_dur.clamp(1.0, 10.0);
+        let acc_dur = acc_dur.ceil().clamp(1.0, 5.0);
 
         let scale = config.mode_config(mode).scale;
         let scale = acc_dur * scale / target_fps;

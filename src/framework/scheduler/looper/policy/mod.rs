@@ -14,7 +14,7 @@
 pub mod config;
 mod extract;
 
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 #[cfg(debug_assertions)]
 use log::debug;
@@ -71,7 +71,7 @@ impl Buffer {
     }
 
     fn frame_analyze(&mut self, config: PolicyConfig, policy_data: PolicyData) -> NormalEvent {
-        let diff = policy_data.normalized_frame.as_secs_f64() - 1.0;
+        let diff = policy_data.normalized_unit_frame.as_secs_f64() - 1.0;
         self.acc_frame += diff;
 
         if self.acc_timer.elapsed() * policy_data.target_fps < config.acc_dur {
@@ -97,16 +97,17 @@ impl Buffer {
     }
 
     fn jank_analyze(&mut self, config: PolicyConfig, policy_data: PolicyData) -> JankEvent {
-        let diff = policy_data.normalized_avg_frame.as_secs_f64() - 1.0;
+        let diff_avg = policy_data.normalized_avg_frame.as_secs_f64() - 1.0;
+        let last_frame = policy_data.normalized_last_frame;
 
-        if diff >= config.big_jank_scale {
+        if last_frame >= Duration::from_millis(1700) || diff_avg >= config.big_jank_scale {
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
 
             self.acc_frame = 0.0;
 
             JankEvent::BigJank
-        } else if diff >= config.jank_scale {
+        } else if last_frame >= Duration::from_millis(5000) || diff_avg >= config.jank_scale {
             #[cfg(debug_assertions)]
             debug!("JANK: simp jank");
 

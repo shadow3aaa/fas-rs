@@ -192,8 +192,11 @@ impl<P: PerformanceController> Looper<P> {
             return Ok(());
         };
 
-        if self.jank_state != event {
-            match event {
+        if event == JankEvent::None {
+            self.jank_state = event;
+        } else {
+            self.jank_state = event.max(self.jank_state);
+            match self.jank_state {
                 JankEvent::BigJank => {
                     self.last_limit = Instant::now();
                     self.limit_delay = Duration::from_secs(5);
@@ -206,8 +209,6 @@ impl<P: PerformanceController> Looper<P> {
                 }
                 JankEvent::None => (),
             }
-
-            self.jank_state = event;
         }
 
         Ok(())
