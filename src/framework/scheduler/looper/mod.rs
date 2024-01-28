@@ -90,7 +90,8 @@ impl Looper {
         loop {
             let new_mode = self.node.get_mode()?;
             if self.mode != new_mode && self.state == State::Working {
-                self.controller.init_game(new_mode, &self.config);
+                self.controller
+                    .init_game(new_mode, &self.config, &self.extension);
                 self.mode = new_mode;
             }
 
@@ -168,7 +169,7 @@ impl Looper {
         match event {
             NormalEvent::Release => {
                 self.last_limit = Instant::now();
-                self.controller.release();
+                self.controller.release(&self.extension);
             }
             NormalEvent::Restrictable => {
                 if self.jank_state == JankEvent::None
@@ -176,7 +177,7 @@ impl Looper {
                 {
                     self.last_limit = Instant::now();
                     self.limit_delay = Duration::from_secs(1);
-                    self.controller.limit();
+                    self.controller.limit(&self.extension);
                 }
             }
             NormalEvent::None => (),
@@ -209,12 +210,12 @@ impl Looper {
                 JankEvent::BigJank => {
                     self.last_limit = Instant::now();
                     self.limit_delay = Duration::from_secs(5);
-                    self.controller.big_jank();
+                    self.controller.big_jank(&self.extension);
                 }
                 JankEvent::Jank => {
                     self.last_limit = Instant::now();
                     self.limit_delay = Duration::from_secs(3);
-                    self.controller.jank();
+                    self.controller.jank(&self.extension);
                 }
                 JankEvent::None => (),
             }

@@ -18,8 +18,10 @@ use rlua::Function;
 use super::core::ExtensionMap;
 
 pub enum CallBacks {
-    InitFas(pid_t),
-    StopFas(pid_t),
+    LoadFas(pid_t),
+    UnloadFas(pid_t),
+    StartFas,
+    StopFas,
     InitCpuFreq,
     WriteCpuFreq(usize),
     ResetCpuFreq,
@@ -28,20 +30,38 @@ pub enum CallBacks {
 impl CallBacks {
     pub fn do_callback(self, map: &ExtensionMap) {
         match self {
-            Self::InitFas(pid) => {
+            Self::LoadFas(pid) => {
                 for (extension, lua) in map {
                     lua.context(|context| {
-                        if let Ok(func) = context.globals().get::<_, Function>("init_fas") {
+                        if let Ok(func) = context.globals().get::<_, Function>("load_fas") {
                             func.call(pid).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
                         }
                     });
                 }
             }
-            Self::StopFas(pid) => {
+            Self::UnloadFas(pid) => {
+                for (extension, lua) in map {
+                    lua.context(|context| {
+                        if let Ok(func) = context.globals().get::<_, Function>("unload_fas") {
+                            func.call(pid).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
+                        }
+                    });
+                }
+            }
+            Self::StartFas => {
+                for (extension, lua) in map {
+                    lua.context(|context| {
+                        if let Ok(func) = context.globals().get::<_, Function>("start_fas") {
+                        func.call(()).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
+                        }
+                    });
+                }
+            }
+            Self::StopFas => {
                 for (extension, lua) in map {
                     lua.context(|context| {
                         if let Ok(func) = context.globals().get::<_, Function>("stop_fas") {
-                            func.call(pid).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
+                        func.call(()).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
                         }
                     });
                 }

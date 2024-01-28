@@ -14,7 +14,7 @@
 use std::{collections::HashMap, fs, path::PathBuf, sync::mpsc::Receiver, time::Duration};
 
 use inotify::{Inotify, WatchMask};
-use log::{error, info};
+use log::{debug, error, info};
 use rlua::Lua;
 
 use super::{callbacks::CallBacks, EXTENSIONS_PATH};
@@ -62,12 +62,37 @@ fn load_extensions() -> Result<ExtensionMap> {
         let path = file.path();
         let file = fs::read_to_string(&path)?;
 
-        match lua.context(|context| context.load(&file).exec()) {
-            Ok(()) => info!("Extension loaded successfully: {path:?}"),
+        match lua.context(|context| {
+            context.globals().set(
+                "log_info",
+                context.create_function(|_, message: String| {
+                    info!("extension: {message}");
+                    Ok(())
+                })?,
+            )?;
+            context.globals().set(
+                "log_debug",
+                context.create_function(|_, message: String| {
+                    debug!("extension: {message}");
+                    Ok(())
+                })?,
+            )?;
+            context.globals().set(
+                "log_error",
+                context.create_function(|_, message: String| {
+                    error!("extension: {message}");
+                    Ok(())
+                })?,
+            )?;
+
+            context.load(&file).exec()
+        }) {
+            Ok(()) => {
+                info!("Extension loaded successfully: {path:?}");
+                map.insert(path, lua);
+            }
             Err(e) => error!("Extension loading failed, reason: {e:#?}"),
         }
-
-        map.insert(path, lua);
     }
 
     Ok(map)
