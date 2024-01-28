@@ -35,6 +35,7 @@ pub struct Policy {
     pub num: u8,
     pub path: PathBuf,
     pub freqs: Vec<Freq>,
+    cache: Cell<Freq>,
     fas_boost: Cell<bool>,
     gov_snapshot: RefCell<Option<String>>,
     force_bound: Option<Bounder>,
@@ -74,6 +75,7 @@ impl Policy {
             num,
             path: path.to_path_buf(),
             freqs,
+            cache: Cell::new(0),
             fas_boost: Cell::new(false),
             gov_snapshot: RefCell::new(None),
             force_bound,
@@ -102,6 +104,10 @@ impl Policy {
     }
 
     pub fn set_fas_freq(&self, f: Freq) -> Result<()> {
+        if f == self.cache.get() {
+            return Ok(());
+        }
+
         if self.fas_boost.get() {
             if self.little {
                 return Ok(());
@@ -123,6 +129,8 @@ impl Policy {
                 bounder.force_freq(self.num, first_freq, f)?;
             }
         }
+
+        self.cache.set(f);
 
         Ok(())
     }

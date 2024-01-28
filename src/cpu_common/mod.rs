@@ -15,7 +15,7 @@ mod policy;
 
 use std::{cell::Cell, collections::HashSet, ffi::OsStr, fs};
 
-use crate::framework::{prelude::*, Result as FrameworkResult};
+use crate::framework::prelude::*;
 use anyhow::Result;
 
 use policy::Policy;
@@ -75,10 +75,8 @@ impl CpuCommon {
             let _ = policy.set_fas_freq(last_freq);
         }
     }
-}
 
-impl PerformanceController for CpuCommon {
-    fn limit(&self, _m: Mode, _c: &Config) -> FrameworkResult<()> {
+    pub fn limit(&self) {
         let current_freq = self.fas_freq.get();
         let limited_freq = current_freq.saturating_sub(50000).max(self.freqs[0]);
         self.fas_freq.set(limited_freq);
@@ -86,11 +84,9 @@ impl PerformanceController for CpuCommon {
         for policy in &self.policies {
             let _ = policy.set_fas_freq(limited_freq);
         }
-
-        Ok(())
     }
 
-    fn release(&self, _m: Mode, _c: &Config) -> FrameworkResult<()> {
+    pub fn release(&self) {
         let current_freq = self.fas_freq.get();
         let released_freq = current_freq
             .saturating_add(50000)
@@ -100,11 +96,9 @@ impl PerformanceController for CpuCommon {
         for policy in &self.policies {
             let _ = policy.set_fas_freq(released_freq);
         }
-
-        Ok(())
     }
 
-    fn jank(&self, _m: Mode, _c: &Config) -> FrameworkResult<()> {
+    pub fn jank(&self) {
         let current_freq = self.fas_freq.get();
         let released_freq = current_freq
             .saturating_add(100_000)
@@ -114,37 +108,29 @@ impl PerformanceController for CpuCommon {
         for policy in &self.policies {
             let _ = policy.set_fas_freq(released_freq);
         }
-
-        Ok(())
     }
 
-    fn big_jank(&self, _m: Mode, _c: &Config) -> FrameworkResult<()> {
+    pub fn big_jank(&self) {
         let max_freq = self.freqs.last().copied().unwrap();
 
         for policy in &self.policies {
             let _ = policy.set_fas_freq(max_freq);
         }
-
-        Ok(())
     }
 
-    fn init_game(&self, m: Mode, c: &Config) -> FrameworkResult<()> {
+    pub fn init_game(&self, m: Mode, c: &Config) {
         self.reset_freq();
 
         for policy in &self.policies {
             let _ = policy.init_game(m, c);
         }
-
-        Ok(())
     }
 
-    fn init_default(&self, _m: Mode, _c: &Config) -> FrameworkResult<()> {
+    pub fn init_default(&self) {
         self.reset_freq();
 
         for policy in &self.policies {
             let _ = policy.init_default();
         }
-
-        Ok(())
     }
 }
