@@ -21,8 +21,9 @@ use super::{
     config::{Config, TargetFps},
     error::{Error, Result},
     node::Node,
-    PerformanceController,
+    Extension,
 };
+use crate::CpuCommon;
 
 use self::binder::FasServer;
 use looper::Looper;
@@ -43,12 +44,12 @@ pub struct FasData {
     pub cpu: i32,
 }
 
-pub struct Scheduler<P: PerformanceController> {
-    controller: Option<P>,
+pub struct Scheduler {
+    controller: Option<CpuCommon>,
     config: Option<Config>,
 }
 
-impl<P: PerformanceController> Scheduler<P> {
+impl Scheduler {
     #[must_use]
     pub const fn new() -> Self {
         Self {
@@ -66,13 +67,14 @@ impl<P: PerformanceController> Scheduler<P> {
 
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
-    pub fn controller(mut self, c: P) -> Self {
+    pub fn controller(mut self, c: CpuCommon) -> Self {
         self.controller = Some(c);
         self
     }
 
     pub fn start_run(self) -> Result<()> {
         let node = Node::init()?;
+        let extension = Extension::init()?;
         let config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
 
         let controller = self
@@ -81,6 +83,6 @@ impl<P: PerformanceController> Scheduler<P> {
 
         let rx = FasServer::run_server(config.clone())?;
 
-        Looper::new(rx, config, node, controller).enter_loop()
+        Looper::new(rx, config, node, extension, controller).enter_loop()
     }
 }

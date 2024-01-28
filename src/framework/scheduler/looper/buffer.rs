@@ -63,7 +63,6 @@ impl Buffer {
         self.frametimes
             .truncate(self.target_fps.unwrap_or(60) as usize * BUFFER_LEN_SECS);
         self.calculate_current_fps();
-        self.calculate_deviation();
 
         if self.timer.elapsed() >= Duration::from_secs(BUFFER_LEN_SECS as u64) {
             self.timer = Instant::now();
@@ -122,31 +121,5 @@ impl Buffer {
         }
 
         self.target_fps = target_fpses.last().copied();
-    }
-
-    pub fn calculate_deviation(&mut self) {
-        if self.frametimes.is_empty() {
-            return;
-        }
-
-        if let Some(target_fps) = self.target_fps {
-            let avg = self.avg_time * target_fps;
-
-            let standard_deviation: f64 = {
-                let total: f64 = self
-                    .frametimes
-                    .iter()
-                    .copied()
-                    .map(|f| f.as_secs_f64() * f64::from(target_fps)) // normalization
-                    .map(|f| (f - avg.as_secs_f64()).abs())
-                    .sum();
-                total / self.frametimes.len() as f64
-            };
-
-            #[cfg(debug_assertions)]
-            debug!("standard deviation: {standard_deviation:.2}");
-
-            self.deviation = standard_deviation;
-        }
     }
 }

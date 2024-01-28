@@ -19,33 +19,35 @@ use std::{
 use log::info;
 
 use super::{super::FasData, policy::JankEvent, Buffer, Looper, State};
-use crate::framework::{config::TargetFps, error::Result, PerformanceController};
+use crate::framework::{config::TargetFps, CallBacks};
 
-impl<P: PerformanceController> Looper<P> {
-    pub fn retain_topapp(&mut self) -> Result<()> {
-        self.buffers
-            .retain(|(_, p), _| self.topapp_checker.is_topapp(*p));
+impl Looper {
+    pub fn retain_topapp(&mut self) {
+        self.buffers.retain(|(_, p), _| {
+            if self.topapp_checker.is_topapp(*p) {
+                true
+            } else {
+                self.extension.call_extentions(CallBacks::StopFas(*p));
+                false
+            }
+        });
 
         if self.buffers.is_empty() {
-            self.disable_fas()?;
+            self.disable_fas();
         } else {
-            self.enable_fas()?;
+            self.enable_fas();
         }
-
-        Ok(())
     }
 
-    pub fn disable_fas(&mut self) -> Result<()> {
+    pub fn disable_fas(&mut self) {
         if self.state != State::NotWorking {
-            self.controller.init_default(self.mode, &self.config)?;
+            self.controller.init_default();
             self.state = State::NotWorking;
             self.jank_state = JankEvent::None;
         }
-
-        Ok(())
     }
 
-    pub fn enable_fas(&mut self) -> Result<()> {
+    pub fn enable_fas(&mut self) {
         match self.state {
             State::NotWorking => {
                 self.delay_timer = Instant::now();
@@ -53,14 +55,12 @@ impl<P: PerformanceController> Looper<P> {
             }
             State::Waiting => {
                 if self.delay_timer.elapsed() > Duration::from_secs(10) {
-                    self.controller.init_game(self.mode, &self.config)?;
+                    self.controller.init_game(self.mode, &self.config);
                     self.state = State::Working;
                 }
             }
             State::Working => (),
         }
-
-        Ok(())
     }
 
     pub fn buffer_update(&mut self, d: &FasData) {
@@ -86,6 +86,8 @@ impl<P: PerformanceController> Looper<P> {
             }
             Entry::Vacant(v) => {
                 info!("New fas buffer on game: [{}] pid: [{}]", d.pkg, d.pid);
+
+                self.extension.call_extentions(CallBacks::InitFas(d.pid));
 
                 let mut buffer = Buffer::new(target_fps);
                 buffer.push_frametime(frametime);

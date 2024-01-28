@@ -12,23 +12,15 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 #![allow(dead_code)]
-
 pub mod config;
 mod error;
+mod extension;
 mod node;
 pub mod prelude;
 mod scheduler;
 
 pub use config::Config;
 pub use error::Result;
+pub use extension::{CallBacks, Extension};
 pub use node::Mode;
 pub use scheduler::Scheduler;
-
-pub trait PerformanceController: Send {
-    fn limit(&self, m: Mode, c: &Config) -> Result<()>;
-    fn release(&self, m: Mode, c: &Config) -> Result<()>;
-    fn jank(&self, m: Mode, c: &Config) -> Result<()>;
-    fn big_jank(&self, m: Mode, c: &Config) -> Result<()>;
-    fn init_game(&self, m: Mode, c: &Config) -> Result<()>;
-    fn init_default(&self, m: Mode, c: &Config) -> Result<()>;
-}

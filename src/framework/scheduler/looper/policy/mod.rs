@@ -74,7 +74,7 @@ impl Buffer {
         let diff = policy_data.normalized_unit_frame.as_secs_f64() - 1.0;
         self.acc_frame += diff;
 
-        if self.acc_timer.elapsed() * policy_data.target_fps < config.acc_dur {
+        if self.acc_timer.elapsed() * policy_data.target_fps < Duration::from_secs(1) {
             return NormalEvent::None;
         }
 

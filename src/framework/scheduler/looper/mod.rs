@@ -22,11 +22,14 @@ use std::{
 };
 
 use super::{topapp::TimedWatcher, BinderMessage, FasData};
-use crate::framework::{
-    config::Config,
-    error::{Error, Result},
-    node::{Mode, Node},
-    PerformanceController,
+use crate::{
+    framework::{
+        config::Config,
+        error::{Error, Result},
+        node::{Mode, Node},
+        Extension,
+    },
+    CpuCommon,
 };
 
 use buffer::Buffer;
@@ -42,12 +45,13 @@ enum State {
     Working,
 }
 
-pub struct Looper<P: PerformanceController> {
+pub struct Looper {
     rx: Receiver<BinderMessage>,
     config: Config,
     node: Node,
+    extension: Extension,
     mode: Mode,
-    controller: P,
+    controller: CpuCommon,
     topapp_checker: TimedWatcher,
     buffers: Buffers,
     state: State,
@@ -57,12 +61,19 @@ pub struct Looper<P: PerformanceController> {
     limit_delay: Duration,
 }
 
-impl<P: PerformanceController> Looper<P> {
-    pub fn new(rx: Receiver<BinderMessage>, config: Config, node: Node, controller: P) -> Self {
+impl Looper {
+    pub fn new(
+        rx: Receiver<BinderMessage>,
+        config: Config,
+        node: Node,
+        extension: Extension,
+        controller: CpuCommon,
+    ) -> Self {
         Self {
             rx,
             config,
             node,
+            extension,
             mode: Mode::Balance,
             controller,
             topapp_checker: TimedWatcher::new(),
@@ -79,7 +90,7 @@ impl<P: PerformanceController> Looper<P> {
         loop {
             let new_mode = self.node.get_mode()?;
             if self.mode != new_mode && self.state == State::Working {
-                self.controller.init_game(new_mode, &self.config)?;
+                self.controller.init_game(new_mode, &self.config);
                 self.mode = new_mode;
             }
 
@@ -93,8 +104,8 @@ impl<P: PerformanceController> Looper<P> {
             if let Some(message) = self.recv_message(target_fps)? {
                 match message {
                     BinderMessage::Data(d) => {
-                        self.consume_data(&d)?;
-                        self.do_normal_policy(target_fps)?;
+                        self.consume_data(&d);
+                        self.do_normal_policy(target_fps);
                     }
                     BinderMessage::RemoveBuffer(k) => {
                         self.buffers.remove(&k);
@@ -102,7 +113,7 @@ impl<P: PerformanceController> Looper<P> {
                 }
             }
 
-            self.do_jank_policy(target_fps)?;
+            self.do_jank_policy(target_fps);
         }
     }
 
@@ -118,10 +129,10 @@ impl<P: PerformanceController> Looper<P> {
                     return Err(Error::Other("Binder Server Disconnected"));
                 }
 
-                self.retain_topapp()?;
+                self.retain_topapp();
 
                 if self.state == State::Working && self.latest_update_elapsed() > timeout_error {
-                    self.disable_fas()?;
+                    self.disable_fas();
                 }
 
                 Ok(None)
@@ -129,14 +140,14 @@ impl<P: PerformanceController> Looper<P> {
         }
     }
 
-    fn consume_data(&mut self, data: &FasData) -> Result<()> {
+    fn consume_data(&mut self, data: &FasData) {
         self.buffer_update(data);
-        self.retain_topapp()
+        self.retain_topapp();
     }
 
-    fn do_normal_policy(&mut self, target_fps: Option<u32>) -> Result<()> {
+    fn do_normal_policy(&mut self, target_fps: Option<u32>) {
         if self.state != State::Working {
-            return Ok(());
+            return;
         }
 
         let Some(event) = self
@@ -146,18 +157,18 @@ impl<P: PerformanceController> Looper<P> {
             .map(|buffer| buffer.normal_event(&self.config, self.mode))
             .max()
         else {
-            self.disable_fas()?;
-            return Ok(());
+            self.disable_fas();
+            return;
         };
 
         let Some(target_fps) = target_fps else {
-            return Ok(());
+            return;
         };
 
         match event {
             NormalEvent::Release => {
                 self.last_limit = Instant::now();
-                self.controller.release(self.mode, &self.config)?;
+                self.controller.release();
             }
             NormalEvent::Restrictable => {
                 if self.jank_state == JankEvent::None
@@ -165,18 +176,16 @@ impl<P: PerformanceController> Looper<P> {
                 {
                     self.last_limit = Instant::now();
                     self.limit_delay = Duration::from_secs(1);
-                    self.controller.limit(self.mode, &self.config)?;
+                    self.controller.limit();
                 }
             }
             NormalEvent::None => (),
         }
-
-        Ok(())
     }
 
-    fn do_jank_policy(&mut self, target_fps: Option<u32>) -> Result<()> {
+    fn do_jank_policy(&mut self, target_fps: Option<u32>) {
         if self.state != State::Working {
-            return Ok(());
+            return;
         }
 
         self.buffers.values_mut().for_each(Buffer::frame_prepare);
@@ -188,8 +197,8 @@ impl<P: PerformanceController> Looper<P> {
             .map(|buffer| buffer.jank_event(&self.config, self.mode))
             .max()
         else {
-            self.disable_fas()?;
-            return Ok(());
+            self.disable_fas();
+            return;
         };
 
         if event == JankEvent::None {
@@ -200,17 +209,15 @@ impl<P: PerformanceController> Looper<P> {
                 JankEvent::BigJank => {
                     self.last_limit = Instant::now();
                     self.limit_delay = Duration::from_secs(5);
-                    self.controller.big_jank(self.mode, &self.config)?;
+                    self.controller.big_jank();
                 }
                 JankEvent::Jank => {
                     self.last_limit = Instant::now();
                     self.limit_delay = Duration::from_secs(3);
-                    self.controller.jank(self.mode, &self.config)?;
+                    self.controller.jank();
                 }
                 JankEvent::None => (),
             }
         }
-
-        Ok(())
     }
 }

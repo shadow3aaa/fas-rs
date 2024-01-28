@@ -11,52 +11,20 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+mod power_mode;
+
 use std::{
     collections::HashMap,
     fs,
     path::Path,
-    str::FromStr,
     time::{Duration, Instant},
 };
 
-use super::error::{Error, Result};
+use crate::framework::error::{Error, Result};
+pub use power_mode::Mode;
 
 const NODE_PATH: &str = "/dev/fas_rs";
 const REFRESH_TIME: Duration = Duration::from_secs(1);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Mode {
-    Powersave,
-    Balance,
-    Performance,
-    Fast,
-}
-
-impl FromStr for Mode {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self> {
-        Ok(match s {
-            "powersave" => Self::Powersave,
-            "balance" => Self::Balance,
-            "performance" => Self::Performance,
-            "fast" => Self::Fast,
-            _ => return Err(Error::ParseNode),
-        })
-    }
-}
-
-impl ToString for Mode {
-    fn to_string(&self) -> String {
-        match self {
-            Self::Powersave => "powersave",
-            Self::Balance => "balance",
-            Self::Performance => "performance",
-            Self::Fast => "fast",
-        }
-        .into()
-    }
-}
 
 pub struct Node {
     map: HashMap<String, (String, Instant)>,
@@ -66,14 +34,15 @@ pub struct Node {
 
 impl Node {
     pub fn init() -> Result<Self> {
-        let _ = fs::remove_dir_all(NODE_PATH);
-        fs::create_dir(NODE_PATH)?;
+        let _ = fs::create_dir(NODE_PATH);
 
         let mut result = Self {
             map: HashMap::new(),
             mode: Mode::Balance,
             mode_timer: Instant::now(),
         };
+
+        let _ = result.remove_node("mode");
         result.create_node("mode", "balance")?;
 
         Ok(result)
@@ -93,13 +62,15 @@ impl Node {
         Ok(())
     }
 
-    pub fn get_mode(&mut self) -> Result<Mode> {
-        if self.mode_timer.elapsed() > REFRESH_TIME {
-            self.mode = Self::read_mode()?;
-            self.mode_timer = Instant::now();
-        }
+    pub fn remove_node<S: AsRef<str>>(&mut self, i: S) -> Result<()> {
+        let id = i.as_ref();
 
-        Ok(self.mode)
+        let path = Path::new(NODE_PATH).join(id);
+        fs::remove_file(path)?;
+
+        self.map.remove(id);
+
+        Ok(())
     }
 
     pub fn get_node<S: AsRef<str>>(&mut self, i: S) -> Result<String> {
@@ -116,15 +87,5 @@ impl Node {
         } else {
             Err(Error::NodeNotFound)
         }
-    }
-
-    fn read_mode() -> Result<Mode> {
-        let path = Path::new(NODE_PATH).join("mode");
-
-        Mode::from_str(
-            fs::read_to_string(path)
-                .map_err(|_| Error::NodeNotFound)?
-                .trim(),
-        )
     }
 }
