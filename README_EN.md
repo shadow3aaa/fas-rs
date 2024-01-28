@@ -15,6 +15,10 @@
   - `fas-rs` is an implementation of `FAS (Frame Aware Scheduling)` running in user mode. Compared with `MI FEAS` in kernel mode, it has the same core idea but has the advantages of almost universal compatibility and flexibility on any device.
   - Compared with other user-mode `FAS` implementations (such as `scene fas`), `fas-rs` uses a more intrusive inline hook method to obtain rendering time, which brings more accurate data and smaller overhead. However, this is essentially an injection and may be misjudged by the anti-cheating system, although I have not encountered it yet.
 
+## **Extension System**
+
+  - In order to maximize the flexibility of user mode, `fas-rs` has its own extension system. For development instructions, please see our [extension template repository](https://github.com/shadow3aaa/fas-rs-extension- module-template)
+
 ## **Customization (configuration)**
 
 - ### **Configuration path: `/sdcard/Android/fas-rs/games.toml`**

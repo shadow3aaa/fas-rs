@@ -15,6 +15,10 @@
   - `fas-rs`是运行在用户态的`FAS(Frame Aware Scheduling)`实现, 对比核心思路一致但是在内核态的`MI FEAS`有着近乎在任何设备通用的兼容性和灵活性方面的优势
   - 对比其它用户态`FAS`实现(如`scene fas`), `fas-rs`采用了侵入性更强的inline hook方法获取渲染时间, 这带来了更准确的数据和更小的开销, 然而这本质上是注入, 可能被反作弊系统误判断, 虽然我还没遇到过
 
+## **插件系统**
+
+  - 为了最大化用户态的灵活性, `fas-rs`有自己的一套插件系统, 开发说明详见[插件的模板仓库](https://github.com/shadow3aaa/fas-rs-extension-module-template)
+
 ## **自定义(配置)**
 
 - ### **配置路径 : `/sdcard/Android/fas-rs/games.toml`**
