@@ -17,7 +17,7 @@
 
 ## **插件系统**
 
-  - 为了最大化用户态的灵活性, `fas-rs`有自己的一套插件系统, 开发说明详见[插件的模板仓库](https://github.com/shadow3aaa/fas-rs-extension-module-template)
+- 为了最大化用户态的灵活性, `fas-rs`有自己的一套插件系统, 开发说明详见[插件的模板仓库](https://github.com/shadow3aaa/fas-rs-extension-module-template)
 
 ## **自定义(配置)**
 
