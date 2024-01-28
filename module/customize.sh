@@ -85,3 +85,5 @@ set_perm $MODPATH/fas-rs 0 0 0755
 
 ui_print "Configuration folder: /sdcard/Android/fas-rs"
 ui_print "配置文件夹：/sdcard/Android/fas-rs"
+
+resetprop fas-rs-installed true

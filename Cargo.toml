@@ -27,6 +27,7 @@ flexi_logger = "0.27.3"
 serde_derive = "1.0.193"
 toml = "0.8.8"
 serde = "1.0.193"
+rlua = "0.19.8"
 
 [build-dependencies]
 anyhow = "1.0.79"
@@ -41,6 +42,6 @@ overflow-checks = false
 overflow-checks = false
 codegen-units = 1
 lto = "fat"
-opt-level = 'z'
+opt-level = 3
 strip = true
 panic = "abort"
