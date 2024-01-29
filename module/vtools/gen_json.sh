@@ -21,7 +21,7 @@ versionCode=$(cat $propPath | grep "versionCode=" | cut -d "=" -f2)
 json=$(
 	cat <<EOF
 {
-    "name": "FAS-RS",
+    "name": "fas-rs",
     "author": "shadow3",
     "version": "$version",
     "versionCode": ${versionCode},

@@ -1,4 +1,4 @@
-# **FAS-RS**
+# **fas-rs**
 
 - [English](README_EN.md)
 - [![Stars](https://img.shields.io/github/stars/shadow3aaa/fas-rs)](https://github.com/shadow3aaa/fas-rs)
@@ -148,7 +148,7 @@ chmod +x ./make.sh
 I'm here to introduce you the greatest thief @tryigitx !  
 So, what did he do?  
 
-- 1. He kept stealing FAS-RS module from me without any permission, and pretended to be co-developed with me.  
+- 1. He kept stealing fas-rs module from me without any permission, and pretended to be co-developed with me.  
 In fact, he hasn't developed any kind of project, just because he is not able to.
   From his homepage (<https://linktr.ee/tryigitx>), we can see he is an eXpErT! lmfao🤣🤣  
   I just can't imagine how can a real expert do these things. If @tryigitx is a real expert, pLeAsE fOrGiVe Me😭😭  
