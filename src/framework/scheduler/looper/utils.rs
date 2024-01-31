@@ -41,19 +41,19 @@ impl Looper {
 
     pub fn disable_fas(&mut self) {
         if self.state != State::NotWorking {
+            self.extension.call_extentions(CallBacks::StopFas);
             self.controller.init_default(&self.extension);
             self.state = State::NotWorking;
             self.jank_state = JankEvent::None;
-            self.extension.call_extentions(CallBacks::StopFas);
         }
     }
 
     pub fn enable_fas(&mut self) {
         match self.state {
             State::NotWorking => {
+                self.extension.call_extentions(CallBacks::StartFas);
                 self.delay_timer = Instant::now();
                 self.state = State::Waiting;
-                self.extension.call_extentions(CallBacks::StartFas);
             }
             State::Waiting => {
                 if self.delay_timer.elapsed() > Duration::from_secs(10) {
@@ -88,9 +88,9 @@ impl Looper {
                 o.get_mut().push_frametime(frametime);
             }
             Entry::Vacant(v) => {
-                info!("New fas buffer on game: [{}] pid: [{}]", d.pkg, d.pid);
-
                 self.extension.call_extentions(CallBacks::LoadFas(d.pid));
+
+                info!("New fas buffer on game: [{}] pid: [{}]", d.pkg, d.pid);
 
                 let mut buffer = Buffer::new(target_fps);
                 buffer.push_frametime(frametime);

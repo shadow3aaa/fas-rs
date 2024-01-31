@@ -71,11 +71,11 @@ impl CpuCommon {
         let last_freq = self.freqs.last().copied().unwrap();
         self.fas_freq.set(last_freq);
 
+        extension.call_extentions(CallBacks::WriteCpuFreq(last_freq));
+
         for policy in &self.policies {
             let _ = policy.set_fas_freq(last_freq);
         }
-
-        extension.call_extentions(CallBacks::WriteCpuFreq(last_freq));
     }
 
     pub fn limit(&self, extension: &Extension) {
@@ -83,11 +83,11 @@ impl CpuCommon {
         let limited_freq = current_freq.saturating_sub(50000).max(self.freqs[0]);
         self.fas_freq.set(limited_freq);
 
+        extension.call_extentions(CallBacks::WriteCpuFreq(limited_freq));
+
         for policy in &self.policies {
             let _ = policy.set_fas_freq(limited_freq);
         }
-
-        extension.call_extentions(CallBacks::WriteCpuFreq(limited_freq));
     }
 
     pub fn release(&self, extension: &Extension) {
@@ -97,11 +97,11 @@ impl CpuCommon {
             .min(self.freqs.last().copied().unwrap());
         self.fas_freq.set(released_freq);
 
+        extension.call_extentions(CallBacks::WriteCpuFreq(released_freq));
+
         for policy in &self.policies {
             let _ = policy.set_fas_freq(released_freq);
         }
-
-        extension.call_extentions(CallBacks::WriteCpuFreq(released_freq));
     }
 
     pub fn jank(&self, extension: &Extension) {
@@ -111,40 +111,40 @@ impl CpuCommon {
             .min(self.freqs.last().copied().unwrap());
         self.fas_freq.set(released_freq);
 
+        extension.call_extentions(CallBacks::WriteCpuFreq(released_freq));
+
         for policy in &self.policies {
             let _ = policy.set_fas_freq(released_freq);
         }
-
-        extension.call_extentions(CallBacks::WriteCpuFreq(released_freq));
     }
 
     pub fn big_jank(&self, extension: &Extension) {
         let max_freq = self.freqs.last().copied().unwrap();
 
+        extension.call_extentions(CallBacks::WriteCpuFreq(max_freq));
+
         for policy in &self.policies {
             let _ = policy.set_fas_freq(max_freq);
         }
-
-        extension.call_extentions(CallBacks::WriteCpuFreq(max_freq));
     }
 
     pub fn init_game(&self, m: Mode, c: &Config, extension: &Extension) {
         self.reset_freq(extension);
 
+        extension.call_extentions(CallBacks::InitCpuFreq);
+
         for policy in &self.policies {
             let _ = policy.init_game(m, c);
         }
-
-        extension.call_extentions(CallBacks::InitCpuFreq);
     }
 
     pub fn init_default(&self, extension: &Extension) {
         self.reset_freq(extension);
 
+        extension.call_extentions(CallBacks::ResetCpuFreq);
+
         for policy in &self.policies {
             let _ = policy.init_default();
         }
-
-        extension.call_extentions(CallBacks::ResetCpuFreq);
     }
 }
