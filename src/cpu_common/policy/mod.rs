@@ -11,7 +11,6 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-mod force_bound;
 mod utils;
 
 use std::{
@@ -27,7 +26,6 @@ use likely_stable::LikelyOption;
 
 use super::Freq;
 use crate::{error::Error, framework::prelude::*};
-use force_bound::Bounder;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Policy {
@@ -38,7 +36,6 @@ pub struct Policy {
     cache: Cell<Freq>,
     fas_boost: Cell<bool>,
     gov_snapshot: RefCell<Option<String>>,
-    force_bound: Option<Bounder>,
 }
 
 impl Ord for Policy {
@@ -68,8 +65,6 @@ impl Policy {
             .and_then_likely(|p| p.replace("policy", "").trim().parse().ok())
             .ok_or(Error::Other("Failed to parse cpufreq policy num"))?;
 
-        let force_bound = Bounder::new();
-
         Ok(Self {
             little: false,
             num,
@@ -78,19 +73,10 @@ impl Policy {
             cache: Cell::new(0),
             fas_boost: Cell::new(false),
             gov_snapshot: RefCell::new(None),
-            force_bound,
         })
     }
 
     pub fn init_default(&self) -> Result<()> {
-        if let Some(ref bounder) = self.force_bound {
-            bounder.force_freq(
-                self.num,
-                self.freqs.first().copied().unwrap(),
-                self.freqs.last().copied().unwrap(),
-            )?;
-        }
-
         self.unlock_min_freq(self.freqs[0])?;
         self.unlock_max_freq(self.freqs.last().copied().unwrap())?;
         self.reset_gov()
@@ -116,18 +102,10 @@ impl Policy {
             self.lock_min_freq(f)?;
             let last_freq = self.freqs.last().copied().unwrap();
             self.lock_max_freq(last_freq)?;
-
-            if let Some(ref bounder) = self.force_bound {
-                bounder.force_freq(self.num, f, last_freq)?;
-            }
         } else {
             self.lock_max_freq(f)?;
             let first_freq = self.freqs.first().copied().unwrap();
             self.lock_min_freq(first_freq)?;
-
-            if let Some(ref bounder) = self.force_bound {
-                bounder.force_freq(self.num, first_freq, f)?;
-            }
         }
 
         self.cache.set(f);
