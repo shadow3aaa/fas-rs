@@ -13,29 +13,29 @@ keep_std = true
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
 [powersave]
-big_jank_scale = 5.0
+big_jank_scale_ms = 83
 fas_boost = false
-jank_scale = 3.0
-scale = 0.5
+jank_scale_ms = 50
+scale_ms = 8
 use_performance_governor = false
 
 [balance]
-big_jank_scale = 5.0
+big_jank_scale_ms = 75
 fas_boost = false
-jank_scale = 3.0
-scale = 0.25
+jank_scale_ms = 50
+scale_ms = 4
 use_performance_governor = true
 
 [performance]
-big_jank_scale = 4.5
+big_jank_scale_ms = 75
 fas_boost = false
-jank_scale = 2.5
-scale = 0.23
+jank_scale_ms = 41
+scale_ms = 3
 use_performance_governor = true
 
 [fast]
-big_jank_scale = 3.0
+big_jank_scale_ms = 83
 fas_boost = true
-jank_scale = 3.0
-scale = 0.25
+jank_scale_ms = 50
+scale_ms = 4
 use_performance_governor = false

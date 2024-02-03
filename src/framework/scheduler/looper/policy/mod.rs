@@ -43,7 +43,7 @@ impl Buffer {
     pub fn normal_event(&mut self, config: &Config, mode: Mode) -> NormalEvent {
         let config = PolicyConfig::new(config, mode, self);
         let Some(policy_data) = PolicyData::extract(self) else {
-            return NormalEvent::None;
+            return NormalEvent::Release;
         };
 
         #[cfg(debug_assertions)]
@@ -58,7 +58,7 @@ impl Buffer {
     pub fn jank_event(&mut self, config: &Config, mode: Mode) -> JankEvent {
         let config = PolicyConfig::new(config, mode, self);
         let Some(policy_data) = PolicyData::extract(self) else {
-            return JankEvent::None;
+            return JankEvent::BigJank;
         };
 
         #[cfg(debug_assertions)]
@@ -71,14 +71,13 @@ impl Buffer {
     }
 
     fn frame_analyze(&mut self, config: PolicyConfig, policy_data: PolicyData) -> NormalEvent {
-        let diff = policy_data.normalized_unit_frame.as_secs_f64() - 1.0;
-        self.acc_frame += diff;
+        self.acc_frame.acc(policy_data.normalized_unit_frame);
 
         if self.acc_timer.elapsed() * policy_data.target_fps < Duration::from_secs(1) {
             return NormalEvent::None;
         }
 
-        let result = if self.acc_frame >= config.scale {
+        let result = if self.acc_frame.as_duration() >= config.scale {
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
 
@@ -90,28 +89,30 @@ impl Buffer {
             NormalEvent::Restrictable
         };
 
-        self.acc_frame = 0.0;
+        self.acc_frame.reset();
         self.acc_timer = Instant::now();
 
         result
     }
 
     fn jank_analyze(&mut self, config: PolicyConfig, policy_data: PolicyData) -> JankEvent {
-        let diff_avg = policy_data.normalized_avg_frame.as_secs_f64() - 1.0;
+        let diff_avg = policy_data
+            .normalized_avg_frame
+            .saturating_sub(Duration::from_secs(1));
         let last_frame = policy_data.normalized_last_frame;
 
         if last_frame >= Duration::from_millis(1700) || diff_avg >= config.big_jank_scale {
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
 
-            self.acc_frame = 0.0;
+            self.acc_frame.reset();
 
             JankEvent::BigJank
         } else if last_frame >= Duration::from_millis(5000) || diff_avg >= config.jank_scale {
             #[cfg(debug_assertions)]
             debug!("JANK: simp jank");
 
-            self.acc_frame = 0.0;
+            self.acc_frame.reset();
 
             JankEvent::Jank
         } else {

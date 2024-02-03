@@ -120,8 +120,6 @@ impl Looper {
 
     fn recv_message(&mut self, target_fps: Option<u32>) -> Result<Option<BinderMessage>> {
         let timeout = target_fps.map_or(Duration::from_secs(1), |t| Duration::from_secs(2) / t);
-        let timeout_error =
-            target_fps.map_or(Duration::from_secs(5), |t| Duration::from_secs(10) / t);
 
         match self.rx.recv_timeout(timeout) {
             Ok(m) => Ok(Some(m)),
@@ -131,10 +129,6 @@ impl Looper {
                 }
 
                 self.retain_topapp();
-
-                if self.state == State::Working && self.latest_update_elapsed() > timeout_error {
-                    self.disable_fas();
-                }
 
                 Ok(None)
             }
@@ -158,11 +152,12 @@ impl Looper {
             .map(|buffer| buffer.normal_event(&self.config, self.mode))
             .max()
         else {
-            self.disable_fas();
+            self.controller.release(&self.extension);
             return;
         };
 
         let Some(target_fps) = target_fps else {
+            self.controller.release(&self.extension);
             return;
         };
 
@@ -198,7 +193,7 @@ impl Looper {
             .map(|buffer| buffer.jank_event(&self.config, self.mode))
             .max()
         else {
-            self.disable_fas();
+            self.controller.release(&self.extension);
             return;
         };
 
@@ -209,12 +204,12 @@ impl Looper {
             match self.jank_state {
                 JankEvent::BigJank => {
                     self.last_limit = Instant::now();
-                    self.limit_delay = Duration::from_secs(5);
+                    self.limit_delay = Duration::from_secs(30);
                     self.controller.big_jank(&self.extension);
                 }
                 JankEvent::Jank => {
                     self.last_limit = Instant::now();
-                    self.limit_delay = Duration::from_secs(3);
+                    self.limit_delay = Duration::from_secs(5);
                     self.controller.jank(&self.extension);
                 }
                 JankEvent::None => (),

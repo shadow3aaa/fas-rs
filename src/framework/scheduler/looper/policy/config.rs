@@ -11,30 +11,28 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+use std::time::Duration;
 
 use super::super::Buffer;
 use crate::framework::{node::Mode, Config};
 
 #[derive(Debug, Clone, Copy)]
 pub struct PolicyConfig {
-    pub scale: f64,
-    pub jank_scale: f64,
-    pub big_jank_scale: f64,
+    pub scale: Duration,
+    pub jank_scale: Duration,
+    pub big_jank_scale: Duration,
 }
 
 impl PolicyConfig {
-    pub fn new(config: &Config, mode: Mode, buffer: &Buffer) -> Self {
-        let target_fps = buffer.target_fps.unwrap_or(10);
-        let target_fps = f64::from(target_fps);
+    pub fn new(config: &Config, mode: Mode, _buffer: &Buffer) -> Self {
+        let scale_ms = config.mode_config(mode).scale_ms;
+        let scale = Duration::from_millis(scale_ms);
 
-        let scale = config.mode_config(mode).scale;
-        let scale = scale / target_fps;
+        let jank_scale_ms = config.mode_config(mode).jank_scale_ms;
+        let jank_scale = Duration::from_millis(jank_scale_ms);
 
-        let jank_scale = config.mode_config(mode).jank_scale;
-        let jank_scale = jank_scale / target_fps;
-
-        let big_jank_scale = config.mode_config(mode).big_jank_scale;
-        let big_jank_scale = big_jank_scale / target_fps;
+        let big_jank_scale_ms = config.mode_config(mode).big_jank_scale_ms;
+        let big_jank_scale = Duration::from_millis(big_jank_scale_ms);
 
         Self {
             scale,

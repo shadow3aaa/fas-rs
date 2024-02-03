@@ -11,6 +11,8 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+mod frame_acc;
+
 use std::{
     collections::VecDeque,
     time::{Duration, Instant},
@@ -20,6 +22,7 @@ use std::{
 use log::debug;
 
 use crate::framework::config::TargetFps;
+pub use frame_acc::Acc;
 
 const BUFFER_LEN_SECS: usize = 3;
 
@@ -32,7 +35,7 @@ pub struct Buffer {
     pub frame_prepare: Duration,
     pub deviation: f64,
     pub last_update: Instant,
-    pub acc_frame: f64,
+    pub acc_frame: Acc,
     pub acc_timer: Instant,
     target_fps_config: TargetFps,
     timer: Instant,
@@ -48,7 +51,7 @@ impl Buffer {
             frame_prepare: Duration::ZERO,
             deviation: 0.0,
             last_update: Instant::now(),
-            acc_frame: 0.0,
+            acc_frame: Acc::new(),
             acc_timer: Instant::now(),
             timer: Instant::now(),
             target_fps_config: t,

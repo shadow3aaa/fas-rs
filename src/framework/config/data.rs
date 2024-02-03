@@ -33,7 +33,7 @@ pub struct Config {
 pub struct ModeConfig {
     pub fas_boost: bool,
     pub use_performance_governor: bool,
-    pub scale: f64,
-    pub jank_scale: f64,
-    pub big_jank_scale: f64,
+    pub scale_ms: u64,
+    pub jank_scale_ms: u64,
+    pub big_jank_scale_ms: u64,
 }

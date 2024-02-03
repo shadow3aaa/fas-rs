@@ -33,11 +33,12 @@ impl PolicyData {
 
         let normalized_last_frame = buffer.frametimes.front().copied()?;
         let normalized_avg_frame = buffer.avg_time * target_fps;
-        let normalized_unit_frame = frame.mul_f64(
+        /* let normalized_unit_frame = frame.mul_f64(
             buffer
                 .current_fps
                 .clamp(f64::from(target_fps) - 1.0, f64::from(target_fps)),
-        );
+        ); */
+        let normalized_unit_frame = frame * target_fps;
 
         Some(Self {
             target_fps,
