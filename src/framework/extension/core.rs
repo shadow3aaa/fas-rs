@@ -87,7 +87,7 @@ fn load_extensions() -> Result<ExtensionMap> {
 
             context.load(&file).exec()
         });
-        
+
         match result {
             Ok(()) => {
                 info!("Extension loaded successfully: {path:?}");

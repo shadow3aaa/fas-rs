@@ -29,7 +29,7 @@ impl PolicyData {
     pub fn extract(buffer: &Buffer) -> Option<Self> {
         let target_fps = buffer.target_fps?;
 
-        let frames: SmallVec::<[Duration; 5]> = buffer.frametimes.iter().copied().take(5).collect();
+        let frames: SmallVec<[Duration; 5]> = buffer.frametimes.iter().copied().take(5).collect();
         let len = frames.len();
         let frame = frames.into_iter().sum::<Duration>() / len as u32;
 
