@@ -35,11 +35,15 @@ impl TimedWatcher {
 
     pub fn is_topapp(&mut self, pid: i32) -> bool {
         if self.last_refresh.elapsed() > REFRESH_TIME {
-            self.cache = Self::get_top_pids().unwrap_or_default();
-            self.last_refresh = Instant::now();
+            self.refresh();
         }
 
         self.cache.contains(&pid)
+    }
+
+    pub fn refresh(&mut self) {
+        self.cache = Self::get_top_pids().unwrap_or_default();
+        self.last_refresh = Instant::now();
     }
 
     fn get_top_pids() -> Option<Vec<i32>> {

@@ -67,7 +67,7 @@ impl Buffer {
             debug!("policy data: {policy_data:?}");
         }
 
-        self.jank_analyze(config, policy_data)
+        Self::jank_analyze(config, policy_data)
     }
 
     fn frame_analyze(&mut self, config: PolicyConfig, policy_data: PolicyData) -> NormalEvent {
@@ -95,7 +95,7 @@ impl Buffer {
         result
     }
 
-    fn jank_analyze(&mut self, config: PolicyConfig, policy_data: PolicyData) -> JankEvent {
+    fn jank_analyze(config: PolicyConfig, policy_data: PolicyData) -> JankEvent {
         let diff_avg = policy_data
             .normalized_avg_frame
             .saturating_sub(Duration::from_secs(1));
@@ -105,14 +105,10 @@ impl Buffer {
             #[cfg(debug_assertions)]
             debug!("JANK: big jank");
 
-            self.acc_frame.reset();
-
             JankEvent::BigJank
         } else if last_frame >= Duration::from_millis(5000) || diff_avg >= config.jank_scale {
             #[cfg(debug_assertions)]
             debug!("JANK: simp jank");
-
-            self.acc_frame.reset();
 
             JankEvent::Jank
         } else {
