@@ -21,6 +21,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+use log::info;
+
 use super::{topapp::TimedWatcher, BinderMessage, FasData};
 use crate::{
     framework::{
@@ -88,13 +90,7 @@ impl Looper {
 
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
-            let new_mode = self.node.get_mode()?;
-            if self.mode != new_mode && self.state == State::Working {
-                self.controller
-                    .init_game(new_mode, &self.config, &self.extension);
-                self.mode = new_mode;
-            }
-
+            self.switch_mode();
             let target_fps = self
                 .buffers
                 .values()
@@ -115,6 +111,24 @@ impl Looper {
             }
 
             self.do_jank_policy(target_fps);
+        }
+    }
+
+    fn switch_mode(&mut self) {
+        if let Ok(new_mode) = self.node.get_mode() {
+            if self.mode != new_mode {
+                info!(
+                    "Switch mode: {} -> {}",
+                    self.mode.to_string(),
+                    new_mode.to_string()
+                );
+                self.mode = new_mode;
+
+                if self.state == State::Working {
+                    self.controller
+                        .init_game(new_mode, &self.config, &self.extension);
+                }
+            }
         }
     }
 
