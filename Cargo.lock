@@ -225,6 +225,7 @@ dependencies = [
  "rlua",
  "serde",
  "serde_derive",
+ "smallvec",
  "thiserror",
  "toml",
 ]

@@ -15,6 +15,8 @@ use std::time::Duration;
 
 use super::super::buffer::Buffer;
 
+use smallvec::SmallVec;
+
 #[derive(Debug, Clone, Copy)]
 pub struct PolicyData {
     pub target_fps: u32,
@@ -27,7 +29,7 @@ impl PolicyData {
     pub fn extract(buffer: &Buffer) -> Option<Self> {
         let target_fps = buffer.target_fps?;
 
-        let frames: Vec<_> = buffer.frametimes.iter().copied().take(5).collect();
+        let frames: SmallVec::<[Duration; 5]> = buffer.frametimes.iter().copied().take(5).collect();
         let len = frames.len();
         let frame = frames.into_iter().sum::<Duration>() / len as u32;
 
