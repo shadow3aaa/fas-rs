@@ -62,7 +62,7 @@ fn load_extensions() -> Result<ExtensionMap> {
         let path = file.path();
         let file = fs::read_to_string(&path)?;
 
-        match lua.context(|context| {
+        let result = lua.context(|context| {
             context.globals().set(
                 "log_info",
                 context.create_function(|_, message: String| {
@@ -86,7 +86,9 @@ fn load_extensions() -> Result<ExtensionMap> {
             )?;
 
             context.load(&file).exec()
-        }) {
+        });
+        
+        match result {
             Ok(()) => {
                 info!("Extension loaded successfully: {path:?}");
                 map.insert(path, lua);
