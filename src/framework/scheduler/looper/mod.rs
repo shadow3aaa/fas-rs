@@ -166,26 +166,23 @@ impl Looper {
             .map(|buffer| buffer.normal_event(&self.config, self.mode))
             .max()
         else {
-            self.controller.release(&self.extension);
             return;
         };
 
         let Some(target_fps) = target_fps else {
-            self.controller.release(&self.extension);
             return;
         };
 
         match event {
             NormalEvent::Release => {
-                self.last_limit = Instant::now();
+                self.update_limit_delay(Duration::from_secs(2));
                 self.controller.release(&self.extension);
             }
             NormalEvent::Restrictable => {
                 if self.jank_state == JankEvent::None
                     && self.last_limit.elapsed() * target_fps > self.limit_delay
                 {
-                    self.last_limit = Instant::now();
-                    self.limit_delay = Duration::from_secs(1);
+                    self.set_limit_delay(Duration::from_secs(1));
                     self.controller.limit(&self.extension);
                 }
             }
@@ -207,7 +204,6 @@ impl Looper {
             .map(|buffer| buffer.jank_event(&self.config, self.mode))
             .max()
         else {
-            self.controller.release(&self.extension);
             return;
         };
 
@@ -217,13 +213,11 @@ impl Looper {
             self.jank_state = event.max(self.jank_state);
             match self.jank_state {
                 JankEvent::BigJank => {
-                    self.last_limit = Instant::now();
-                    self.limit_delay = Duration::from_secs(30);
+                    self.update_limit_delay(Duration::from_secs(5));
                     self.controller.big_jank(&self.extension);
                 }
                 JankEvent::Jank => {
-                    self.last_limit = Instant::now();
-                    self.limit_delay = Duration::from_secs(5);
+                    self.update_limit_delay(Duration::from_secs(3));
                     self.controller.jank(&self.extension);
                 }
                 JankEvent::None => (),

@@ -22,6 +22,16 @@ use super::{super::FasData, policy::JankEvent, Buffer, Looper, State};
 use crate::framework::{config::TargetFps, CallBacks};
 
 impl Looper {
+    pub fn update_limit_delay(&mut self, new: Duration) {
+        self.last_limit = Instant::now();
+        self.limit_delay = self.limit_delay.max(new);
+    }
+
+    pub fn set_limit_delay(&mut self, new: Duration) {
+        self.last_limit = Instant::now();
+        self.limit_delay = new;
+    }
+
     pub fn retain_topapp(&mut self) {
         self.buffers.retain(|(_, p), _| {
             if self.topapp_checker.is_topapp(*p) {

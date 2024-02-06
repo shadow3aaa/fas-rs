@@ -83,6 +83,18 @@ impl Buffer {
 
             NormalEvent::Release
         } else {
+            let stability = self.calculate_stability();
+            let mut stability = stability.clamp(1.0, 10.0);
+            if stability.is_nan() {
+                stability = 10.0;
+            }
+
+            if self.acc_timer.elapsed() * policy_data.target_fps
+                < Duration::from_secs_f64(stability)
+            {
+                return NormalEvent::None;
+            }
+
             #[cfg(debug_assertions)]
             debug!("JANK: no jank");
 

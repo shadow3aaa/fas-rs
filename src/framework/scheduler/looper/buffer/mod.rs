@@ -11,6 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+mod calculate;
 mod frame_acc;
 
 use std::{
@@ -18,13 +19,10 @@ use std::{
     time::{Duration, Instant},
 };
 
-#[cfg(debug_assertions)]
-use log::debug;
-
 use crate::framework::config::TargetFps;
 pub use frame_acc::Acc;
 
-const BUFFER_LEN_SECS: usize = 3;
+const BUFFER_LEN_SECS: usize = 10;
 
 #[derive(Debug)]
 pub struct Buffer {
@@ -37,6 +35,7 @@ pub struct Buffer {
     pub last_update: Instant,
     pub acc_frame: Acc,
     pub acc_timer: Instant,
+    deviations: VecDeque<f64>,
     target_fps_config: TargetFps,
     timer: Instant,
 }
@@ -47,12 +46,13 @@ impl Buffer {
             target_fps: None,
             current_fps: 0.0,
             avg_time: Duration::ZERO,
-            frametimes: VecDeque::new(),
+            frametimes: VecDeque::with_capacity(144 * BUFFER_LEN_SECS),
             frame_prepare: Duration::ZERO,
             deviation: 0.0,
             last_update: Instant::now(),
             acc_frame: Acc::new(),
             acc_timer: Instant::now(),
+            deviations: VecDeque::with_capacity(144 * BUFFER_LEN_SECS),
             timer: Instant::now(),
             target_fps_config: t,
         }
@@ -62,10 +62,12 @@ impl Buffer {
         self.last_update = Instant::now();
         self.frame_prepare = Duration::ZERO;
 
+        if self.frametimes.len() >= self.target_fps.unwrap_or(60) as usize * BUFFER_LEN_SECS {
+            self.frametimes.pop_back();
+        }
         self.frametimes.push_front(d);
-        self.frametimes
-            .truncate(self.target_fps.unwrap_or(60) as usize * BUFFER_LEN_SECS);
         self.calculate_current_fps();
+        self.calculate_deviation();
 
         if self.timer.elapsed() >= Duration::from_secs(BUFFER_LEN_SECS as u64) {
             self.timer = Instant::now();
@@ -77,52 +79,5 @@ impl Buffer {
         self.frame_prepare = self.last_update.elapsed();
         self.calculate_current_fps();
         self.calculate_target_fps();
-    }
-
-    fn calculate_current_fps(&mut self) {
-        let avg_time: Duration = self
-            .frametimes
-            .iter()
-            .sum::<Duration>()
-            .saturating_add(self.frame_prepare)
-            / self.frametimes.len().try_into().unwrap();
-        #[cfg(debug_assertions)]
-        debug!("avg_time: {avg_time:?}");
-
-        self.avg_time = avg_time;
-
-        let current_fps = 1.0 / avg_time.as_secs_f64();
-
-        #[cfg(debug_assertions)]
-        debug!("current_fps: {:.2}", current_fps);
-
-        self.current_fps = current_fps;
-    }
-
-    fn calculate_target_fps(&mut self) {
-        let target_fpses = match &self.target_fps_config {
-            TargetFps::Value(t) => vec![*t],
-            TargetFps::Array(arr) => arr.clone(),
-        };
-
-        if self.current_fps < (target_fpses[0].saturating_sub(10).max(10)).into() {
-            self.target_fps = None;
-            return;
-        }
-
-        for target_fps in target_fpses.iter().copied() {
-            if self.current_fps <= f64::from(target_fps) + 3.0 {
-                #[cfg(debug_assertions)]
-                debug!(
-                    "Matched target_fps: current: {:.2} target_fps: {target_fps}",
-                    self.current_fps
-                );
-
-                self.target_fps = Some(target_fps);
-                return;
-            }
-        }
-
-        self.target_fps = target_fpses.last().copied();
     }
 }
