@@ -15,6 +15,7 @@ use std::time::Duration;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Acc {
+    len: u32,
     positive: Duration,
     negative: Duration,
 }
@@ -22,16 +23,18 @@ pub struct Acc {
 impl Acc {
     pub const fn new() -> Self {
         Self {
+            len: 0,
             positive: Duration::ZERO,
             negative: Duration::ZERO,
         }
     }
 
-    pub const fn as_duration(&self) -> Duration {
-        self.positive.saturating_sub(self.negative)
+    pub fn timeout_dur(&self) -> Duration {
+        self.positive.saturating_sub(self.negative) / self.len
     }
 
     pub fn acc(&mut self, normalized_frame: Duration) {
+        self.len += 1;
         if normalized_frame > Duration::from_secs(1) {
             self.positive += normalized_frame - Duration::from_secs(1);
         } else {
@@ -42,5 +45,6 @@ impl Acc {
     pub fn reset(&mut self) {
         self.positive = Duration::ZERO;
         self.negative = Duration::ZERO;
+        self.len = 0;
     }
 }

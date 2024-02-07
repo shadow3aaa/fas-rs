@@ -77,7 +77,7 @@ impl Buffer {
             return NormalEvent::None;
         }
 
-        let result = if self.acc_frame.as_duration() >= config.scale {
+        let result = if self.acc_frame.timeout_dur() >= config.scale {
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
 

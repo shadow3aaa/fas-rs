@@ -65,6 +65,7 @@ impl Buffer {
         if self.frametimes.len() >= self.target_fps.unwrap_or(60) as usize * BUFFER_LEN_SECS {
             self.frametimes.pop_back();
         }
+
         self.frametimes.push_front(d);
         self.calculate_current_fps();
         self.calculate_deviation();
