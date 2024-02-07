@@ -19,7 +19,7 @@ use std::time::{Duration, Instant};
 #[cfg(debug_assertions)]
 use log::debug;
 
-use super::Buffer;
+use super::{buffer::calculate::StabilityLevel, Buffer};
 use crate::framework::{Config, Mode};
 
 use config::PolicyConfig;
@@ -77,21 +77,23 @@ impl Buffer {
             return NormalEvent::None;
         }
 
+        let (limit_delay, release_delay) = match self.calculate_stability() {
+            StabilityLevel::High => (Duration::from_secs(1), Duration::from_secs(3)),
+            StabilityLevel::Mid => (Duration::from_secs(2), Duration::from_secs(2)),
+            StabilityLevel::Low => (Duration::from_secs(3), Duration::from_secs(1)),
+        };
+
         let result = if self.acc_frame.timeout_dur() >= config.scale {
+            if self.acc_timer.elapsed() * policy_data.target_fps < release_delay {
+                return NormalEvent::None;
+            }
+
             #[cfg(debug_assertions)]
             debug!("JANK: unit jank");
 
             NormalEvent::Release
         } else {
-            let stability = self.calculate_stability();
-            let mut stability = stability.clamp(1.0, 10.0);
-            if stability.is_nan() {
-                stability = 10.0;
-            }
-
-            if self.acc_timer.elapsed() * policy_data.target_fps
-                < Duration::from_secs_f64(stability)
-            {
+            if self.acc_timer.elapsed() * policy_data.target_fps < limit_delay {
                 return NormalEvent::None;
             }
 

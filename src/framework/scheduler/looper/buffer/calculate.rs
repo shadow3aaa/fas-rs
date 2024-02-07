@@ -11,13 +11,21 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::time::Duration;
+use std::{ops::RangeInclusive, time::Duration};
 
 #[cfg(debug_assertions)]
 use log::debug;
 
 use super::{Buffer, BUFFER_LEN_SECS};
 use crate::framework::config::TargetFps;
+
+pub enum StabilityLevel {
+    High,
+    Mid,
+    Low,
+}
+
+const STABLE_RANGE: RangeInclusive<f64> = 7.5..=8.5;
 
 impl Buffer {
     pub fn calculate_current_fps(&mut self) {
@@ -91,7 +99,7 @@ impl Buffer {
         self.deviations.push_front(deviation);
     }
 
-    pub fn calculate_stability(&self) -> f64 {
+    pub fn calculate_stability(&self) -> StabilityLevel {
         let len = self.deviations.len() as f64;
         let avg = self.deviations.iter().copied().sum::<f64>() / len;
         let deviation = self
@@ -101,6 +109,19 @@ impl Buffer {
             .map(|v| (v - avg).abs())
             .sum::<f64>()
             / len;
-        0.01 / deviation
+        let stability = 0.01 / deviation;
+        let stability = if stability.is_finite() {
+            stability.clamp(0.0, 10.0)
+        } else {
+            10.0
+        };
+
+        if stability > *STABLE_RANGE.end() {
+            StabilityLevel::High
+        } else if stability < *STABLE_RANGE.start() {
+            StabilityLevel::Low
+        } else {
+            StabilityLevel::Mid
+        }
     }
 }
