@@ -20,8 +20,7 @@
     clippy::cast_precision_loss
 )]
 
-#[cfg(not(target_os = "android"))]
-#[cfg(not(target_arch = "aarch64"))]
+#[cfg(any(not(target_os = "android"), not(target_arch = "aarch64")))]
 compile_error!("Only for aarch64 android");
 
 mod clean;
@@ -57,8 +56,12 @@ fn main() -> Result<()> {
 
         return Ok(());
     } else if args[1] == "run" {
-        run(&args[2]).unwrap_or_else(|e| error!("{e:?}"));
-        panic!("An unrecoverable error occurred!");
+        run(&args[2]).unwrap_or_else(|e| {
+            error!("{e:#?}");
+            error!("An unrecoverable error occurred, exiting fas-rs");
+            error!("If you're sure this shouldn't happen, open an issue on https://github.com/shadow3aaa/fas-rs/issues");
+            process::exit(-1);
+        });
     }
 
     Ok(())

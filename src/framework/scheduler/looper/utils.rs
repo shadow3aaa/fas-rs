@@ -16,7 +16,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use log::info;
+use log::{error, info};
 
 use super::{super::FasData, policy::JankEvent, Buffer, Looper, State};
 use crate::framework::{config::TargetFps, CallBacks};
@@ -80,7 +80,11 @@ impl Looper {
         if !self.topapp_checker.is_topapp(d.pid) || d.frametime.is_zero() {
             return;
         } else if d.target_fps == TargetFps::Value(0) {
-            panic!("Target fps must be bigger than zero");
+            error!(
+                "Target fps must be bigger than zero, reject to load fas on [{}]",
+                d.pkg
+            );
+            return;
         }
 
         let producer = (d.buffer, d.pid);

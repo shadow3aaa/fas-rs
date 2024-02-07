@@ -83,13 +83,14 @@ impl Buffer {
             StabilityLevel::Low => (Duration::from_secs(3), Duration::from_secs(1)),
         };
 
-        let result = if self.acc_frame.timeout_dur() >= config.scale {
+        let timeout = self.acc_frame.timeout_dur();
+        let result = if timeout >= config.scale {
             if self.acc_timer.elapsed() * policy_data.target_fps < release_delay {
                 return NormalEvent::None;
             }
 
             #[cfg(debug_assertions)]
-            debug!("JANK: unit jank");
+            debug!("unit small jank, timeout: {timeout:?}");
 
             NormalEvent::Release
         } else {
@@ -98,7 +99,7 @@ impl Buffer {
             }
 
             #[cfg(debug_assertions)]
-            debug!("JANK: no jank");
+            debug!("no jank, timeout: {timeout:?}");
 
             NormalEvent::Restrictable
         };
@@ -117,12 +118,12 @@ impl Buffer {
 
         if last_frame >= Duration::from_millis(1700) || diff_avg >= config.big_jank_scale {
             #[cfg(debug_assertions)]
-            debug!("JANK: big jank");
+            debug!("big jank, last frame: {last_frame:?}, timeout: {diff_avg:?}");
 
             JankEvent::BigJank
         } else if last_frame >= Duration::from_millis(5000) || diff_avg >= config.jank_scale {
             #[cfg(debug_assertions)]
-            debug!("JANK: simp jank");
+            debug!("jank, last frame: {last_frame:?}, timeout: {diff_avg:?}");
 
             JankEvent::Jank
         } else {

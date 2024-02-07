@@ -117,10 +117,19 @@ impl Buffer {
         };
 
         if stability > *STABLE_RANGE.end() {
+            #[cfg(debug_assertions)]
+            debug!("frametimes stable level: High");
+
             StabilityLevel::High
         } else if stability < *STABLE_RANGE.start() {
+            #[cfg(debug_assertions)]
+            debug!("frametimes stable level: Low");
+
             StabilityLevel::Low
         } else {
+            #[cfg(debug_assertions)]
+            debug!("frametimes stable level: Mid");
+
             StabilityLevel::Mid
         }
     }
