@@ -30,8 +30,8 @@ pub struct CpuCommon {
 }
 
 impl CpuCommon {
-    pub fn new() -> Result<Self> {
-        let mut policies: Vec<_> = fs::read_dir("/sys/devices/system/cpu/cpufreq")?
+    pub fn new(c: &Config) -> Result<Self> {
+        let policies: Vec<_> = fs::read_dir("/sys/devices/system/cpu/cpufreq")?
             .filter_map(|d| Some(d.ok()?.path()))
             .filter(|p| p.is_dir())
             .filter(|p| {
@@ -40,14 +40,9 @@ impl CpuCommon {
                     .unwrap()
                     .contains("policy")
             })
-            .map(Policy::new)
+            .map(|p| Policy::new(c, p))
             .map(Result::unwrap)
             .collect();
-
-        policies.sort_unstable();
-        if policies.len() > 2 {
-            policies[0].little = true;
-        }
 
         let mut freqs: Vec<_> = policies
             .iter()
@@ -138,13 +133,13 @@ impl CpuCommon {
         }
     }
 
-    pub fn init_default(&self, extension: &Extension) {
+    pub fn init_default(&self, c: &Config, extension: &Extension) {
         self.reset_freq(extension);
 
         extension.call_extentions(CallBacks::ResetCpuFreq);
 
         for policy in &self.policies {
-            let _ = policy.init_default();
+            let _ = policy.init_default(c);
         }
     }
 }

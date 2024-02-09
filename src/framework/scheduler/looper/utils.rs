@@ -52,7 +52,7 @@ impl Looper {
     pub fn disable_fas(&mut self) {
         if self.state != State::NotWorking {
             self.extension.call_extentions(CallBacks::StopFas);
-            self.controller.init_default(&self.extension);
+            self.controller.init_default(&self.config, &self.extension);
             self.state = State::NotWorking;
             self.jank_state = JankEvent::None;
         }

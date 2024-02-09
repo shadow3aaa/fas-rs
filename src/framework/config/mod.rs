@@ -22,7 +22,7 @@ use parking_lot::RwLock;
 use toml::Value;
 
 use crate::framework::{error::Result, node::Mode};
-use data::{ConfigData, ModeConfig};
+use data::{Config as ConfigConfig, ConfigData, ModeConfig};
 use read::wait_and_read;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -115,7 +115,7 @@ impl Config {
     }
 
     #[must_use]
-    pub fn config(&self) -> ConfigData {
-        self.toml.read().clone()
+    pub fn config(&self) -> ConfigConfig {
+        self.toml.read().config
     }
 }

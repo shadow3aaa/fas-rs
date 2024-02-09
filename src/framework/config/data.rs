@@ -27,6 +27,7 @@ pub struct ConfigData {
 #[derive(Debug, Deserialize, Clone, Copy)]
 pub struct Config {
     pub keep_std: bool,
+    pub userspace_governor: bool,
 }
 
 #[derive(Debug, Deserialize, Clone, Copy)]

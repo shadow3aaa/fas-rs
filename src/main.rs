@@ -17,7 +17,8 @@
     clippy::module_name_repetitions,
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss,
-    clippy::cast_precision_loss
+    clippy::cast_precision_loss,
+    clippy::cast_possible_wrap
 )]
 
 #[cfg(any(not(target_os = "android"), not(target_arch = "aarch64")))]
@@ -82,7 +83,7 @@ fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
     let _ = fs::write("/dev/cpuset/background/cgroup.procs", self_pid.to_string());
 
     let config = Config::new(USER_CONFIG, std_path)?;
-    let cpu = CpuCommon::new()?;
+    let cpu = CpuCommon::new(&config)?;
 
     #[cfg(debug_assertions)]
     debug!("{cpu:#?}");

@@ -115,7 +115,7 @@ impl Buffer {
         } else {
             10.0
         };
-        
+
         #[cfg(debug_assertions)]
         debug!("stability: {stability:.2}");
 

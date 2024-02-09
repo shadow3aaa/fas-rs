@@ -1,5 +1,6 @@
 [config]
 keep_std = true
+userspace_governor = true
 
 [game_list]
 "com.hypergryph.arknights" = [30, 60]

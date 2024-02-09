@@ -11,132 +11,54 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-mod utils;
+mod insider;
 
 use std::{
-    cell::{Cell, RefCell},
-    cmp::Ordering,
-    ffi::OsStr,
-    fs,
-    path::{Path, PathBuf},
+    path::Path,
+    sync::mpsc::{self, Sender},
 };
 
 use anyhow::Result;
-use likely_stable::LikelyOption;
 
 use super::Freq;
-use crate::{error::Error, framework::prelude::*};
+use crate::framework::prelude::*;
+use insider::{Event, Insider};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct Policy {
-    pub little: bool,
-    pub num: u8,
-    pub path: PathBuf,
     pub freqs: Vec<Freq>,
-    cache: Cell<Freq>,
-    fas_boost: Cell<bool>,
-    gov_snapshot: RefCell<Option<String>>,
-}
-
-impl Ord for Policy {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.num.cmp(&other.num)
-    }
-}
-
-impl PartialOrd for Policy {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
+    sx: Sender<Event>,
 }
 
 impl Policy {
-    pub fn new<P: AsRef<Path>>(p: P) -> Result<Self> {
-        let path = p.as_ref();
+    pub fn new<P: AsRef<Path>>(c: &Config, p: P) -> Result<Self> {
+        let (sx, rx) = mpsc::channel();
+        let freqs = Insider::spawn(rx, p)?;
 
-        let mut freqs: Vec<Freq> = fs::read_to_string(path.join("scaling_available_frequencies"))?
-            .split_whitespace()
-            .map(|s| s.parse().unwrap())
-            .collect();
-        freqs.sort_unstable();
-        let num = path
-            .file_name()
-            .and_then_likely(OsStr::to_str)
-            .and_then_likely(|p| p.replace("policy", "").trim().parse().ok())
-            .ok_or(Error::Other("Failed to parse cpufreq policy num"))?;
-
-        Ok(Self {
-            little: false,
-            num,
-            path: path.to_path_buf(),
-            freqs,
-            cache: Cell::new(0),
-            fas_boost: Cell::new(false),
-            gov_snapshot: RefCell::new(None),
-        })
+        let result = Self { freqs, sx };
+        result.init_default(c)?;
+        Ok(result)
     }
 
-    pub fn init_default(&self) -> Result<()> {
-        self.unlock_min_freq(self.freqs[0])?;
-        self.unlock_max_freq(self.freqs.last().copied().unwrap())?;
-        self.reset_gov()
+    pub fn init_default(&self, c: &Config) -> Result<()> {
+        let userspace_governor = c.config().userspace_governor;
+        self.sx.send(Event::InitDefault(userspace_governor))?;
+        Ok(())
     }
 
     pub fn init_game(&self, m: Mode, c: &Config) -> Result<()> {
-        self.fas_boost.set(c.mode_config(m).fas_boost);
+        let fas_boost = c.mode_config(m).fas_boost;
+        let use_performance_governor = c.mode_config(m).use_performance_governor;
 
-        self.set_fas_gov(m, c)?;
-        self.set_fas_freq(self.freqs.last().copied().unwrap())
+        self.sx
+            .send(Event::SetFasGovernor(use_performance_governor))?;
+        self.sx.send(Event::InitGame(fas_boost))?;
+
+        Ok(())
     }
 
     pub fn set_fas_freq(&self, f: Freq) -> Result<()> {
-        if f == self.cache.get() {
-            return Ok(());
-        }
-
-        if self.fas_boost.get() {
-            if self.little {
-                return Ok(());
-            }
-
-            self.lock_min_freq(f)?;
-            let last_freq = self.freqs.last().copied().unwrap();
-            self.lock_max_freq(last_freq)?;
-        } else {
-            self.lock_max_freq(f)?;
-            let first_freq = self.freqs.first().copied().unwrap();
-            self.lock_min_freq(first_freq)?;
-        }
-
-        self.cache.set(f);
-
-        Ok(())
-    }
-
-    fn reset_gov(&self) -> Result<()> {
-        if let Some(ref governor) = *self.gov_snapshot.borrow() {
-            self.unlock_governor(governor)?;
-        }
-
-        Ok(())
-    }
-
-    pub fn set_fas_gov(&self, mode: Mode, c: &Config) -> Result<()> {
-        if self.fas_boost.get() || !c.mode_config(mode).use_performance_governor {
-            return self.reset_gov();
-        }
-
-        if !self.little {
-            let path = self.path.join("scaling_governor");
-            let cur_gov = fs::read_to_string(path)?;
-
-            if cur_gov.trim() != "performance" {
-                self.gov_snapshot.replace(Some(cur_gov));
-            }
-
-            self.lock_governor("performance")?;
-        }
-
+        self.sx.send(Event::SetFasFreq(f))?;
         Ok(())
     }
 }
