@@ -75,8 +75,8 @@ else
 	cp $MODPATH/games.toml $CONF
 fi
 
-cp -f $MODPATH/README.md $DIR/doc_cn.md
-cp -f $MODPATH/README_EN.md $DIR/doc_en.md
+mv -f $MODPATH/README.md $DIR/doc_cn.md
+mv -f $MODPATH/README_EN.md $DIR/doc_en.md
 
 sh $MODPATH/vtools/init_vtools.sh $(realpath $MODPATH/module.prop)
 
