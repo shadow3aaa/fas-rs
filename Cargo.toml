@@ -38,6 +38,9 @@ serde_derive = "1.0.196"
 
 [profile.dev]
 overflow-checks = false
+lto = "thin"
+opt-level = 3
+strip = true
 
 [profile.release]
 overflow-checks = false
