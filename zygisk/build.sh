@@ -21,7 +21,7 @@ DEBUG_BUILD=false
 RELEASE_BUILD=false
 VERBOSE=false
 CFLAGS="
--O3 -flto -fmerge-all-constants -fno-exceptions -fomit-frame-pointer -fshort-enums
+-Ofast -flto -fmerge-all-constants -fno-exceptions -fomit-frame-pointer -fshort-enums
 -Wl,-O3,--lto-O3,--gc-sections,--as-needed,--icf=all,-z,norelro,--pack-dyn-relocs=android+relr
 -std=c++2b -Wall -lc++"
 
