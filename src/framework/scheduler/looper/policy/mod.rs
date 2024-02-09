@@ -73,14 +73,10 @@ impl Buffer {
     fn frame_analyze(&mut self, config: PolicyConfig, policy_data: PolicyData) -> NormalEvent {
         self.acc_frame.acc(policy_data.normalized_unit_frame);
 
-        if self.acc_timer.elapsed() * policy_data.target_fps < Duration::from_secs(1) {
-            return NormalEvent::None;
-        }
-
         let (limit_delay, release_delay) = match self.calculate_stability() {
-            StabilityLevel::High => (Duration::from_secs(1), Duration::from_secs(3)),
-            StabilityLevel::Mid => (Duration::from_secs(2), Duration::from_secs(2)),
-            StabilityLevel::Low => (Duration::from_secs(3), Duration::from_secs(1)),
+            StabilityLevel::High => (Duration::from_secs(4), Duration::from_secs(3)),
+            StabilityLevel::Mid => (Duration::from_secs(3), Duration::from_secs(2)),
+            StabilityLevel::Low => (Duration::from_secs(2), Duration::from_secs(1)),
         };
 
         let timeout = self.acc_frame.timeout_dur();

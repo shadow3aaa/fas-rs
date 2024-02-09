@@ -62,7 +62,7 @@ impl Buffer {
         self.last_update = Instant::now();
         self.frame_prepare = Duration::ZERO;
 
-        if self.frametimes.len() >= self.target_fps.unwrap_or(60) as usize * BUFFER_LEN_SECS {
+        while self.frametimes.len() >= self.target_fps.unwrap_or(60) as usize * BUFFER_LEN_SECS {
             self.frametimes.pop_back();
         }
 

@@ -25,7 +25,7 @@ pub enum StabilityLevel {
     Low,
 }
 
-const STABLE_RANGE: RangeInclusive<f64> = 7.5..=8.5;
+const STABLE_RANGE: RangeInclusive<f64> = 1.7..=2.2;
 
 impl Buffer {
     pub fn calculate_current_fps(&mut self) {
@@ -92,7 +92,7 @@ impl Buffer {
             .sum::<f64>()
             / self.frametimes.len() as f64;
 
-        if self.deviations.len() >= target_fps as usize * BUFFER_LEN_SECS {
+        while self.deviations.len() >= target_fps as usize * BUFFER_LEN_SECS {
             self.deviations.pop_back();
         }
 
@@ -115,6 +115,9 @@ impl Buffer {
         } else {
             10.0
         };
+        
+        #[cfg(debug_assertions)]
+        debug!("stability: {stability:.2}");
 
         if stability > *STABLE_RANGE.end() {
             #[cfg(debug_assertions)]
