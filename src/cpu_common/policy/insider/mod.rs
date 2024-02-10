@@ -17,7 +17,6 @@ mod normal;
 mod utils;
 
 use std::{
-    cell::{Cell, RefCell},
     fs,
     path::{Path, PathBuf},
     sync::mpsc::Receiver,
@@ -27,6 +26,7 @@ use std::{
 use anyhow::Result;
 
 use super::super::Freq;
+use event_loop::State;
 
 pub enum Event {
     InitDefault(bool),
@@ -39,10 +39,15 @@ pub enum Event {
 pub struct Insider {
     cpus: Vec<i32>,
     path: PathBuf,
-    cache: Cell<Freq>,
+    cache: Freq,
+    fas_freq: Freq,
+    governor_freq: Freq,
     freqs: Vec<Freq>,
-    fas_boost: Cell<bool>,
-    gov_snapshot: RefCell<Option<String>>,
+    fas_boost: bool,
+    userspace_governor: bool,
+    use_performance_governor: bool,
+    state: State,
+    gov_snapshot: Option<String>,
     rx: Receiver<Event>,
 }
 
@@ -68,9 +73,14 @@ impl Insider {
             cpus,
             path: path.to_path_buf(),
             freqs: freqs.clone(),
-            cache: Cell::new(0),
-            fas_boost: Cell::new(false),
-            gov_snapshot: RefCell::new(None),
+            cache: freqs.last().copied().unwrap(),
+            fas_freq: freqs.last().copied().unwrap(),
+            governor_freq: freqs.last().copied().unwrap(),
+            fas_boost: false,
+            userspace_governor: false,
+            state: State::Normal,
+            use_performance_governor: false,
+            gov_snapshot: None,
             rx,
         };
 

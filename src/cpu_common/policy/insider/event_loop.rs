@@ -21,38 +21,29 @@ use cpu_cycles_reader::{Cycles, CyclesInstant, CyclesReader};
 
 use super::{Event, Insider};
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum State {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum State {
     Fas,
     Normal,
 }
 
 impl Insider {
-    pub fn event_loop(self) {
-        let mut state = State::Normal;
+    pub fn event_loop(mut self) {
         let reader = CyclesReader::new().unwrap();
         let mut cycles: HashMap<i32, CyclesInstant> = HashMap::with_capacity(self.cpus.len());
         let mut last_record = Instant::now();
-        let mut userspace_governor = false;
 
         loop {
-            if userspace_governor && state == State::Normal {
+            if self.userspace_governor && (self.state == State::Normal || self.cpus.contains(&0)) {
                 thread::sleep(Duration::from_millis(25));
                 let max_cycles = self.max_cycles_per_secs(&reader, &mut last_record, &mut cycles);
                 self.normal_policy(max_cycles);
             }
 
-            if let Some(event) = self.recv_event(state, userspace_governor) {
+            if let Some(event) = self.recv_event() {
                 match event {
-                    Event::InitDefault(b) => {
-                        state = State::Normal;
-                        userspace_governor = b;
-                        self.init_default(b)
-                    }
-                    Event::InitGame(b) => {
-                        state = State::Fas;
-                        self.init_game(b)
-                    }
+                    Event::InitDefault(b) => self.init_default(b),
+                    Event::InitGame(b) => self.init_game(b),
                     Event::SetFasFreq(f) => self.set_fas_freq(f),
                     Event::SetFasGovernor(b) => self.set_fas_governor(b),
                 }
@@ -61,11 +52,11 @@ impl Insider {
         }
     }
 
-    fn recv_event(&self, state: State, userspace_governor: bool) -> Option<Event> {
-        match state {
+    fn recv_event(&self) -> Option<Event> {
+        match self.state {
             State::Fas => self.rx.recv().ok(),
             State::Normal => {
-                if userspace_governor {
+                if self.userspace_governor {
                     self.rx.try_recv().ok()
                 } else {
                     self.rx.recv().ok()
@@ -92,7 +83,6 @@ impl Insider {
         let time = last_record.elapsed();
         *last_record = Instant::now();
 
-        let rhs = 1.0 / time.as_secs_f64();
-        cycles.mul_f64(rhs)
+        cycles * Duration::from_secs(1).as_nanos() as i64 / time.as_nanos() as i64
     }
 }

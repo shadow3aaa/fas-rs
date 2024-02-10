@@ -18,12 +18,13 @@ use super::Insider;
 const MARGIN: Cycles = Cycles::from_mhz(300);
 
 impl Insider {
-    pub fn normal_policy(&self, max_cycles: Cycles) {
+    pub fn normal_policy(&mut self, max_cycles: Cycles) {
         let target_freq = max_cycles + MARGIN;
         let min = Cycles::from_khz(self.freqs[0] as i64);
         let max = Cycles::from_khz(self.freqs.last().copied().unwrap() as i64);
 
         let target_freq = target_freq.clamp(min, max);
-        self.set_freq(target_freq.as_khz() as usize).unwrap();
+        self.set_userspace_governor_freq(target_freq.as_khz() as usize)
+            .unwrap();
     }
 }

@@ -11,16 +11,18 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::fs;
+use std::{cmp, fs};
 
 use anyhow::Result;
 
-use super::{super::Freq, Insider};
+use super::{super::Freq, event_loop::State, Insider};
 
 impl Insider {
-    pub fn init_default(&self, userspace_governor: bool) -> Result<()> {
-        self.unlock_min_freq(self.freqs[0])?;
+    pub fn init_default(&mut self, userspace_governor: bool) -> Result<()> {
+        self.unlock_min_freq(self.freqs.first().copied().unwrap())?;
         self.unlock_max_freq(self.freqs.last().copied().unwrap())?;
+        self.userspace_governor = userspace_governor;
+        self.state = State::Normal;
 
         if userspace_governor {
             self.lock_governor("performance")?;
@@ -28,61 +30,118 @@ impl Insider {
             self.reset_governor()?;
         }
 
-        Ok(())
+        self.set_userspace_governor_freq(self.freqs.last().copied().unwrap())
     }
 
-    pub fn init_game(&self, fas_boost: bool) -> Result<()> {
-        self.fas_boost.set(fas_boost);
-        self.set_fas_freq(self.freqs.last().copied().unwrap())
+    pub fn init_game(&mut self, fas_boost: bool) -> Result<()> {
+        self.fas_boost = fas_boost;
+        self.state = State::Fas;
+        let last_freq = self.freqs.last().copied().unwrap();
+        self.set_fas_freq(last_freq)
     }
 
-    pub fn set_fas_freq(&self, f: Freq) -> Result<()> {
-        if f == self.cache.get() {
-            return Ok(());
-        }
+    pub fn set_fas_freq(&mut self, f: Freq) -> Result<()> {
+        self.fas_freq = f;
+        self.write_freq()
+    }
 
-        if self.fas_boost.get() {
-            if self.cpus.contains(&0) {
-                return Ok(());
-            }
+    pub fn set_userspace_governor_freq(&mut self, f: Freq) -> Result<()> {
+        self.governor_freq = f;
+        self.write_freq()
+    }
 
-            self.lock_min_freq(f)?;
-            let last_freq = self.freqs.last().copied().unwrap();
-            self.lock_max_freq(last_freq)?;
+    fn write_freq(&mut self) -> Result<()> {
+        if self.fas_boost && self.state == State::Fas {
+            self.write_freq_boost()
         } else {
-            let first_freq = self.freqs.first().copied().unwrap();
-            self.lock_max_freq(f)?;
-            self.lock_min_freq(first_freq)?;
+            self.write_freq_nonboost()
         }
-
-        self.cache.set(f);
-
-        Ok(())
     }
 
-    pub fn set_freq(&self, f: Freq) -> Result<()> {
-        if f == self.cache.get() {
-            return Ok(());
+    fn write_freq_nonboost(&mut self) -> Result<()> {
+        if (self.userspace_governor && !self.use_performance_governor)
+            || self.cpus.contains(&0)
+            || self.state == State::Normal
+        {
+            let freq = cmp::min(self.fas_freq, self.governor_freq);
+            let target = self.find_freq(freq);
+
+            if self.cache == target {
+                Ok(())
+            } else {
+                self.cache = target;
+                self.lock_max_freq(target)?;
+                self.lock_min_freq(self.freqs.first().copied().unwrap())
+            }
+        } else {
+            let target = self.find_freq(self.fas_freq);
+
+            if self.cache == target {
+                Ok(())
+            } else {
+                self.cache = target;
+                self.lock_max_freq(target)?;
+                self.lock_min_freq(self.freqs.first().copied().unwrap())
+            }
         }
+    }
 
-        let first_freq = self.freqs.first().copied().unwrap();
-        self.lock_max_freq(f)?;
-        self.lock_min_freq(first_freq)?;
-        self.cache.set(f);
+    fn write_freq_boost(&mut self) -> Result<()> {
+        if self.cpus.contains(&0) {
+            let freq = self.governor_freq;
+            let target = self.find_freq(freq);
 
-        Ok(())
+            if self.cache == target {
+                Ok(())
+            } else {
+                self.cache = target;
+                self.lock_max_freq(target)?;
+                self.lock_min_freq(self.freqs.first().copied().unwrap())
+            }
+        } else if self.userspace_governor {
+            let freq = cmp::max(self.fas_freq, self.governor_freq);
+            let target = self.find_freq(freq);
+
+            if self.cache == target {
+                Ok(())
+            } else {
+                self.cache = target;
+                self.lock_max_freq(target)?;
+                self.lock_min_freq(target)
+            }
+        } else {
+            let target = self.find_freq(self.fas_freq);
+
+            if self.cache == target {
+                Ok(())
+            } else {
+                self.cache = target;
+                self.lock_max_freq(self.freqs.last().copied().unwrap())?;
+                self.lock_min_freq(target)
+            }
+        }
+    }
+
+    fn find_freq(&self, f: Freq) -> Freq {
+        self.freqs
+            .iter()
+            .find(|freq| **freq >= f)
+            .copied()
+            .unwrap_or_else(|| self.freqs.last().copied().unwrap())
     }
 
     fn reset_governor(&self) -> Result<()> {
-        if let Some(ref governor) = *self.gov_snapshot.borrow() {
+        if let Some(governor) = &self.gov_snapshot {
             self.unlock_governor(governor)?;
         }
 
         Ok(())
     }
 
-    pub fn set_fas_governor(&self, use_performance_governor: bool) -> Result<()> {
-        if self.fas_boost.get() || !use_performance_governor {
+    pub fn set_fas_governor(&mut self, use_performance_governor: bool) -> Result<()> {
+        self.use_performance_governor = use_performance_governor;
+
+        if self.fas_boost || !use_performance_governor {
             return self.reset_governor();
         }
 
@@ -91,7 +150,7 @@ impl Insider {
             let cur_gov = fs::read_to_string(path)?;
 
             if cur_gov.trim() != "performance" {
-                self.gov_snapshot.replace(Some(cur_gov));
+                self.gov_snapshot = Some(cur_gov);
             }
 
             self.lock_governor("performance")?;
