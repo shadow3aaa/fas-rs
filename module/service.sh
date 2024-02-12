@@ -26,19 +26,6 @@ until [ -d $DIR ]; do
 	sleep 1
 done
 
-if [ -f $MODDIR/zygisk/unloaded ]; then
-	touch $MODDIR/disable
-
-	echo "Error: Failed to load zygisk, fas-rs will be disabled" >$LOG
-	echo "Suggestions:" >$LOG
-	echo "Magisk: Please check if zygisk is turned on" >$LOG
-	echo "Magisk: 请检查zygisk是否开启" >$LOG
-	echo "Kernel Su: Please check if you have the latest version of zygisk-next installed" >$LOG
-	echo "Kernel Su: 请检查是否安装最新版本zygisk-next" >$LOG
-
-	exit 1
-fi
-
 if [ -f $MERGE_FLAG ]; then
 	$MODDIR/fas-rs merge $MODDIR/games.toml >$DIR/.update_games.toml
 	rm $MERGE_FLAG
