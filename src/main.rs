@@ -30,12 +30,16 @@ mod error;
 mod framework;
 mod misc;
 
-use std::{env, fs, process, thread};
+use std::{
+    env, fs,
+    io::{self, prelude::*},
+    process, thread,
+};
 
 use framework::prelude::*;
 
 use anyhow::Result;
-use flexi_logger::{LogSpecification, Logger};
+use flexi_logger::{DeferredNow, LogSpecification, Logger, Record};
 use log::{error, info, warn};
 
 #[cfg(debug_assertions)]
@@ -75,7 +79,10 @@ fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
     #[cfg(debug_assertions)]
     let logger_spec = LogSpecification::debug();
 
-    Logger::with(logger_spec).log_to_stdout().start()?;
+    Logger::with(logger_spec)
+        .log_to_stdout()
+        .format(log_format)
+        .start()?;
 
     let std_path = std_path.as_ref();
 
@@ -99,4 +106,13 @@ fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
         .start_run()?;
 
     Ok(())
+}
+
+fn log_format(
+    write: &mut dyn Write,
+    now: &mut DeferredNow,
+    record: &Record<'_>,
+) -> Result<(), io::Error> {
+    let time = now.format("%Y-%m-%d %H:%M");
+    write!(write, "[{time}] {}: {}", record.level(), record.args())
 }
