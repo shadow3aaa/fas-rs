@@ -11,6 +11,8 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+mod default;
+
 use serde_derive::{Deserialize, Serialize};
 use toml::Table;
 
@@ -26,7 +28,9 @@ pub struct ConfigData {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct Config {
+    #[serde(default = "Config::default_value_keep_std")]
     pub keep_std: bool,
+    #[serde(default = "Config::default_value_userspace_governor")]
     pub userspace_governor: bool,
 }
 
