@@ -27,11 +27,17 @@
 
   - **keep_std**
 
-    - Type: `Bool`
+    - Type: `bool`
     - `true`: Always keep the standard configuration profile when merging configurations, retain the local configuration application list, and other places are the same as false *
-    - `false` : see [default behavior of config merge](#config merge)
+    - `false`: see [default behavior of config merge](#config merge)
 
-  - `*` : default configuration
+  - **userspace_governor**
+
+    - Type: `bool`
+    - `true`: Enable the built-in user space governor
+    - `false`: turn off the built-in user space governor
+
+  - `*`: default configuration
 
 - ### **Game list (`game_list`) description:**
 
@@ -45,7 +51,7 @@
   - **mode:**
     - Currently, `fas-rs` does not have an official switching mode manager, but is connected to the configuration interface of [`scene`](https://www.coolapk.com/apk/com.omarea.vtools). If you don’t use scene, the configuration of `balance` will be used by default.
     - If you have some understanding of programming on Linux, you can switch to the corresponding mode by writing any one of the 4 modes to the `/dev/fas_rs/mode` node, and at the same time, reading it can also know the current `fas-rs` mode
-  - **Parameter Description :**
+  - **Parameter Description:**
     - fas_boost(bool): The purpose of `fas-rs` is to limit power consumption or reduce game frame drops. When true, it is the mode to reduce frame drops.
     - use_performance_governor(bool): Whether `fas-rs` uses the performance kernel cpufreq policy when working (this configuration is invalid when fas_boost is turned on)
 

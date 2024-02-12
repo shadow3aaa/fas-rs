@@ -21,35 +21,41 @@
 
 ## **自定义(配置)**
 
-- ### **配置路径 : `/sdcard/Android/fas-rs/games.toml`**
+- ### **配置路径: `/sdcard/Android/fas-rs/games.toml`**
 
-- ### **参数(`config`)说明 :**
+- ### **参数(`config`)说明:**
 
   - **keep_std**
 
-    - 类型 : `Bool`
-    - `true` : 永远在配置合并时保持标准配置的profile, 保留本地配置的应用列表, 其它地方和false相同 *
-    - `false` : 见[配置合并的默认行为](#配置合并)
+    - 类型: `bool`
+    - `true`: 永远在配置合并时保持标准配置的profile, 保留本地配置的应用列表, 其它地方和false相同 *
+    - `false`: 见[配置合并的默认行为](#配置合并)
 
-  - `*` : 默认配置
+  - **userspace_governor**
 
-- ### **游戏列表(`game_list`)说明 :**
+    - 类型: `bool`
+    - `true`: 开启内置用户空间调速器
+    - `false`: 关闭内置用户空间调速器
+
+  - `*`: 默认配置
+
+- ### **游戏列表(`game_list`)说明:**
 
   - **`"package"` = `target_fps`**
 
-    - `package` : 字符串, 应用包名
-    - `target_fps` : 一个数组(如`[30, 60, 120, 144]`)或者单个整数, 表示游戏会渲染到的目标帧率, `fas-rs`会在运行时动态匹配
+    - `package`: 字符串, 应用包名
+    - `target_fps`: 一个数组(如`[30, 60, 120, 144]`)或者单个整数, 表示游戏会渲染到的目标帧率, `fas-rs`会在运行时动态匹配
 
-- ### **`powersave` / `balance` / `performance` / `fast` 说明 :**
+- ### **`powersave` / `balance` / `performance` / `fast` 说明:**
 
-  - **mode :**
+  - **mode:**
     - 目前`fas-rs`还没有官方的切换模式的管理器, 而是接入了[`scene`](https://www.coolapk.com/apk/com.omarea.vtools)的配置接口, 如果你不用scene则默认使用`balance`的配置
     - 如果你有在linux上编程的一些了解, 向`/dev/fas_rs/mode`节点写入4模式中的任意一个即可切换到对应模式, 同时读取它也可以知道现在`fas-rs`所处的模式
-  - **参数说明 :**
+  - **参数说明:**
     - fas_boost(bool): `fas-rs`的目的是限制功耗还是减少游戏掉帧, true时为减少掉帧模式
     - use_performance_governor(bool): `fas-rs`是否在工作时使用performance内核cpufreq策略(fas_boost开启时此配置无效)
 
-### **`games.toml`配置标准例 :**
+### **`games.toml`配置标准例:**
 
 ```
 [config]
