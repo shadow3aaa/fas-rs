@@ -20,9 +20,8 @@ use std::{
     time::Duration,
 };
 
-use binder::{BinderFeatures, Interface};
+use binder::{BinderFeatures, Interface, ProcessState};
 use log::{error, info};
-use parking_lot::Mutex;
 
 use super::{BinderMessage, FasData};
 use crate::framework::{
@@ -33,7 +32,7 @@ use IRemoteService::BnRemoteService;
 
 pub struct FasServer {
     config: Config,
-    sx: Mutex<Sender<BinderMessage>>,
+    sx: Sender<BinderMessage>,
 }
 
 impl Interface for FasServer {}
@@ -62,7 +61,7 @@ impl IRemoteService::IRemoteService for FasServer {
             cpu,
         };
 
-        if let Err(e) = self.sx.lock().send(BinderMessage::Data(data)) {
+        if let Err(e) = self.sx.send(BinderMessage::Data(data)) {
             error!("{e:?}");
         }
 
@@ -70,11 +69,7 @@ impl IRemoteService::IRemoteService for FasServer {
     }
 
     fn removeBuffer(&self, buffer: i64, pid: i32) -> binder::Result<()> {
-        if let Err(e) = self
-            .sx
-            .lock()
-            .send(BinderMessage::RemoveBuffer((buffer, pid)))
-        {
+        if let Err(e) = self.sx.send(BinderMessage::RemoveBuffer((buffer, pid))) {
             error!("{e:?}");
         }
 
@@ -94,17 +89,16 @@ impl FasServer {
     }
 
     fn run(sx: Sender<BinderMessage>, config: Config) -> Result<()> {
-        let server = Self {
-            config,
-            sx: Mutex::new(sx),
-        };
+        let server = Self { config, sx };
         let server = BnRemoteService::new_binder(server, BinderFeatures::default());
 
         binder::add_service("fas_rs_server", server.as_binder())
             .map_err(|_| Error::Other("Failed to register binder service?"))?;
 
+        ProcessState::set_thread_pool_max_thread_count(8);
+        ProcessState::start_thread_pool();
+        ProcessState::join_thread_pool();
         info!("Binder server started");
-        binder::ProcessState::join_thread_pool();
 
         Ok(())
     }
