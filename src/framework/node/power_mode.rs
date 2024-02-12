@@ -11,9 +11,9 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{fs, path::Path, str::FromStr, time::Instant};
+use std::str::FromStr;
 
-use super::{Node, NODE_PATH, REFRESH_TIME};
+use super::Node;
 use crate::framework::error::{Error, Result};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -52,21 +52,8 @@ impl ToString for Mode {
 
 impl Node {
     pub fn get_mode(&mut self) -> Result<Mode> {
-        if self.mode_timer.elapsed() > REFRESH_TIME {
-            self.mode = Self::read_mode()?;
-            self.mode_timer = Instant::now();
-        }
+        let mode = self.get_node("mode").or(Err(Error::NodeNotFound))?;
 
-        Ok(self.mode)
-    }
-
-    fn read_mode() -> Result<Mode> {
-        let path = Path::new(NODE_PATH).join("mode");
-
-        Mode::from_str(
-            fs::read_to_string(path)
-                .map_err(|_| Error::NodeNotFound)?
-                .trim(),
-        )
+        Mode::from_str(mode.trim())
     }
 }
