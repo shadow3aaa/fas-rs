@@ -23,7 +23,6 @@ pub enum CallBacks {
     StartFas,
     StopFas,
     InitCpuFreq,
-    WriteCpuFreq(usize),
     ResetCpuFreq,
 }
 
@@ -71,15 +70,6 @@ impl CallBacks {
                     lua.context(|context| {
                         if let Ok(func) = context.globals().get::<_, Function>("init_cpu_freq") {
                         func.call(()).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
-                        }
-                    });
-                }
-            }
-            Self::WriteCpuFreq(freq) => {
-                for (extension, lua) in map {
-                    lua.context(|context| {
-                        if let Ok(func) = context.globals().get::<_, Function>("write_cpu_freq") {
-                        func.call(freq).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
                         }
                     });
                 }
