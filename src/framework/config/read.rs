@@ -32,7 +32,7 @@ pub(super) fn wait_and_read(
 
     loop {
         if retry_count > 10 {
-            error!("Too many read user config retries");
+            error!("Too many read / parse user config retries");
             error!("Use std profile instead until we could read and parse user config");
 
             *toml.write() = std_config.clone();
@@ -47,13 +47,31 @@ pub(super) fn wait_and_read(
                 s
             }
             Err(e) => {
-                debug!("Failed to read file '{}': {e}", path.display());
+                debug!("Failed to read config {path:?}, reason: {e}");
                 retry_count += 1;
                 thread::sleep(Duration::from_secs(1));
                 continue;
             }
         };
-        *toml.write() = toml::from_str(&ori)?;
+
+        *toml.write() = match toml::from_str(&ori) {
+            Ok(o) => {
+                retry_count = 0;
+                o
+            }
+            Err(e) => {
+                error!("Failed to parse config {path:?}, reason: {e}");
+                error!("Trying to roll back to the last configuration that could be resolved...");
+                let latest = toml::to_string(&*toml.read()).unwrap();
+                if fs::write(path, latest).is_ok() {
+                    error!("Rollback successful");
+                }
+
+                retry_count += 1;
+                thread::sleep(Duration::from_secs(1));
+                continue;
+            }
+        };
 
         // wait until file change
         let Ok(mut inotify) = Inotify::init() else {
