@@ -11,10 +11,10 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use serde_derive::Deserialize;
+use serde_derive::{Deserialize, Serialize};
 use toml::Table;
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ConfigData {
     pub config: Config,
     pub game_list: Table,
@@ -24,17 +24,14 @@ pub struct ConfigData {
     pub fast: ModeConfig,
 }
 
-#[derive(Debug, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct Config {
     pub keep_std: bool,
     pub userspace_governor: bool,
 }
 
-#[derive(Debug, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct ModeConfig {
     pub fas_boost: bool,
     pub use_performance_governor: bool,
-    pub scale_ms: u64,
-    pub jank_scale_ms: u64,
-    pub big_jank_scale_ms: u64,
 }

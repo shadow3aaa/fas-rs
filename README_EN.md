@@ -47,9 +47,6 @@
     - If you have some understanding of programming on Linux, you can switch to the corresponding mode by writing any one of the 4 modes to the `/dev/fas_rs/mode` node, and at the same time, reading it can also know the current `fas-rs` mode
   - **Parameter Description :**
     - fas_boost(bool): The purpose of `fas-rs` is to limit power consumption or reduce game frame drops. When true, it is the mode to reduce frame drops.
-    - scale(f64): The number of frame drops that `fas-rs` can tolerate
-    - jank_scale(f64): `fas-rs` determines the number of dropped frames due to minor lags
-    - big_jank_scale(f64): `fas-rs` determines the number of dropped frames due to large lags
     - use_performance_governor(bool): Whether `fas-rs` uses the performance kernel cpufreq policy when working (this configuration is invalid when fas_boost is turned on)
 
 ### **`games.toml` configuration standard example:**
@@ -57,6 +54,7 @@
 ```
 [config]
 keep_std = true
+userspace_governor = true
 
 [game_list]
 "com.hypergryph.arknights" = [30, 60]
@@ -71,30 +69,18 @@ keep_std = true
 
 [powersave]
 fas_boost = false
-scale=0.5
-jank_scale = 3.0
-big_jank_scale = 5.0
 use_performance_governor = false
 
 [balance]
 fas_boost = false
-scale=0.25
-jank_scale= 3.0
-big_jank_scale = 5.0
 use_performance_governor = true
 
 [performance]
 fas_boost = false
-scale=0.2
-jank_scale= 1.5
-big_jank_scale = 3.0
 use_performance_governor = true
 
 [fast]
 fas_boost = true
-scale=0.1
-jank_scale= 1.5
-big_jank_scale = 3.0
 use_performance_governor = false
 ```
 

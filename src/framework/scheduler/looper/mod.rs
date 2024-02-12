@@ -163,7 +163,7 @@ impl Looper {
             .buffers
             .values_mut()
             .filter(|buffer| buffer.target_fps == target_fps)
-            .map(|buffer| buffer.normal_event(&self.config, self.mode))
+            .map(|buffer| buffer.normal_event(self.mode))
             .max()
         else {
             return;
@@ -176,14 +176,14 @@ impl Looper {
         match event {
             NormalEvent::Release => {
                 self.update_limit_delay(Duration::from_secs(2));
-                self.controller.release(&self.extension);
+                self.controller.release();
             }
             NormalEvent::Restrictable => {
                 if self.jank_state == JankEvent::None
                     && self.last_limit.elapsed() * target_fps > self.limit_delay
                 {
                     self.set_limit_delay(Duration::from_secs(1));
-                    self.controller.limit(&self.extension);
+                    self.controller.limit();
                 }
             }
             NormalEvent::None => (),
@@ -201,7 +201,7 @@ impl Looper {
             .buffers
             .values_mut()
             .filter(|buffer| buffer.target_fps == target_fps)
-            .map(|buffer| buffer.jank_event(&self.config, self.mode))
+            .map(|buffer| buffer.jank_event(self.mode))
             .max()
         else {
             return;
@@ -214,11 +214,11 @@ impl Looper {
             match self.jank_state {
                 JankEvent::BigJank => {
                     self.update_limit_delay(Duration::from_secs(5));
-                    self.controller.big_jank(&self.extension);
+                    self.controller.big_jank();
                 }
                 JankEvent::Jank => {
                     self.update_limit_delay(Duration::from_secs(3));
-                    self.controller.jank(&self.extension);
+                    self.controller.jank();
                 }
                 JankEvent::None => (),
             }

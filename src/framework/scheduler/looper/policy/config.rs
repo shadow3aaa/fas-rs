@@ -13,29 +13,26 @@
 *  limitations under the License. */
 use std::time::Duration;
 
-use super::super::Buffer;
-use crate::framework::{node::Mode, Config};
+use crate::framework::node::Mode;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PolicyConfig {
-    pub scale: Duration,
     pub jank_scale: Duration,
     pub big_jank_scale: Duration,
 }
 
 impl PolicyConfig {
-    pub fn new(config: &Config, mode: Mode, _buffer: &Buffer) -> Self {
-        let scale_ms = config.mode_config(mode).scale_ms;
-        let scale = Duration::from_millis(scale_ms);
-
-        let jank_scale_ms = config.mode_config(mode).jank_scale_ms;
-        let jank_scale = Duration::from_millis(jank_scale_ms);
-
-        let big_jank_scale_ms = config.mode_config(mode).big_jank_scale_ms;
-        let big_jank_scale = Duration::from_millis(big_jank_scale_ms);
+    pub const fn new(mode: Mode) -> Self {
+        let (jank_scale, big_jank_scale) = match mode {
+            Mode::Powersave | Mode::Balance => {
+                (Duration::from_millis(58), Duration::from_millis(83))
+            }
+            Mode::Performance | Mode::Fast => {
+                (Duration::from_millis(41), Duration::from_millis(58))
+            }
+        };
 
         Self {
-            scale,
             jank_scale,
             big_jank_scale,
         }

@@ -20,7 +20,7 @@ use std::time::{Duration, Instant};
 use log::debug;
 
 use super::{buffer::calculate::StabilityLevel, Buffer};
-use crate::framework::{Config, Mode};
+use crate::framework::Mode;
 
 use config::PolicyConfig;
 use extract::PolicyData;
@@ -40,24 +40,20 @@ pub enum JankEvent {
 }
 
 impl Buffer {
-    pub fn normal_event(&mut self, config: &Config, mode: Mode) -> NormalEvent {
-        let config = PolicyConfig::new(config, mode, self);
-        let Some(policy_data) = PolicyData::extract(self) else {
+    pub fn normal_event(&mut self, mode: Mode) -> NormalEvent {
+        let Some(policy_data) = PolicyData::extract(self, mode) else {
             return NormalEvent::Release;
         };
 
         #[cfg(debug_assertions)]
-        {
-            debug!("policy config: {config:?}");
-            debug!("policy data: {policy_data:?}");
-        }
+        debug!("policy data: {policy_data:?}");
 
-        self.frame_analyze(config, policy_data)
+        self.frame_analyze(policy_data)
     }
 
-    pub fn jank_event(&mut self, config: &Config, mode: Mode) -> JankEvent {
-        let config = PolicyConfig::new(config, mode, self);
-        let Some(policy_data) = PolicyData::extract(self) else {
+    pub fn jank_event(&mut self, mode: Mode) -> JankEvent {
+        let config = PolicyConfig::new(mode);
+        let Some(policy_data) = PolicyData::extract(self, mode) else {
             return JankEvent::BigJank;
         };
 
@@ -70,27 +66,27 @@ impl Buffer {
         Self::jank_analyze(config, policy_data)
     }
 
-    fn frame_analyze(&mut self, config: PolicyConfig, policy_data: PolicyData) -> NormalEvent {
+    fn frame_analyze(&mut self, policy_data: PolicyData) -> NormalEvent {
         self.acc_frame.acc(policy_data.normalized_unit_frame);
 
-        let (limit_delay, release_delay) = match self.calculate_stability() {
-            StabilityLevel::High => (Duration::from_secs(4), Duration::from_secs(3)),
-            StabilityLevel::Mid => (Duration::from_secs(3), Duration::from_secs(2)),
-            StabilityLevel::Low => (Duration::from_secs(2), Duration::from_secs(1)),
+        if self.acc_timer.elapsed() * policy_data.target_fps < Duration::from_secs(1) {
+            return NormalEvent::None;
+        }
+
+        let limit_delay = match self.calculate_stability() {
+            StabilityLevel::High => Duration::from_millis(150),
+            StabilityLevel::Mid => Duration::from_millis(250),
+            StabilityLevel::Low => Duration::from_millis(450),
         };
 
         let timeout = self.acc_frame.timeout_dur();
-        let result = if timeout >= config.scale {
-            if self.acc_timer.elapsed() * policy_data.target_fps < release_delay {
-                return NormalEvent::None;
-            }
-
+        let result = if timeout > Duration::ZERO {
             #[cfg(debug_assertions)]
             debug!("unit small jank, timeout: {timeout:?}");
 
             NormalEvent::Release
         } else {
-            if self.acc_timer.elapsed() * policy_data.target_fps < limit_delay {
+            if self.acc_timer.elapsed() < limit_delay {
                 return NormalEvent::None;
             }
 
