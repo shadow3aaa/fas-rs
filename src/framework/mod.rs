@@ -11,14 +11,14 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-#![allow(dead_code)]
-pub mod config;
+mod config;
 mod error;
 mod extension;
 mod node;
 pub mod prelude;
 mod scheduler;
 
+#[allow(unused_imports)]
 pub use config::Config;
 pub use error::Result;
 pub use extension::{CallBacks, Extension};
