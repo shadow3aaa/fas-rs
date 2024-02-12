@@ -62,6 +62,14 @@ impl Insider {
             .split_whitespace()
             .map(|s| s.parse().unwrap())
             .collect();
+
+        if let Ok(boost_freqs) = fs::read_to_string(path.join("scaling_boost_frequencies")) {
+            let boost_freqs = boost_freqs
+                .split_whitespace()
+                .map(|s| s.parse::<Freq>().unwrap());
+            freqs.extend(boost_freqs);
+        } // 部分设备一部分频率表在scaling_boost_frequencies内
+
         freqs.sort_unstable();
 
         let cpus = fs::read_to_string(path.join("affected_cpus"))?;
