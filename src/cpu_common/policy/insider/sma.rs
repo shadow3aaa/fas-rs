@@ -11,20 +11,30 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use cpu_cycles_reader::Cycles;
+use std::collections::VecDeque;
 
-use super::Insider;
+use crate::cpu_common::Freq;
 
-const MARGIN: Cycles = Cycles::from_mhz(300);
+const LENGTH: usize = 1000;
 
-impl Insider {
-    pub fn normal_policy(&mut self, max_cycles: Cycles) {
-        let target_freq = max_cycles + MARGIN;
-        let min = Cycles::from_khz(self.freqs.first().copied().unwrap() as i64);
-        let max = Cycles::from_khz(self.freqs.last().copied().unwrap() as i64);
+#[derive(Debug)]
+pub struct Smooth {
+    buffer: VecDeque<Freq>,
+}
 
-        let target_freq = target_freq.clamp(min, max);
-        self.set_userspace_governor_freq(target_freq.as_khz() as usize)
-            .unwrap();
+impl Smooth {
+    pub fn new() -> Self {
+        Self {
+            buffer: VecDeque::with_capacity(LENGTH),
+        }
+    }
+
+    pub fn update(&mut self, f: Freq) -> Freq {
+        if self.buffer.len() == LENGTH {
+            self.buffer.pop_back();
+        }
+
+        self.buffer.push_front(f);
+        self.buffer.iter().copied().sum::<Freq>() / LENGTH
     }
 }

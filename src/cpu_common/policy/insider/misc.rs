@@ -88,8 +88,7 @@ impl Insider {
 
     fn write_freq_boost(&mut self) -> Result<()> {
         if self.cpus.contains(&0) {
-            let freq = self.governor_freq;
-            let target = self.find_freq(freq);
+            let target = self.find_freq(self.governor_freq);
 
             if self.cache == target {
                 Ok(())
@@ -122,10 +121,11 @@ impl Insider {
         }
     }
 
-    fn find_freq(&self, f: Freq) -> Freq {
+    fn find_freq(&mut self, f: Freq) -> Freq {
+        let freq = cmp::max(f, self.smooth.update(f));
         self.freqs
             .iter()
-            .find(|freq| **freq >= f)
+            .find(|target| **target >= freq)
             .copied()
             .unwrap_or_else(|| self.freqs.last().copied().unwrap())
     }

@@ -14,6 +14,7 @@
 mod event_loop;
 mod misc;
 mod normal;
+mod sma;
 mod utils;
 
 use std::{
@@ -27,6 +28,7 @@ use anyhow::Result;
 
 use super::super::Freq;
 use event_loop::State;
+use sma::Smooth;
 
 pub enum Event {
     InitDefault(bool),
@@ -40,6 +42,7 @@ pub struct Insider {
     cpus: Vec<i32>,
     path: PathBuf,
     cache: Freq,
+    smooth: Smooth,
     fas_freq: Freq,
     governor_freq: Freq,
     freqs: Vec<Freq>,
@@ -74,6 +77,7 @@ impl Insider {
             path: path.to_path_buf(),
             freqs: freqs.clone(),
             cache: freqs.last().copied().unwrap(),
+            smooth: Smooth::new(),
             fas_freq: freqs.last().copied().unwrap(),
             governor_freq: freqs.last().copied().unwrap(),
             fas_boost: false,
