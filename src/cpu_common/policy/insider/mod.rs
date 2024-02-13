@@ -14,7 +14,7 @@
 mod event_loop;
 mod misc;
 mod normal;
-mod sma;
+mod smooth;
 mod utils;
 
 use std::{
@@ -28,7 +28,7 @@ use anyhow::Result;
 
 use super::super::Freq;
 use event_loop::State;
-use sma::Smooth;
+use smooth::Smooth;
 
 pub enum Event {
     InitDefault(bool),

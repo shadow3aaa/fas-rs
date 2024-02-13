@@ -11,30 +11,40 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::collections::VecDeque;
+use std::{
+    collections::VecDeque,
+    time::{Duration, Instant},
+};
 
 use crate::cpu_common::Freq;
 
-const LENGTH: usize = 1000;
-
 #[derive(Debug)]
 pub struct Smooth {
-    buffer: VecDeque<Freq>,
+    buffer: VecDeque<(Freq, Instant)>,
 }
 
 impl Smooth {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
-            buffer: VecDeque::with_capacity(LENGTH),
+            buffer: VecDeque::new(),
         }
     }
 
-    pub fn update(&mut self, f: Freq) -> Freq {
-        if self.buffer.len() == LENGTH {
-            self.buffer.pop_back();
-        }
+    pub fn update(&mut self, freq: Freq) -> Freq {
+        self.buffer.push_front((freq, Instant::now()));
+        self.buffer = self
+            .buffer
+            .iter()
+            .copied()
+            .take_while(|(_, i)| i.elapsed() <= Duration::from_secs(5))
+            .collect();
 
-        self.buffer.push_front(f);
-        self.buffer.iter().copied().sum::<Freq>() / LENGTH
+        self.avg()
+    }
+
+    fn avg(&self) -> Freq {
+        let sum: Freq = self.buffer.iter().copied().map(|(f, _)| f).sum();
+        let len = self.buffer.len().max(1);
+        sum / len
     }
 }

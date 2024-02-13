@@ -122,7 +122,13 @@ impl Insider {
     }
 
     fn find_freq(&mut self, f: Freq) -> Freq {
-        let freq = cmp::max(f, self.smooth.update(f));
+        let freq = if self.state == State::Fas && !self.cpus.contains(&0) {
+            let freq_smoothed = self.smooth.update(f);
+            cmp::min(f, freq_smoothed)
+        } else {
+            f
+        };
+
         self.freqs
             .iter()
             .find(|target| **target >= freq)
