@@ -1,12 +1,25 @@
-# fas-rs(v2.0.0)
+# fas-rs(v2.1.0)
 
 [Homepage](https://github.com/shadow3aaa/fas-rs)
 
 ## Change log
 
-- [Extension system](https://github.com/shadow3aaa/fas-rs-extension-module-template)
+- Built-in switchable user space governor (userspace_governor)
+- Read scaling_boost_frequencies to get the complete frequency table
+- Increase frequency smoothness
+- Advance plugin execution time
+- Removed a plugin api (write_freq) that was too expensive
+- Optimize binder processing and enable binder thread pool
+- Removed some configurations
+- Optimize configuration error handling and add automatic rollback mechanism for configuration errors to the last normal configuration
+- Optimize configuration error prompts
+- Modify log format
+- Automatically recognize localization
+- Optimize Node
+- Ignore some meaningless errors
+- Removed cpufreq_debug setting frequency
 - Update dependencies
-- Modify compilation parameters to improve execution efficiency
+- Modify zygisk compilation parameters to improve execution efficiency
 
 ## Running requirements
 

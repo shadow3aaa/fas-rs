@@ -1,12 +1,25 @@
-# fas-rs(v2.0.0)
+# fas-rs(v2.1.0)
 
 [项目主页](https://github.com/shadow3aaa/fas-rs)
 
 ## 更新日志
 
-- [插件系统](https://github.com/shadow3aaa/fas-rs-extension-module-template)
+- 内置可开关的用户空间调速器(userspace_governor)
+- 读取scaling_boost_frequencies获取完整频率表
+- 增加频率平滑性
+- 提前插件执行时间
+- 移除一个开销太大的插件api(write_freq)
+- 优化binder处理，开启binder线程池
+- 删除一些配置
+- 优化配置错误处理，增加配置错误自动回滚上一次正常配置机制
+- 优化配置错误提示
+- 修改日志格式
+- 自动识别本地化
+- 优化Node
+- 忽略一些无意义的错误
+- 移除cpufreq_debug设置频率
 - 更新依赖
-- 修改编译参数，提高执行效率
+- 修改zygisk编译参数，提高执行效率
 
 ## 运行要求
 
