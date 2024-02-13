@@ -26,6 +26,14 @@ local_print() {
 	fi
 }
 
+local_echo() {
+	if [ $LOCALE = zh-CN ]; then
+		echo "$1"
+	else
+		echo "$2"
+	fi
+}
+
 if [ $ARCH != arm64 ]; then
 	local_print "设备不支持, 非arm64设备" "Only for arm64 device !"
 	abort
@@ -90,5 +98,6 @@ set_perm_recursive $MODPATH 0 0 0755 0644
 set_perm $MODPATH/fas-rs 0 0 0755
 
 local_print "配置文件夹：/sdcard/Android/fas-rs" "Configuration folder: /sdcard/Android/fas-rs"
+local_echo "updateJson=https://github.com/shadow3aaa/fas-rs/raw/master/update/update.json" "updateJson=https://github.com/shadow3aaa/fas-rs/raw/master/update/update_en.json" >>$MODPATH/module.prop
 
 resetprop fas-rs-installed true
