@@ -24,7 +24,6 @@ impl Insider {
         let max = Cycles::from_khz(self.freqs.last().copied().unwrap() as i64);
 
         let target_freq = target_freq.clamp(min, max);
-        self.set_userspace_governor_freq(target_freq.as_khz() as usize)
-            .unwrap();
+        let _ = self.set_userspace_governor_freq(target_freq.as_khz() as usize);
     }
 }
