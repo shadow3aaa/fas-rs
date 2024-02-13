@@ -11,7 +11,6 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-pub mod config;
 mod extract;
 
 use std::time::{Duration, Instant};
@@ -22,7 +21,6 @@ use log::debug;
 use super::{buffer::calculate::StabilityLevel, Buffer};
 use crate::framework::Mode;
 
-use config::PolicyConfig;
 use extract::PolicyData;
 
 #[derive(Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
@@ -52,18 +50,11 @@ impl Buffer {
     }
 
     pub fn jank_event(&mut self, mode: Mode) -> JankEvent {
-        let config = PolicyConfig::new(mode);
         let Some(policy_data) = PolicyData::extract(self, mode) else {
             return JankEvent::BigJank;
         };
 
-        #[cfg(debug_assertions)]
-        {
-            debug!("policy config: {config:?}");
-            debug!("policy data: {policy_data:?}");
-        }
-
-        Self::jank_analyze(config, policy_data)
+        Self::jank_analyze(policy_data)
     }
 
     fn frame_analyze(&mut self, policy_data: PolicyData) -> NormalEvent {
@@ -73,10 +64,12 @@ impl Buffer {
             return NormalEvent::None;
         }
 
+        self.acc_timer = Instant::now();
+
         let limit_delay = match self.calculate_stability() {
-            StabilityLevel::High => Duration::from_millis(150),
-            StabilityLevel::Mid => Duration::from_millis(250),
-            StabilityLevel::Low => Duration::from_millis(450),
+            StabilityLevel::High => Duration::from_secs(10) / policy_data.target_fps,
+            StabilityLevel::Mid => Duration::from_secs(9) / policy_data.target_fps,
+            StabilityLevel::Low => Duration::from_secs(8) / policy_data.target_fps,
         };
 
         let timeout = self.acc_frame.timeout_dur();
@@ -84,9 +77,10 @@ impl Buffer {
             #[cfg(debug_assertions)]
             debug!("unit small jank, timeout: {timeout:?}");
 
+            self.limit_timer = Instant::now();
             NormalEvent::Release
         } else {
-            if self.acc_timer.elapsed() < limit_delay {
+            if self.limit_timer.elapsed() < limit_delay {
                 return NormalEvent::None;
             }
 
@@ -97,25 +91,20 @@ impl Buffer {
         };
 
         self.acc_frame.reset();
-        self.acc_timer = Instant::now();
-
         result
     }
 
-    fn jank_analyze(config: PolicyConfig, policy_data: PolicyData) -> JankEvent {
-        let diff_avg = policy_data
-            .normalized_avg_frame
-            .saturating_sub(Duration::from_secs(1));
+    fn jank_analyze(policy_data: PolicyData) -> JankEvent {
         let last_frame = policy_data.normalized_last_frame;
 
-        if last_frame >= Duration::from_millis(1700) || diff_avg >= config.big_jank_scale {
+        if last_frame >= Duration::from_millis(5000) {
             #[cfg(debug_assertions)]
-            debug!("big jank, last frame: {last_frame:?}, timeout: {diff_avg:?}");
+            debug!("big jank, last frame: {last_frame:?}");
 
             JankEvent::BigJank
-        } else if last_frame >= Duration::from_millis(5000) || diff_avg >= config.jank_scale {
+        } else if last_frame >= Duration::from_millis(1700) {
             #[cfg(debug_assertions)]
-            debug!("jank, last frame: {last_frame:?}, timeout: {diff_avg:?}");
+            debug!("jank, last frame: {last_frame:?}");
 
             JankEvent::Jank
         } else {
