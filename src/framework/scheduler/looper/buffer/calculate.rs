@@ -25,7 +25,7 @@ pub enum StabilityLevel {
     Low,
 }
 
-const STABLE_RANGE: RangeInclusive<f64> = 1.7..=2.2;
+const STABLE_RANGE: RangeInclusive<f64> = 2.0..=3.0;
 
 impl Buffer {
     pub fn calculate_current_fps(&mut self) {
