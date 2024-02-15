@@ -54,7 +54,7 @@ impl Buffer {
             return JankEvent::BigJank;
         };
 
-        Self::jank_analyze(policy_data)
+        self.jank_analyze(policy_data)
     }
 
     fn frame_analyze(&mut self, policy_data: PolicyData) -> NormalEvent {
@@ -68,8 +68,8 @@ impl Buffer {
 
         let limit_delay = match self.calculate_stability() {
             StabilityLevel::High => Duration::from_secs(10) / policy_data.target_fps,
-            StabilityLevel::Mid => Duration::from_secs(9) / policy_data.target_fps,
-            StabilityLevel::Low => Duration::from_secs(8) / policy_data.target_fps,
+            StabilityLevel::Mid => Duration::from_secs(13) / policy_data.target_fps,
+            StabilityLevel::Low => Duration::from_secs(15) / policy_data.target_fps,
         };
 
         let timeout = self.acc_frame.timeout_dur();
@@ -77,7 +77,6 @@ impl Buffer {
             #[cfg(debug_assertions)]
             debug!("unit small jank, timeout: {timeout:?}");
 
-            self.limit_timer = Instant::now();
             NormalEvent::Release
         } else {
             if self.limit_timer.elapsed() < limit_delay {
@@ -90,22 +89,28 @@ impl Buffer {
             NormalEvent::Restrictable
         };
 
+        self.limit_timer = Instant::now();
         self.acc_frame.reset();
         result
     }
 
-    fn jank_analyze(policy_data: PolicyData) -> JankEvent {
+    fn jank_analyze(&mut self, policy_data: PolicyData) -> JankEvent {
         let last_frame = policy_data.normalized_last_frame;
+        let avg_frame = policy_data.normalized_avg_frame;
 
-        if last_frame >= Duration::from_millis(5000) {
+        if avg_frame >= Duration::from_millis(1083) || last_frame >= Duration::from_millis(5000) {
             #[cfg(debug_assertions)]
             debug!("big jank, last frame: {last_frame:?}");
 
+            self.limit_timer = Instant::now();
             JankEvent::BigJank
-        } else if last_frame >= Duration::from_millis(1700) {
+        } else if avg_frame >= Duration::from_millis(1033)
+            || last_frame >= Duration::from_millis(1700)
+        {
             #[cfg(debug_assertions)]
             debug!("jank, last frame: {last_frame:?}");
 
+            self.limit_timer = Instant::now();
             JankEvent::Jank
         } else {
             JankEvent::None

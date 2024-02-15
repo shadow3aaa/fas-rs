@@ -44,7 +44,7 @@ impl Insider {
                 match event {
                     Event::InitDefault(b) => self.init_default(b),
                     Event::InitGame(b) => self.init_game(b),
-                    Event::SetFasFreq(f) => self.set_fas_freq(f),
+                    Event::SetFasFreq(f, t) => self.set_fas_freq(f, t),
                     Event::SetFasGovernor(b) => self.set_fas_governor(b),
                 }
                 .unwrap();

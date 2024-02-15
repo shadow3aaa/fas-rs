@@ -18,7 +18,7 @@ use std::{cell::Cell, collections::HashSet, ffi::OsStr, fs};
 use crate::framework::prelude::*;
 use anyhow::Result;
 
-use policy::Policy;
+use policy::{Policy, SetFreqType};
 
 pub type Freq = usize; // 单位: khz
 
@@ -67,7 +67,7 @@ impl CpuCommon {
         self.fas_freq.set(last_freq);
 
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(last_freq);
+            let _ = policy.set_fas_freq(last_freq, SetFreqType::None);
         }
     }
 
@@ -79,7 +79,7 @@ impl CpuCommon {
         self.fas_freq.set(limited_freq);
 
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(limited_freq);
+            let _ = policy.set_fas_freq(limited_freq, SetFreqType::Limit);
         }
     }
 
@@ -91,19 +91,18 @@ impl CpuCommon {
         self.fas_freq.set(released_freq);
 
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(released_freq);
+            let _ = policy.set_fas_freq(released_freq, SetFreqType::Release);
         }
     }
 
     pub fn jank(&self) {
         let current_freq = self.fas_freq.get();
         let released_freq = current_freq
-            .saturating_add(100_000)
+            .saturating_add(50000)
             .min(self.freqs.last().copied().unwrap());
-        self.fas_freq.set(released_freq);
 
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(released_freq);
+            let _ = policy.set_fas_freq(released_freq, SetFreqType::Jank);
         }
     }
 
@@ -111,7 +110,7 @@ impl CpuCommon {
         let max_freq = self.freqs.last().copied().unwrap();
 
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(max_freq);
+            let _ = policy.set_fas_freq(max_freq, SetFreqType::BigJank);
         }
     }
 

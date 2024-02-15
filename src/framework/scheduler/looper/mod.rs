@@ -57,10 +57,7 @@ pub struct Looper {
     topapp_checker: TimedWatcher,
     buffers: Buffers,
     state: State,
-    jank_state: JankEvent,
     delay_timer: Instant,
-    last_limit: Instant,
-    limit_delay: Duration,
 }
 
 impl Looper {
@@ -81,10 +78,7 @@ impl Looper {
             topapp_checker: TimedWatcher::new(),
             buffers: Buffers::new(),
             state: State::NotWorking,
-            jank_state: JankEvent::None,
             delay_timer: Instant::now(),
-            last_limit: Instant::now(),
-            limit_delay: Duration::from_secs(1),
         }
     }
 
@@ -169,23 +163,13 @@ impl Looper {
             return;
         };
 
-        let Some(target_fps) = target_fps else {
+        let Some(_target_fps) = target_fps else {
             return;
         };
 
         match event {
-            NormalEvent::Release => {
-                self.update_limit_delay(Duration::from_secs(2));
-                self.controller.release();
-            }
-            NormalEvent::Restrictable => {
-                if self.jank_state == JankEvent::None
-                    && self.last_limit.elapsed() * target_fps > self.limit_delay
-                {
-                    self.set_limit_delay(Duration::from_secs(1));
-                    self.controller.limit();
-                }
-            }
+            NormalEvent::Release => self.controller.release(),
+            NormalEvent::Restrictable => self.controller.limit(),
             NormalEvent::None => (),
         }
     }
@@ -207,21 +191,10 @@ impl Looper {
             return;
         };
 
-        if event == JankEvent::None {
-            self.jank_state = event;
-        } else {
-            self.jank_state = event.max(self.jank_state);
-            match self.jank_state {
-                JankEvent::BigJank => {
-                    self.update_limit_delay(Duration::from_secs(5));
-                    self.controller.big_jank();
-                }
-                JankEvent::Jank => {
-                    self.update_limit_delay(Duration::from_secs(3));
-                    self.controller.jank();
-                }
-                JankEvent::None => (),
-            }
+        match event {
+            JankEvent::BigJank => self.controller.big_jank(),
+            JankEvent::Jank => self.controller.jank(),
+            JankEvent::None => (),
         }
     }
 }

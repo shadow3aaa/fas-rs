@@ -26,14 +26,14 @@ use std::{
 
 use anyhow::Result;
 
-use super::super::Freq;
+use super::{super::Freq, SetFreqType};
 use event_loop::State;
 use smooth::Smooth;
 
 pub enum Event {
     InitDefault(bool),
     InitGame(bool),
-    SetFasFreq(Freq),
+    SetFasFreq(Freq, SetFreqType),
     SetFasGovernor(bool),
 }
 
