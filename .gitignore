@@ -1,10 +1,6 @@
 # target
 /target
 
-# module-dirty
-/module/README.md
-/module/module.prop
-
 # build
 /output
 
