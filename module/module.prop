@@ -1,6 +1,6 @@
 id=fas_rs
 name=fas-rs
-version=v2.1.0
-versionCode=210
+version=v2.1.5
+versionCode=215
 author=shadow3
 description=Frame aware scheduling for android
