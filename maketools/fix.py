@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/python3
 #
 # Copyright 2023 shadow3aaa@gitbub.com
 #
@@ -13,12 +13,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-format_codes() {
-	find -type f -name "*.sh" -not -path ".git/*" -exec shfmt -w -p -s {} \;
-	cargo fmt -v
-	cd zygisk
-	clang-format -i --verbose src/*.cpp
-	clang-format -i --verbose src/*.hpp
-	cd rust
-	cargo fmt -v
-}
+import os
+from maketools.toolchains import cargo
+from pathlib import Path
+
+
+def __clippy_fix():
+    cargo("clippy --fix --allow-dirty --allow-staged --target aarch64-linux-android")
+    cargo(
+        "clippy --fix --allow-dirty --allow-staged --target aarch64-linux-android --release"
+    )
+
+
+def task():
+    __clippy_fix()
+
+    zygisk = Path("zygisk").joinpath("rust")
+    os.chdir(zygisk)
+
+    __clippy_fix()

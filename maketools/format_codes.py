@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/python3
 #
 # Copyright 2023 shadow3aaa@gitbub.com
 #
@@ -13,10 +13,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-fix_codes() {
-	source $SHDIR/script/toolchains.sh
-	FIX="$RR clippy --fix --allow-dirty --allow-staged"
+import os
+from pathlib import Path
 
-	cd $SHDIR && $FIX
-	cd $SHDIR/zygisk/rust && $FIX
-}
+
+def task():
+    os.system("black make.py")
+    os.system("black maketools")
+    os.system("shfmt -s -w -p {}".format(Path("module").joinpath("*.sh")))
+    os.system("cargo fmt -v")
+    os.chdir("zygisk")
+    cpp_src = Path("src").joinpath("*")
+    os.system("clang-format -i --verbose {}".format(cpp_src))
+    os.chdir("rust")
+    os.system("cargo fmt -v")

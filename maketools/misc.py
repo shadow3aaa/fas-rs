@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/python3
 #
 # Copyright 2023 shadow3aaa@gitbub.com
 #
@@ -13,17 +13,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-if [ "$TERMUX_VERSION" = "" ]; then
-	RR='cargo ndk -p 31 -t arm64-v8a'
+import sys, os
+from pathlib import Path
 
-	if [ "$ANDROID_NDK_HOME" = "" ]; then
-		echo Missing ANDROID_NDK_HOME >&2
-		exit 1
-	else
-		dir="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
-		STRIP="$dir/llvm-strip"
-	fi
-else
-	RR=cargo
-	STRIP=strip
-fi
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)

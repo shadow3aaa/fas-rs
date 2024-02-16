@@ -42,9 +42,8 @@ jobs:
       run: |
         export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
         export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
-        chmod +x ./make.sh
-        ./make.sh build --release
-        ./make.sh build --debug
+        python3 ./make.py build --release
+        python3 ./make.py build --debug
 
     - name: Upload release-ci
       uses: actions/upload-artifact@v4

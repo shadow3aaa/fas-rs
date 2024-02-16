@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/python3
 #
 # Copyright 2023 shadow3aaa@gitbub.com
 #
@@ -13,29 +13,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-SHDIR="$(dirname $(readlink -f "$0"))"
-SCRIPT=$SHDIR/script
+import sys, os
+import maketools.format_codes as format_codes
+import maketools.build as build
+import maketools.fix as fix
+from maketools.misc import eprint
 
-case $1 in
-build)
-	source $SCRIPT/build.sh
-	shift
-	build $@
-	;;
-format | fmt)
-	source $SCRIPT/format.sh
-	format_codes
-	;;
-fix)
-	source $SCRIPT/fix.sh
-	fix_codes
-	;;
-update)
-	source $SCRIPT/update.sh
-	update_deps
-	;;
-help)
-	echo "./make.sh:
+help_text = """\
+./make.py:
     build:
         build and package fas-rs module
         sugg: try ./make.sh build --help to get details
@@ -45,10 +30,27 @@ help)
         fix codes of fas-rs
     update:
         recursive update all depended crates"
-	;;
-*)
-	echo Illegal parameter: $1 >&2
-	echo Try \'./make.sh help\' >&2
-	exit 1
-	;;
-esac
+    help:
+        print this message\
+"""
+
+try:
+    arg = sys.argv[1]
+except IndexError:
+    eprint("Missing argument")
+    eprint(help_text)
+    exit(-1)
+
+match arg:
+    case "help":
+        print(help_text)
+    case "fmt" | "format":
+        format_codes.task()
+    case "build":
+        build.task(sys.argv[2:])
+    case "fix":
+        fix.task()
+    case _:
+        eprint("Invalid argument")
+        eprint(help_text)
+        exit(-1)

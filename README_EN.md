@@ -115,24 +115,28 @@ use_performance_governor = false
 ## **Compile**
 
 ```bash
-#Termux
-apt install rust zip ndk* clang binutils-is-llvm shfmt git-lfs
+# Termux
+apt install rust zip ndk* clang binutils-is-llvm shfmt git-lfs python3
 
 # Ubuntu(NDK is required)
-apt install gcc-multilib git-lfs clang
-#Rust
+apt install gcc-multilib git-lfs clang python3
+
+# black(format .py)
+pip install black
+
+# Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
-#Cargo-ndk
+
+# Cargo-ndk
 cargo install cargo-ndk
 
-#Clone
+# Clone
 git clone https://github.com/shadow3aaa/fas-rs
 cd fas-rs
 
-#Compile
-chmod +x ./make.sh
-./make.sh build --release
+# Compile
+python3 ./make.py build --release
 ```
 
 - ## **💩**
