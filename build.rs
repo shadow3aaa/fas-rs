@@ -61,10 +61,6 @@ fn main() -> Result<()> {
     writeln!(file, "versionCode={version_code}")?;
     writeln!(file, "author={author}")?;
     writeln!(file, "description={}", package.description)?;
-    writeln!(
-        file,
-        "updateJson=https://github.com/shadow3aaa/fas-rs/raw/master/update/update.json"
-    )?;
 
     Ok(())
 }
