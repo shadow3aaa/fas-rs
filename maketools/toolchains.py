@@ -29,7 +29,6 @@ elif (__ndk_home := os.getenv("ANDROID_NDK_HOME")) is not None:
         .joinpath("prebuilt")
         .joinpath("linux-x86_64")
         .joinpath("bin")
-        .joinpath("llvm-strip")
     )
     __cargo = "cargo ndk -p 31 -t arm64-v8a"
     __strip = __bins.joinpath("llvm-strip")
