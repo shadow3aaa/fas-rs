@@ -33,7 +33,7 @@ elif (__ndk_home := os.getenv("ANDROID_NDK_HOME")) is not None:
     )
     __cargo = "cargo ndk -p 31 -t arm64-v8a"
     __strip = bins.joinpath("llvm-strip")
-    __clang_plusplus = bins.joinpath("aarch64-linux-android31-clang++")
+    __clang_plusplus = __bins.joinpath("aarch64-linux-android31-clang++")
 else:
     eprint("Missing env: ANDROID_NDK_HOME")
     exit(-1)
