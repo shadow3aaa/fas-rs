@@ -161,6 +161,7 @@ def task(args):
 
     zygisk_lib = Path("zygisk").joinpath("output").joinpath("arm64-v8a.so")
     zygisk_module = temp_dir.joinpath("zygisk")
+    zygisk_module.mkdir()
     shutil.copy2(zygisk_lib, zygisk_module)
 
     arg = "build --target aarch64-linux-android "
