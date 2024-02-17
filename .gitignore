@@ -9,7 +9,6 @@
 
 # py
 /__pycache__
-/buildtools/__pycache__
 
 # idea
 /.idea
