@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
+import os, platform
 from pathlib import Path
 from maketools.misc import *
 
@@ -22,14 +22,31 @@ if os.getenv("TERMUX_VERSION") is not None:
     __strip = "strip"
     __clang_plusplus = "clang++"
 elif (__ndk_home := os.getenv("ANDROID_NDK_HOME")) is not None:
-    __bins = (
-        Path(__ndk_home)
-        .joinpath("toolchains")
-        .joinpath("llvm")
-        .joinpath("prebuilt")
-        .joinpath("linux-x86_64")
-        .joinpath("bin")
-    )
+    system = platform.system()
+    arch = platform.machine()
+    match (arch, machine):
+        case ("x86_64", "Windows"):
+            __bins = (
+                Path(__ndk_home)
+                .joinpath("toolchains")
+                .joinpath("llvm")
+                .joinpath("prebuilt")
+                .joinpath("windows-x86_64")
+                .joinpath("bin")
+            )
+        case ("x86_64", "Linux"):
+            __bins = (
+                Path(__ndk_home)
+                .joinpath("toolchains")
+                .joinpath("llvm")
+                .joinpath("prebuilt")
+                .joinpath("linux-x86_64")
+                .joinpath("bin")
+            )
+        case _:
+            eprint("Unsupported platform: {} {}".format(arch, system))
+            exit(-1)
+
     __cargo = "cargo ndk -p 31 -t arm64-v8a"
     __strip = __bins.joinpath("llvm-strip")
     __clang_plusplus = __bins.joinpath("aarch64-linux-android31-clang++")
