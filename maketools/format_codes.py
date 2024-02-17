@@ -18,8 +18,8 @@ from pathlib import Path
 
 
 def task():
-    os.system("black make.py")
-    os.system("black maketools")
+    os.system("ruff format make.py")
+    os.system("ruff format maketools")
     os.system("shfmt -s -w -p {}".format(Path("module").joinpath("*.sh")))
     os.system("cargo fmt -v")
     os.chdir("zygisk")

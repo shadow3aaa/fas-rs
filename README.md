@@ -121,8 +121,8 @@ apt install rust zip ndk* clang binutils-is-llvm shfmt git-lfs python3
 # Ubuntu(NDK is required)
 apt install gcc-multilib git-lfs clang python3
 
-# black(format .py)
-pip install black
+# ruff(python lints & format)
+pip install ruff
 
 # Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh

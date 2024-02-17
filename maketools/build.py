@@ -13,7 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os, shutil
+import os
+import shutil
 from pathlib import Path
 from maketools.toolchains import cargo, strip, clang_plusplus
 from maketools.misc import eprint
@@ -29,9 +30,11 @@ python3 ./make.py build:
     --verbose:
         print details of build"\
 """
-CFLAGS = "-Ofast -flto -fmerge-all-constants -fno-exceptions -fomit-frame-pointer -fshort-enums \
+CFLAGS = (
+    "-Ofast -flto -fmerge-all-constants -fno-exceptions -fomit-frame-pointer -fshort-enums \
 -Wl,-O3,--lto-O3,--gc-sections,--as-needed,--icf=all,-z,norelro,--pack-dyn-relocs=android+relr \
 -std=c++2b -Wall -lc++"
+)
 
 
 def __parse_args(args):
@@ -69,7 +72,7 @@ def __parse_args(args):
 def __clean():
     try:
         shutil.rmtree("output")
-    except:
+    except Exception:
         pass
 
     os.system("cargo clean")
@@ -77,7 +80,7 @@ def __clean():
 
     try:
         shutil.rmtree("output")
-    except:
+    except Exception:
         pass
 
     os.chdir("rust")
@@ -91,7 +94,7 @@ def __build_zygisk(release: bool, verbose: bool):
 
     try:
         Path("output").mkdir()
-    except:
+    except Exception:
         pass
 
     os.chdir("rust")
@@ -142,7 +145,7 @@ def task(args):
 
     try:
         Path("output").mkdir()
-    except:
+    except Exception:
         pass
 
     if release:
@@ -152,7 +155,7 @@ def task(args):
 
     try:
         shutil.rmtree(temp_dir)
-    except:
+    except Exception:
         pass
 
     shutil.copytree("module", temp_dir)

@@ -13,9 +13,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os, platform
+import os
+import platform
 from pathlib import Path
-from maketools.misc import *
+from maketools.misc import eprint
 
 if os.getenv("TERMUX_VERSION") is not None:
     __cargo = "cargo"

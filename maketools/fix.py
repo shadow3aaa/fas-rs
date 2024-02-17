@@ -26,6 +26,9 @@ def __clippy_fix():
 
 
 def task():
+    os.system("ruff --fix make.py")
+    os.system("ruff --fix maketools")
+
     __clippy_fix()
 
     zygisk = Path("zygisk").joinpath("rust")

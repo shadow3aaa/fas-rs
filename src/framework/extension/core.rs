@@ -23,7 +23,7 @@ use crate::framework::error::Result;
 pub type ExtensionMap = HashMap<PathBuf, Lua>;
 
 pub fn thread(rx: &Receiver<CallBacks>) {
-    let mut extensions = load_extensions().unwrap();
+    let mut extensions = load_extensions().unwrap_or_default();
     let mut inotify = Inotify::init().unwrap();
 
     inotify
@@ -36,7 +36,7 @@ pub fn thread(rx: &Receiver<CallBacks>) {
 
     loop {
         if need_update(&mut inotify) {
-            extensions = load_extensions().unwrap();
+            extensions = load_extensions().unwrap_or_default();
         }
 
         let Ok(callback) = rx.recv_timeout(Duration::from_secs(1)) else {
