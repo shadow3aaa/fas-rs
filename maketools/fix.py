@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from maketools.toolchains import cargo
+from maketools.toolchains import cargo, clang_tidy
 from pathlib import Path
 
 
@@ -32,8 +32,8 @@ def task():
     __clippy_fix()
 
     os.chdir("zygisk")
-    os.system(
-        "clang-tidy -fix-errors --fix --header-filter='.*\.cpp' {} -- -I{}".format(
+    clang_tidy(
+        "-fix-errors --fix --header-filter='.*\.cpp' {} -- -I{}".format(
             Path("src").joinpath("*.cpp"), Path("rust").joinpath("include")
         )
     )

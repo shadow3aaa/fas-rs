@@ -22,6 +22,8 @@ if os.getenv("TERMUX_VERSION") is not None:
     __cargo = "cargo"
     __strip = "strip"
     __clang_plusplus = "clang++"
+    __clang_format = "clang-format"
+    __clang_tidy = "clang-tidy"
 elif (__ndk_home := os.getenv("ANDROID_NDK_HOME")) is not None:
     system = platform.system()
     arch = platform.machine()
@@ -51,6 +53,8 @@ elif (__ndk_home := os.getenv("ANDROID_NDK_HOME")) is not None:
     __cargo = "cargo ndk -p 31 -t arm64-v8a"
     __strip = __bins.joinpath("llvm-strip")
     __clang_plusplus = __bins.joinpath("aarch64-linux-android31-clang++")
+    __clang_format = __bins.joinpath("clang-format")
+    __clang_tidy = __bins.joinpath("clang-tidy")
 else:
     eprint("Missing env: ANDROID_NDK_HOME")
     exit(-1)
@@ -66,3 +70,11 @@ def strip(arg: str):
 
 def clang_plusplus(arg: str):
     os.system("{} {}".format(__clang_plusplus, arg))
+
+
+def clang_format(arg: str):
+    os.system("{} {}".format(__clang_format, arg))
+
+
+def clang_tidy(arg: str):
+    os.system("{} {}".format(__clang_tidy, arg))

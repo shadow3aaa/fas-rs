@@ -15,15 +15,20 @@
 # limitations under the License.
 import os
 from pathlib import Path
+from maketools.toolchains import clang_format
 
 
 def task():
     os.system("ruff format make.py")
     os.system("ruff format maketools")
+
     os.system("shfmt -s -w -p {}".format(Path("module").joinpath("*.sh")))
+
     os.system("cargo fmt -v")
+
     os.chdir("zygisk")
     cpp_src = Path("src").joinpath("*")
-    os.system("clang-format -i --verbose {}".format(cpp_src))
+    clang_format("-i --verbose {}".format(cpp_src))
+
     os.chdir("rust")
     os.system("cargo fmt -v")
