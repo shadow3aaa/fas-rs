@@ -31,7 +31,12 @@ def task():
 
     __clippy_fix()
 
-    zygisk = Path("zygisk").joinpath("rust")
-    os.chdir(zygisk)
+    os.chdir("zygisk")
+    os.system(
+        "clang-tidy -fix-errors --fix --header-filter='.*\.cpp' {} -- -I{}".format(
+            Path("src").joinpath("*.cpp"), Path("rust").joinpath("include")
+        )
+    )
 
+    os.chdir("rust")
     __clippy_fix()
