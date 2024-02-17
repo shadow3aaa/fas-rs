@@ -14,7 +14,7 @@
 use std::{fs, io::Write};
 
 use anyhow::Result;
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 struct Package {
@@ -77,37 +77,39 @@ fn module_prop(data: &CargoConfig) -> Result<()> {
     writeln!(file, "versionCode={version_code}")?;
     writeln!(file, "author={author}")?;
     writeln!(file, "description={}", package.description)?;
-    
+
     Ok(())
 }
 
 fn update_json(data: &CargoConfig) -> Result<()> {
     let version = &data.package.version;
     let version_code: usize = version.replace('.', "").trim().parse()?;
-    
+
     let version = format!("v{version}");
-    let zip_url = format!("https://github.com/shadow3aaa/fas-rs/releases/download/{version}/fas-rs.zip");
-    
-    
+    let zip_url =
+        format!("https://github.com/shadow3aaa/fas-rs/releases/download/{version}/fas-rs.zip");
+
     let cn = UpdateJson {
         versionCode: version_code,
         version: version.clone(),
         zipUrl: zip_url.clone(),
-        changelog: "https://github.com/shadow3aaa/fas-rs/raw/master/update/zh-CN/changelog.md".into(),
+        changelog: "https://github.com/shadow3aaa/fas-rs/raw/master/update/zh-CN/changelog.md"
+            .into(),
     };
 
     let en = UpdateJson {
         versionCode: version_code,
         version,
         zipUrl: zip_url,
-        changelog: "https://github.com/shadow3aaa/fas-rs/raw/master/update/en-US/changelog.md".into(),
+        changelog: "https://github.com/shadow3aaa/fas-rs/raw/master/update/en-US/changelog.md"
+            .into(),
     };
-    
+
     let cn = serde_json::to_string_pretty(&cn)?;
     let en = serde_json::to_string_pretty(&en)?;
-    
+
     fs::write("update/update.json", cn)?;
     fs::write("update/update_en.json", en)?;
-    
+
     Ok(())
 }

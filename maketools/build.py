@@ -158,21 +158,19 @@ def task(args):
     except Exception:
         pass
 
-    shutil.copytree("module", temp_dir)
-
     __build_zygisk(release, verbose)
-
-    zygisk_lib = Path("zygisk").joinpath("output").joinpath("arm64-v8a.so")
-    zygisk_module = temp_dir.joinpath("zygisk")
-    zygisk_module.mkdir()
-    shutil.copy2(zygisk_lib, zygisk_module)
-
     arg = "build --target aarch64-linux-android "
     if release:
         arg += "--release "
     if verbose:
         arg += "--verbose "
     cargo(arg)
+
+    shutil.copytree("module", temp_dir)
+    zygisk_lib = Path("zygisk").joinpath("output").joinpath("arm64-v8a.so")
+    zygisk_module = temp_dir.joinpath("zygisk")
+    zygisk_module.mkdir()
+    shutil.copy2(zygisk_lib, zygisk_module)
 
     bin = Path("target").joinpath("aarch64-linux-android")
     if release:
