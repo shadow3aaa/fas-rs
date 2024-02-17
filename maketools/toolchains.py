@@ -28,7 +28,7 @@ elif (__ndk_home := os.getenv("ANDROID_NDK_HOME")) is not None:
     system = platform.system()
     arch = platform.machine()
     match (arch, system):
-        case ("x86_64", "Windows"):
+        case ("x86_64", "Windows") | ("AMD64", "Windows"):
             __bins = (
                 Path(__ndk_home)
                 .joinpath("toolchains")
@@ -37,7 +37,7 @@ elif (__ndk_home := os.getenv("ANDROID_NDK_HOME")) is not None:
                 .joinpath("windows-x86_64")
                 .joinpath("bin")
             )
-        case ("x86_64", "Linux"):
+        case ("x86_64", "Linux") | ("AMD64", "Linux"):
             __bins = (
                 Path(__ndk_home)
                 .joinpath("toolchains")
