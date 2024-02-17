@@ -24,7 +24,7 @@ if os.getenv("TERMUX_VERSION") is not None:
 elif (__ndk_home := os.getenv("ANDROID_NDK_HOME")) is not None:
     system = platform.system()
     arch = platform.machine()
-    match (arch, machine):
+    match (arch, system):
         case ("x86_64", "Windows"):
             __bins = (
                 Path(__ndk_home)
