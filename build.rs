@@ -14,9 +14,9 @@
 use std::{fs, io::Write};
 
 use anyhow::Result;
-use serde_derive::Deserialize;
+use serde_derive::{Serialize, Deserialize};
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 struct Package {
     pub authors: Vec<String>,
     pub name: String,
@@ -25,8 +25,17 @@ struct Package {
 }
 
 #[derive(Deserialize)]
-struct TomlData {
+struct CargoConfig {
     pub package: Package,
+}
+
+#[allow(non_snake_case)]
+#[derive(Serialize)]
+struct UpdateJson {
+    versionCode: usize,
+    version: String,
+    zipUrl: String,
+    changelog: String,
 }
 
 fn main() -> Result<()> {
@@ -37,15 +46,22 @@ fn main() -> Result<()> {
     println!("cargo:rustc-link-lib=binder_ndk");
 
     let toml = fs::read_to_string("Cargo.toml")?;
-    let data: TomlData = toml::from_str(&toml)?;
+    let data: CargoConfig = toml::from_str(&toml)?;
 
-    let package = data.package;
-    let id = package.name.replace('-', "_"); // 符合magisk module id要求
-    let version_code: usize = package.version.replace('.', "").trim().parse()?; // 转为纯数字版本
-    let authors = package.authors;
+    module_prop(&data)?;
+    update_json(&data)?;
+
+    Ok(())
+}
+
+fn module_prop(data: &CargoConfig) -> Result<()> {
+    let package = &data.package;
+    let id = package.name.replace('-', "_");
+    let version_code: usize = package.version.replace('.', "").trim().parse()?;
+    let authors = &package.authors;
     let mut author = String::new();
     for a in authors {
-        author = format!("{author}{a} ");
+        author += &format!("{a} ");
     }
     let author = author.trim();
 
@@ -61,6 +77,37 @@ fn main() -> Result<()> {
     writeln!(file, "versionCode={version_code}")?;
     writeln!(file, "author={author}")?;
     writeln!(file, "description={}", package.description)?;
+    
+    Ok(())
+}
 
+fn update_json(data: &CargoConfig) -> Result<()> {
+    let version = &data.package.version;
+    let version_code: usize = version.replace('.', "").trim().parse()?;
+    
+    let version = format!("v{version}");
+    let zip_url = format!("https://github.com/shadow3aaa/fas-rs/releases/download/{version}/fas-rs.zip");
+    
+    
+    let cn = UpdateJson {
+        versionCode: version_code,
+        version: version.clone(),
+        zipUrl: zip_url.clone(),
+        changelog: "https://github.com/shadow3aaa/fas-rs/raw/master/update/zh-CN/changelog.md".into(),
+    };
+
+    let en = UpdateJson {
+        versionCode: version_code,
+        version,
+        zipUrl: zip_url,
+        changelog: "https://github.com/shadow3aaa/fas-rs/raw/master/update/en-US/changelog.md".into(),
+    };
+    
+    let cn = serde_json::to_string_pretty(&cn)?;
+    let en = serde_json::to_string_pretty(&en)?;
+    
+    fs::write("update/update.json", cn)?;
+    fs::write("update/update_en.json", en)?;
+    
     Ok(())
 }
