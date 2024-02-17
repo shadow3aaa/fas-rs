@@ -12,3 +12,6 @@
 
 # idea
 /.idea
+
+# misc
+/module/module.prop
