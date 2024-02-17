@@ -1,11 +1,10 @@
-# fas-rs(v2.1.5)
+# fas-rs(v2.1.8)
 
 [Homepage](https://github.com/shadow3aaa/fas-rs)
 
 ## Change log
 
-- Reduce lag and remove redundant code
-- Update module.prop
+- Eliminate unnecessary panics
 
 ## Running requirements
 

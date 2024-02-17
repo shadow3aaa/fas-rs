@@ -1,11 +1,10 @@
-# fas-rs(v2.1.5)
+# fas-rs(v2.1.8)
 
 [项目主页](https://github.com/shadow3aaa/fas-rs)
 
 ## 更新日志
 
-- 减少卡顿，去除多余代码
-- 更新module.prop
+- 消除不必要的panic
 
 ## 运行要求
 
