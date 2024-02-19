@@ -15,11 +15,7 @@ use std::{cmp, fs};
 
 use anyhow::Result;
 
-use super::{
-    super::Freq,
-    event_loop::State,
-    Insider,
-};
+use super::{super::Freq, event_loop::State, Insider};
 
 impl Insider {
     pub fn init_default(&mut self, userspace_governor: bool) -> Result<()> {

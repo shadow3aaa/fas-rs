@@ -69,14 +69,14 @@ impl CpuCommon {
         let last_freq = self.freqs.last().copied().unwrap();
         self.set_freq(last_freq);
     }
-    
+
     fn set_freq(&mut self, f: Freq) {
         self.smooth.update(f);
         for policy in &self.policies {
             let _ = policy.set_fas_freq(f);
         }
     }
-    
+
     fn set_freq_cached(&mut self, f: Freq) {
         if f == self.fas_freq {
             self.smooth.update(f);
@@ -85,12 +85,15 @@ impl CpuCommon {
             self.set_freq(f);
         }
     }
-    
+
     fn set_limit_freq(&mut self, f: Freq) {
         self.smooth.update(f);
-        let avg = self.smooth.avg().unwrap_or_else(|| self.freqs.last().copied().unwrap());
+        let avg = self
+            .smooth
+            .avg()
+            .unwrap_or_else(|| self.freqs.last().copied().unwrap());
         self.fas_freq = avg;
-        
+
         for policy in &self.policies {
             let _ = policy.set_fas_freq(avg);
         }
@@ -101,7 +104,7 @@ impl CpuCommon {
         let limited_freq = current_freq
             .saturating_sub(50000)
             .max(self.freqs.first().copied().unwrap());
-           
+
         self.set_limit_freq(limited_freq);
     }
 
