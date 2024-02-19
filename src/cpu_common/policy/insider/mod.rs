@@ -14,7 +14,6 @@
 mod event_loop;
 mod misc;
 mod normal;
-mod smooth;
 mod utils;
 
 use std::{
@@ -26,14 +25,13 @@ use std::{
 
 use anyhow::Result;
 
-use super::{super::Freq, SetFreqType};
+use super::super::Freq;
 use event_loop::State;
-use smooth::Smooth;
 
 pub enum Event {
     InitDefault(bool),
     InitGame(bool),
-    SetFasFreq(Freq, SetFreqType),
+    SetFasFreq(Freq),
     SetFasGovernor(bool),
 }
 
@@ -42,7 +40,6 @@ pub struct Insider {
     cpus: Vec<i32>,
     path: PathBuf,
     cache: Freq,
-    smooth: Smooth,
     fas_freq: Freq,
     governor_freq: Freq,
     freqs: Vec<Freq>,
@@ -85,7 +82,6 @@ impl Insider {
             path: path.to_path_buf(),
             freqs: freqs.clone(),
             cache: freqs.last().copied().unwrap(),
-            smooth: Smooth::new(),
             fas_freq: freqs.last().copied().unwrap(),
             governor_freq: freqs.last().copied().unwrap(),
             fas_boost: false,

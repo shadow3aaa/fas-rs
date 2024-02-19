@@ -16,7 +16,7 @@ use std::{cmp, fs};
 use anyhow::Result;
 
 use super::{
-    super::{Freq, SetFreqType},
+    super::Freq,
     event_loop::State,
     Insider,
 };
@@ -41,34 +41,34 @@ impl Insider {
         self.fas_boost = fas_boost;
         self.state = State::Fas;
         let last_freq = self.freqs.last().copied().unwrap();
-        self.set_fas_freq(last_freq, SetFreqType::None)
+        self.set_fas_freq(last_freq)
     }
 
-    pub fn set_fas_freq(&mut self, f: Freq, t: SetFreqType) -> Result<()> {
+    pub fn set_fas_freq(&mut self, f: Freq) -> Result<()> {
         self.fas_freq = f;
-        self.write_freq(t)
+        self.write_freq()
     }
 
     pub fn set_userspace_governor_freq(&mut self, f: Freq) -> Result<()> {
         self.governor_freq = f;
-        self.write_freq(SetFreqType::None)
+        self.write_freq()
     }
 
-    fn write_freq(&mut self, t: SetFreqType) -> Result<()> {
+    fn write_freq(&mut self) -> Result<()> {
         if self.fas_boost && self.state == State::Fas {
-            self.write_freq_boost(t)
+            self.write_freq_boost()
         } else {
-            self.write_freq_nonboost(t)
+            self.write_freq_nonboost()
         }
     }
 
-    fn write_freq_nonboost(&mut self, t: SetFreqType) -> Result<()> {
+    fn write_freq_nonboost(&mut self) -> Result<()> {
         if (self.userspace_governor && !self.use_performance_governor)
             || self.cpus.contains(&0)
             || self.state == State::Normal
         {
             let freq = cmp::min(self.fas_freq, self.governor_freq);
-            let target = self.find_freq(freq, t);
+            let target = self.find_freq(freq);
 
             if self.cache == target {
                 Ok(())
@@ -78,7 +78,7 @@ impl Insider {
                 self.lock_min_freq(self.freqs.first().copied().unwrap())
             }
         } else {
-            let target = self.find_freq(self.fas_freq, t);
+            let target = self.find_freq(self.fas_freq);
 
             if self.cache == target {
                 Ok(())
@@ -90,9 +90,9 @@ impl Insider {
         }
     }
 
-    fn write_freq_boost(&mut self, t: SetFreqType) -> Result<()> {
+    fn write_freq_boost(&mut self) -> Result<()> {
         if self.cpus.contains(&0) {
-            let target = self.find_freq(self.governor_freq, t);
+            let target = self.find_freq(self.governor_freq);
 
             if self.cache == target {
                 Ok(())
@@ -103,7 +103,7 @@ impl Insider {
             }
         } else if self.userspace_governor {
             let freq = cmp::max(self.fas_freq, self.governor_freq);
-            let target = self.find_freq(freq, t);
+            let target = self.find_freq(freq);
 
             if self.cache == target {
                 Ok(())
@@ -113,7 +113,7 @@ impl Insider {
                 self.lock_min_freq(target)
             }
         } else {
-            let target = self.find_freq(self.fas_freq, t);
+            let target = self.find_freq(self.fas_freq);
 
             if self.cache == target {
                 Ok(())
@@ -125,16 +125,10 @@ impl Insider {
         }
     }
 
-    fn find_freq(&mut self, f: Freq, t: SetFreqType) -> Freq {
-        let freq = if self.state == State::Fas && !self.cpus.contains(&0) {
-            self.smooth.smooth(f, t).unwrap_or(f)
-        } else {
-            f
-        };
-
+    fn find_freq(&mut self, f: Freq) -> Freq {
         self.freqs
             .iter()
-            .find(|target| **target >= freq)
+            .find(|target| **target >= f)
             .copied()
             .unwrap_or_else(|| self.freqs.last().copied().unwrap())
     }

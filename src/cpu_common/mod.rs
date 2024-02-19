@@ -12,20 +12,23 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 mod policy;
+mod smooth;
 
-use std::{cell::Cell, collections::HashSet, ffi::OsStr, fs};
+use std::{collections::HashSet, ffi::OsStr, fs};
 
 use crate::framework::prelude::*;
 use anyhow::Result;
 
-use policy::{Policy, SetFreqType};
+use policy::Policy;
+use smooth::Smooth;
 
 pub type Freq = usize; // 单位: khz
 
 #[derive(Debug)]
 pub struct CpuCommon {
     freqs: Vec<Freq>,
-    fas_freq: Cell<Freq>,
+    fas_freq: Freq,
+    smooth: Smooth,
     policies: Vec<Policy>,
 }
 
@@ -52,69 +55,79 @@ impl CpuCommon {
             .collect();
         freqs.sort_unstable();
 
-        let last_freq = freqs.last().copied().unwrap();
-        let fas_freq = Cell::new(last_freq);
+        let fas_freq = freqs.last().copied().unwrap();
 
         Ok(Self {
             freqs,
             fas_freq,
+            smooth: Smooth::new(),
             policies,
         })
     }
 
-    fn reset_freq(&self) {
+    fn reset_freq(&mut self) {
         let last_freq = self.freqs.last().copied().unwrap();
-        self.fas_freq.set(last_freq);
-
+        self.set_freq(last_freq);
+    }
+    
+    fn set_freq(&mut self, f: Freq) {
+        self.smooth.update(f);
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(last_freq, SetFreqType::None);
+            let _ = policy.set_fas_freq(f);
+        }
+    }
+    
+    fn set_freq_cached(&mut self, f: Freq) {
+        if f == self.fas_freq {
+            self.smooth.update(f);
+        } else {
+            self.fas_freq = f;
+            self.set_freq(f);
+        }
+    }
+    
+    fn set_limit_freq(&mut self, f: Freq) {
+        self.smooth.update(f);
+        let avg = self.smooth.avg().unwrap_or_else(|| self.freqs.last().copied().unwrap());
+        self.fas_freq = avg;
+        
+        for policy in &self.policies {
+            let _ = policy.set_fas_freq(avg);
         }
     }
 
-    pub fn limit(&self) {
-        let current_freq = self.fas_freq.get();
+    pub fn limit(&mut self) {
+        let current_freq = self.fas_freq;
         let limited_freq = current_freq
             .saturating_sub(50000)
             .max(self.freqs.first().copied().unwrap());
-        self.fas_freq.set(limited_freq);
-
-        for policy in &self.policies {
-            let _ = policy.set_fas_freq(limited_freq, SetFreqType::Limit);
-        }
+           
+        self.set_limit_freq(limited_freq);
     }
 
-    pub fn release(&self) {
-        let current_freq = self.fas_freq.get();
+    pub fn release(&mut self) {
+        let current_freq = self.fas_freq;
         let released_freq = current_freq
             .saturating_add(50000)
             .min(self.freqs.last().copied().unwrap());
-        self.fas_freq.set(released_freq);
-
-        for policy in &self.policies {
-            let _ = policy.set_fas_freq(released_freq, SetFreqType::Release);
-        }
+        self.set_freq_cached(released_freq);
     }
 
-    pub fn jank(&self) {
-        let current_freq = self.fas_freq.get();
+    pub fn jank(&mut self) {
+        let current_freq = self.fas_freq;
         let released_freq = current_freq
             .saturating_add(50000)
             .min(self.freqs.last().copied().unwrap());
 
-        for policy in &self.policies {
-            let _ = policy.set_fas_freq(released_freq, SetFreqType::Jank);
-        }
+        self.set_freq(released_freq);
     }
 
-    pub fn big_jank(&self) {
+    pub fn big_jank(&mut self) {
         let max_freq = self.freqs.last().copied().unwrap();
-
-        for policy in &self.policies {
-            let _ = policy.set_fas_freq(max_freq, SetFreqType::BigJank);
-        }
+        self.set_freq(max_freq);
     }
 
-    pub fn init_game(&self, m: Mode, c: &Config, extension: &Extension) {
+    pub fn init_game(&mut self, m: Mode, c: &Config, extension: &Extension) {
         self.reset_freq();
 
         extension.call_extentions(CallBacks::InitCpuFreq);
@@ -124,7 +137,7 @@ impl CpuCommon {
         }
     }
 
-    pub fn init_default(&self, c: &Config, extension: &Extension) {
+    pub fn init_default(&mut self, c: &Config, extension: &Extension) {
         self.reset_freq();
 
         extension.call_extentions(CallBacks::ResetCpuFreq);

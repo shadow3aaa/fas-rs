@@ -16,8 +16,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use super::super::SetFreqType;
-use crate::cpu_common::Freq;
+use super::Freq;
 
 #[derive(Debug)]
 pub struct Smooth {
@@ -31,22 +30,13 @@ impl Smooth {
         }
     }
 
-    pub fn smooth(&mut self, freq: Freq, t: SetFreqType) -> Option<Freq> {
-        match t {
-            SetFreqType::Jank | SetFreqType::BigJank => (),
-            _ => self.buffer.push_front((freq, Instant::now())),
-        }
-
+    pub fn update(&mut self, freq: Freq) {
+        self.buffer.push_front((freq, Instant::now()));
         self.buffer
-            .retain(|(_, i)| i.elapsed() <= Duration::from_secs(30));
-
-        Some(match t {
-            SetFreqType::Limit => self.avg()?.max(freq),
-            _ => freq,
-        })
+            .retain(|(_, i)| i.elapsed() <= Duration::from_millis(500));
     }
 
-    fn avg(&self) -> Option<Freq> {
+    pub fn avg(&self) -> Option<Freq> {
         let sum: Freq = self.buffer.iter().copied().map(|(f, _)| f).sum();
         let len = self.buffer.len();
         sum.checked_div(len)

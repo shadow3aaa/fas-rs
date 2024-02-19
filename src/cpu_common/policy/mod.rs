@@ -24,15 +24,6 @@ use super::Freq;
 use crate::framework::prelude::*;
 use insider::{Event, Insider};
 
-#[derive(Debug, Clone, Copy)]
-pub enum SetFreqType {
-    Limit,
-    Release,
-    Jank,
-    BigJank,
-    None,
-}
-
 #[derive(Debug)]
 pub struct Policy {
     pub freqs: Vec<Freq>,
@@ -66,8 +57,8 @@ impl Policy {
         Ok(())
     }
 
-    pub fn set_fas_freq(&self, f: Freq, t: SetFreqType) -> Result<()> {
-        self.sx.send(Event::SetFasFreq(f, t))?;
+    pub fn set_fas_freq(&self, f: Freq) -> Result<()> {
+        self.sx.send(Event::SetFasFreq(f))?;
         Ok(())
     }
 }
