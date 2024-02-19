@@ -17,6 +17,7 @@ import sys
 import maketools.format_codes as format_codes
 import maketools.build as build
 import maketools.fix as fix
+import maketools.update as update
 from maketools.misc import eprint
 
 help_text = """\
@@ -50,6 +51,8 @@ match arg:
         build.task(sys.argv[2:])
     case "fix":
         fix.task()
+    case "update":
+        update.task()
     case _:
         eprint("Invalid argument")
         eprint(help_text)
