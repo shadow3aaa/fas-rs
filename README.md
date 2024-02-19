@@ -49,7 +49,7 @@
 - ### **`powersave` / `balance` / `performance` / `fast` 说明:**
 
   - **mode:**
-    - 目前`fas-rs`还没有官方的切换模式的管理器, 而是接入了[`scene`](https://www.coolapk.com/apk/com.omarea.vtools)的配置接口, 如果你不用scene则默认使用`balance`的配置
+    - 目前`fas-rs`还没有官方的切换模式的管理器, 而是接入了[`scene`](http://vtools.omarea.com)的配置接口, 如果你不用scene则默认使用`balance`的配置
     - 如果你有在linux上编程的一些了解, 向`/dev/fas_rs/mode`节点写入4模式中的任意一个即可切换到对应模式, 同时读取它也可以知道现在`fas-rs`所处的模式
   - **参数说明:**
     - fas_boost(bool): `fas-rs`的目的是限制功耗还是减少游戏掉帧, true时为减少掉帧模式

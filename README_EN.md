@@ -49,7 +49,7 @@
 - ### **`powersave` / `balance` / `performance` / `fast` Description:**
 
   - **mode:**
-    - Currently, `fas-rs` does not have an official switching mode manager, but is connected to the configuration interface of [`scene`](https://www.coolapk.com/apk/com.omarea.vtools). If you don’t use scene, the configuration of `balance` will be used by default.
+    - Currently, `fas-rs` does not have an official switching mode manager, but is connected to the configuration interface of [`scene`](http://vtools.omarea.com). If you don’t use scene, the configuration of `balance` will be used by default.
     - If you have some understanding of programming on Linux, you can switch to the corresponding mode by writing any one of the 4 modes to the `/dev/fas_rs/mode` node, and at the same time, reading it can also know the current `fas-rs` mode
   - **Parameter Description:**
     - fas_boost(bool): The purpose of `fas-rs` is to limit power consumption or reduce game frame drops. When true, it is the mode to reduce frame drops.
