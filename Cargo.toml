@@ -49,6 +49,6 @@ strip = true
 overflow-checks = false
 codegen-units = 1
 lto = "fat"
-opt-level = 3
+opt-level = 'z'
 strip = true
 # panic = "abort"
