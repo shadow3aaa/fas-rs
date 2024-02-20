@@ -108,13 +108,17 @@ def __build_zygisk(tools: Buildtools, release: bool, verbose: bool, nightly: boo
 
     os.chdir("rust")
 
-    cargo = tools.cargo().arg("build --target aarch64-linux-android")
+    if nightly:
+        cargo = tools.cargo_nightly()
+        cargo = cargo.extra_arg("-Z build-std")
+    else:
+        cargo = tools.cargo()
+
+    cargo = cargo.arg("build --target aarch64-linux-android")
     if release:
         cargo = cargo.arg("--release")
     if verbose:
         cargo = cargo.arg("--verbose")
-    if nightly:
-        cargo = cargo.extra_arg("-Z build-std")
 
     cargo.build()
     os.chdir(zygisk_root)

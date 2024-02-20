@@ -39,6 +39,33 @@ class Cargo:
         os.system(command)
 
 
+class CargoNightly:
+    __cargo = ""
+    __args = ""
+    __extra_args = ""
+
+    def __init__(self):
+        if os.getenv("TERMUX_VERSION") is not None:
+            prefix = os.getenv("PREFIX")
+            self.__cargo = Path(prefix).joinpath("opt/rust-nightly/bin/cargo")
+        elif os.getenv("ANDROID_NDK_HOME") is not None:
+            self.__cargo = "cargo +nightly ndk -p 31 -t arm64-v8a"
+        else:
+            raise "Missing env: ANDROID_NDK_HOME"
+
+    def arg(self, arg: str):
+        self.__args += "{} ".format(arg)
+        return self
+
+    def extra_arg(self, arg: str):
+        self.__extra_args += "{} ".format(arg)
+        return self
+
+    def build(self):
+        command = "{} {} -- {}".format(self.__cargo, self.__args, self.__extra_args)
+        os.system(command)
+
+
 class Cpp:
     __clang_plusplus = ""
     __args = ""
@@ -120,6 +147,9 @@ class Buildtools:
 
     def cargo(self):
         return Cargo(self.__cargo)
+
+    def cargo_nightly(self):
+        return CargoNightly()
 
     def strip(self, path: Path):
         command = "{} {}".format(self.__strip, path)
