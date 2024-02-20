@@ -33,7 +33,7 @@ mod utils;
 
 use std::{ffi::CStr, fs, ptr, sync::atomic::AtomicBool, thread};
 
-use android_logger::{self, Config};
+use android_logger::Config;
 use dobby_api::Address;
 use libc::c_char;
 #[cfg(debug_assertions)]
