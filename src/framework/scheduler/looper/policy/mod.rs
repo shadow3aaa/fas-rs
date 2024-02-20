@@ -67,9 +67,9 @@ impl Buffer {
         self.acc_timer = Instant::now();
 
         let limit_delay = match self.calculate_stability() {
-            StabilityLevel::High => Duration::from_secs(10) / policy_data.target_fps,
-            StabilityLevel::Mid => Duration::from_secs(13) / policy_data.target_fps,
-            StabilityLevel::Low => Duration::from_secs(15) / policy_data.target_fps,
+            StabilityLevel::High => Duration::from_secs(8) / policy_data.target_fps,
+            StabilityLevel::Mid => Duration::from_secs(9) / policy_data.target_fps,
+            StabilityLevel::Low => Duration::from_secs(10) / policy_data.target_fps,
         };
 
         let timeout = self.acc_frame.timeout_dur();
@@ -77,6 +77,7 @@ impl Buffer {
             #[cfg(debug_assertions)]
             debug!("unit small jank, timeout: {timeout:?}");
 
+            self.limit_timer = Instant::now();
             NormalEvent::Release
         } else {
             if self.limit_timer.elapsed() < limit_delay {
@@ -89,7 +90,6 @@ impl Buffer {
             NormalEvent::Restrictable
         };
 
-        self.limit_timer = Instant::now();
         self.acc_frame.reset();
         result
     }
