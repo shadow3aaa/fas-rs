@@ -42,7 +42,7 @@ jobs:
       run: |
         export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
         export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
-        python3 ./make.py build --release
+        python3 ./make.py build --release --nightly
         python3 ./make.py build --debug
 
     - name: Upload release-ci
