@@ -16,19 +16,23 @@
 import os
 import shutil
 from pathlib import Path
-from maketools.toolchains import cargo, strip, clang_plusplus
+from maketools.toolchains import Buildtools
 from maketools.misc import eprint
 
 build_help_text = """\
 python3 ./make.py build:
+    --help:
+        print this help
     --clean:
         clean up
     --release:
         release build
     --debug:
         debug build
+    --nightly:
+        Introducing more optimizations using rust nightly
     --verbose:
-        print details of build"\
+        print details of build\
 """
 CFLAGS = (
     "-Ofast -flto -fmerge-all-constants -fno-exceptions -fomit-frame-pointer -fshort-enums \
@@ -43,6 +47,7 @@ def __parse_args(args):
     build = False
     verbose = False
     clean = False
+    nightly = False
 
     for arg in args:
         match arg:
@@ -52,10 +57,14 @@ def __parse_args(args):
             case "--debug" | "-d":
                 debug = True
                 build = True
-            case "--clean" | "clean":
+            case "--clean":
                 clean = True
+            case "--nightly":
+                nightly = True
             case "--verbose" | "verbose" | "-v":
                 verbose = True
+            case "-h" | "--help":
+                print(build_help_text)
             case _:
                 raise Exception("Illegal build parameter: {}".format(arg))
 
@@ -66,7 +75,7 @@ def __parse_args(args):
     elif (release and debug) or (build and clean):
         raise Exception("Conflicting build arguments")
 
-    return (clean, release, verbose)
+    return (clean, release, nightly, verbose)
 
 
 def __clean():
@@ -87,7 +96,7 @@ def __clean():
     os.system("cargo clean")
 
 
-def __build_zygisk(release: bool, verbose: bool):
+def __build_zygisk(tools: Buildtools, release: bool, verbose: bool, nightly: bool):
     root = Path.cwd()
     zygisk_root = root.joinpath("zygisk")
     os.chdir(zygisk_root)
@@ -98,13 +107,16 @@ def __build_zygisk(release: bool, verbose: bool):
         pass
 
     os.chdir("rust")
-    arg = "build --target aarch64-linux-android "
-    if release:
-        arg += "--release "
-    if verbose:
-        arg += "--verbose "
 
-    cargo(arg)
+    cargo = tools.cargo().arg("build --target aarch64-linux-android")
+    if release:
+        cargo = cargo.arg("--release")
+    if verbose:
+        cargo = cargo.arg("--verbose")
+    if nightly:
+        cargo = cargo.extra_arg("-Z build-std")
+
+    cargo.build()
     os.chdir(zygisk_root)
 
     source = Path("rust").joinpath("target").joinpath("aarch64-linux-android")
@@ -119,22 +131,31 @@ def __build_zygisk(release: bool, verbose: bool):
     shutil.copy2(source, destination)
 
     output = Path("output").joinpath("arm64-v8a.so")
-    arg = "--shared {} ".format(Path("src").joinpath("*.cpp"))
-    arg += "-I {} ".format(Path("rust").joinpath("include"))
-    arg += "-L output -L {} ".format(Path("..").joinpath("prebuilt"))
-    arg += "-fPIC -nostdlib++ -Wl,-lrust,-llog,-lbinder_ndk "
-    arg += "{} ".format(CFLAGS)
-    arg += "-o {}".format(output)
 
-    clang_plusplus(arg)
-    strip(output)
+    (
+        tools.cpp()
+        .arg("--shared {}".format(Path("src").joinpath("*.cpp")))
+        .arg("-I {}".format(Path("rust").joinpath("include")))
+        .arg("-L output -L {}".format(Path("..").joinpath("prebuilt")))
+        .arg("-fPIC -nostdlib++ -Wl,-lrust,-llog,-lbinder_ndk")
+        .arg(CFLAGS)
+        .arg("-o {}".format(output))
+        .build()
+    )
 
+    tools.strip(output)
     os.chdir(root)
 
 
 def task(args):
     try:
-        (clean, release, verbose) = __parse_args(args)
+        tools = Buildtools()
+    except Exception as err:
+        eprint(err)
+        exit(-1)
+
+    try:
+        (clean, release, nightly, verbose) = __parse_args(args)
     except Exception as err:
         eprint(err)
         exit(-1)
@@ -158,13 +179,18 @@ def task(args):
     except Exception:
         pass
 
-    __build_zygisk(release, verbose)
-    arg = "build --target aarch64-linux-android "
+    __build_zygisk(tools, release, nightly, verbose)
+
+    cargo = tools.cargo().arg("build --target aarch64-linux-android")
+
     if release:
-        arg += "--release "
+        cargo = cargo.arg("--release")
     if verbose:
-        arg += "--verbose "
-    cargo(arg)
+        cargo = cargo.arg("--verbose")
+    if nightly:
+        cargo = cargo.arg("-Z build-std ")
+
+    cargo.build()
 
     shutil.copytree("module", temp_dir)
     zygisk_lib = Path("zygisk").joinpath("output").joinpath("arm64-v8a.so")
@@ -181,7 +207,7 @@ def task(args):
 
     bin_module = temp_dir.joinpath("fas-rs")
     shutil.copy2(bin, bin_module)
-    strip(bin_module)
+    tools.strip(bin_module)
 
     if release:
         output = Path("output").joinpath("fas-rs(release)")

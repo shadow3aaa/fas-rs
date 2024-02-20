@@ -14,29 +14,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from maketools.toolchains import cargo, clang_tidy
+from maketools.toolchains import Buildtools
 from pathlib import Path
 
 
-def __clippy_fix():
-    cargo("clippy --fix --allow-dirty --allow-staged --target aarch64-linux-android")
-    cargo(
-        "clippy --fix --allow-dirty --allow-staged --target aarch64-linux-android --release"
+def __clippy_fix(tools: Buildtools):
+    (
+        tools.cargo()
+        .arg("clippy --fix --allow-dirty --allow-staged --target aarch64-linux-android")
+        .build()
+    )
+
+    (
+        tools.cargo()
+        .arg(
+            "clippy --fix --allow-dirty --allow-staged --target aarch64-linux-android --release"
+        )
+        .build()
     )
 
 
 def task():
+    tools = Buildtools()
+
     os.system("ruff --fix make.py")
     os.system("ruff --fix maketools")
 
-    __clippy_fix()
+    __clippy_fix(tools)
 
     os.chdir("zygisk")
-    clang_tidy(
-        "-fix-errors --fix --header-filter='.*\.cpp' {} -- -I{}".format(
-            Path("src").joinpath("*.cpp"), Path("rust").joinpath("include")
+    (
+        tools.cpp_tidy()
+        .arg("-fix-errors")
+        .arg("--fix")
+        .arg("--header-filter='.*.cpp'")
+        .arg(
+            "{} -- -I{}".format(
+                Path("src").joinpath("*.cpp"), Path("rust").joinpath("include")
+            )
         )
     )
 
     os.chdir("rust")
-    __clippy_fix()
+    __clippy_fix(tools)

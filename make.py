@@ -32,7 +32,7 @@ help_text = """\
     update:
         recursive update all depended crates"
     help:
-        print this message\
+        print this help\
 """
 
 try:

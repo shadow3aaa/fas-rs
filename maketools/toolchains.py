@@ -16,65 +16,121 @@
 import os
 import platform
 from pathlib import Path
-from maketools.misc import eprint
-
-if os.getenv("TERMUX_VERSION") is not None:
-    __cargo = "cargo"
-    __strip = "strip"
-    __clang_plusplus = "clang++"
-    __clang_format = "clang-format"
-    __clang_tidy = "clang-tidy"
-elif (__ndk_home := os.getenv("ANDROID_NDK_HOME")) is not None:
-    system = platform.system()
-    arch = platform.machine()
-    match (arch, system):
-        case ("x86_64", "Windows") | ("AMD64", "Windows"):
-            __bins = (
-                Path(__ndk_home)
-                .joinpath("toolchains")
-                .joinpath("llvm")
-                .joinpath("prebuilt")
-                .joinpath("windows-x86_64")
-                .joinpath("bin")
-            )
-        case ("x86_64", "Linux") | ("AMD64", "Linux"):
-            __bins = (
-                Path(__ndk_home)
-                .joinpath("toolchains")
-                .joinpath("llvm")
-                .joinpath("prebuilt")
-                .joinpath("linux-x86_64")
-                .joinpath("bin")
-            )
-        case _:
-            eprint("Unsupported platform: {} {}".format(arch, system))
-            exit(-1)
-
-    __cargo = "cargo ndk -p 31 -t arm64-v8a"
-    __strip = __bins.joinpath("llvm-strip")
-    __clang_plusplus = __bins.joinpath("aarch64-linux-android31-clang++")
-    __clang_format = __bins.joinpath("clang-format")
-    __clang_tidy = __bins.joinpath("clang-tidy")
-else:
-    eprint("Missing env: ANDROID_NDK_HOME")
-    exit(-1)
 
 
-def cargo(arg: str):
-    os.system("{} {}".format(__cargo, arg))
+class Cargo:
+    __cargo = ""
+    __args = ""
+    __extra_args = ""
+
+    def __init__(self, command: str):
+        self.__cargo = command
+
+    def arg(self, arg: str):
+        self.__args += "{} ".format(arg)
+        return self
+
+    def extra_arg(self, arg: str):
+        self.__extra_args += "{} ".format(arg)
+        return self
+
+    def build(self):
+        command = "{} {} -- {}".format(self.__cargo, self.__args, self.__extra_args)
+        os.system(command)
 
 
-def strip(arg: str):
-    os.system("{} {}".format(__strip, arg))
+class Cpp:
+    __clang_plusplus = ""
+    __args = ""
+
+    def __init__(self, command: str):
+        self.__clang_plusplus = command
+
+    def arg(self, arg):
+        self.__args += "{} ".format(arg)
+        return self
+
+    def build(self):
+        command = "{} {}".format(self.__clang_plusplus, self.__args)
+        os.system(command)
 
 
-def clang_plusplus(arg: str):
-    os.system("{} {}".format(__clang_plusplus, arg))
+class CppTidy:
+    __clang_tidy = ""
+    __args = ""
+
+    def __init__(self, command: str):
+        self.__clang_plusplus = command
+
+    def arg(self, arg: str):
+        self.__args += "{} ".format(arg)
+        return self
+
+    def tidy(self):
+        command = "{} {}".format(self.__clang_tidy, self.__args)
+        os.system(command)
 
 
-def clang_format(arg: str):
-    os.system("{} {}".format(__clang_format, arg))
+class Buildtools:
+    __cargo = ""
+    __strip = ""
+    __clang_plusplus = ""
+    __clang_format = ""
+    __clang_tidy = ""
 
+    def __init__(self):
+        if os.getenv("TERMUX_VERSION") is not None:
+            self.__cargo = "cargo"
+            self.__strip = "strip"
+            self.__clang_plusplus = "clang++"
+            self.__clang_format = "clang-format"
+            self.__clang_tidy = "clang-tidy"
+        elif (ndk_home := os.getenv("ANDROID_NDK_HOME")) is not None:
+            system = platform.system()
+            arch = platform.machine()
+            match (arch, system):
+                case ("x86_64", "Windows") | ("AMD64", "Windows"):
+                    bins = (
+                        Path(ndk_home)
+                        .joinpath("toolchains")
+                        .joinpath("llvm")
+                        .joinpath("prebuilt")
+                        .joinpath("windows-x86_64")
+                        .joinpath("bin")
+                    )
+                case ("x86_64", "Linux") | ("AMD64", "Linux"):
+                    bins = (
+                        Path(ndk_home)
+                        .joinpath("toolchains")
+                        .joinpath("llvm")
+                        .joinpath("prebuilt")
+                        .joinpath("linux-x86_64")
+                        .joinpath("bin")
+                    )
+                case _:
+                    raise "Unsupported platform: {} {}".format(arch, system)
 
-def clang_tidy(arg: str):
-    os.system("{} {}".format(__clang_tidy, arg))
+            self.__cargo = "cargo ndk -p 31 -t arm64-v8a"
+            self.__strip = bins.joinpath("llvm-strip")
+            self.__clang_plusplus = bins.joinpath("aarch64-linux-android31-clang++")
+            self.__clang_format = bins.joinpath("clang-format")
+            self.__clang_tidy = bins.joinpath("clang-tidy")
+        else:
+            raise "Missing env: ANDROID_NDK_HOME"
+
+    def cargo(self):
+        return Cargo(self.__cargo)
+
+    def strip(self, path: Path):
+        command = "{} {}".format(self.__strip, path)
+        os.system(command)
+
+    def cpp(self):
+        return Cpp(self.__clang_plusplus)
+
+    def cpp_format(self, path: Path):
+        command = "{} -i --verbose {}".format(self.__clang_format, path)
+        os.system(command)
+
+    def cpp_tidy(self):
+        return CppTidy(self.__clang_tidy)
