@@ -38,23 +38,19 @@ pub enum JankEvent {
 }
 
 impl Buffer {
-    pub fn normal_event(&mut self, mode: Mode) -> NormalEvent {
-        let Some(policy_data) = PolicyData::extract(self, mode) else {
-            return NormalEvent::Release;
-        };
+    pub fn normal_event(&mut self, mode: Mode) -> Option<NormalEvent> {
+        let policy_data = PolicyData::extract(self, mode)?;
 
         #[cfg(debug_assertions)]
         debug!("policy data: {policy_data:?}");
 
-        self.frame_analyze(policy_data)
+        Some(self.frame_analyze(policy_data))
     }
 
-    pub fn jank_event(&mut self, mode: Mode) -> JankEvent {
-        let Some(policy_data) = PolicyData::extract(self, mode) else {
-            return JankEvent::BigJank;
-        };
+    pub fn jank_event(&mut self, mode: Mode) -> Option<JankEvent> {
+        let policy_data = PolicyData::extract(self, mode)?;
 
-        self.jank_analyze(policy_data)
+        Some(self.jank_analyze(policy_data))
     }
 
     fn frame_analyze(&mut self, policy_data: PolicyData) -> NormalEvent {

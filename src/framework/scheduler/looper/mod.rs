@@ -157,13 +157,10 @@ impl Looper {
             .buffers
             .values_mut()
             .filter(|buffer| buffer.target_fps == target_fps)
-            .map(|buffer| buffer.normal_event(self.mode))
+            .filter_map(|buffer| buffer.normal_event(self.mode))
             .max()
         else {
-            return;
-        };
-
-        let Some(_target_fps) = target_fps else {
+            self.disable_fas();
             return;
         };
 
@@ -185,9 +182,10 @@ impl Looper {
             .buffers
             .values_mut()
             .filter(|buffer| buffer.target_fps == target_fps)
-            .map(|buffer| buffer.jank_event(self.mode))
+            .filter_map(|buffer| buffer.jank_event(self.mode))
             .max()
         else {
+            self.disable_fas();
             return;
         };
 
