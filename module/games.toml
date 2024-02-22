@@ -26,5 +26,5 @@ fas_boost = false
 use_performance_governor = true
 
 [fast]
-fas_boost = true
-use_performance_governor = false
+fas_boost = false
+use_performance_governor = true
