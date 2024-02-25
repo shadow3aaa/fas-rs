@@ -11,7 +11,9 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+mod misc;
 mod policy;
+mod jump;
 mod smooth;
 
 use std::{collections::HashSet, ffi::OsStr, fs};
@@ -20,9 +22,12 @@ use crate::framework::prelude::*;
 use anyhow::Result;
 
 use policy::Policy;
+use jump::JumpStep;
 use smooth::Smooth;
 
 pub type Freq = usize; // 单位: khz
+
+const STEP: Freq = 50000;
 
 #[derive(Debug)]
 pub struct CpuCommon {
@@ -30,6 +35,7 @@ pub struct CpuCommon {
     fas_freq: Freq,
     smooth: Smooth,
     policies: Vec<Policy>,
+    jump: JumpStep,
 }
 
 impl CpuCommon {
@@ -62,64 +68,30 @@ impl CpuCommon {
             fas_freq,
             smooth: Smooth::new(),
             policies,
+            jump: JumpStep::new(),
         })
-    }
-
-    fn reset_freq(&mut self) {
-        let last_freq = self.freqs.last().copied().unwrap();
-        self.set_freq(last_freq);
-    }
-
-    fn set_freq(&mut self, f: Freq) {
-        self.smooth.update(f);
-        for policy in &self.policies {
-            let _ = policy.set_fas_freq(f);
-        }
-    }
-
-    fn set_freq_cached(&mut self, f: Freq) {
-        if f == self.fas_freq {
-            self.smooth.update(f);
-        } else {
-            self.fas_freq = f;
-            self.set_freq(f);
-        }
-    }
-
-    fn set_limit_freq(&mut self, f: Freq) {
-        self.smooth.update(f);
-        let avg = self
-            .smooth
-            .avg()
-            .unwrap_or_else(|| self.freqs.last().copied().unwrap());
-        self.fas_freq = avg;
-
-        for policy in &self.policies {
-            let _ = policy.set_fas_freq(avg);
-        }
     }
 
     pub fn limit(&mut self) {
         let current_freq = self.fas_freq;
-        let limited_freq = current_freq
-            .saturating_sub(50000)
-            .max(self.freqs.first().copied().unwrap());
+        // let limited_freq = current_freq.saturating_sub(STEP);
+        let limited_freq = self.jump.limit(current_freq).max(self.freqs.first().copied().unwrap());
 
         self.set_limit_freq(limited_freq);
     }
 
     pub fn release(&mut self) {
         let current_freq = self.fas_freq;
-        let released_freq = current_freq
-            .saturating_add(50000)
-            .min(self.freqs.last().copied().unwrap());
+        // let released_freq = current_freq.saturating_add(STEP);
+        let released_freq = self.jump.release(current_freq).min(self.freqs.last().copied().unwrap());
+        
         self.set_freq_cached(released_freq);
     }
 
     pub fn jank(&mut self) {
         let current_freq = self.fas_freq;
         let released_freq = current_freq
-            .saturating_add(50000)
+            .saturating_add(STEP)
             .min(self.freqs.last().copied().unwrap());
 
         self.set_freq(released_freq);

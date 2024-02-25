@@ -33,12 +33,16 @@ impl Smooth {
     pub fn update(&mut self, freq: Freq) {
         self.buffer.push_front((freq, Instant::now()));
         self.buffer
-            .retain(|(_, i)| i.elapsed() <= Duration::from_millis(100));
+            .retain(|(_, i)| i.elapsed() <= Duration::from_millis(500));
     }
 
     pub fn avg(&self) -> Option<Freq> {
         let sum: Freq = self.buffer.iter().copied().map(|(f, _)| f).sum();
         let len = self.buffer.len();
         sum.checked_div(len)
+    }
+
+    pub fn reset(&mut self) {
+        self.buffer.clear();
     }
 }
