@@ -11,9 +11,9 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+mod jump;
 mod misc;
 mod policy;
-mod jump;
 mod smooth;
 
 use std::{collections::HashSet, ffi::OsStr, fs};
@@ -21,8 +21,8 @@ use std::{collections::HashSet, ffi::OsStr, fs};
 use crate::framework::prelude::*;
 use anyhow::Result;
 
-use policy::Policy;
 use jump::JumpStep;
+use policy::Policy;
 use smooth::Smooth;
 
 pub type Freq = usize; // 单位: khz
@@ -75,7 +75,10 @@ impl CpuCommon {
     pub fn limit(&mut self) {
         let current_freq = self.fas_freq;
         // let limited_freq = current_freq.saturating_sub(STEP);
-        let limited_freq = self.jump.limit(current_freq).max(self.freqs.first().copied().unwrap());
+        let limited_freq = self
+            .jump
+            .limit(current_freq)
+            .max(self.freqs.first().copied().unwrap());
 
         self.set_limit_freq(limited_freq);
     }
@@ -83,8 +86,11 @@ impl CpuCommon {
     pub fn release(&mut self) {
         let current_freq = self.fas_freq;
         // let released_freq = current_freq.saturating_add(STEP);
-        let released_freq = self.jump.release(current_freq).min(self.freqs.last().copied().unwrap());
-        
+        let released_freq = self
+            .jump
+            .release(current_freq)
+            .min(self.freqs.last().copied().unwrap());
+
         self.set_freq_cached(released_freq);
     }
 
