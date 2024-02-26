@@ -8,7 +8,7 @@
 
 ## **Introduction**
 
-  > If the picture seen by the naked eye can be directly reflected in the scheduling, that is to say, the scheduler is placed from the perspective of the viewer to determine the performance, can perfect performance control and maximized experience be achieved? `FAS (Frame Aware Scheduling) )` is this scheduling concept, trying to control performance by monitoring screen rendering to minimize overhead while ensuring rendering time.
+  > If the picture seen by the naked eye can be directly reflected in the scheduling, that is to say, the scheduler is placed from the perspective of the viewer to determine the performance, can perfect performance control and maximized experience be achieved? `FAS (Frame Aware Scheduling)` is this scheduling concept, trying to control performance by monitoring screen rendering to minimize overhead while ensuring rendering time.
 
 - ### **What is `fas-rs`?**
 
@@ -138,19 +138,3 @@ cd fas-rs
 # Compile
 python3 ./make.py build --release
 ```
-
-- ## **💩**
-
-I'm here to introduce you the greatest thief @tryigitx !
-So, what did he do?
-
-- 1. He kept stealing fas-rs module from me without any permission, and pretended to be co-developed with me.
-In fact, he hasn't developed any kind of project, just because he is not able to.
-  From his homepage (<https://linktr.ee/tryigitx>), we can see he is an eXpErT! lmfao🤣🤣
-  I just can't imagine how can a real expert do these things. If @tryigitx is a real expert, pLeAsE fOrGiVe Me😭😭
-
-- 2. He also stole other modules, like "Play Integrity Fix".
-  He copied it and changed the author to his own, but that's not all.
-  Maybe it's some kind of self-deception, he also changed the name to "China Play Integrity Fix".
-  He seemed to want to express that this is for China Version ROMs, but everyone can see what he really wanted to do.
-  Now that you've all seen these, make your own judgment based on your own values.
