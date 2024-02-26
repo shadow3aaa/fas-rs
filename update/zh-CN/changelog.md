@@ -1,10 +1,14 @@
-# fas-rs(v2.1.8)
+# fas-rs(v2.2.0)
 
 [项目主页](https://github.com/shadow3aaa/fas-rs)
 
 ## 更新日志
 
-- 消除不必要的panic
+- 频率调整步进自动改变
+- 默认配置不开启fas_boost
+- 加回fas自动暂停分析
+- 优化频率稳定性
+- 优化二进制大小(编译标准库)
 
 ## 运行要求
 
