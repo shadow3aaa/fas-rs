@@ -36,8 +36,17 @@ jobs:
     - name: Other deps
       run: |
         sudo apt update
-        sudo apt install gcc-multilib git-lfs
+        sudo apt install gcc-multilib git-lfs mold
         git lfs pull
+    
+    - name: Set cargo config
+      run: |
+        mold_path=$(which mold)
+        config='
+        [target.aarch64-linux-android]
+        rustflags = ["-C", "link-arg=-fuse-ld=/data/data/com.termux/files/usr/bin/mold"]
+        '
+        echo "$config" > ~/.cargo/config
 
     - name: Build
       run: |
