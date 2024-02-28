@@ -74,7 +74,6 @@ impl CpuCommon {
 
     pub fn limit(&mut self) {
         let current_freq = self.fas_freq;
-        // let limited_freq = current_freq.saturating_sub(STEP);
         let limited_freq = self
             .jump
             .limit(current_freq)
@@ -85,7 +84,6 @@ impl CpuCommon {
 
     pub fn release(&mut self) {
         let current_freq = self.fas_freq;
-        // let released_freq = current_freq.saturating_add(STEP);
         let released_freq = self
             .jump
             .release(current_freq)

@@ -15,7 +15,7 @@ use cpu_cycles_reader::Cycles;
 
 use super::Insider;
 
-const MARGIN: Cycles = Cycles::from_mhz(300);
+const MARGIN: Cycles = Cycles::from_mhz(250);
 
 impl Insider {
     pub fn normal_policy(&mut self, max_cycles: Cycles) {
