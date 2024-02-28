@@ -44,7 +44,7 @@ jobs:
         mold_path=$(which mold)
         config='
         [target.aarch64-linux-android]
-        rustflags = ["-C", "link-arg=-fuse-ld=/data/data/com.termux/files/usr/bin/mold"]
+        rustflags = ["-C", "link-arg=-fuse-ld=$mold_path"]
         '
         echo "$config" > ~/.cargo/config
 
