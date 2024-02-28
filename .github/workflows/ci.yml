@@ -38,15 +38,6 @@ jobs:
         sudo apt update
         sudo apt install gcc-multilib git-lfs mold
         git lfs pull
-    
-    - name: Set cargo config
-      run: |
-        mold_path=$(which mold)
-        config="
-        [target.aarch64-linux-android]
-        rustflags = [\"-C\", \"link-arg=-fuse-ld=$mold_path\"]
-        "
-        echo "$config" > ~/.cargo/config.toml
 
     - name: Build
       run: |
