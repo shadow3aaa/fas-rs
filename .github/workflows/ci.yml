@@ -42,11 +42,11 @@ jobs:
     - name: Set cargo config
       run: |
         mold_path=$(which mold)
-        config='
+        config="
         [target.aarch64-linux-android]
-        rustflags = ["-C", "link-arg=-fuse-ld=$mold_path"]
-        '
-        echo "$config" > ~/.cargo/config
+        rustflags = [\"-C\", \"link-arg=-fuse-ld=$mold_path\"]
+        "
+        echo "$config" > ~/.cargo/config.toml
 
     - name: Build
       run: |
