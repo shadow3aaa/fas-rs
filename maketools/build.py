@@ -37,8 +37,7 @@ python3 ./make.py build:
 CFLAGS = (
     "-Ofast -flto -fmerge-all-constants -fno-exceptions -fomit-frame-pointer -fshort-enums \
 -Wl,-O3,--lto-O3,--gc-sections,--as-needed,--icf=all,-z,norelro,--pack-dyn-relocs=android+relr \
--std=c++2b -Wall -lc++"
-)
+-std=c++2b -Wall -lc++")
 
 
 def __parse_args(args):
@@ -144,6 +143,7 @@ def __build_zygisk(tools: Buildtools, release: bool, verbose: bool, nightly: boo
         .arg("-fPIC -nostdlib++ -Wl,-lrust,-llog,-lbinder_ndk")
         .arg(CFLAGS)
         .arg("-o {}".format(output))
+        .arg("-Wl,--threads=1")
         .build()
     )
 
