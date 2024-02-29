@@ -118,7 +118,6 @@ def __build_zygisk(
 
     if nightly:
         cargo = tools.cargo_nightly()
-        cargo = cargo.extra_arg("-Z build-std")
     else:
         cargo = tools.cargo()
 
@@ -126,6 +125,8 @@ def __build_zygisk(
         cargo = cargo.arg("check --target aarch64-linux-android")
     else:
         cargo = cargo.arg("build --target aarch64-linux-android")
+        if nightly:
+            cargo = cargo.extra_arg("-Z build-std")
 
     if release:
         cargo = cargo.arg("--release")
@@ -205,7 +206,6 @@ def task(args):
 
     if nightly:
         cargo = tools.cargo_nightly()
-        cargo = cargo.extra_arg("-Z build-std")
     else:
         cargo = tools.cargo()
 
@@ -213,6 +213,8 @@ def task(args):
         cargo = cargo.arg("check --target aarch64-linux-android")
     else:
         cargo = cargo.arg("build --target aarch64-linux-android")
+        if nightly:
+            cargo = cargo.extra_arg("-Z build-std")
 
     if release:
         cargo = cargo.arg("--release")
