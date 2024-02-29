@@ -49,12 +49,7 @@ pub unsafe extern "C" fn post_hook(android_native_buffer_t: *mut c_void, fence_i
 
     let buffer = android_native_buffer_t;
     let instant = Instant::now();
-    let cpu = libc::sched_getcpu();
-    let data = Data {
-        buffer,
-        instant,
-        cpu,
-    };
+    let data = Data { buffer, instant };
 
     let _ = CHANNEL.sx.try_send(data);
 

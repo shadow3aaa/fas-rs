@@ -31,80 +31,54 @@ mod data;
 mod hook;
 mod utils;
 
-use std::{ffi::CStr, fs, ptr, sync::atomic::AtomicBool, thread};
+use std::{ffi::CStr, fs, path::Path, ptr, sync::atomic::AtomicBool, thread};
 
 use android_logger::Config;
 use dobby_api::Address;
-use libc::c_char;
-#[cfg(debug_assertions)]
-use log::debug;
-use log::{error, LevelFilter};
-use toml::Value;
 
-const CONFIG: &str = "/data/media/0/Android/fas-rs/games.toml";
+use binder::get_interface;
+use libc::c_char;
+use log::{error, LevelFilter};
 
 static mut OLD_FUNC_PTR: Address = ptr::null_mut();
 static mut IS_CHILD: AtomicBool = AtomicBool::new(false);
 
 #[no_mangle]
-pub unsafe extern "C" fn _need_hook_(process: *const c_char) -> bool {
+pub unsafe extern "C" fn need_hook(process: *const c_char) -> bool {
+    use IRemoteService::IRemoteService;
+
     android_logger::init_once(
         Config::default()
             .with_max_level(LevelFilter::Trace)
             .with_tag("libgui-zygisk"),
     );
 
+    let Ok(server_pid) = fs::read_to_string("/dev/fas_rs/pid") else {
+        return false;
+    };
+
+    let comm = Path::new("/proc").join(server_pid).join("comm");
+    if let Ok(comm) = fs::read_to_string(comm) {
+        if comm.trim() != "fas-rs" {
+            return false;
+        }
+    }
+
     let process = CStr::from_ptr(process);
-
-    #[cfg(debug_assertions)]
-    debug!("process: {process:?}");
-
     let Ok(process) = process.to_str() else {
         return false;
     };
     let process = utils::process_name(process);
 
-    let Ok(config) = fs::read_to_string(CONFIG) else {
-        error!("Failed to read config file: {CONFIG}");
-        return false;
-    };
-
-    let Ok(config) = toml::from_str::<Value>(&config) else {
-        error!("Failed to parse config");
-        return false;
-    };
-
-    let Some(list) = config.get("game_list") else {
-        #[cfg(debug_assertions)]
-        debug!("Didn't find game_list in config");
-        return false;
-    };
-
-    #[cfg(debug_assertions)]
-    debug!("{list:?}");
-    list.get(&process).is_some()
+    get_interface::<dyn IRemoteService>("fas_rs_server")
+        .map_or(false, |service| service.needFas(&process).unwrap_or(false))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn _hook_handler_(process: *const c_char) {
-    android_logger::init_once(
-        Config::default()
-            .with_max_level(LevelFilter::Trace)
-            .with_tag("libgui-zygisk"),
-    );
-
-    let process = CStr::from_ptr(process);
-    let Ok(process) = process.to_str() else {
-        return;
-    };
-    let process = utils::process_name(process);
-
-    #[cfg(debug_assertions)]
-    debug!("Try to hook process: {process}");
-
+pub unsafe extern "C" fn hook_handler() {
     libc::pthread_atfork(None, None, Some(utils::at_fork));
 
-    if let Err(e) = thread::Builder::new()
+    let _ = thread::Builder::new()
         .name("libgui-analyze".into())
         .spawn(move || {
             if let Err(e) = utils::hook() {
@@ -112,9 +86,6 @@ pub unsafe extern "C" fn _hook_handler_(process: *const c_char) {
                 return;
             }
 
-            analyze::thread(process).unwrap_or_else(|e| error!("{e:?}"));
-        })
-    {
-        error!("Failed to start analyze thread, reason: {e:?}");
-    }
+            analyze::thread().unwrap_or_else(|e| error!("{e:?}"));
+        });
 }

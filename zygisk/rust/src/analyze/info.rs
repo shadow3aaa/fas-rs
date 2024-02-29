@@ -17,24 +17,20 @@ use dobby_api::Address;
 
 #[derive(Debug, Clone)]
 pub struct Info {
-    pub process: String,
     pub pid: i32,
-    pub tid: i32,
     pub stamps: HashMap<Address, Instant>,
     pub gc_timer: Instant,
 }
 
 impl Info {
-    pub fn new(process: String) -> Self {
-        let (pid, tid) = unsafe { (libc::getpid(), libc::gettid()) };
+    pub fn new() -> Self {
+        let pid = unsafe { libc::getpid() };
 
         let stamps = HashMap::new();
         let gc_timer = Instant::now();
 
         Self {
-            process,
             pid,
-            tid,
             stamps,
             gc_timer,
         }

@@ -64,6 +64,10 @@ impl Config {
         Ok(Self { toml })
     }
 
+    pub fn need_fas<S: AsRef<str>>(&self, pkg: S) -> bool {
+        self.toml.read().game_list.contains_key(pkg.as_ref())
+    }
+
     pub fn target_fps<S: AsRef<str>>(&self, pkg: S) -> Option<TargetFps> {
         let pkg = pkg.as_ref();
         let pkg = pkg.split(':').next()?;

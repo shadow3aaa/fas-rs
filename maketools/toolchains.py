@@ -87,7 +87,7 @@ class CppTidy:
     __args = ""
 
     def __init__(self, command: str):
-        self.__clang_plusplus = command
+        self.__clang_tidy = command
 
     def arg(self, arg: str):
         self.__args += "{} ".format(arg)

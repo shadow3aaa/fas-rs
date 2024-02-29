@@ -25,15 +25,20 @@ pub enum Error {
     ParseNode,
     #[error("No such a node")]
     NodeNotFound,
-    #[error("Got an error when parsing config: {source:?}")]
-    SerConfig {
+    #[error("Got an error when serialize toml: {source:?}")]
+    SerToml {
         #[from]
         source: toml::ser::Error,
     },
-    #[error("Got an error when parsing config: {source:?}")]
-    DeConfig {
+    #[error("Got an error when deserialize toml: {source:?}")]
+    DeToml {
         #[from]
         source: toml::de::Error,
+    },
+    #[error("Got an error when (de)serialize xml: {source:?}")]
+    SerXml {
+        #[from]
+        source: quick_xml::DeError,
     },
     #[error("Missing {0} when building Scheduler")]
     SchedulerMissing(&'static str),

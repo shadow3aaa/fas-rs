@@ -25,6 +25,8 @@ python3 ./make.py build:
         print this help
     --clean:
         clean up
+    --check:
+        run cargo check
     --release:
         release build
     --debug:
@@ -37,10 +39,12 @@ python3 ./make.py build:
 CFLAGS = (
     "-Ofast -flto -fmerge-all-constants -fno-exceptions -fomit-frame-pointer -fshort-enums \
 -Wl,-O3,--lto-O3,--gc-sections,--as-needed,--icf=all,-z,norelro,--pack-dyn-relocs=android+relr \
--std=c++2b -Wall -lc++")
+-std=c++2b -Wall -lc++"
+)
 
 
 def __parse_args(args):
+    check = False
     release = False
     debug = False
     build = False
@@ -62,19 +66,22 @@ def __parse_args(args):
                 nightly = True
             case "--verbose" | "verbose" | "-v":
                 verbose = True
+            case "--check":
+                check = True
+                build = False
             case "-h" | "--help":
                 print(build_help_text)
             case _:
                 raise Exception("Illegal build parameter: {}".format(arg))
 
-    if not build and not clean:
+    if not build and not clean and not check:
         raise Exception(
             "Missing necessary build task argument(--release / --debug / --clean)"
         )
-    elif (release and debug) or (build and clean):
+    elif (release and debug) or (build and clean) or (check and clean):
         raise Exception("Conflicting build arguments")
 
-    return (clean, release, nightly, verbose)
+    return (check, clean, release, nightly, verbose)
 
 
 def __clean():
@@ -95,7 +102,9 @@ def __clean():
     os.system("cargo clean")
 
 
-def __build_zygisk(tools: Buildtools, release: bool, verbose: bool, nightly: bool):
+def __build_zygisk(
+    tools: Buildtools, check: bool, release: bool, verbose: bool, nightly: bool
+):
     root = Path.cwd()
     zygisk_root = root.joinpath("zygisk")
     os.chdir(zygisk_root)
@@ -113,13 +122,22 @@ def __build_zygisk(tools: Buildtools, release: bool, verbose: bool, nightly: boo
     else:
         cargo = tools.cargo()
 
-    cargo = cargo.arg("build --target aarch64-linux-android")
+    if check:
+        cargo = cargo.arg("check --target aarch64-linux-android")
+    else:
+        cargo = cargo.arg("build --target aarch64-linux-android")
+
     if release:
         cargo = cargo.arg("--release")
     if verbose:
         cargo = cargo.arg("--verbose")
 
     cargo.build()
+
+    if check:
+        print("Finish check (zygisk)")
+        return
+
     os.chdir(zygisk_root)
 
     source = Path("rust").joinpath("target").joinpath("aarch64-linux-android")
@@ -159,14 +177,14 @@ def task(args):
         exit(-1)
 
     try:
-        (clean, release, nightly, verbose) = __parse_args(args)
+        (check, clean, release, nightly, verbose) = __parse_args(args)
     except Exception as err:
         eprint(err)
         exit(-1)
 
     if clean:
         __clean()
-        exit()
+        return
 
     try:
         Path("output").mkdir()
@@ -183,18 +201,29 @@ def task(args):
     except Exception:
         pass
 
-    __build_zygisk(tools, release, nightly, verbose)
+    __build_zygisk(tools, check, release, nightly, verbose)
 
-    cargo = tools.cargo().arg("build --target aarch64-linux-android")
+    if nightly:
+        cargo = tools.cargo_nightly()
+        cargo = cargo.extra_arg("-Z build-std")
+    else:
+        cargo = tools.cargo()
+
+    if check:
+        cargo = cargo.arg("check --target aarch64-linux-android")
+    else:
+        cargo = cargo.arg("build --target aarch64-linux-android")
 
     if release:
         cargo = cargo.arg("--release")
     if verbose:
         cargo = cargo.arg("--verbose")
-    if nightly:
-        cargo = cargo.arg("-Z build-std ")
 
     cargo.build()
+
+    if check:
+        print("Finish check")
+        return
 
     shutil.copytree("module", temp_dir)
     zygisk_lib = Path("zygisk").joinpath("output").joinpath("arm64-v8a.so")

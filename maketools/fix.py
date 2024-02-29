@@ -53,6 +53,7 @@ def task():
                 Path("src").joinpath("*.cpp"), Path("rust").joinpath("include")
             )
         )
+        .tidy()
     )
 
     os.chdir("rust")

@@ -16,10 +16,10 @@ use std::{
     time::{Duration, Instant},
 };
 
-use log::{error, info};
+use log::info;
 
 use super::{super::FasData, Buffer, Looper, State};
-use crate::framework::{config::TargetFps, CallBacks};
+use crate::framework::{utils::get_process_name, CallBacks};
 
 impl Looper {
     pub fn retain_topapp(&mut self) {
@@ -72,17 +72,10 @@ impl Looper {
     pub fn buffer_update(&mut self, d: &FasData) {
         if !self.topapp_checker.is_topapp(d.pid) || d.frametime.is_zero() {
             return;
-        } else if d.target_fps == TargetFps::Value(0) {
-            error!(
-                "Target fps must be bigger than zero, reject to load fas on [{}]",
-                d.pkg
-            );
-            return;
         }
 
         let producer = (d.buffer, d.pid);
         let frametime = d.frametime;
-        let target_fps = d.target_fps.clone();
 
         for (process, buffer) in &mut self.buffers {
             if *process != producer {
@@ -96,8 +89,10 @@ impl Looper {
             }
             Entry::Vacant(v) => {
                 self.extension.call_extentions(CallBacks::LoadFas(d.pid));
+                let pkg = get_process_name(d.pid).unwrap();
+                let target_fps = self.config.target_fps(&pkg).unwrap();
 
-                info!("New fas buffer on game: [{}] pid: [{}]", d.pkg, d.pid);
+                info!("New fas buffer on: [{pkg}]");
 
                 let mut buffer = Buffer::new(target_fps);
                 buffer.push_frametime(frametime);

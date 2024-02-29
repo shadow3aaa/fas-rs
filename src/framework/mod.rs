@@ -17,6 +17,7 @@ mod extension;
 mod node;
 pub mod prelude;
 mod scheduler;
+mod utils;
 
 #[allow(unused_imports)]
 pub use config::Config;

@@ -13,7 +13,7 @@
 *  limitations under the License. */
 mod default;
 
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use toml::Table;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -38,4 +38,19 @@ pub struct Config {
 pub struct ModeConfig {
     pub fas_boost: bool,
     pub use_performance_governor: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename = "map")]
+pub struct SceneAppList {
+    #[serde(rename = "boolean")]
+    pub apps: Vec<SceneApp>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SceneApp {
+    #[serde(rename = "@name")]
+    pub pkg: String,
+    #[serde(rename = "@value")]
+    pub is_game: bool,
 }

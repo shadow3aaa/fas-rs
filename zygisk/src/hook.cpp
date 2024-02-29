@@ -37,7 +37,6 @@ class LibGuiHook : public zygisk::ModuleBase {
     }
 
     void preAppSpecialize(AppSpecializeArgs *args) override {
-        bool hook = false;
         const char *process = env_->GetStringUTFChars(args->nice_name, nullptr);
 
         uid_t uid = args->uid;
@@ -45,50 +44,43 @@ class LibGuiHook : public zygisk::ModuleBase {
 
         if (uid <= 10000 || gid < 10000 ||
             strstr(process, "zygisk") != nullptr) {
-            this->need_hook_ = false;
+            need_hook_ = false;
             env_->ReleaseStringUTFChars(args->nice_name, process);
             return;
         }
 
-        const int fd = api_->connectCompanion();
+        const int socket = api_->connectCompanion();
 
-        if (fd == -1) {
+        if (socket == -1) {
             LOGD("Failed to get socket");
             return;
         }
 
         size_t len = strlen(process) + 1;
 
-        if (write(fd, &len, sizeof(len)) == -1) {
-            close(fd);
+        if (write(socket, &len, sizeof(len)) == -1) {
+            close(socket);
             env_->ReleaseStringUTFChars(args->nice_name, process);
             return;
         }
 
-        if (write(fd, process, len) == -1) {
-            close(fd);
+        if (write(socket, process, len) == -1) {
+            close(socket);
             env_->ReleaseStringUTFChars(args->nice_name, process);
             return;
         }
 
-        if (read(fd, &hook, sizeof(hook)) == -1) {
-            close(fd);
-            env_->ReleaseStringUTFChars(args->nice_name, process);
-            return;
+        if (read(socket, &need_hook_, sizeof(need_hook_)) == -1) {
+            need_hook_ = false;
         }
 
-        close(fd);
+        close(socket);
         env_->ReleaseStringUTFChars(args->nice_name, process);
-
-        this->need_hook_ = hook;
     }
 
-    void postAppSpecialize(const AppSpecializeArgs *args) override {
+    void postAppSpecialize(const AppSpecializeArgs * /*args*/) override {
         if (need_hook_) {
-            const char *process =
-                env_->GetStringUTFChars(args->nice_name, nullptr);
-            rust::hook_handler(process);
-            env_->ReleaseStringUTFChars(args->nice_name, process);
+            rust::hook_handler();
         } else {
             api_->setOption(Option::DLCLOSE_MODULE_LIBRARY);
         }
@@ -101,25 +93,23 @@ class LibGuiHook : public zygisk::ModuleBase {
 };
 
 // NOLINTBEGIN(misc-use-anonymous-namespace,-warnings-as-errors)
-static void companion_handler(int fd) {
+static void root_handler(int socket) {
     size_t len = 0;
-    bool need_hook = false;
-
-    if (read(fd, &len, sizeof(len)) == -1) {
+    if (read(socket, &len, sizeof(len)) == -1) {
         return;
     }
 
     char process[len];
     memset(process, 0, sizeof(process));
 
-    if (read(fd, &process, sizeof(process)) == -1) {
+    if (read(socket, &process, sizeof(process)) == -1) {
         return;
     }
 
-    need_hook = rust::need_hook(process);
-    write(fd, &need_hook, sizeof(need_hook));
+    bool need_hook = rust::need_hook(process);
+    write(socket, &need_hook, sizeof(need_hook));
 }
 // NOLINTEND(misc-use-anonymous-namespace,-warnings-as-errors)
 
 REGISTER_ZYGISK_MODULE(LibGuiHook)
-REGISTER_ZYGISK_COMPANION(companion_handler)
+REGISTER_ZYGISK_COMPANION(root_handler)

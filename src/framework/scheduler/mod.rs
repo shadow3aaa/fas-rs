@@ -18,7 +18,7 @@ mod topapp;
 use std::time::Duration;
 
 use super::{
-    config::{Config, TargetFps},
+    config::Config,
     error::{Error, Result},
     node::Node,
     Extension,
@@ -28,20 +28,17 @@ use crate::CpuCommon;
 use self::binder::FasServer;
 use looper::Looper;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum BinderMessage {
     Data(FasData),
     RemoveBuffer((i64, i32)),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct FasData {
     pub buffer: i64,
-    pub target_fps: TargetFps,
-    pub pkg: String,
     pub pid: i32,
     pub frametime: Duration,
-    pub cpu: i32,
 }
 
 pub struct Scheduler {
@@ -73,7 +70,7 @@ impl Scheduler {
     }
 
     pub fn start_run(self) -> Result<()> {
-        let node = Node::init()?;
+        let mut node = Node::init()?;
         let extension = Extension::init()?;
         let config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
 
@@ -81,7 +78,7 @@ impl Scheduler {
             .controller
             .ok_or(Error::SchedulerMissing("Controller"))?;
 
-        let rx = FasServer::run_server(config.clone())?;
+        let rx = FasServer::run_server(&mut node, config.clone())?;
 
         Looper::new(rx, config, node, extension, controller).enter_loop()
     }

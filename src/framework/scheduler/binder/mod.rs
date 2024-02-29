@@ -27,6 +27,7 @@ use super::{BinderMessage, FasData};
 use crate::framework::{
     config::Config,
     error::{Error, Result},
+    node::Node,
 };
 use IRemoteService::BnRemoteService;
 
@@ -38,27 +39,17 @@ pub struct FasServer {
 impl Interface for FasServer {}
 
 impl IRemoteService::IRemoteService for FasServer {
-    fn sendData(
-        &self,
-        buffer: i64,
-        pkg: &str,
-        pid: i32,
-        frametime_ns: i64,
-        cpu: i32,
-    ) -> binder::Result<bool> {
-        let Some(target_fps) = self.config.target_fps(pkg) else {
-            return Ok(false);
-        };
+    fn needFas(&self, pkg: &str) -> binder::Result<bool> {
+        Ok(self.config.need_fas(pkg))
+    }
 
+    fn sendData(&self, buffer: i64, pid: i32, frametime_ns: i64) -> binder::Result<bool> {
         let frametime = Duration::from_nanos(frametime_ns as u64);
 
         let data = FasData {
             buffer,
-            target_fps,
             pid,
-            pkg: pkg.to_string(),
             frametime,
-            cpu,
         };
 
         if let Err(e) = self.sx.send(BinderMessage::Data(data)) {
@@ -78,12 +69,17 @@ impl IRemoteService::IRemoteService for FasServer {
 }
 
 impl FasServer {
-    pub fn run_server(config: Config) -> Result<Receiver<BinderMessage>> {
+    pub fn run_server(node: &mut Node, config: Config) -> Result<Receiver<BinderMessage>> {
         let (sx, rx) = mpsc::channel();
 
         thread::Builder::new()
             .name("BinderServer".into())
             .spawn(|| Self::run(sx, config))?;
+
+        unsafe {
+            node.create_node("pid", &libc::getpid().to_string())
+                .unwrap();
+        }
 
         Ok(rx)
     }

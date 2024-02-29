@@ -1,4 +1,5 @@
 interface IRemoteService {
-    boolean sendData(long buffer, String Pkg, int pid, long FrameTimeNanos, int cpu);
+    boolean needFas(String pkg);
+    boolean sendData(long buffer, int pid, long FrameTimeNanos);
     void removeBuffer(long buffer, int pid);
 }

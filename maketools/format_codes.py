@@ -30,7 +30,9 @@ def task():
 
     os.chdir("zygisk")
     cpp_src = Path("src").joinpath("*")
+    rust_header = Path("rust").joinpath("include").joinpath("*")
     tools.cpp_format(cpp_src)
+    tools.cpp_format(rust_header)
 
     os.chdir("rust")
     os.system("cargo fmt -v")

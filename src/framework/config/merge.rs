@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 use likely_stable::LikelyOption;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use toml::{Table, Value};
 
 use super::Config;

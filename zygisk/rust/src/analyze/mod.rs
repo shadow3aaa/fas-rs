@@ -24,13 +24,13 @@ use log::error;
 use crate::{channel::CHANNEL, data::Data, IRemoteService::IRemoteService, IS_CHILD};
 use info::Info;
 
-pub unsafe fn thread(process: String) -> Result<()> {
-    let mut info = Info::new(process);
+pub unsafe fn thread() -> Result<()> {
+    let mut info = Info::new();
     let Some(mut fas_service) = get_server_interface() else {
         return Ok(());
     };
 
-    let _ = fs::write("/dev/cpuset/background/tasks", info.tid.to_string());
+    let _ = fs::write("/dev/cpuset/background/tasks", libc::gettid().to_string());
 
     loop {
         let data = match CHANNEL.rx.recv() {
@@ -40,9 +40,6 @@ pub unsafe fn thread(process: String) -> Result<()> {
                 return Ok(());
             }
         };
-
-        #[cfg(debug_assertions)]
-        debug!("Rendering Data: {data:?}");
 
         let last_stamp = info.stamps.entry(data.buffer).or_insert(data.instant);
         let frametime = data.instant - *last_stamp;
@@ -64,15 +61,10 @@ fn send_data_to_server(
     data: Data,
     info: &Info,
 ) -> bool {
-    #[cfg(debug_assertions)]
-    debug!("process: [{}] framtime: [{frametime:?}]", info.process);
-
     fas_service.sendData(
-         data.buffer as i64,
-         &info.process,
-         info.pid,
+        data.buffer as i64,
+        info.pid,
         frametime.as_nanos() as i64,
-        data.cpu
     ).map_or_else(|_| get_server_interface().map_or(false, |service| {
         *fas_service = service;
         send_data_to_server(fas_service, frametime, data, info)
