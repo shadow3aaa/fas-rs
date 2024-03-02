@@ -56,9 +56,9 @@ impl Buffer {
     fn frame_analyze(&mut self, policy_data: PolicyData) -> NormalEvent {
         self.acc_frame.acc(policy_data.normalized_unit_frame);
 
-        if self.acc_timer.elapsed() * policy_data.target_fps < Duration::from_secs(1) {
+        /* if self.acc_timer.elapsed() * policy_data.target_fps < Duration::from_secs(1) {
             return NormalEvent::None;
-        }
+        } */
 
         self.acc_timer = Instant::now();
 

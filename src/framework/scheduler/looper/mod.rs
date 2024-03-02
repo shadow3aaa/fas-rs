@@ -127,7 +127,7 @@ impl Looper {
     }
 
     fn recv_message(&mut self, target_fps: Option<u32>) -> Result<Option<BinderMessage>> {
-        let timeout = target_fps.map_or(Duration::from_secs(1), |t| Duration::from_secs(2) / t);
+        let timeout = target_fps.map_or(Duration::from_secs(1), |t| Duration::from_secs(1) / t);
 
         match self.rx.recv_timeout(timeout) {
             Ok(m) => Ok(Some(m)),
