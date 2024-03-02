@@ -13,7 +13,7 @@
 *  limitations under the License. */
 mod info;
 
-use std::{fs, sync::atomic::Ordering, thread, time::Duration};
+use std::{sync::atomic::Ordering, thread, time::Duration};
 
 use anyhow::Result;
 use binder::{get_interface, Strong};
@@ -29,8 +29,6 @@ pub unsafe fn thread() -> Result<()> {
     let Some(mut fas_service) = get_server_interface() else {
         return Ok(());
     };
-
-    let _ = fs::write("/dev/cpuset/background/tasks", libc::gettid().to_string());
 
     loop {
         let data = match CHANNEL.rx.recv() {
