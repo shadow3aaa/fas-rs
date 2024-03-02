@@ -18,8 +18,8 @@ use mlua::Function;
 use super::core::ExtensionMap;
 
 pub enum CallBacks {
-    LoadFas(pid_t),
-    UnloadFas(pid_t),
+    LoadFas(pid_t, String),
+    UnloadFas(pid_t, String),
     StartFas,
     StopFas,
     InitCpuFreq,
@@ -29,17 +29,17 @@ pub enum CallBacks {
 impl CallBacks {
     pub fn do_callback(self, map: &ExtensionMap) {
         match self {
-            Self::LoadFas(pid) => {
+            Self::LoadFas(pid, pkg) => {
                 for (extension, lua) in map {
                     if let Ok(func) = lua.globals().get::<_, Function>("load_fas") {
-                        func.call(pid).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
+                        func.call((pid, pkg.clone())).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
                     }
                 }
             }
-            Self::UnloadFas(pid) => {
+            Self::UnloadFas(pid, pkg) => {
                 for (extension, lua) in map {
                     if let Ok(func) = lua.globals().get::<_, Function>("unload_fas") {
-                        func.call(pid).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
+                        func.call((pid, pkg.clone())).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
                     }
                 }
             }

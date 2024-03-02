@@ -27,7 +27,9 @@ impl Looper {
             if self.topapp_checker.is_topapp(*p) {
                 true
             } else {
-                self.extension.call_extentions(CallBacks::UnloadFas(*p));
+                let pkg = get_process_name(*p).unwrap();
+                self.extension
+                    .call_extentions(CallBacks::UnloadFas(*p, pkg));
                 false
             }
         });
@@ -88,11 +90,13 @@ impl Looper {
                 o.get_mut().push_frametime(frametime);
             }
             Entry::Vacant(v) => {
-                self.extension.call_extentions(CallBacks::LoadFas(d.pid));
                 let pkg = get_process_name(d.pid).unwrap();
                 let target_fps = self.config.target_fps(&pkg).unwrap();
 
                 info!("New fas buffer on: [{pkg}]");
+
+                self.extension
+                    .call_extentions(CallBacks::LoadFas(d.pid, pkg));
 
                 let mut buffer = Buffer::new(target_fps);
                 buffer.push_frametime(frametime);

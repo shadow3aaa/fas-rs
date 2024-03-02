@@ -86,6 +86,7 @@ impl Buffer {
             NormalEvent::Restrictable
         };
 
+        self.limit_timer = Instant::now();
         self.acc_frame.reset();
         result
     }
