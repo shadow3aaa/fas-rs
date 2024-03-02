@@ -250,10 +250,10 @@ dependencies = [
  "libc",
  "likely_stable",
  "log",
+ "mlua",
  "once_cell",
  "parking_lot",
  "quick-xml",
- "rlua",
  "serde",
  "serde_json",
  "smallvec",
@@ -445,6 +445,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
+name = "luau0-src"
+version = "0.8.3+luau614"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d0dc9f950d074893d18af156124f8296e7477f96dfbdc0520fb8df5a8aa3898"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "memchr"
 version = "2.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -455,6 +464,32 @@ name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
+
+[[package]]
+name = "mlua"
+version = "0.9.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "868d02cb5eb97761bbf6bd6922c1c7a88b8ea252bbf43bd8350a0bf8497a1fc0"
+dependencies = [
+ "bstr",
+ "libloading",
+ "mlua-sys",
+ "num-traits",
+ "once_cell",
+ "rustc-hash",
+]
+
+[[package]]
+name = "mlua-sys"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2847b42764435201d8cbee1f517edb79c4cca4181877b90047587c89e1b7bce4"
+dependencies = [
+ "cc",
+ "cfg-if",
+ "luau0-src",
+ "pkg-config",
+]
 
 [[package]]
 name = "nom"
@@ -617,30 +652,6 @@ name = "regex-syntax"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08c74e62047bb2de4ff487b251e4a92e24f48745648451635cec7d591162d9f"
-
-[[package]]
-name = "rlua"
-version = "0.19.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3120d9610f84b17da849f5cc8c089bb74299285515bb4a6114550bbc39ddb1e7"
-dependencies = [
- "bitflags 2.4.2",
- "bstr",
- "libc",
- "num-traits",
- "rlua-lua54-sys",
-]
-
-[[package]]
-name = "rlua-lua54-sys"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7aafabafe1895cb4a2be81a56d7ff3d46bf4b5d2f9cfdbea2ed404cdabe96474"
-dependencies = [
- "cc",
- "libc",
- "pkg-config",
-]
 
 [[package]]
 name = "rustc-hash"

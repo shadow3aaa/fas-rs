@@ -13,7 +13,7 @@
 *  limitations under the License. */
 use libc::pid_t;
 use log::error;
-use rlua::Function;
+use mlua::Function;
 
 use super::core::ExtensionMap;
 
@@ -31,56 +31,44 @@ impl CallBacks {
         match self {
             Self::LoadFas(pid) => {
                 for (extension, lua) in map {
-                    lua.context(|context| {
-                        if let Ok(func) = context.globals().get::<_, Function>("load_fas") {
-                            func.call(pid).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
-                        }
-                    });
+                    if let Ok(func) = lua.globals().get::<_, Function>("load_fas") {
+                        func.call(pid).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
+                    }
                 }
             }
             Self::UnloadFas(pid) => {
                 for (extension, lua) in map {
-                    lua.context(|context| {
-                        if let Ok(func) = context.globals().get::<_, Function>("unload_fas") {
-                            func.call(pid).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
-                        }
-                    });
+                    if let Ok(func) = lua.globals().get::<_, Function>("unload_fas") {
+                        func.call(pid).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
+                    }
                 }
             }
             Self::StartFas => {
                 for (extension, lua) in map {
-                    lua.context(|context| {
-                        if let Ok(func) = context.globals().get::<_, Function>("start_fas") {
+                    if let Ok(func) = lua.globals().get::<_, Function>("start_fas") {
                         func.call(()).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
-                        }
-                    });
+                    }
                 }
             }
             Self::StopFas => {
                 for (extension, lua) in map {
-                    lua.context(|context| {
-                        if let Ok(func) = context.globals().get::<_, Function>("stop_fas") {
+                    if let Ok(func) = lua.globals().get::<_, Function>("stop_fas") {
                         func.call(()).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
-                        }
-                    });
+                    }
                 }
             }
             Self::InitCpuFreq => {
                 for (extension, lua) in map {
-                    lua.context(|context| {
-                        if let Ok(func) = context.globals().get::<_, Function>("init_cpu_freq") {
+                    if let Ok(func) = lua.globals().get::<_, Function>("init_cpu_freq") {
                         func.call(()).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
-                        }
-                    });
+                    }
                 }
             }
             Self::ResetCpuFreq => {
                 for (extension, lua) in map {
-                    lua.context(|context| {
-                        if let Ok(func) = context.globals().get::<_, Function>("reset_cpu_freq") {
+                    if let Ok(func) = lua.globals().get::<_, Function>("reset_cpu_freq") {
                         func.call(()).unwrap_or_else(|e| error!("Got an error when executing extension '{extension:?}', reason: {e:#?}"));
-                        }
-                    });
+                    }
                 }
             }
         }

@@ -47,6 +47,11 @@ pub enum Error {
         #[from]
         source: io::Error,
     },
+    #[error("Lua error: {source:?}")]
+    Lua {
+        #[from]
+        source: mlua::Error,
+    },
     #[error("Got an error: {0}")]
     Other(&'static str),
 }

@@ -15,7 +15,7 @@ use std::{collections::HashMap, fs, path::PathBuf, sync::mpsc::Receiver, time::D
 
 use inotify::{Inotify, WatchMask};
 use log::{debug, error, info};
-use rlua::Lua;
+use mlua::Lua;
 
 use super::{callbacks::CallBacks, EXTENSIONS_PATH};
 use crate::framework::error::Result;
@@ -62,33 +62,31 @@ fn load_extensions() -> Result<ExtensionMap> {
         let path = file.path();
         let file = fs::read_to_string(&path)?;
 
-        let result = lua.context(|context| {
-            context.globals().set(
-                "log_info",
-                context.create_function(|_, message: String| {
-                    info!("extension: {message}");
-                    Ok(())
-                })?,
-            )?;
-            context.globals().set(
-                "log_debug",
-                context.create_function(|_, message: String| {
-                    debug!("extension: {message}");
-                    Ok(())
-                })?,
-            )?;
-            context.globals().set(
-                "log_error",
-                context.create_function(|_, message: String| {
-                    error!("extension: {message}");
-                    Ok(())
-                })?,
-            )?;
+        lua.globals().set(
+            "log_info",
+            lua.create_function(|_, message: String| {
+                info!("extension: {message}");
+                Ok(())
+            })?,
+        )?;
 
-            context.load(&file).exec()
-        });
+        lua.globals().set(
+            "log_debug",
+            lua.create_function(|_, message: String| {
+                debug!("extension: {message}");
+                Ok(())
+            })?,
+        )?;
 
-        match result {
+        lua.globals().set(
+            "log_error",
+            lua.create_function(|_, message: String| {
+                error!("extension: {message}");
+                Ok(())
+            })?,
+        )?;
+
+        match lua.load(&file).exec() {
             Ok(()) => {
                 info!("Extension loaded successfully: {path:?}");
                 map.insert(path, lua);
