@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-DIR=/data/media/0/Android/fas-rs
+DIR=/sdcard/Android/fas-rs
 CONF=$DIR/games.toml
 MERGE_FLAG=$DIR/.need_merge
 LOCALE=$(getprop persist.sys.locale)

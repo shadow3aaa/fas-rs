@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 MODDIR=${0%/*}
-DIR=/data/media/0/Android/fas-rs
+DIR=/sdcard/Android/fas-rs
 MERGE_FLAG=$DIR/.need_merge
 LOG=$DIR/fas_log.txt
 

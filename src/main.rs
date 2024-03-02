@@ -47,7 +47,7 @@ use log::debug;
 
 use cpu_common::CpuCommon;
 
-const USER_CONFIG: &str = "/data/media/0/Android/fas-rs/games.toml";
+const USER_CONFIG: &str = "/sdcard/Android/fas-rs/games.toml";
 
 fn main() -> Result<()> {
     let args: Vec<_> = env::args().collect();

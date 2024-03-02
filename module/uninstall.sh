@@ -13,17 +13,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-DIR=/data/media/0/Android/fas-rs/
+DIR=/sdcard/Android/fas-rs
 
 {
-	# wait until the sdcard is decrypted
-	until [ -d $DIR ]; do
+	until [ -d $DIR ] && [ -d /data ]; do
 		sleep 1
 	done
 
-	# remove config & log dir
 	rm -rf $DIR
-
-	# remove vtools powercfg
 	rm -f /data/powercfg*
 } & # do not block boot
