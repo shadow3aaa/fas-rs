@@ -36,7 +36,7 @@ impl JumpStep {
 
     pub fn release(&mut self, freq: Freq) -> Freq {
         if matches!(self.state, State::Release) {
-            self.jump = (self.jump + 5000).min(50000);
+            self.jump = (self.jump + 5000).min(100000);
         } else {
             self.jump = 5000;
             self.state = State::Release;
@@ -47,7 +47,7 @@ impl JumpStep {
 
     pub fn limit(&mut self, freq: Freq) -> Freq {
         if matches!(self.state, State::Limit) {
-            self.jump = (self.jump + 5000).min(50000);
+            self.jump = (self.jump + 5000).min(100000);
         } else {
             self.jump = 5000;
             self.state = State::Limit;
