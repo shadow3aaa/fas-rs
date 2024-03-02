@@ -26,7 +26,6 @@ compile_error!("Only for aarch64 android");
 
 mod clean;
 mod cpu_common;
-mod error;
 mod framework;
 mod misc;
 
