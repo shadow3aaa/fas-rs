@@ -30,7 +30,7 @@ smallvec = "1.13.1"
 cpu_cycles_reader = "1.0.0"
 sys-mount = { version = "3.0.1", default-features = false }
 quick-xml = { version = "0.31.0", features = ["serialize"] }
-mlua = { version = "0.9.6", features = ["lua54", "vendored"] }
+mlua = { version = "0.9.6", features = ["luajit", "vendored"] }
 
 [build-dependencies]
 anyhow = "1.0.79"
