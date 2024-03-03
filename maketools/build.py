@@ -220,8 +220,7 @@ def task(args):
         cargo = cargo.arg("--release")
     if verbose:
         cargo = cargo.arg("--verbose")
-    
-    cargo.rust_flag("-C default-linker-libraries")
+
     cargo.build()
 
     if check:
