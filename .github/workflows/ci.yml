@@ -1,65 +1,51 @@
 name: ci-build
-
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
-    branches: [ "master" ]
-
+    branches: ["master"]
 env:
   CARGO_TERM_COLOR: always
-
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup ndk
-      run: |
-        ndk_url=$(wget -qO- https://github.com/android/ndk/releases/latest | grep -e 'https://dl.google.com/android/repository/android-ndk-.*-linux.zip' | sed -n 's/.*<a href="\([^"]*\)".*/\1/p')
-        wget -O ndk.zip $ndk_url -nv
-        mkdir ~/ndk_temp
-        unzip ndk.zip -d ~/ndk_temp 2>&1 > /dev/null
-        mv ~/ndk_temp/*/* ~/ndk_temp
+      - uses: actions/checkout@v4
+      - name: Setup ndk
+        run: |
+          ndk_url=$(wget -qO- https://github.com/android/ndk/releases/latest | grep -e 'https://dl.google.com/android/repository/android-ndk-.*-linux.zip' | sed -n 's/.*<a href="\([^"]*\)".*/\1/p')
+          wget -O ndk.zip $ndk_url -nv
+          mkdir ~/ndk_temp
+          unzip ndk.zip -d ~/ndk_temp 2>&1 > /dev/null
+          mv ~/ndk_temp/*/* ~/ndk_temp
+      - name: Setup rust toolchains
+        run: |
+          rustup default nightly
+          rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+          rustup component add rust-src
+      - name: Install cargo ndk
+        run: cargo install cargo-ndk
+      - name: Other deps
+        run: |
+          sudo apt update
+          sudo apt install gcc-multilib git-lfs mold
+          git lfs pull
+      - name: Build
+        run: |
+          export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
+          export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
 
-    - name: Setup rust toolchains
-      run: |
-        rustup default nightly
-        rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
-        rustup component add rust-src
-
-    - name: Install cargo ndk
-      run: cargo install cargo-ndk
-    
-    - name: Other deps
-      run: |
-        sudo apt update
-        sudo apt install gcc-multilib git-lfs mold
-        git lfs pull
-
-    - name: Build
-      run: |
-        export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
-        export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
-        
-        echo -n "[target.aarch64-linux-android]
-        rustflags = [\"-C\", \"default-linker-libraries\"]" >> ~/.cargo/config.toml
-        
-        python3 ./make.py build --release --nightly
-        python3 ./make.py build --debug
-
-    - name: Upload release-ci
-      uses: actions/upload-artifact@v4
-      with:
-        name: fas-rs(release-ci)
-        compression-level: 9
-        path: output/.temp/release
-
-    - name: Upload debug-ci
-      uses: actions/upload-artifact@v4
-      with:
-        name: fas-rs(debug-ci)
-        compression-level: 9
-        path: output/.temp/debug
+          python3 ./make.py build --release --nightly
+          python3 ./make.py build --debug
+      - name: Upload release-ci
+        uses: actions/upload-artifact@v4
+        with:
+          name: fas-rs(release-ci)
+          compression-level: 9
+          path: output/.temp/release
+      - name: Upload debug-ci
+        uses: actions/upload-artifact@v4
+        with:
+          name: fas-rs(debug-ci)
+          compression-level: 9
+          path: output/.temp/debug
