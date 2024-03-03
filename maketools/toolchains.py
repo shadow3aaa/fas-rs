@@ -22,6 +22,7 @@ class Cargo:
     __cargo = ""
     __args = ""
     __extra_args = ""
+    __rust_flags = ""
 
     def __init__(self, command: str):
         self.__cargo = command
@@ -33,9 +34,13 @@ class Cargo:
     def extra_arg(self, arg: str):
         self.__extra_args += "{} ".format(arg)
         return self
+    
+    def rust_flag(self, arg: str):
+        self.__rust_flags += "{} ".format(arg)
+        return self
 
     def build(self):
-        command = "{} {} -- {}".format(self.__cargo, self.__args, self.__extra_args)
+        command = "RUSTFLAGS='{}' {} {} -- {}".format(self.__rust_flags, self.__cargo, self.__args, self.__extra_args)
         os.system(command)
 
 
@@ -61,8 +66,12 @@ class CargoNightly:
         self.__extra_args += "{} ".format(arg)
         return self
 
+    def rust_flag(self, arg: str):
+        self.__rust_flags += "{} ".format(arg)
+        return self
+
     def build(self):
-        command = "{} {} -- {}".format(self.__cargo, self.__args, self.__extra_args)
+        command = "RUSTFLAGS='{}' {} {} -- {}".format(self.__rust_flags, self.__cargo, self.__args, self.__extra_args)
         os.system(command)
 
 
