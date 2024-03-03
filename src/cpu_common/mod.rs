@@ -92,6 +92,10 @@ impl CpuCommon {
         self.set_freq_cached(released_freq);
     }
 
+    pub fn none(&mut self) {
+        self.set_freq_cached(self.fas_freq);
+    }
+
     pub fn jank(&mut self) {
         let current_freq = self.fas_freq;
         let released_freq = current_freq

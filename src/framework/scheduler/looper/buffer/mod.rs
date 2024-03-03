@@ -26,6 +26,7 @@ const BUFFER_LEN_SECS: usize = 10;
 
 #[derive(Debug)]
 pub struct Buffer {
+    pub pkg: String,
     pub target_fps: Option<u32>,
     pub current_fps: f64,
     pub avg_time: Duration,
@@ -42,9 +43,11 @@ pub struct Buffer {
 }
 
 impl Buffer {
-    pub fn new(t: TargetFps) -> Self {
+    pub fn new(target_fps_config: TargetFps, pkg: String) -> Self {
         Self {
+            pkg,
             target_fps: None,
+            target_fps_config,
             current_fps: 0.0,
             avg_time: Duration::ZERO,
             frametimes: VecDeque::with_capacity(144 * BUFFER_LEN_SECS),
@@ -56,7 +59,6 @@ impl Buffer {
             limit_timer: Instant::now(),
             deviations: VecDeque::with_capacity(144 * BUFFER_LEN_SECS),
             timer: Instant::now(),
-            target_fps_config: t,
         }
     }
 

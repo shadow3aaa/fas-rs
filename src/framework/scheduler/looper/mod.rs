@@ -58,6 +58,7 @@ pub struct Looper {
     buffers: Buffers,
     state: State,
     delay_timer: Instant,
+    timer: Instant,
 }
 
 impl Looper {
@@ -79,6 +80,7 @@ impl Looper {
             buffers: Buffers::new(),
             state: State::NotWorking,
             delay_timer: Instant::now(),
+            timer: Instant::now(),
         }
     }
 
@@ -96,7 +98,12 @@ impl Looper {
                 match message {
                     BinderMessage::Data(d) => {
                         self.consume_data(&d);
-                        self.do_normal_policy(target_fps);
+                        if self.timer.elapsed() * target_fps.unwrap_or_default()
+                            > Duration::from_secs(1)
+                        {
+                            self.do_normal_policy(target_fps);
+                            self.timer = Instant::now();
+                        }
                     }
                     BinderMessage::RemoveBuffer(k) => {
                         self.buffers.remove(&k);
@@ -167,7 +174,7 @@ impl Looper {
         match event {
             NormalEvent::Release => self.controller.release(),
             NormalEvent::Restrictable => self.controller.limit(),
-            NormalEvent::None => (),
+            NormalEvent::None => self.controller.none(),
         }
     }
 
