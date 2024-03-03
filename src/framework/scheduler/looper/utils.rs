@@ -23,11 +23,11 @@ use crate::framework::{utils::get_process_name, CallBacks};
 
 impl Looper {
     pub fn retain_topapp(&mut self) {
-        self.buffers.retain(|(_, p), _| {
+        self.buffers.retain(|(_, p), buffer| {
             if self.topapp_checker.is_topapp(*p) {
                 true
             } else {
-                let pkg = get_process_name(*p).unwrap();
+                let pkg = buffer.pkg.clone();
                 self.extension
                     .call_extentions(CallBacks::UnloadFas(*p, pkg));
                 false
@@ -90,15 +90,17 @@ impl Looper {
                 o.get_mut().push_frametime(frametime);
             }
             Entry::Vacant(v) => {
-                let pkg = get_process_name(d.pid).unwrap();
+                let Ok(pkg) = get_process_name(d.pid) else {
+                    return;
+                };
                 let target_fps = self.config.target_fps(&pkg).unwrap();
 
                 info!("New fas buffer on: [{pkg}]");
 
                 self.extension
-                    .call_extentions(CallBacks::LoadFas(d.pid, pkg));
+                    .call_extentions(CallBacks::LoadFas(d.pid, pkg.clone()));
 
-                let mut buffer = Buffer::new(target_fps);
+                let mut buffer = Buffer::new(target_fps, pkg);
                 buffer.push_frametime(frametime);
                 v.insert(buffer);
                 self.topapp_checker.refresh();
