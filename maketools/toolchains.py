@@ -48,6 +48,7 @@ class CargoNightly:
     __cargo = ""
     __args = ""
     __extra_args = ""
+    __rust_flags = ""
 
     def __init__(self):
         if os.getenv("TERMUX_VERSION") is not None:
