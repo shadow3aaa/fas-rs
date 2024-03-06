@@ -18,7 +18,7 @@ use std::time::{Duration, Instant};
 #[cfg(debug_assertions)]
 use log::debug;
 
-use super::{buffer::calculate::StabilityLevel, Buffer};
+use super::Buffer;
 use crate::framework::Mode;
 
 use extract::PolicyData;
@@ -62,12 +62,7 @@ impl Buffer {
 
         self.acc_timer = Instant::now();
 
-        let limit_delay = match self.calculate_stability() {
-            StabilityLevel::High => Duration::from_secs(10) / policy_data.target_fps,
-            StabilityLevel::Mid => Duration::from_secs(9) / policy_data.target_fps,
-            StabilityLevel::Low => Duration::from_secs(8) / policy_data.target_fps,
-        };
-
+        let limit_delay = Duration::from_secs(10) / policy_data.target_fps;
         let timeout = self.acc_frame.timeout_dur();
         let result = if timeout > Duration::ZERO {
             #[cfg(debug_assertions)]

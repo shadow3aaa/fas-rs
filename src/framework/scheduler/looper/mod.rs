@@ -174,7 +174,7 @@ impl Looper {
         match event {
             NormalEvent::Release => self.controller.release(),
             NormalEvent::Restrictable => self.controller.limit(),
-            NormalEvent::None => self.controller.none(),
+            NormalEvent::None => (),
         }
     }
 

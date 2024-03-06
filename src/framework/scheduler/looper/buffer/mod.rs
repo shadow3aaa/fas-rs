@@ -32,12 +32,10 @@ pub struct Buffer {
     pub avg_time: Duration,
     pub frametimes: VecDeque<Duration>,
     pub frame_prepare: Duration,
-    pub deviation: f64,
     pub last_update: Instant,
     pub acc_frame: Acc,
     pub acc_timer: Instant,
     pub limit_timer: Instant,
-    deviations: VecDeque<f64>,
     target_fps_config: TargetFps,
     timer: Instant,
 }
@@ -52,12 +50,10 @@ impl Buffer {
             avg_time: Duration::ZERO,
             frametimes: VecDeque::with_capacity(144 * BUFFER_LEN_SECS),
             frame_prepare: Duration::ZERO,
-            deviation: 0.0,
             last_update: Instant::now(),
             acc_frame: Acc::new(),
             acc_timer: Instant::now(),
             limit_timer: Instant::now(),
-            deviations: VecDeque::with_capacity(144 * BUFFER_LEN_SECS),
             timer: Instant::now(),
         }
     }
@@ -72,7 +68,6 @@ impl Buffer {
 
         self.frametimes.push_front(d);
         self.calculate_current_fps();
-        self.calculate_deviation();
 
         if self.timer.elapsed() >= Duration::from_secs(BUFFER_LEN_SECS as u64) {
             self.timer = Instant::now();
