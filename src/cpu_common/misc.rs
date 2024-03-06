@@ -17,12 +17,14 @@ impl CpuCommon {
     pub fn reset_freq(&mut self) {
         let last_freq = self.freqs.last().copied().unwrap();
 
-        self.set_freq(last_freq);
+        self.cache = last_freq;
+        self.fas_freq = last_freq;
+        self.set_freq_cached(last_freq);
         self.smooth.reset();
         self.jump.reset();
     }
 
-    pub fn set_freq(&mut self, f: Freq) {
+    fn set_freq(&mut self, f: Freq) {
         self.smooth.update(f);
 
         for policy in &self.policies {
@@ -31,24 +33,20 @@ impl CpuCommon {
     }
 
     pub fn set_freq_cached(&mut self, f: Freq) {
-        if f == self.fas_freq {
-            self.smooth.update(f);
-        } else {
-            self.fas_freq = f;
+        if f != self.cache {
+            self.cache = f;
             self.set_freq(f);
         }
     }
 
     pub fn set_limit_freq(&mut self, f: Freq) {
-        self.smooth.update(f);
-        let avg = self
-            .smooth
-            .avg()
-            .unwrap_or_else(|| self.freqs.last().copied().unwrap());
-        self.fas_freq = avg;
+        let clamped_freq = f.max(self.smooth.avg().unwrap_or(f));
+        self.fas_freq = (f + clamped_freq) / 2;
+
+        self.smooth.update(self.fas_freq);
 
         for policy in &self.policies {
-            let _ = policy.set_fas_freq(avg);
+            let _ = policy.set_fas_freq(self.fas_freq);
         }
     }
 }

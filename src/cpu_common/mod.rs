@@ -33,6 +33,7 @@ const STEP: Freq = 50000;
 pub struct CpuCommon {
     freqs: Vec<Freq>,
     fas_freq: Freq,
+    cache: Freq,
     smooth: Smooth,
     policies: Vec<Policy>,
     jump: JumpStep,
@@ -62,11 +63,14 @@ impl CpuCommon {
         freqs.sort_unstable();
 
         let fas_freq = freqs.last().copied().unwrap();
+        let cache = fas_freq;
+        let smooth_max = freqs.iter().copied().rev().nth(1).unwrap();
 
         Ok(Self {
             freqs,
             fas_freq,
-            smooth: Smooth::new(),
+            cache,
+            smooth: Smooth::new(smooth_max),
             policies,
             jump: JumpStep::new(),
         })
@@ -83,16 +87,11 @@ impl CpuCommon {
     }
 
     pub fn release(&mut self) {
-        let current_freq = self.fas_freq;
-        let released_freq = self
+        self.fas_freq = self
             .jump
-            .release(current_freq)
+            .release(self.fas_freq)
             .min(self.freqs.last().copied().unwrap());
 
-        self.set_freq_cached(released_freq);
-    }
-
-    pub fn none(&mut self) {
         self.set_freq_cached(self.fas_freq);
     }
 
@@ -102,12 +101,12 @@ impl CpuCommon {
             .saturating_add(STEP)
             .min(self.freqs.last().copied().unwrap());
 
-        self.set_freq(released_freq);
+        self.set_freq_cached(released_freq);
     }
 
     pub fn big_jank(&mut self) {
         let max_freq = self.freqs.last().copied().unwrap();
-        self.set_freq(max_freq);
+        self.set_freq_cached(max_freq);
     }
 
     pub fn init_game(&mut self, m: Mode, c: &Config, extension: &Extension) {

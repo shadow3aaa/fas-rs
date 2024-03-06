@@ -18,31 +18,64 @@ use std::{
 
 use super::Freq;
 
+const RECORD_LENGTH: Duration = Duration::from_millis(150);
+
 #[derive(Debug)]
 pub struct Smooth {
-    buffer: VecDeque<(Freq, Instant)>,
+    max: Freq,
+    last_freq: Freq,
+    freqs: VecDeque<(Freq, Instant)>,
 }
 
 impl Smooth {
-    pub const fn new() -> Self {
+    pub const fn new(max: Freq) -> Self {
         Self {
-            buffer: VecDeque::new(),
+            max,
+            last_freq: 0,
+            freqs: VecDeque::new(),
         }
     }
 
     pub fn update(&mut self, freq: Freq) {
-        self.buffer.push_front((freq, Instant::now()));
-        self.buffer
-            .retain(|(_, i)| i.elapsed() <= Duration::from_millis(1000));
+        self.freqs.push_front((self.last_freq, Instant::now()));
+        self.last_freq = freq;
+        self.retain();
+    }
+
+    fn retain(&mut self) {
+        self.freqs.retain_mut(|(_, instant)| {
+            let elapsed = instant.elapsed();
+            if elapsed >= RECORD_LENGTH * 2 {
+                return false;
+            }
+
+            if elapsed > RECORD_LENGTH {
+                *instant += elapsed - RECORD_LENGTH;
+            }
+
+            true
+        });
     }
 
     pub fn avg(&self) -> Option<Freq> {
-        let sum: Freq = self.buffer.iter().copied().map(|(f, _)| f).sum();
-        let len = self.buffer.len();
-        sum.checked_div(len)
+        let (mut freq, mut start) = self.freqs.back().copied()?;
+        let (_, end) = self.freqs.front().copied()?;
+        let total = end - start;
+        let mut avg = 0;
+
+        for (next_freq, end) in self.freqs.iter().copied().skip(1) {
+            let duration = end - start;
+
+            avg += (freq * duration.as_nanos() as usize).checked_div(total.as_nanos() as usize)?;
+
+            freq = next_freq;
+            start = end;
+        }
+
+        Some(avg.min(self.max))
     }
 
     pub fn reset(&mut self) {
-        self.buffer.clear();
+        self.freqs.clear();
     }
 }
