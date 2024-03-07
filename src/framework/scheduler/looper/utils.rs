@@ -21,6 +21,8 @@ use log::info;
 use super::{super::FasData, Buffer, Looper, State};
 use crate::framework::{utils::get_process_name, CallBacks};
 
+const DELAY_TIME: Duration = Duration::from_secs(3);
+
 impl Looper {
     pub fn retain_topapp(&mut self) {
         self.buffers.retain(|(_, p), buffer| {
@@ -61,7 +63,7 @@ impl Looper {
                 self.state = State::Waiting;
             }
             State::Waiting => {
-                if self.delay_timer.elapsed() > Duration::from_secs(10) {
+                if self.delay_timer.elapsed() > DELAY_TIME {
                     self.controller
                         .init_game(self.mode, &self.config, &self.extension);
                     self.state = State::Working;
