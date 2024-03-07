@@ -77,13 +77,21 @@ impl CpuCommon {
     }
 
     pub fn limit(&mut self) {
-        let current_freq = self.fas_freq;
         let limited_freq = self
             .jump
-            .limit(current_freq)
+            .limit(self.fas_freq)
             .max(self.freqs.first().copied().unwrap());
 
-        self.set_limit_freq(limited_freq);
+        if let Some(smoothed_freq) = self.smooth.avg() {
+            let allowed = 5000;
+            let smoothed_freq = smoothed_freq.clamp(allowed, self.fas_freq.max(allowed));
+
+            self.fas_freq = limited_freq.max(smoothed_freq - allowed); // 尽量让频率不低于最近一段时间的平均频率以减少抖动
+        } else {
+            self.fas_freq = limited_freq;
+        }
+
+        self.set_freq_cached(self.fas_freq);
     }
 
     pub fn release(&mut self) {

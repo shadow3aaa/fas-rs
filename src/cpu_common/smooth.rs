@@ -18,7 +18,7 @@ use std::{
 
 use super::Freq;
 
-const RECORD_LENGTH: Duration = Duration::from_millis(150);
+const RECORD_LENGTH: Duration = Duration::from_millis(200);
 
 #[derive(Debug)]
 pub struct Smooth {

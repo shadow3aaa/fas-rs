@@ -38,15 +38,4 @@ impl CpuCommon {
             self.set_freq(f);
         }
     }
-
-    pub fn set_limit_freq(&mut self, f: Freq) {
-        let clamped_freq = f.max(self.smooth.avg().unwrap_or(f));
-        self.fas_freq = (f + clamped_freq) / 2;
-
-        self.smooth.update(self.fas_freq);
-
-        for policy in &self.policies {
-            let _ = policy.set_fas_freq(self.fas_freq);
-        }
-    }
 }
