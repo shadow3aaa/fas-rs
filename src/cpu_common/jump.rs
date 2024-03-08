@@ -38,7 +38,7 @@ impl JumpStep {
         if matches!(self.state, State::Release) {
             self.jump = (self.jump + 5000).min(250_000);
         } else {
-            self.jump = 10000;
+            self.jump = 5000;
             self.state = State::Release;
         }
 

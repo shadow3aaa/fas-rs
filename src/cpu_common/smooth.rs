@@ -22,15 +22,13 @@ const RECORD_LENGTH: Duration = Duration::from_millis(200);
 
 #[derive(Debug)]
 pub struct Smooth {
-    max: Freq,
     last_freq: Freq,
     freqs: VecDeque<(Freq, Instant)>,
 }
 
 impl Smooth {
-    pub const fn new(max: Freq) -> Self {
+    pub const fn new() -> Self {
         Self {
-            max,
             last_freq: 0,
             freqs: VecDeque::new(),
         }
@@ -72,7 +70,7 @@ impl Smooth {
             start = end;
         }
 
-        Some(avg.min(self.max))
+        Some(avg)
     }
 
     pub fn reset(&mut self) {

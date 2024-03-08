@@ -64,13 +64,12 @@ impl CpuCommon {
 
         let fas_freq = freqs.last().copied().unwrap();
         let cache = fas_freq;
-        let smooth_max = freqs.iter().copied().rev().nth(1).unwrap();
 
         Ok(Self {
             freqs,
             fas_freq,
             cache,
-            smooth: Smooth::new(smooth_max),
+            smooth: Smooth::new(),
             policies,
             jump: JumpStep::new(),
         })
@@ -83,10 +82,7 @@ impl CpuCommon {
             .max(self.freqs.first().copied().unwrap());
 
         if let Some(smoothed_freq) = self.smooth.avg() {
-            let allowed = 5000;
-            let smoothed_freq = smoothed_freq.clamp(allowed, self.fas_freq.max(allowed));
-
-            self.fas_freq = limited_freq.max(smoothed_freq - allowed); // 尽量让频率不低于最近一段时间的平均频率以减少抖动
+            self.fas_freq = limited_freq.max(smoothed_freq * 9 / 10); // 尽量让频率不低于最近一段时间的平均频率以减少抖动
         } else {
             self.fas_freq = limited_freq;
         }
