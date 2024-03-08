@@ -1,3 +1,13 @@
 {
-    "rust-analyzer.cargo.buildScripts.overrideCommand": ["cargo", "ndk", "check", "--quiet", "--workspace", "--message-format=json"],
+    "rust-analyzer.cargo.buildScripts.overrideCommand": [
+        "cargo",
+        "ndk",
+        "check",
+        "--quiet",
+        "--workspace",
+        "--message-format=json"
+    ],
+    "rust-analyzer.linkedProjects": [
+        "./zygisk/rust/Cargo.toml"
+    ],
 }
