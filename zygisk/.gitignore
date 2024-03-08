@@ -1,6 +1,6 @@
-# xmake
-.xmake
-
 # build
 /build
 /output
+
+# vscode
+/.vscode
