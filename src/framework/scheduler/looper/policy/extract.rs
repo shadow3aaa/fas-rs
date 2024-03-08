@@ -30,8 +30,8 @@ impl PolicyData {
     pub fn extract(buffer: &Buffer, mode: Mode) -> Option<Self> {
         let target_fps = buffer.target_fps?;
         let target_fps_prefixed = match mode {
-            Mode::Powersave | Mode::Balance => target_fps * 115 / 120,
-            Mode::Performance | Mode::Fast => target_fps * 117 / 120,
+            Mode::Powersave | Mode::Balance => target_fps * 117 / 120,
+            Mode::Performance | Mode::Fast => target_fps * 118 / 120,
         };
 
         let frames: SmallVec<[Duration; 5]> = buffer.frametimes.iter().copied().take(5).collect();

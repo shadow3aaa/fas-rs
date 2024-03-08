@@ -69,6 +69,7 @@ impl Buffer {
             debug!("unit small jank, timeout: {timeout:?}");
 
             self.limit_timer = Instant::now();
+
             NormalEvent::Release
         } else {
             if self.limit_timer.elapsed() < limit_delay {
