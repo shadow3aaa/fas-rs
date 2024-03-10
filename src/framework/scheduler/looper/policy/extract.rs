@@ -21,6 +21,7 @@ use smallvec::SmallVec;
 #[derive(Debug, Clone, Copy)]
 pub struct PolicyData {
     pub target_fps: u32,
+    pub current_fps: f64,
     pub normalized_last_frame: Duration,
     pub normalized_unit_frame: Duration,
     pub normalized_avg_frame: Duration,
@@ -44,6 +45,7 @@ impl PolicyData {
 
         Some(Self {
             target_fps,
+            current_fps: buffer.current_fps,
             normalized_last_frame,
             normalized_unit_frame,
             normalized_avg_frame,

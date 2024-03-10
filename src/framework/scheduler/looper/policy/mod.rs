@@ -87,18 +87,17 @@ impl Buffer {
     }
 
     fn jank_analyze(&mut self, policy_data: PolicyData) -> JankEvent {
+        let target_fps = policy_data.target_fps;
         let last_frame = policy_data.normalized_last_frame;
-        let avg_frame = policy_data.normalized_avg_frame;
+        let avg_fps = policy_data.current_fps;
 
-        if avg_frame >= Duration::from_millis(1083) || last_frame >= Duration::from_millis(5000) {
+        if avg_fps + 5.0 <= target_fps.into() || last_frame >= Duration::from_millis(5000) {
             #[cfg(debug_assertions)]
             debug!("big jank, last frame: {last_frame:?}");
 
             self.limit_timer = Instant::now();
             JankEvent::BigJank
-        } else if avg_frame >= Duration::from_millis(1033)
-            || last_frame >= Duration::from_millis(1700)
-        {
+        } else if avg_fps + 3.0 <= target_fps.into() || last_frame >= Duration::from_millis(1700) {
             #[cfg(debug_assertions)]
             debug!("jank, last frame: {last_frame:?}");
 
