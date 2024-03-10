@@ -95,7 +95,9 @@ impl Looper {
                 let Ok(pkg) = get_process_name(d.pid) else {
                     return;
                 };
-                let target_fps = self.config.target_fps(&pkg).unwrap();
+                let Some(target_fps) = self.config.target_fps(&pkg) else {
+                    return;
+                };
 
                 info!("New fas buffer on: [{pkg}]");
 
