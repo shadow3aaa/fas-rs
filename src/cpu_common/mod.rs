@@ -14,7 +14,6 @@
 mod jump;
 mod misc;
 mod policy;
-mod smooth;
 
 use std::{collections::HashSet, ffi::OsStr, fs};
 
@@ -23,9 +22,8 @@ use anyhow::Result;
 
 use jump::JumpStep;
 use policy::Policy;
-use smooth::Smooth;
 
-pub type Freq = usize; // 单位: khz
+pub type Freq = usize; // khz
 
 const STEP: Freq = 50000;
 
@@ -34,7 +32,6 @@ pub struct CpuCommon {
     freqs: Vec<Freq>,
     fas_freq: Freq,
     cache: Freq,
-    smooth: Smooth,
     policies: Vec<Policy>,
     jump: JumpStep,
 }
@@ -69,23 +66,16 @@ impl CpuCommon {
             freqs,
             fas_freq,
             cache,
-            smooth: Smooth::new(),
             policies,
             jump: JumpStep::new(),
         })
     }
 
     pub fn limit(&mut self) {
-        let limited_freq = self
+        self.fas_freq = self
             .jump
             .limit(self.fas_freq)
             .max(self.freqs.first().copied().unwrap());
-
-        if let Some(smoothed_freq) = self.smooth.avg() {
-            self.fas_freq = limited_freq.max(smoothed_freq * 9 / 10); // 尽量让频率不低于最近一段时间的平均频率以减少抖动
-        } else {
-            self.fas_freq = limited_freq;
-        }
 
         self.set_freq_cached(self.fas_freq);
     }

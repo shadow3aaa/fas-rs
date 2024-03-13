@@ -15,17 +15,13 @@ use super::{CpuCommon, Freq};
 
 impl CpuCommon {
     pub fn reset_freq(&mut self) {
-        let last_freq = self.freqs.last().copied().unwrap();
-
-        self.cache = last_freq;
-        self.fas_freq = last_freq;
-        self.set_freq_cached(last_freq);
-        self.smooth.reset();
+        self.fas_freq = self.freqs.last().copied().unwrap();
+        self.set_freq_cached(self.fas_freq);
         self.jump.reset();
     }
 
     fn set_freq(&mut self, f: Freq) {
-        self.smooth.update(f);
+        self.cache = f;
 
         for policy in &self.policies {
             let _ = policy.set_fas_freq(f);
@@ -34,7 +30,6 @@ impl CpuCommon {
 
     pub fn set_freq_cached(&mut self, f: Freq) {
         if f != self.cache {
-            self.cache = f;
             self.set_freq(f);
         }
     }

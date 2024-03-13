@@ -13,7 +13,6 @@
 *  limitations under the License. */
 use std::{
     collections::HashMap,
-    thread,
     time::{Duration, Instant},
 };
 
@@ -34,8 +33,7 @@ impl Insider {
         let mut last_record = Instant::now();
 
         loop {
-            if self.userspace_governor && (self.state == State::Normal || self.cpus.contains(&0)) {
-                thread::sleep(Duration::from_millis(25));
+            if self.use_builtin_governor() {
                 let max_cycles = self.max_cycles_per_secs(&reader, &mut last_record, &mut cycles);
                 self.normal_policy(max_cycles);
             }
@@ -52,15 +50,10 @@ impl Insider {
     }
 
     fn recv_event(&self) -> Option<Event> {
-        match self.state {
-            State::Fas => self.rx.recv().ok(),
-            State::Normal => {
-                if self.userspace_governor {
-                    self.rx.try_recv().ok()
-                } else {
-                    self.rx.recv().ok()
-                }
-            }
+        if self.use_builtin_governor() {
+            self.rx.recv_timeout(Duration::from_millis(25)).ok()
+        } else {
+            self.rx.recv().ok()
         }
     }
 
