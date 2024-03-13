@@ -26,7 +26,8 @@ impl Buffer {
             .iter()
             .sum::<Duration>()
             .saturating_add(self.frame_prepare)
-            / self.frametimes.len().try_into().unwrap();
+            .checked_div(self.frametimes.len().try_into().unwrap())
+            .unwrap_or_default();
         #[cfg(debug_assertions)]
         debug!("avg_time: {avg_time:?}");
 
@@ -38,17 +39,36 @@ impl Buffer {
         debug!("current_fps: {:.2}", current_fps);
 
         self.current_fps = current_fps;
+
+        while self.current_fpses.len() >= self.target_fps.unwrap_or(60) as usize * 144 {
+            self.current_fpses.pop_back();
+        }
+
+        self.current_fpses.push_front(current_fps);
     }
 
     pub fn calculate_target_fps(&mut self) {
+        let new_target_fps = self.target_fps();
+        if self.target_fps != new_target_fps {
+            self.target_fps = new_target_fps;
+            self.clear_buffer();
+        }
+    }
+
+    fn clear_buffer(&mut self) {
+        self.current_fpses.clear();
+        self.acc_frame.reset();
+        self.frame_prepare = Duration::ZERO;
+    }
+
+    fn target_fps(&self) -> Option<u32> {
         let target_fpses = match &self.target_fps_config {
             TargetFps::Value(t) => vec![*t],
             TargetFps::Array(arr) => arr.clone(),
         };
 
         if self.current_fps < (target_fpses[0].saturating_sub(10).max(10)).into() {
-            self.target_fps = None;
-            return;
+            return None;
         }
 
         for target_fps in target_fpses.iter().copied() {
@@ -59,11 +79,10 @@ impl Buffer {
                     self.current_fps
                 );
 
-                self.target_fps = Some(target_fps);
-                return;
+                return Some(target_fps);
             }
         }
 
-        self.target_fps = target_fpses.last().copied();
+        target_fpses.last().copied()
     }
 }

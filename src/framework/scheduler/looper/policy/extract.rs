@@ -21,6 +21,7 @@ use smallvec::SmallVec;
 #[derive(Debug, Clone, Copy)]
 pub struct PolicyData {
     pub target_fps: u32,
+    pub target_fps_prefixed: u32,
     pub current_fps: f64,
     pub normalized_last_frame: Duration,
     pub normalized_unit_frame: Duration,
@@ -30,22 +31,35 @@ pub struct PolicyData {
 impl PolicyData {
     pub fn extract(buffer: &Buffer, mode: Mode) -> Option<Self> {
         let target_fps = buffer.target_fps?;
+        let current_fps = buffer.current_fps;
+        let target_fps = buffer
+            .current_fpses
+            .iter()
+            .copied()
+            .map(|f| f as u32)
+            .max()
+            .unwrap_or(target_fps)
+            .clamp(target_fps - 1, target_fps);
         let target_fps_prefixed = match mode {
-            Mode::Powersave | Mode::Balance => target_fps * 117 / 120,
-            Mode::Performance | Mode::Fast => target_fps * 118 / 120,
+            Mode::Powersave | Mode::Balance => target_fps * 118 / 120,
+            Mode::Performance | Mode::Fast => target_fps * 119 / 120,
         };
 
         let frames: SmallVec<[Duration; 5]> = buffer.frametimes.iter().copied().take(5).collect();
         let len = frames.len();
-        let frame = frames.into_iter().sum::<Duration>() / len as u32;
+        let frame = frames
+            .into_iter()
+            .sum::<Duration>()
+            .checked_div(len as u32)?;
 
         let normalized_last_frame = buffer.frametimes.front().copied()? * target_fps_prefixed;
         let normalized_avg_frame = buffer.avg_time * target_fps;
-        let normalized_unit_frame = frame * target_fps_prefixed;
+        let normalized_unit_frame = frame * target_fps;
 
         Some(Self {
             target_fps,
-            current_fps: buffer.current_fps,
+            target_fps_prefixed,
+            current_fps,
             normalized_last_frame,
             normalized_unit_frame,
             normalized_avg_frame,

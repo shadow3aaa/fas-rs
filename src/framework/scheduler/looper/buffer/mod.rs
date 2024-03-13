@@ -22,20 +22,18 @@ use std::{
 use crate::framework::config::TargetFps;
 pub use frame_acc::Acc;
 
-const BUFFER_LEN_SECS: usize = 10;
-
 #[derive(Debug)]
 pub struct Buffer {
     pub pkg: String,
     pub target_fps: Option<u32>,
     pub current_fps: f64,
+    pub current_fpses: VecDeque<f64>,
     pub avg_time: Duration,
     pub frametimes: VecDeque<Duration>,
     pub frame_prepare: Duration,
     pub last_update: Instant,
     pub acc_frame: Acc,
     pub acc_timer: Instant,
-    pub limit_timer: Instant,
     target_fps_config: TargetFps,
     timer: Instant,
 }
@@ -47,13 +45,13 @@ impl Buffer {
             target_fps: None,
             target_fps_config,
             current_fps: 0.0,
+            current_fpses: VecDeque::with_capacity(144 * 30),
             avg_time: Duration::ZERO,
-            frametimes: VecDeque::with_capacity(144 * BUFFER_LEN_SECS),
+            frametimes: VecDeque::with_capacity(144),
             frame_prepare: Duration::ZERO,
             last_update: Instant::now(),
             acc_frame: Acc::new(),
             acc_timer: Instant::now(),
-            limit_timer: Instant::now(),
             timer: Instant::now(),
         }
     }
@@ -62,14 +60,14 @@ impl Buffer {
         self.last_update = Instant::now();
         self.frame_prepare = Duration::ZERO;
 
-        while self.frametimes.len() >= self.target_fps.unwrap_or(60) as usize * BUFFER_LEN_SECS {
+        while self.frametimes.len() >= self.target_fps.unwrap_or(144) as usize {
             self.frametimes.pop_back();
         }
 
         self.frametimes.push_front(d);
         self.calculate_current_fps();
 
-        if self.timer.elapsed() >= Duration::from_secs(BUFFER_LEN_SECS as u64) {
+        if self.timer.elapsed() >= Duration::from_secs(5) {
             self.timer = Instant::now();
             self.calculate_target_fps();
         }
