@@ -15,7 +15,6 @@ use std::time::Duration;
 
 use super::super::buffer::Buffer;
 
-
 use smallvec::SmallVec;
 
 #[derive(Debug, Clone, Copy)]

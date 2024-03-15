@@ -37,11 +37,12 @@ impl Step {
 
     pub fn release(&mut self, freq: Freq, target_fps: u32, mode: Mode) -> Freq {
         if matches!(self.state, State::Release) {
-            self.step += 25000 * 120 / target_fps as Freq;
+            self.step += 5000 * 120 / target_fps as Freq;
 
             let step_max = match mode {
-                Mode::Powersave | Mode::Balance => 75000,
-                Mode::Performance | Mode::Fast => 100_000,
+                Mode::Powersave => self.step,
+                Mode::Balance => 50000 * 120 / target_fps as Freq,
+                Mode::Performance | Mode::Fast => 750_000 * 120 / target_fps as Freq,
             };
 
             self.step = self.step.min(step_max);

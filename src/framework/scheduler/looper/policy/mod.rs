@@ -20,7 +20,6 @@ use log::debug;
 
 use super::buffer::{Acc, Buffer};
 
-
 use extract::PolicyData;
 
 #[derive(Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
@@ -88,7 +87,7 @@ impl Buffer {
         for frame in self
             .frametimes
             .iter()
-            .take(30)
+            .take(10)
             .copied()
             .map(|f| f * target_fps)
         {
