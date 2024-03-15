@@ -14,7 +14,7 @@
 use std::time::Duration;
 
 use super::super::buffer::Buffer;
-use crate::framework::Mode;
+
 
 use smallvec::SmallVec;
 
@@ -29,9 +29,11 @@ pub struct PolicyData {
 }
 
 impl PolicyData {
-    pub fn extract(buffer: &Buffer, mode: Mode) -> Option<Self> {
+    pub fn extract(buffer: &Buffer) -> Option<Self> {
         let target_fps = buffer.target_fps?;
         let current_fps = buffer.current_fps;
+        let target_fps_prefixed = target_fps * 119 / 120;
+
         let target_fps = buffer
             .current_fpses
             .iter()
@@ -39,20 +41,19 @@ impl PolicyData {
             .map(|f| f as u32)
             .max()
             .unwrap_or(target_fps)
-            .clamp(target_fps - 1, target_fps);
-        let target_fps_prefixed = match mode {
-            Mode::Powersave | Mode::Balance => target_fps * 118 / 120,
-            Mode::Performance | Mode::Fast => target_fps * 119 / 120,
-        };
+            .clamp(target_fps_prefixed, target_fps);
 
-        let frames: SmallVec<[Duration; 5]> = buffer.frametimes.iter().copied().take(5).collect();
+        let unit_len = f64::from(target_fps) * 5.0 / 120.0;
+        let unit_len = unit_len.round() as usize;
+        let frames: SmallVec<[Duration; 10]> =
+            buffer.frametimes.iter().copied().take(unit_len).collect();
         let len = frames.len();
         let frame = frames
             .into_iter()
             .sum::<Duration>()
             .checked_div(len as u32)?;
 
-        let normalized_last_frame = buffer.frametimes.front().copied()? * target_fps_prefixed;
+        let normalized_last_frame = buffer.frametimes.front().copied()? * target_fps;
         let normalized_avg_frame = buffer.avg_time * target_fps;
         let normalized_unit_frame = frame * target_fps;
 

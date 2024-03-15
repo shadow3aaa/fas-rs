@@ -17,7 +17,7 @@ impl CpuCommon {
     pub fn reset_freq(&mut self) {
         self.fas_freq = self.freqs.last().copied().unwrap();
         self.set_freq_cached(self.fas_freq);
-        self.jump.reset();
+        self.step.reset();
     }
 
     fn set_freq(&mut self, f: Freq) {

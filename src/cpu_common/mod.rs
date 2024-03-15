@@ -11,21 +11,21 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-mod jump;
 mod misc;
 mod policy;
+mod step;
 
 use std::{collections::HashSet, ffi::OsStr, fs};
 
 use crate::framework::prelude::*;
 use anyhow::Result;
 
-use jump::JumpStep;
 use policy::Policy;
+use step::Step;
 
 pub type Freq = usize; // khz
 
-const STEP: Freq = 50000;
+const JANK_STEP: Freq = 500_000;
 
 #[derive(Debug)]
 pub struct CpuCommon {
@@ -33,7 +33,7 @@ pub struct CpuCommon {
     fas_freq: Freq,
     cache: Freq,
     policies: Vec<Policy>,
-    jump: JumpStep,
+    step: Step,
 }
 
 impl CpuCommon {
@@ -67,35 +67,40 @@ impl CpuCommon {
             fas_freq,
             cache,
             policies,
-            jump: JumpStep::new(),
+            step: Step::new(),
         })
     }
 
-    pub fn limit(&mut self) {
+    pub fn limit(&mut self, target_fps: u32) {
         self.fas_freq = self
-            .jump
-            .limit(self.fas_freq)
+            .step
+            .limit(self.fas_freq, target_fps)
             .max(self.freqs.first().copied().unwrap());
 
         self.set_freq_cached(self.fas_freq);
     }
 
-    pub fn release(&mut self) {
+    pub fn release(&mut self, target_fps: u32, mode: Mode) {
         self.fas_freq = self
-            .jump
-            .release(self.fas_freq)
+            .step
+            .release(self.fas_freq, target_fps, mode)
             .min(self.freqs.last().copied().unwrap());
 
         self.set_freq_cached(self.fas_freq);
     }
 
-    pub fn jank(&mut self) {
-        let current_freq = self.fas_freq;
-        let released_freq = current_freq
-            .saturating_add(STEP)
+    pub fn jank(&mut self, target_fps: u32, mode: Mode) {
+        let jank_freq = self
+            .fas_freq
+            .saturating_add(JANK_STEP)
             .min(self.freqs.last().copied().unwrap());
 
-        self.set_freq_cached(released_freq);
+        self.fas_freq = self
+            .step
+            .release(self.fas_freq, target_fps, mode)
+            .min(self.freqs.last().copied().unwrap());
+
+        self.set_freq_cached(jank_freq);
     }
 
     pub fn big_jank(&mut self) {

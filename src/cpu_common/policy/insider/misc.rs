@@ -52,13 +52,15 @@ impl Insider {
 
     pub fn use_builtin_governor(&self) -> bool {
         self.userspace_governor
-            && (!self.use_performance_governor
-                || self.cpus.contains(&0)
-                || self.state == State::Normal)
+            && (!self.use_performance_governor || self.is_little() || self.state == State::Normal)
+    }
+
+    fn is_little(&self) -> bool {
+        self.cpus.contains(&0)
     }
 
     fn write_freq(&mut self) -> Result<()> {
-        if self.fas_boost && self.state == State::Fas && !self.cpus.contains(&0) {
+        if self.fas_boost && self.state == State::Fas && !self.is_little() {
             self.write_freq_boost()
         } else {
             self.write_freq_nonboost()
@@ -67,7 +69,11 @@ impl Insider {
 
     fn write_freq_nonboost(&mut self) -> Result<()> {
         if self.use_builtin_governor() {
-            let freq = cmp::min(self.fas_freq, self.governor_freq);
+            let freq = if self.is_little() {
+                self.governor_freq
+            } else {
+                cmp::min(self.fas_freq, self.governor_freq)
+            };
             let target = self.find_freq(freq);
 
             if self.cache == target {
@@ -78,6 +84,10 @@ impl Insider {
                 self.lock_min_freq(self.freqs.first().copied().unwrap())
             }
         } else {
+            if self.is_little() {
+                return Ok(());
+            }
+
             let target = self.find_freq(self.fas_freq);
 
             if self.cache == target {

@@ -12,10 +12,11 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 use super::Freq;
+use crate::framework::Mode;
 
 #[derive(Debug)]
-pub struct JumpStep {
-    jump: Freq,
+pub struct Step {
+    step: Freq,
     state: State,
 }
 
@@ -26,38 +27,43 @@ enum State {
     None,
 }
 
-impl JumpStep {
+impl Step {
     pub const fn new() -> Self {
         Self {
-            jump: 0,
+            step: 0,
             state: State::None,
         }
     }
 
-    pub fn release(&mut self, freq: Freq) -> Freq {
+    pub fn release(&mut self, freq: Freq, target_fps: u32, mode: Mode) -> Freq {
         if matches!(self.state, State::Release) {
-            self.jump = (self.jump + 5000).min(250_000);
+            self.step += 25000 * 120 / target_fps as Freq;
+
+            let step_max = match mode {
+                Mode::Powersave | Mode::Balance => 75000,
+                Mode::Performance | Mode::Fast => 100_000,
+            };
+
+            self.step = self.step.min(step_max);
         } else {
-            self.jump = 5000;
+            self.step = 25000 * 120 / target_fps as Freq;
             self.state = State::Release;
         }
 
-        freq.saturating_add(self.jump)
+        freq.saturating_add(self.step)
     }
 
-    pub fn limit(&mut self, freq: Freq) -> Freq {
-        if matches!(self.state, State::Limit) {
-            self.jump = (self.jump + 5000).min(250_000);
-        } else {
-            self.jump = 5000;
+    pub fn limit(&mut self, freq: Freq, target_fps: u32) -> Freq {
+        if !matches!(self.state, State::Limit) {
             self.state = State::Limit;
         }
 
-        freq.saturating_sub(self.jump)
+        self.step = 25000 * 120 / target_fps as Freq;
+
+        freq.saturating_sub(self.step)
     }
 
     pub fn reset(&mut self) {
-        self.jump = 0;
         self.state = State::None;
     }
 }

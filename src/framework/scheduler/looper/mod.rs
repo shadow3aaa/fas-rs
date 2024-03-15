@@ -164,16 +164,18 @@ impl Looper {
             .buffers
             .values_mut()
             .filter(|buffer| buffer.target_fps == target_fps)
-            .filter_map(|buffer| buffer.normal_event(self.mode))
+            .filter_map(Buffer::normal_event)
             .max()
         else {
             self.disable_fas();
             return;
         };
 
+        let target_fps = target_fps.unwrap_or(120);
+
         match event {
-            NormalEvent::Release => self.controller.release(),
-            NormalEvent::Restrictable => self.controller.limit(),
+            NormalEvent::Release => self.controller.release(target_fps, self.mode),
+            NormalEvent::Restrictable => self.controller.limit(target_fps),
             NormalEvent::None => (),
         }
     }
@@ -189,16 +191,18 @@ impl Looper {
             .buffers
             .values_mut()
             .filter(|buffer| buffer.target_fps == target_fps)
-            .filter_map(|buffer| buffer.jank_event(self.mode))
+            .filter_map(|buffer| buffer.jank_event())
             .max()
         else {
             self.disable_fas();
             return;
         };
 
+        let target_fps = target_fps.unwrap_or(120);
+
         match event {
             JankEvent::BigJank => self.controller.big_jank(),
-            JankEvent::Jank => self.controller.jank(),
+            JankEvent::Jank => self.controller.jank(target_fps, self.mode),
             JankEvent::None => (),
         }
     }

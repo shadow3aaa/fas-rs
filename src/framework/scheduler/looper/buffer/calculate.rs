@@ -40,7 +40,7 @@ impl Buffer {
 
         self.current_fps = current_fps;
 
-        while self.current_fpses.len() >= self.target_fps.unwrap_or(60) as usize * 144 {
+        while self.current_fpses.len() >= self.target_fps.unwrap_or(144) as usize * 30 {
             self.current_fpses.pop_back();
         }
 

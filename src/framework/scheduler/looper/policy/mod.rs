@@ -18,8 +18,8 @@ use std::time::{Duration, Instant};
 #[cfg(debug_assertions)]
 use log::debug;
 
-use super::Buffer;
-use crate::framework::Mode;
+use super::buffer::{Acc, Buffer};
+
 
 use extract::PolicyData;
 
@@ -38,8 +38,8 @@ pub enum JankEvent {
 }
 
 impl Buffer {
-    pub fn normal_event(&mut self, mode: Mode) -> Option<NormalEvent> {
-        let policy_data = PolicyData::extract(self, mode)?;
+    pub fn normal_event(&mut self) -> Option<NormalEvent> {
+        let policy_data = PolicyData::extract(self)?;
 
         #[cfg(debug_assertions)]
         debug!("policy data: {policy_data:?}");
@@ -47,8 +47,8 @@ impl Buffer {
         Some(self.frame_analyze(policy_data))
     }
 
-    pub fn jank_event(&self, mode: Mode) -> Option<JankEvent> {
-        let policy_data = PolicyData::extract(self, mode)?;
+    pub fn jank_event(&self) -> Option<JankEvent> {
+        let policy_data = PolicyData::extract(self)?;
 
         Some(Self::jank_analyze(policy_data))
     }
@@ -83,13 +83,19 @@ impl Buffer {
 
     fn recent_timeout(&self, policy_data: PolicyData) -> bool {
         let target_fps = policy_data.target_fps_prefixed;
-        self.frametimes
+
+        let mut acc = Acc::new();
+        for frame in self
+            .frametimes
             .iter()
-            .take(10)
+            .take(30)
             .copied()
             .map(|f| f * target_fps)
-            .sum::<Duration>()
-            >= Duration::from_secs(10)
+        {
+            acc.acc(frame);
+        }
+
+        acc.timeout_dur() > Duration::ZERO
     }
 
     fn jank_analyze(policy_data: PolicyData) -> JankEvent {
@@ -97,12 +103,14 @@ impl Buffer {
         let last_frame = policy_data.normalized_last_frame;
         let avg_fps = policy_data.current_fps;
 
-        if avg_fps + 5.0 <= target_fps.into() || last_frame >= Duration::from_millis(5000) {
+        if avg_fps <= (target_fps * 115 / 120).into() || last_frame >= Duration::from_millis(5000) {
             #[cfg(debug_assertions)]
             debug!("big jank, last frame: {last_frame:?}");
 
             JankEvent::BigJank
-        } else if avg_fps + 3.0 <= target_fps.into() || last_frame >= Duration::from_millis(1700) {
+        } else if avg_fps <= (target_fps * 117 / 120).into()
+            || last_frame >= Duration::from_millis(1700)
+        {
             #[cfg(debug_assertions)]
             debug!("jank, last frame: {last_frame:?}");
 

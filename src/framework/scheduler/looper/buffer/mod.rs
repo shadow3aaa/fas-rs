@@ -47,7 +47,7 @@ impl Buffer {
             current_fps: 0.0,
             current_fpses: VecDeque::with_capacity(144 * 30),
             avg_time: Duration::ZERO,
-            frametimes: VecDeque::with_capacity(144),
+            frametimes: VecDeque::with_capacity(144 * 3),
             frame_prepare: Duration::ZERO,
             last_update: Instant::now(),
             acc_frame: Acc::new(),
@@ -60,7 +60,7 @@ impl Buffer {
         self.last_update = Instant::now();
         self.frame_prepare = Duration::ZERO;
 
-        while self.frametimes.len() >= self.target_fps.unwrap_or(144) as usize {
+        while self.frametimes.len() >= self.target_fps.unwrap_or(144) as usize * 3 {
             self.frametimes.pop_back();
         }
 
