@@ -122,16 +122,16 @@ def __build_zygisk(
         cargo = tools.cargo()
 
     if check:
-        cargo = cargo.arg("check --target aarch64-linux-android")
+        cargo.arg("check --target aarch64-linux-android")
     else:
-        cargo = cargo.arg("build --target aarch64-linux-android")
+        cargo.arg("build --target aarch64-linux-android")
         if nightly:
-            cargo = cargo.arg("-Z build-std")
+            cargo.arg("-Z build-std")
 
     if release:
-        cargo = cargo.arg("--release")
+        cargo.arg("--release")
     if verbose:
-        cargo = cargo.arg("--verbose")
+        cargo.arg("--verbose")
 
     cargo.build()
 
@@ -210,16 +210,16 @@ def task(args):
         cargo = tools.cargo()
 
     if check:
-        cargo = cargo.arg("check --target aarch64-linux-android")
+        cargo.arg("check --target aarch64-linux-android")
     else:
-        cargo = cargo.arg("build --target aarch64-linux-android")
+        cargo.arg("build --target aarch64-linux-android")
         if nightly:
-            cargo = cargo.arg("-Z build-std")
+            cargo.arg("-Z build-std")
 
     if release:
-        cargo = cargo.arg("--release")
+        cargo.arg("--release")
     if verbose:
-        cargo = cargo.arg("--verbose")
+        cargo.arg("--verbose")
 
     cargo.rust_flag("-C default-linker-libraries")
     cargo.build()
