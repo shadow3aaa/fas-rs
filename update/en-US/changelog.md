@@ -1,10 +1,11 @@
-# v2.4.0
+# v2.5.0
 
 ## Change log
 
-- More reasonable smooth algorithm, greatly increasing frequency stability
-- Shorten delayed startup time
-- Remove meaningless codes
-- Stricter jank
+- Standardize various parameters
+- Remove smooth algorithm
+- fas state no longer controls small core clusters
+- Optimize framework logic
+- userspace_governor is turned off by default (some devices have problems opening it)
+- Optimize cpu controller
 - Update dependencies
-- Increase frame rate watermark
