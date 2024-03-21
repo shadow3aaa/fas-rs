@@ -11,11 +11,12 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::sync::mpsc::{self, Receiver, SyncSender};
+use std::{
+    sync::mpsc::{self, Receiver, SyncSender},
+    time::Instant,
+};
 
 use once_cell::sync::Lazy;
-
-use crate::data::Data;
 
 pub static CHANNEL: Lazy<Channel> = Lazy::new(|| {
     let (sx, rx) = mpsc::sync_channel(1024);
@@ -23,8 +24,8 @@ pub static CHANNEL: Lazy<Channel> = Lazy::new(|| {
 });
 
 pub struct Channel {
-    pub sx: SyncSender<Data>,
-    pub rx: Receiver<Data>,
+    pub sx: SyncSender<Instant>,
+    pub rx: Receiver<Instant>,
 }
 
 unsafe impl Sync for Channel {}

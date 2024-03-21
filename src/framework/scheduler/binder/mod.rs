@@ -15,6 +15,7 @@
 mod IRemoteService;
 
 use std::{
+    process,
     sync::mpsc::{self, Receiver, Sender},
     thread,
     time::Duration,
@@ -23,7 +24,7 @@ use std::{
 use binder::{BinderFeatures, Interface, ProcessState};
 use log::{error, info};
 
-use super::{BinderMessage, FasData};
+use super::FasData;
 use crate::framework::{
     config::Config,
     error::{Error, Result},
@@ -33,7 +34,7 @@ use IRemoteService::BnRemoteService;
 
 pub struct FasServer {
     config: Config,
-    sx: Sender<BinderMessage>,
+    sx: Sender<FasData>,
 }
 
 impl Interface for FasServer {}
@@ -43,33 +44,22 @@ impl IRemoteService::IRemoteService for FasServer {
         Ok(self.config.need_fas(pkg))
     }
 
-    fn sendData(&self, buffer: i64, pid: i32, frametime_ns: i64) -> binder::Result<bool> {
+    fn sendData(&self, pid: i32, frametime_ns: i64) -> binder::Result<bool> {
         let frametime = Duration::from_nanos(frametime_ns as u64);
 
-        let data = FasData {
-            buffer,
-            pid,
-            frametime,
-        };
+        let data = FasData { pid, frametime };
 
-        if let Err(e) = self.sx.send(BinderMessage::Data(data)) {
+        if let Err(e) = self.sx.send(data) {
             error!("{e:?}");
+            process::exit(-1);
         }
 
         Ok(true)
     }
-
-    fn removeBuffer(&self, buffer: i64, pid: i32) -> binder::Result<()> {
-        if let Err(e) = self.sx.send(BinderMessage::RemoveBuffer((buffer, pid))) {
-            error!("{e:?}");
-        }
-
-        Ok(())
-    }
 }
 
 impl FasServer {
-    pub fn run_server(node: &mut Node, config: Config) -> Result<Receiver<BinderMessage>> {
+    pub fn run_server(node: &mut Node, config: Config) -> Result<Receiver<FasData>> {
         let (sx, rx) = mpsc::channel();
 
         thread::Builder::new()
@@ -84,7 +74,7 @@ impl FasServer {
         Ok(rx)
     }
 
-    fn run(sx: Sender<BinderMessage>, config: Config) -> Result<()> {
+    fn run(sx: Sender<FasData>, config: Config) -> Result<()> {
         let server = Self { config, sx };
         let server = BnRemoteService::new_binder(server, BinderFeatures::default());
 
