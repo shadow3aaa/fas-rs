@@ -40,7 +40,7 @@ impl Buffer {
 
         self.current_fps = current_fps;
 
-        while self.current_fpses.len() >= self.target_fps.unwrap_or(144) as usize * 30 {
+        while self.current_fpses.len() >= self.target_fps.unwrap_or(144) as usize * 3 {
             self.current_fpses.pop_back();
         }
 
@@ -57,7 +57,6 @@ impl Buffer {
 
     fn clear_buffer(&mut self) {
         self.current_fpses.clear();
-        self.acc_frame.reset();
         self.frame_prepare = Duration::ZERO;
     }
 
@@ -67,16 +66,27 @@ impl Buffer {
             TargetFps::Array(arr) => arr.clone(),
         };
 
-        if self.current_fps < (target_fpses[0].saturating_sub(10).max(10)).into() {
+        let mut current_fps: Option<f64> = None;
+        for next_fps in self.current_fpses.iter().copied().take(144) {
+            if let Some(fps) = current_fps {
+                current_fps = Some(fps.max(next_fps));
+            } else {
+                current_fps = Some(next_fps);
+            }
+        }
+
+        let current_fps = current_fps?;
+
+        if current_fps < (target_fpses[0].saturating_sub(10).max(10)).into() {
             return None;
         }
 
         for target_fps in target_fpses.iter().copied() {
-            if self.current_fps <= f64::from(target_fps) + 3.0 {
+            if current_fps <= f64::from(target_fps) + 3.0 {
                 #[cfg(debug_assertions)]
                 debug!(
                     "Matched target_fps: current: {:.2} target_fps: {target_fps}",
-                    self.current_fps
+                    current_fps
                 );
 
                 return Some(target_fps);

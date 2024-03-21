@@ -25,13 +25,13 @@ const DELAY_TIME: Duration = Duration::from_secs(3);
 
 impl Looper {
     pub fn retain_topapp(&mut self) {
-        self.buffers.retain(|(_, p), buffer| {
-            if self.topapp_checker.is_topapp(*p) {
+        self.buffers.retain(|pid, buffer| {
+            if self.topapp_checker.is_topapp(*pid) {
                 true
             } else {
                 let pkg = buffer.pkg.clone();
                 self.extension
-                    .call_extentions(CallBacks::UnloadFas(*p, pkg));
+                    .call_extentions(CallBacks::UnloadFas(*pid, pkg));
                 false
             }
         });
@@ -78,7 +78,7 @@ impl Looper {
             return;
         }
 
-        let producer = (d.buffer, d.pid);
+        let producer = d.pid;
         let frametime = d.frametime;
 
         for (process, buffer) in &mut self.buffers {

@@ -13,20 +13,20 @@
 *  limitations under the License. */
 mod extract;
 
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 #[cfg(debug_assertions)]
 use log::debug;
 
-use super::buffer::{Acc, Buffer};
+use super::buffer::Buffer;
+use crate::framework::node::Mode;
 
 use extract::PolicyData;
 
 #[derive(Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
 pub enum NormalEvent {
-    Restrictable,
-    None,
-    Release,
+    Restrictable(Duration, Duration),
+    Release(Duration, Duration),
 }
 
 #[derive(Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
@@ -37,64 +37,40 @@ pub enum JankEvent {
 }
 
 impl Buffer {
-    pub fn normal_event(&mut self) -> Option<NormalEvent> {
+    pub fn normal_event(&self, mode: Mode) -> Option<NormalEvent> {
         let policy_data = PolicyData::extract(self)?;
 
         #[cfg(debug_assertions)]
         debug!("policy data: {policy_data:?}");
 
-        Some(self.frame_analyze(policy_data))
+        Some(Self::frame_analyze(policy_data, mode))
     }
 
     pub fn jank_event(&self) -> Option<JankEvent> {
         let policy_data = PolicyData::extract(self)?;
-
         Some(Self::jank_analyze(policy_data))
     }
 
-    fn frame_analyze(&mut self, policy_data: PolicyData) -> NormalEvent {
-        self.acc_frame.acc(policy_data.normalized_unit_frame);
+    fn frame_analyze(policy_data: PolicyData, mode: Mode) -> NormalEvent {
+        let frame = policy_data.normalized_last_frame;
+        let target = Duration::from_secs(1)
+            + match mode {
+                Mode::Powersave => Duration::from_millis(5),
+                Mode::Balance => Duration::from_millis(3),
+                Mode::Performance | Mode::Fast => Duration::from_millis(2),
+            };
 
-        if self.acc_timer.elapsed() * policy_data.target_fps < Duration::from_secs(1) {
-            return NormalEvent::None;
-        }
-
-        self.acc_timer = Instant::now();
-
-        let timeout = self.acc_frame.timeout_dur();
-        let result = if timeout > Duration::ZERO {
+        if frame > target {
             #[cfg(debug_assertions)]
-            debug!("unit small jank, timeout: {timeout:?}");
+            debug!("unit small jank, frame: {frame:?}");
 
-            NormalEvent::Release
-        } else if self.recent_timeout(policy_data) {
-            NormalEvent::None
+            NormalEvent::Release(frame, target)
         } else {
             #[cfg(debug_assertions)]
-            debug!("no jank, timeout: {timeout:?}");
+            debug!("no jank, frame: {frame:?}");
 
-            NormalEvent::Restrictable
-        };
-
-        self.acc_frame.reset();
-        result
-    }
-
-    fn recent_timeout(&self, policy_data: PolicyData) -> bool {
-        let target_fps = policy_data.target_fps_prefixed;
-
-        let mut acc = Acc::new();
-        for frame in self
-            .frametimes
-            .iter()
-            .take(10)
-            .copied()
-            .map(|f| f * target_fps)
-        {
-            acc.acc(frame);
+            NormalEvent::Restrictable(frame, target)
         }
-
-        acc.timeout_dur() > Duration::ZERO
     }
 
     fn jank_analyze(policy_data: PolicyData) -> JankEvent {

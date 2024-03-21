@@ -12,7 +12,6 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 pub mod calculate;
-mod frame_acc;
 
 use std::{
     collections::VecDeque,
@@ -20,7 +19,6 @@ use std::{
 };
 
 use crate::framework::config::TargetFps;
-pub use frame_acc::Acc;
 
 #[derive(Debug)]
 pub struct Buffer {
@@ -32,8 +30,6 @@ pub struct Buffer {
     pub frametimes: VecDeque<Duration>,
     pub frame_prepare: Duration,
     pub last_update: Instant,
-    pub acc_frame: Acc,
-    pub acc_timer: Instant,
     target_fps_config: TargetFps,
     timer: Instant,
 }
@@ -45,13 +41,11 @@ impl Buffer {
             target_fps: None,
             target_fps_config,
             current_fps: 0.0,
-            current_fpses: VecDeque::with_capacity(144 * 30),
+            current_fpses: VecDeque::with_capacity(144 * 3),
             avg_time: Duration::ZERO,
-            frametimes: VecDeque::with_capacity(144 * 3),
+            frametimes: VecDeque::with_capacity(144),
             frame_prepare: Duration::ZERO,
             last_update: Instant::now(),
-            acc_frame: Acc::new(),
-            acc_timer: Instant::now(),
             timer: Instant::now(),
         }
     }
@@ -60,7 +54,7 @@ impl Buffer {
         self.last_update = Instant::now();
         self.frame_prepare = Duration::ZERO;
 
-        while self.frametimes.len() >= self.target_fps.unwrap_or(144) as usize * 3 {
+        while self.frametimes.len() >= self.target_fps.unwrap_or(144) as usize {
             self.frametimes.pop_back();
         }
 

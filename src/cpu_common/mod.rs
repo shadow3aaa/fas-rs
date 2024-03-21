@@ -13,18 +13,19 @@
 *  limitations under the License. */
 mod misc;
 mod policy;
-mod step;
 
-use std::{collections::HashSet, ffi::OsStr, fs};
+use std::{cmp, collections::HashSet, ffi::OsStr, fs, time::Duration};
+
+use anyhow::Result;
+#[cfg(debug_assertions)]
+use log::debug;
 
 use crate::framework::prelude::*;
-use anyhow::Result;
-
 use policy::Policy;
-use step::Step;
 
 pub type Freq = usize; // khz
 
+const BASE_STEP: Freq = 200_000;
 const JANK_STEP: Freq = 500_000;
 
 #[derive(Debug)]
@@ -33,7 +34,6 @@ pub struct CpuCommon {
     fas_freq: Freq,
     cache: Freq,
     policies: Vec<Policy>,
-    step: Step,
 }
 
 impl CpuCommon {
@@ -67,37 +67,51 @@ impl CpuCommon {
             fas_freq,
             cache,
             policies,
-            step: Step::new(),
         })
     }
 
-    pub fn limit(&mut self, target_fps: u32) {
-        self.fas_freq = self
-            .step
-            .limit(self.fas_freq, target_fps)
-            .max(self.freqs.first().copied().unwrap());
+    pub fn limit(&mut self, target_fps: u32, frame: Duration, target: Duration) {
+        let target = target.as_nanos() as Freq;
+        let frame = frame.as_nanos() as Freq;
+
+        let step = BASE_STEP * (target - frame) / target;
+        let step = step.min(BASE_STEP);
+        let step = step * 120 / target_fps as Freq;
+
+        #[cfg(debug_assertions)]
+        debug!("step: -{step}khz");
+
+        self.fas_freq = cmp::max(
+            self.fas_freq.saturating_sub(step),
+            self.freqs.first().copied().unwrap(),
+        );
 
         self.set_freq_cached(self.fas_freq);
     }
 
-    pub fn release(&mut self, target_fps: u32, mode: Mode) {
-        self.fas_freq = self
-            .step
-            .release(self.fas_freq, target_fps, mode)
-            .min(self.freqs.last().copied().unwrap());
+    pub fn release(&mut self, target_fps: u32, frame: Duration, target: Duration) {
+        let target = target.as_nanos() as Freq;
+        let frame = frame.as_nanos() as Freq;
+
+        let step = BASE_STEP * (frame - target) / target;
+        let step = step.min(BASE_STEP);
+        let step = step * 120 / target_fps as Freq;
+
+        #[cfg(debug_assertions)]
+        debug!("step: +{step}khz");
+
+        self.fas_freq = cmp::min(
+            self.fas_freq.saturating_add(step),
+            self.freqs.last().copied().unwrap(),
+        );
 
         self.set_freq_cached(self.fas_freq);
     }
 
-    pub fn jank(&mut self, target_fps: u32, mode: Mode) {
+    pub fn jank(&mut self) {
         let jank_freq = self
             .fas_freq
             .saturating_add(JANK_STEP)
-            .min(self.freqs.last().copied().unwrap());
-
-        self.fas_freq = self
-            .step
-            .release(self.fas_freq, target_fps, mode)
             .min(self.freqs.last().copied().unwrap());
 
         self.set_freq_cached(jank_freq);

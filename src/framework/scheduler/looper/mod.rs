@@ -21,9 +21,11 @@ use std::{
     time::{Duration, Instant},
 };
 
+#[cfg(debug_assertions)]
+use log::debug;
 use log::info;
 
-use super::{topapp::TimedWatcher, BinderMessage, FasData};
+use super::{topapp::TimedWatcher, FasData};
 use crate::{
     framework::{
         config::Config,
@@ -37,8 +39,8 @@ use crate::{
 use buffer::Buffer;
 use policy::{JankEvent, NormalEvent};
 
-pub type Producer = (i64, i32); // buffer, pid
-pub type Buffers = HashMap<Producer, Buffer>; // Process, (jank_scale, total_jank_time_ns)
+pub type Producer = i32; // pid
+pub type Buffers = HashMap<Producer, Buffer>;
 
 #[derive(PartialEq)]
 enum State {
@@ -48,7 +50,7 @@ enum State {
 }
 
 pub struct Looper {
-    rx: Receiver<BinderMessage>,
+    rx: Receiver<FasData>,
     config: Config,
     node: Node,
     extension: Extension,
@@ -58,12 +60,11 @@ pub struct Looper {
     buffers: Buffers,
     state: State,
     delay_timer: Instant,
-    timer: Instant,
 }
 
 impl Looper {
     pub fn new(
-        rx: Receiver<BinderMessage>,
+        rx: Receiver<FasData>,
         config: Config,
         node: Node,
         extension: Extension,
@@ -80,13 +81,16 @@ impl Looper {
             buffers: Buffers::new(),
             state: State::NotWorking,
             delay_timer: Instant::now(),
-            timer: Instant::now(),
         }
     }
 
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
             self.switch_mode();
+
+            #[cfg(debug_assertions)]
+            debug!("{:?}", self.buffers.keys());
+
             let target_fps = self
                 .buffers
                 .values()
@@ -94,21 +98,10 @@ impl Looper {
                 .filter_map(|b| b.target_fps)
                 .max(); // 只处理目标fps最大的buffer
 
-            if let Some(message) = self.recv_message(target_fps)? {
-                match message {
-                    BinderMessage::Data(d) => {
-                        self.consume_data(&d);
-                        if self.timer.elapsed() * target_fps.unwrap_or_default()
-                            > Duration::from_secs(1)
-                        {
-                            self.do_normal_policy(target_fps);
-                            self.timer = Instant::now();
-                        }
-                    }
-                    BinderMessage::RemoveBuffer(k) => {
-                        self.buffers.remove(&k);
-                    }
-                }
+            if let Some(data) = self.recv_message()? {
+                self.consume_data(&data);
+                let producer = data.pid;
+                self.do_normal_policy(producer, target_fps);
             }
 
             self.do_jank_policy(target_fps);
@@ -133,10 +126,8 @@ impl Looper {
         }
     }
 
-    fn recv_message(&mut self, target_fps: Option<u32>) -> Result<Option<BinderMessage>> {
-        let timeout = target_fps.map_or(Duration::from_secs(1), |t| Duration::from_secs(1) / t);
-
-        match self.rx.recv_timeout(timeout) {
+    fn recv_message(&mut self) -> Result<Option<FasData>> {
+        match self.rx.recv_timeout(Duration::from_secs(1)) {
             Ok(m) => Ok(Some(m)),
             Err(e) => {
                 if e == RecvTimeoutError::Disconnected {
@@ -155,7 +146,7 @@ impl Looper {
         self.retain_topapp();
     }
 
-    fn do_normal_policy(&mut self, target_fps: Option<u32>) {
+    fn do_normal_policy(&mut self, _producer: Producer, target_fps: Option<u32>) {
         if self.state != State::Working {
             return;
         }
@@ -164,7 +155,7 @@ impl Looper {
             .buffers
             .values_mut()
             .filter(|buffer| buffer.target_fps == target_fps)
-            .filter_map(Buffer::normal_event)
+            .filter_map(|buffer| buffer.normal_event(self.mode))
             .max()
         else {
             self.disable_fas();
@@ -174,18 +165,19 @@ impl Looper {
         let target_fps = target_fps.unwrap_or(120);
 
         match event {
-            NormalEvent::Release => self.controller.release(target_fps, self.mode),
-            NormalEvent::Restrictable => self.controller.limit(target_fps),
-            NormalEvent::None => (),
+            NormalEvent::Release(frame, target) => {
+                self.controller.release(target_fps, frame, target);
+            }
+            NormalEvent::Restrictable(frame, target) => {
+                self.controller.limit(target_fps, frame, target);
+            }
         }
     }
 
-    fn do_jank_policy(&mut self, target_fps: Option<u32>) {
+    fn do_jank_policy(&mut self, target_fps: Option<u32>) -> Option<JankEvent> {
         if self.state != State::Working {
-            return;
+            return None;
         }
-
-        self.buffers.values_mut().for_each(Buffer::frame_prepare);
 
         let Some(event) = self
             .buffers
@@ -195,15 +187,15 @@ impl Looper {
             .max()
         else {
             self.disable_fas();
-            return;
+            return None;
         };
-
-        let target_fps = target_fps.unwrap_or(120);
 
         match event {
             JankEvent::BigJank => self.controller.big_jank(),
-            JankEvent::Jank => self.controller.jank(target_fps, self.mode),
+            JankEvent::Jank => self.controller.jank(),
             JankEvent::None => (),
         }
+
+        Some(event)
     }
 }
