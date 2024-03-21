@@ -75,7 +75,6 @@ impl CpuCommon {
         let frame = frame.as_nanos() as Freq;
 
         let step = BASE_STEP * (target - frame) / target;
-        let step = step.min(BASE_STEP);
         let step = step * 120 / target_fps as Freq;
 
         #[cfg(debug_assertions)]
@@ -94,7 +93,6 @@ impl CpuCommon {
         let frame = frame.as_nanos() as Freq;
 
         let step = BASE_STEP * (frame - target) / target;
-        let step = step.min(BASE_STEP);
         let step = step * 120 / target_fps as Freq;
 
         #[cfg(debug_assertions)]

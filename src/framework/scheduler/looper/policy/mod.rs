@@ -55,9 +55,9 @@ impl Buffer {
         let frame = policy_data.normalized_last_frame;
         let target = Duration::from_secs(1)
             + match mode {
-                Mode::Powersave => Duration::from_millis(5),
-                Mode::Balance => Duration::from_millis(3),
-                Mode::Performance | Mode::Fast => Duration::from_millis(2),
+                Mode::Powersave => Duration::from_millis(4),
+                Mode::Balance => Duration::from_millis(2),
+                Mode::Performance | Mode::Fast => Duration::from_millis(1),
             };
 
         if frame > target {
