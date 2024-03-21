@@ -40,7 +40,6 @@ serde_json = "1.0.114"
 
 [profile.dev]
 overflow-checks = false
-lto = "thin"
 opt-level = 3
 strip = true
 
