@@ -15,7 +15,7 @@ userspace_governor = false
 
 [powersave]
 fas_boost = false
-use_performance_governor = false
+use_performance_governor = true
 
 [balance]
 fas_boost = false
