@@ -60,7 +60,7 @@
 ```
 [config]
 keep_std = true
-userspace_governor = true
+userspace_governor = false
 
 [game_list]
 "com.hypergryph.arknights" = [30, 60]
@@ -75,7 +75,7 @@ userspace_governor = true
 
 [powersave]
 fas_boost = false
-use_performance_governor = false
+use_performance_governor = true
 
 [balance]
 fas_boost = false
@@ -86,8 +86,8 @@ fas_boost = false
 use_performance_governor = true
 
 [fast]
-fas_boost = true
-use_performance_governor = false
+fas_boost = false
+use_performance_governor = true
 ```
 
 ## **Configuration merge**
