@@ -70,7 +70,7 @@ pub(super) fn wait_and_read(
 
         let scene_profile = Path::new(SCENE_PROFILE);
 
-        read_scene_games(scene_profile, toml)?;
+        let _ = read_scene_games(scene_profile, toml);
         wait_until_update(path, scene_profile)?;
     }
 }
