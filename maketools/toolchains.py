@@ -129,25 +129,20 @@ class Buildtools:
         elif (ndk_home := os.getenv("ANDROID_NDK_HOME")) is not None:
             system = platform.system()
             arch = platform.machine()
+            prebuilt = (
+                Path(ndk_home)
+                .joinpath("toolchains")
+                .joinpath("llvm")
+                .joinpath("prebuilt")
+            )
+
             match (arch, system):
                 case ("x86_64", "Windows") | ("AMD64", "Windows"):
-                    bins = (
-                        Path(ndk_home)
-                        .joinpath("toolchains")
-                        .joinpath("llvm")
-                        .joinpath("prebuilt")
-                        .joinpath("windows-x86_64")
-                        .joinpath("bin")
-                    )
+                    bins = prebuilt.joinpath("windows-x86_64").joinpath("bin")
                 case ("x86_64", "Linux") | ("AMD64", "Linux"):
-                    bins = (
-                        Path(ndk_home)
-                        .joinpath("toolchains")
-                        .joinpath("llvm")
-                        .joinpath("prebuilt")
-                        .joinpath("linux-x86_64")
-                        .joinpath("bin")
-                    )
+                    bins = prebuilt.joinpath("linux-x86_64").joinpath("bin")
+                case ("aarch64", "Linux"):
+                    bins = prebuilt.joinpath("linux-aarch64").joinpath("bin")
                 case _:
                     raise Exception("Unsupported platform: {} {}".format(arch, system))
 
