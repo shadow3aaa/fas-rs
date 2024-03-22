@@ -59,7 +59,7 @@ class CargoNightly:
         elif os.getenv("ANDROID_NDK_HOME") is not None:
             self.__cargo = "cargo +nightly ndk -p 31 -t arm64-v8a"
         else:
-            raise "Missing env: ANDROID_NDK_HOME"
+            raise Exception("Missing env: ANDROID_NDK_HOME")
 
     def arg(self, arg: str):
         self.__args += "{} ".format(arg)
@@ -149,7 +149,7 @@ class Buildtools:
                         .joinpath("bin")
                     )
                 case _:
-                    raise "Unsupported platform: {} {}".format(arch, system)
+                    raise Exception("Unsupported platform: {} {}".format(arch, system))
 
             self.__cargo = "cargo ndk -p 31 -t arm64-v8a"
             self.__strip = bins.joinpath("llvm-strip")
@@ -157,7 +157,7 @@ class Buildtools:
             self.__clang_format = bins.joinpath("clang-format")
             self.__clang_tidy = bins.joinpath("clang-tidy")
         else:
-            raise "Missing env: ANDROID_NDK_HOME"
+            raise Exception("Missing env: ANDROID_NDK_HOME")
 
     def cargo(self):
         return Cargo(self.__cargo)
