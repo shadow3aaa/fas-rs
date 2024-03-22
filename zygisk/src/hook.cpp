@@ -24,6 +24,7 @@
 using zygisk::Api;
 using zygisk::AppSpecializeArgs;
 using zygisk::Option;
+using zygisk::ServerSpecializeArgs;
 
 #define LOGD(...) \
     __android_log_print(ANDROID_LOG_DEBUG, "libgui-zygisk", __VA_ARGS__)
@@ -78,12 +79,18 @@ class LibGuiHook : public zygisk::ModuleBase {
         env_->ReleaseStringUTFChars(args->nice_name, process);
     }
 
-    void postAppSpecialize(const AppSpecializeArgs * /*args*/) override {
+    void postAppSpecialize(
+        [[maybe_unused]] const AppSpecializeArgs *args) override {
         if (need_hook_) {
             rust::hook_handler();
         } else {
             api_->setOption(Option::DLCLOSE_MODULE_LIBRARY);
         }
+    }
+
+    void postServerSpecialize(
+        [[maybe_unused]] const ServerSpecializeArgs *args) override {
+        api_->setOption(Option::DLCLOSE_MODULE_LIBRARY);
     }
 
    private:
