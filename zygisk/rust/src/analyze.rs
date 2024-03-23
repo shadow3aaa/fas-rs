@@ -20,8 +20,6 @@ use std::{
 use anyhow::Result;
 use binder::{get_interface, Strong};
 use libc::pid_t;
-#[cfg(debug_assertions)]
-use log::debug;
 use log::error;
 
 use crate::{channel::CHANNEL, IRemoteService::IRemoteService, IS_CHILD};
@@ -63,18 +61,10 @@ fn send_data_to_server(
     fas_service.sendData(
         pid,
         frametime.as_nanos() as i64,
-    ).map_or_else(|_| get_server_interface().map_or(false, |service| {
+    ).unwrap_or_else(|_| get_server_interface().map_or(false, |service| {
         *fas_service = service;
         send_data_to_server(fas_service, frametime, pid)
-    }), |send| {
-        #[cfg(debug_assertions)]
-        {
-            if !send {
-                debug!("Exit analyze thread, since server prefer this is not a fas app anymore");
-            }
-        }
-       send
-    })
+    }))
 }
 
 fn get_server_interface() -> Option<Strong<dyn IRemoteService>> {

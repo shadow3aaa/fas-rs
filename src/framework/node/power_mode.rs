@@ -11,7 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::str::FromStr;
+use std::{str::FromStr, fmt::{Display, Formatter, self}};
 
 use super::Node;
 use crate::framework::error::{Error, Result};
@@ -38,15 +38,16 @@ impl FromStr for Mode {
     }
 }
 
-impl ToString for Mode {
-    fn to_string(&self) -> String {
-        match self {
+impl Display for Mode {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        let mode = match self {
             Self::Powersave => "powersave",
             Self::Balance => "balance",
             Self::Performance => "performance",
             Self::Fast => "fast",
-        }
-        .into()
+        };
+        
+        write!(f, "{mode}")
     }
 }
 
