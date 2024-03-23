@@ -48,16 +48,7 @@ impl Buffer {
     }
 
     pub fn calculate_target_fps(&mut self) {
-        let new_target_fps = self.target_fps();
-        if self.target_fps != new_target_fps {
-            self.target_fps = new_target_fps;
-            self.clear_buffer();
-        }
-    }
-
-    fn clear_buffer(&mut self) {
-        self.current_fpses.clear();
-        self.frame_prepare = Duration::ZERO;
+        self.target_fps = self.target_fps();
     }
 
     fn target_fps(&self) -> Option<u32> {
