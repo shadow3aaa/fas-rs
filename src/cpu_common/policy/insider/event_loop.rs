@@ -33,31 +33,32 @@ impl Insider {
         let mut last_record = Instant::now();
 
         loop {
-            if self.use_builtin_governor() {
-                let max_cycles = self.max_cycles_per_secs(&reader, &mut last_record, &mut cycles);
+            let max_cycles = self.max_cycles(&reader, &mut last_record, &mut cycles);
+
+            /*if self.use_builtin_governor() || max_cycles > MARGIN {
                 self.normal_policy(max_cycles);
-            }
+            }*/
+            self.normal_policy(max_cycles);
 
             if let Some(event) = self.recv_event() {
                 let _ = match event {
                     Event::InitDefault(b) => self.init_default(b),
-                    Event::InitGame(b) => self.init_game(b),
+                    Event::InitGame => self.init_game(),
                     Event::SetFasFreq(f) => self.set_fas_freq(f),
-                    Event::SetFasGovernor(b) => self.set_fas_governor(b),
                 };
             }
         }
     }
 
     fn recv_event(&self) -> Option<Event> {
-        if self.use_builtin_governor() {
+        if self.always_userspace_governor() {
             self.rx.recv_timeout(Duration::from_millis(25)).ok()
         } else {
-            self.rx.recv().ok()
+            self.rx.recv_timeout(Duration::from_millis(300)).ok()
         }
     }
 
-    fn max_cycles_per_secs(
+    fn max_cycles(
         &self,
         reader: &CyclesReader,
         last_record: &mut Instant,

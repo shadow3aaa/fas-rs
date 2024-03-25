@@ -58,13 +58,14 @@ fn send_data_to_server(
     frametime: Duration,
     pid: pid_t,
 ) -> bool {
-    fas_service.sendData(
-        pid,
-        frametime.as_nanos() as i64,
-    ).unwrap_or_else(|_| get_server_interface().map_or(false, |service| {
-        *fas_service = service;
-        send_data_to_server(fas_service, frametime, pid)
-    }))
+    fas_service
+        .sendData(pid, frametime.as_nanos() as i64)
+        .unwrap_or_else(|_| {
+            get_server_interface().map_or(false, |service| {
+                *fas_service = service;
+                send_data_to_server(fas_service, frametime, pid)
+            })
+        })
 }
 
 fn get_server_interface() -> Option<Strong<dyn IRemoteService>> {

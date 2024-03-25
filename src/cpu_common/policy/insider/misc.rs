@@ -11,7 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{cmp, fs};
+use std::fs;
 
 use anyhow::Result;
 
@@ -33,10 +33,10 @@ impl Insider {
         self.set_userspace_governor_freq(self.freqs.last().copied().unwrap())
     }
 
-    pub fn init_game(&mut self, fas_boost: bool) -> Result<()> {
-        self.fas_boost = fas_boost;
+    pub fn init_game(&mut self) -> Result<()> {
         self.state = State::Fas;
         let last_freq = self.freqs.last().copied().unwrap();
+        self.set_fas_governor()?;
         self.set_fas_freq(last_freq)
     }
 
@@ -50,78 +50,44 @@ impl Insider {
         self.write_freq()
     }
 
-    pub fn use_builtin_governor(&self) -> bool {
-        self.userspace_governor
-            && (!self.use_performance_governor || self.is_little() || self.state == State::Normal)
+    pub fn always_userspace_governor(&self) -> bool {
+        self.userspace_governor && self.state == State::Normal
     }
 
-    fn is_little(&self) -> bool {
+    pub fn is_little(&self) -> bool {
         self.cpus.contains(&0)
     }
 
     fn write_freq(&mut self) -> Result<()> {
-        if self.fas_boost && self.state == State::Fas && !self.is_little() {
-            self.write_freq_boost()
+        let freq = match self.state {
+            State::Normal => {
+                if self.always_userspace_governor() {
+                    self.governor_freq
+                } else {
+                    return Ok(());
+                }
+            }
+            State::Fas => {
+                if self.is_little() {
+                    if self.always_userspace_governor() {
+                        self.governor_freq
+                    } else {
+                        return Ok(());
+                    }
+                } else {
+                    self.fas_freq
+                }
+            }
+        };
+
+        let target = self.find_freq(freq);
+
+        if self.cache == target {
+            Ok(())
         } else {
-            self.write_freq_nonboost()
-        }
-    }
-
-    fn write_freq_nonboost(&mut self) -> Result<()> {
-        if self.use_builtin_governor() {
-            let freq = if self.is_little() {
-                self.governor_freq
-            } else {
-                cmp::min(self.fas_freq, self.governor_freq)
-            };
-            let target = self.find_freq(freq);
-
-            if self.cache == target {
-                Ok(())
-            } else {
-                self.cache = target;
-                self.lock_max_freq(target)?;
-                self.lock_min_freq(self.freqs.first().copied().unwrap())
-            }
-        } else {
-            if self.is_little() {
-                return Ok(());
-            }
-
-            let target = self.find_freq(self.fas_freq);
-
-            if self.cache == target {
-                Ok(())
-            } else {
-                self.cache = target;
-                self.lock_max_freq(target)?;
-                self.lock_min_freq(self.freqs.first().copied().unwrap())
-            }
-        }
-    }
-
-    fn write_freq_boost(&mut self) -> Result<()> {
-        if self.use_builtin_governor() {
-            let freq = cmp::max(self.fas_freq, self.governor_freq);
-            let target = self.find_freq(freq);
-
-            if self.cache == target {
-                Ok(())
-            } else {
-                self.cache = target;
-                self.lock_max_freq(target)?;
-                self.lock_min_freq(target)
-            }
-        } else {
-            let target = self.find_freq(self.fas_freq);
-
-            if self.cache == target {
-                Ok(())
-            } else {
-                self.cache = target;
-                self.lock_max_freq(self.freqs.last().copied().unwrap())?;
-                self.lock_min_freq(target)
-            }
+            self.cache = target;
+            self.lock_max_freq(target)?;
+            self.lock_min_freq(target)
         }
     }
 
@@ -141,14 +107,8 @@ impl Insider {
         Ok(())
     }
 
-    pub fn set_fas_governor(&mut self, use_performance_governor: bool) -> Result<()> {
-        self.use_performance_governor = use_performance_governor;
-
-        if self.fas_boost || !use_performance_governor {
-            return self.reset_governor();
-        }
-
-        if !self.cpus.contains(&0) {
+    fn set_fas_governor(&mut self) -> Result<()> {
+        if !self.is_little() || self.always_userspace_governor() {
             let path = self.path.join("scaling_governor");
             let cur_gov = fs::read_to_string(path)?;
 

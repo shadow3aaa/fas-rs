@@ -46,14 +46,8 @@ impl Policy {
         Ok(())
     }
 
-    pub fn init_game(&self, m: Mode, c: &Config) -> Result<()> {
-        let fas_boost = c.mode_config(m).fas_boost;
-        let use_performance_governor = c.mode_config(m).use_performance_governor;
-
-        self.sx
-            .send(Event::SetFasGovernor(use_performance_governor))?;
-        self.sx.send(Event::InitGame(fas_boost))?;
-
+    pub fn init_game(&self) -> Result<()> {
+        self.sx.send(Event::InitGame)?;
         Ok(())
     }
 

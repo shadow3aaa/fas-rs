@@ -30,9 +30,8 @@ use event_loop::State;
 
 pub enum Event {
     InitDefault(bool),
-    InitGame(bool),
+    InitGame,
     SetFasFreq(Freq),
-    SetFasGovernor(bool),
 }
 
 #[derive(Debug)]
@@ -43,9 +42,7 @@ pub struct Insider {
     fas_freq: Freq,
     governor_freq: Freq,
     freqs: Vec<Freq>,
-    fas_boost: bool,
     userspace_governor: bool,
-    use_performance_governor: bool,
     state: State,
     gov_snapshot: Option<String>,
     rx: Receiver<Event>,
@@ -84,10 +81,8 @@ impl Insider {
             cache: freqs.last().copied().unwrap(),
             fas_freq: freqs.last().copied().unwrap(),
             governor_freq: freqs.last().copied().unwrap(),
-            fas_boost: false,
             userspace_governor: false,
             state: State::Normal,
-            use_performance_governor: false,
             gov_snapshot: None,
             rx,
         };

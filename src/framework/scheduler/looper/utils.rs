@@ -64,8 +64,7 @@ impl Looper {
             }
             State::Waiting => {
                 if self.delay_timer.elapsed() > DELAY_TIME {
-                    self.controller
-                        .init_game(self.mode, &self.config, &self.extension);
+                    self.controller.init_game(&self.extension);
                     self.state = State::Working;
                 }
             }

@@ -14,17 +14,13 @@ userspace_governor = false
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
 [powersave]
-fas_boost = false
-use_performance_governor = true
+margin = 4
 
 [balance]
-fas_boost = false
-use_performance_governor = true
+margin = 3
 
 [performance]
-fas_boost = false
-use_performance_governor = true
+margin = 2
 
 [fast]
-fas_boost = false
-use_performance_governor = true
+margin = 1

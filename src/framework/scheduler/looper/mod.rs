@@ -119,8 +119,7 @@ impl Looper {
                 self.mode = new_mode;
 
                 if self.state == State::Working {
-                    self.controller
-                        .init_game(new_mode, &self.config, &self.extension);
+                    self.controller.init_game(&self.extension);
                 }
             }
         }
@@ -155,7 +154,7 @@ impl Looper {
             .buffers
             .values_mut()
             .filter(|buffer| buffer.target_fps == target_fps)
-            .filter_map(|buffer| buffer.normal_event(self.mode))
+            .filter_map(|buffer| buffer.normal_event(&self.config, self.mode))
             .max()
         else {
             self.disable_fas();

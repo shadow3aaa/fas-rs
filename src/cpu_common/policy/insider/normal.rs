@@ -15,11 +15,11 @@ use cpu_cycles_reader::Cycles;
 
 use super::Insider;
 
-const MARGIN: Cycles = Cycles::from_mhz(250);
-
 impl Insider {
     pub fn normal_policy(&mut self, max_cycles: Cycles) {
-        let target_freq = max_cycles + MARGIN;
+        let target_freq = max_cycles * 100 / 65; // target usage: 65
+                                                 // target freq = cycles / target_usage
+
         let min = Cycles::from_khz(self.freqs.first().copied().unwrap() as i64);
         let max = Cycles::from_khz(self.freqs.last().copied().unwrap() as i64);
 

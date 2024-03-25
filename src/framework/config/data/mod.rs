@@ -36,8 +36,7 @@ pub struct Config {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct ModeConfig {
-    pub fas_boost: bool,
-    pub use_performance_governor: bool,
+    pub margin: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

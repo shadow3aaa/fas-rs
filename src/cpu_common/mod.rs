@@ -120,13 +120,13 @@ impl CpuCommon {
         self.set_freq_cached(max_freq);
     }
 
-    pub fn init_game(&mut self, m: Mode, c: &Config, extension: &Extension) {
+    pub fn init_game(&mut self, extension: &Extension) {
         self.reset_freq();
 
         extension.call_extentions(CallBacks::InitCpuFreq);
 
         for policy in &self.policies {
-            let _ = policy.init_game(m, c);
+            let _ = policy.init_game();
         }
     }
 

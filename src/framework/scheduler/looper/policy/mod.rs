@@ -19,7 +19,7 @@ use std::time::Duration;
 use log::debug;
 
 use super::buffer::Buffer;
-use crate::framework::node::Mode;
+use crate::framework::prelude::*;
 
 use extract::PolicyData;
 
@@ -37,13 +37,13 @@ pub enum JankEvent {
 }
 
 impl Buffer {
-    pub fn normal_event(&self, mode: Mode) -> Option<NormalEvent> {
+    pub fn normal_event(&self, config: &Config, mode: Mode) -> Option<NormalEvent> {
         let policy_data = PolicyData::extract(self)?;
 
         #[cfg(debug_assertions)]
         debug!("policy data: {policy_data:?}");
 
-        Some(Self::frame_analyze(policy_data, mode))
+        Some(Self::frame_analyze(policy_data, config, mode))
     }
 
     pub fn jank_event(&self) -> Option<JankEvent> {
@@ -51,14 +51,11 @@ impl Buffer {
         Some(Self::jank_analyze(policy_data))
     }
 
-    fn frame_analyze(policy_data: PolicyData, mode: Mode) -> NormalEvent {
+    fn frame_analyze(policy_data: PolicyData, config: &Config, mode: Mode) -> NormalEvent {
         let frame = policy_data.normalized_last_frame;
-        let target = Duration::from_secs(1)
-            + match mode {
-                Mode::Powersave => Duration::from_millis(4),
-                Mode::Balance => Duration::from_millis(2),
-                Mode::Performance | Mode::Fast => Duration::from_millis(1),
-            };
+        let margin = config.mode_config(mode).margin;
+        let margin = Duration::from_millis(margin);
+        let target = Duration::from_secs(1) + margin;
 
         if frame > target {
             #[cfg(debug_assertions)]

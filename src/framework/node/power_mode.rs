@@ -11,7 +11,10 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::{str::FromStr, fmt::{Display, Formatter, self}};
+use std::{
+    fmt::{self, Display, Formatter},
+    str::FromStr,
+};
 
 use super::Node;
 use crate::framework::error::{Error, Result};
@@ -46,7 +49,7 @@ impl Display for Mode {
             Self::Performance => "performance",
             Self::Fast => "fast",
         };
-        
+
         write!(f, "{mode}")
     }
 }
