@@ -14,7 +14,7 @@
 use std::{fs, os::unix::fs::PermissionsExt, path::Path};
 
 use anyhow::Result;
-use sys_mount::{unmount, Mount, MountFlags, UnmountFlags};
+use sys_mount::{unmount, UnmountFlags};
 
 use super::{Freq, Insider};
 
@@ -32,7 +32,7 @@ impl Insider {
     pub fn lock_governor<S: AsRef<str>>(&self, g: S) -> Result<()> {
         let path = self.path.join("scaling_governor");
         let governor = g.as_ref();
-        lock_mount(path, governor)
+        lock_write(path, governor)
     }
 
     pub fn unlock_max_freq(&self, f: Freq) -> Result<()> {
@@ -70,26 +70,6 @@ fn unlock_write<S: AsRef<str>, P: AsRef<Path>>(p: P, s: S) -> Result<()> {
     let _ = unmount(p, UnmountFlags::DETACH);
     let _ = fs::set_permissions(p, PermissionsExt::from_mode(0o644));
     fs::write(p, s)?;
-
-    Ok(())
-}
-
-fn lock_mount<S: AsRef<str>, P: AsRef<Path>>(p: P, s: S) -> Result<()> {
-    let s = s.as_ref();
-    let p = p.as_ref();
-
-    let _ = unmount(p, UnmountFlags::DETACH);
-
-    let _ = fs::set_permissions(p, PermissionsExt::from_mode(0o644));
-    fs::write(p, s)?;
-    let _ = fs::set_permissions(p, PermissionsExt::from_mode(0o444));
-
-    let mask = Path::new("/cache").join(format!("mount-mask-{s}"));
-    let _ = fs::set_permissions(p, PermissionsExt::from_mode(0o644));
-    fs::write(&mask, s)?;
-    let _ = fs::set_permissions(p, PermissionsExt::from_mode(0o444));
-
-    let _ = Mount::builder().flags(MountFlags::BIND).mount(mask, p);
 
     Ok(())
 }
