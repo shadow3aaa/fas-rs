@@ -16,7 +16,6 @@ use std::{fs, path::Path, sync::Arc, thread, time::Duration};
 use inotify::{Inotify, WatchMask};
 use log::{debug, error};
 use parking_lot::RwLock;
-use toml::Value;
 
 use super::data::{ConfigData, SceneAppList};
 use crate::framework::error::Result;
@@ -89,18 +88,14 @@ fn read_scene_games(scene_profile: &Path, toml: &Arc<RwLock<ConfigData>>) -> Res
     if scene_profile.exists() {
         let scene_apps = fs::read_to_string(scene_profile)?;
         let scene_apps: SceneAppList = quick_xml::de::from_str(&scene_apps)?;
-
-        for pkg in scene_apps
+        let game_list = scene_apps
             .apps
             .into_iter()
             .filter(|app| app.is_game)
             .map(|game| game.pkg)
-        {
-            toml.write()
-                .game_list
-                .entry(pkg)
-                .or_insert(Value::String("auto".to_string()));
-        }
+            .collect();
+
+        toml.write().scene_game_list = game_list;
     }
 
     Ok(())

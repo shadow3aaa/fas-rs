@@ -13,6 +13,8 @@
 *  limitations under the License. */
 mod default;
 
+use std::collections::HashSet;
+
 use serde::{Deserialize, Serialize};
 use toml::Table;
 
@@ -20,6 +22,8 @@ use toml::Table;
 pub struct ConfigData {
     pub config: Config,
     pub game_list: Table,
+    #[serde(skip)]
+    pub scene_game_list: HashSet<String>,
     pub powersave: ModeConfig,
     pub balance: ModeConfig,
     pub performance: ModeConfig,
