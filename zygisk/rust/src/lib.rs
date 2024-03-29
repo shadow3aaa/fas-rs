@@ -30,7 +30,7 @@ mod channel;
 mod hook;
 mod utils;
 
-use std::{ffi::CStr, fs, path::Path, ptr, sync::atomic::AtomicBool, thread};
+use std::{ffi::CStr, process::Command, ptr, sync::atomic::AtomicBool, thread};
 
 use android_logger::Config;
 use dobby_api::Address;
@@ -52,15 +52,16 @@ pub unsafe extern "C" fn need_hook(process: *const c_char) -> bool {
             .with_tag("libgui-zygisk"),
     );
 
-    let Ok(server_pid) = fs::read_to_string("/dev/fas_rs/pid") else {
+    let Some(fas_rs_status) = Command::new("getprop")
+        .arg("fas-rs-server-started")
+        .output()
+        .ok()
+    else {
         return false;
     };
-
-    let comm = Path::new("/proc").join(server_pid).join("comm");
-    if let Ok(comm) = fs::read_to_string(comm) {
-        if comm.trim() != "fas-rs" {
-            return false;
-        }
+    let fas_rs_status = String::from_utf8_lossy(&fas_rs_status.stdout).into_owned();
+    if fas_rs_status.trim() != "true" {
+        return false;
     }
 
     let process = CStr::from_ptr(process);
