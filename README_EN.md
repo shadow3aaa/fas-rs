@@ -52,8 +52,7 @@
     - Currently, `fas-rs` does not have an official switching mode manager, but is connected to the configuration interface of [`scene`](http://vtools.omarea.com). If you don’t use scene, the configuration of `balance` will be used by default.
     - If you have some understanding of programming on Linux, you can switch to the corresponding mode by writing any one of the 4 modes to the `/dev/fas_rs/mode` node, and at the same time, reading it can also know the current `fas-rs` mode
   - **Parameter Description:**
-    - fas_boost(bool): The purpose of `fas-rs` is to limit power consumption or reduce game frame drops. When true, it is the mode to reduce frame drops.
-    - use_performance_governor(bool): Whether `fas-rs` uses the performance kernel cpufreq policy when working (this configuration is invalid when fas_boost is turned on)
+    - margin(ms): Allowed frame drop margin. The smaller the value, the higher the frame rate, the larger the value, the more power is saved (0 < margin < 1000)
 
 ### **`games.toml` configuration standard example:**
 
@@ -74,20 +73,16 @@ userspace_governor = false
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
 [powersave]
-fas_boost = false
-use_performance_governor = true
+margin = 4
 
 [balance]
-fas_boost = false
-use_performance_governor = true
+margin = 3
 
 [performance]
-fas_boost = false
-use_performance_governor = true
+margin = 2
 
 [fast]
-fas_boost = false
-use_performance_governor = true
+margin = 1
 ```
 
 ## **Configuration merge**
