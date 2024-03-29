@@ -20,7 +20,7 @@ thiserror = "1.0.57"
 inotify = { version = "0.10.2", default-features = false }
 libc = "0.2.153"
 async-trait = "0.1.77"
-binder = { package = "binder_ndk", version = "0.2.0" }
+binder = { package = "binder_ndk", git = "https://github.com/shadow3aaa/binder_rs" }
 lazy_static = "1.4.0"
 flexi_logger = "0.27.4"
 toml = "0.8.10"
