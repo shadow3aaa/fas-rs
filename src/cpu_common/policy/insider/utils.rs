@@ -29,12 +29,6 @@ impl Insider {
         lock_write(path, f.to_string())
     }
 
-    pub fn lock_governor<S: AsRef<str>>(&self, g: S) -> Result<()> {
-        let path = self.path.join("scaling_governor");
-        let governor = g.as_ref();
-        lock_write(path, governor)
-    }
-
     pub fn unlock_max_freq(&self, f: Freq) -> Result<()> {
         let path = self.path.join("scaling_max_freq");
         unlock_write(path, f.to_string())
@@ -43,12 +37,6 @@ impl Insider {
     pub fn unlock_min_freq(&self, f: Freq) -> Result<()> {
         let path = self.path.join("scaling_min_freq");
         unlock_write(path, f.to_string())
-    }
-
-    pub fn unlock_governor<S: AsRef<str>>(&self, g: S) -> Result<()> {
-        let path = self.path.join("scaling_governor");
-        let governor = g.as_ref();
-        unlock_write(path, governor)
     }
 }
 

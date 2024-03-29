@@ -44,7 +44,6 @@ pub struct Insider {
     freqs: Vec<Freq>,
     userspace_governor: bool,
     state: State,
-    gov_snapshot: Option<String>,
     rx: Receiver<Event>,
 }
 
@@ -83,7 +82,6 @@ impl Insider {
             governor_freq: freqs.last().copied().unwrap(),
             userspace_governor: false,
             state: State::Normal,
-            gov_snapshot: None,
             rx,
         };
 

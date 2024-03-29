@@ -33,12 +33,10 @@ impl Insider {
         let mut last_record = Instant::now();
 
         loop {
-            let max_cycles = self.max_cycles(&reader, &mut last_record, &mut cycles);
-
-            /*if self.use_builtin_governor() || max_cycles > MARGIN {
+            if self.always_userspace_governor() {
+                let max_cycles = self.max_cycles(&reader, &mut last_record, &mut cycles);
                 self.normal_policy(max_cycles);
-            }*/
-            self.normal_policy(max_cycles);
+            }
 
             if let Some(event) = self.recv_event() {
                 let _ = match event {
@@ -54,7 +52,7 @@ impl Insider {
         if self.always_userspace_governor() {
             self.rx.recv_timeout(Duration::from_millis(25)).ok()
         } else {
-            self.rx.recv_timeout(Duration::from_millis(300)).ok()
+            self.rx.recv().ok()
         }
     }
 

@@ -11,7 +11,6 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-use std::fs;
 
 use anyhow::Result;
 
@@ -24,19 +23,12 @@ impl Insider {
         self.userspace_governor = userspace_governor;
         self.state = State::Normal;
 
-        if userspace_governor {
-            self.lock_governor("performance")?;
-        } else {
-            self.reset_governor()?;
-        }
-
         self.set_userspace_governor_freq(self.freqs.last().copied().unwrap())
     }
 
     pub fn init_game(&mut self) -> Result<()> {
         self.state = State::Fas;
         let last_freq = self.freqs.last().copied().unwrap();
-        self.set_fas_governor()?;
         self.set_fas_freq(last_freq)
     }
 
@@ -97,28 +89,5 @@ impl Insider {
             .find(|target| **target >= f)
             .copied()
             .unwrap_or_else(|| self.freqs.last().copied().unwrap())
-    }
-
-    fn reset_governor(&self) -> Result<()> {
-        if let Some(governor) = &self.gov_snapshot {
-            self.unlock_governor(governor)?;
-        }
-
-        Ok(())
-    }
-
-    fn set_fas_governor(&mut self) -> Result<()> {
-        if !self.is_little() || self.always_userspace_governor() {
-            let path = self.path.join("scaling_governor");
-            let cur_gov = fs::read_to_string(path)?;
-
-            if cur_gov.trim() != "performance" {
-                self.gov_snapshot = Some(cur_gov);
-            }
-
-            self.lock_governor("performance")?;
-        }
-
-        Ok(())
     }
 }
