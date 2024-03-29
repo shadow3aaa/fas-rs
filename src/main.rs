@@ -32,19 +32,20 @@ mod misc;
 use std::{
     env, fs,
     io::{self, prelude::*},
-    process, thread,
+    panic, process, thread,
 };
 
 use framework::prelude::*;
 
 use anyhow::Result;
 use flexi_logger::{DeferredNow, LogSpecification, Logger, Record};
-use log::{error, info, warn};
+use log::{info, warn};
 
 #[cfg(debug_assertions)]
 use log::debug;
 
 use cpu_common::CpuCommon;
+use misc::{daemon_panic_handler, setprop};
 
 const USER_CONFIG: &str = "/sdcard/Android/fas-rs/games.toml";
 
@@ -60,12 +61,9 @@ fn main() -> Result<()> {
 
         return Ok(());
     } else if args[1] == "run" {
-        run(&args[2]).unwrap_or_else(|e| {
-            error!("{e:#?}");
-            error!("An unrecoverable error occurred, exiting fas-rs");
-            error!("If you're sure this shouldn't happen, open an issue on https://github.com/shadow3aaa/fas-rs/issues");
-            process::exit(-1);
-        });
+        panic::set_hook(Box::new(daemon_panic_handler));
+        setprop("fas-rs-server-started", "true");
+        run(&args[2]).unwrap();
     }
 
     Ok(())
