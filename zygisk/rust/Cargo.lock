@@ -62,30 +62,7 @@ version = "0.2.0"
 source = "git+https://github.com/shadow3aaa/binder_rs#035bd9f76841bd9a9d1904677e2abfd8a9fe885c"
 dependencies = [
  "anyhow",
- "bindgen 0.69.4",
-]
-
-[[package]]
-name = "bindgen"
-version = "0.66.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2b84e06fc203107bfbad243f4aba2af864eb7db3b1cf46ea0a023b0b433d2a7"
-dependencies = [
- "bitflags",
- "cexpr",
- "clang-sys",
- "lazy_static",
- "lazycell",
- "log",
- "peeking_take_while",
- "prettyplease",
- "proc-macro2",
- "quote",
- "regex",
- "rustc-hash",
- "shlex",
- "syn",
- "which",
+ "bindgen",
 ]
 
 [[package]]
@@ -154,11 +131,12 @@ dependencies = [
 
 [[package]]
 name = "dobby-api"
-version = "0.2.0"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa5c16b2d7b8492dc5a64607831b54a98f137eaff1c51d54e22ffd74b39864f8"
+checksum = "88a75cff9f870b9fd0937dcc347b5c05fbc87fe8f749145745bbc1a8ec49853f"
 dependencies = [
- "bindgen 0.66.1",
+ "anyhow",
+ "bindgen",
  "thiserror",
 ]
 
@@ -296,12 +274,6 @@ name = "once_cell"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
-
-[[package]]
-name = "peeking_take_while"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19b17cddbe7ec3f8bc800887bab5e717348c95ea2ca0b1bf0837fb964dc67099"
 
 [[package]]
 name = "plain"
