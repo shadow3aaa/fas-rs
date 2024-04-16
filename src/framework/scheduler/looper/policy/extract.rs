@@ -18,7 +18,6 @@ use super::super::buffer::Buffer;
 #[derive(Debug, Clone, Copy)]
 pub struct PolicyData {
     pub target_fps: u32,
-    pub target_fps_prefixed: u32,
     pub current_fps: f64,
     pub normalized_last_frame: Duration,
 }
@@ -42,7 +41,6 @@ impl PolicyData {
 
         Some(Self {
             target_fps,
-            target_fps_prefixed,
             current_fps,
             normalized_last_frame,
         })
