@@ -21,6 +21,7 @@ use anyhow::Result;
 use log::debug;
 
 use crate::framework::prelude::*;
+use api::ApiV0;
 use policy::Policy;
 
 pub type Freq = usize; // khz
@@ -123,7 +124,7 @@ impl CpuCommon {
     pub fn init_game(&mut self, extension: &Extension) {
         self.reset_freq();
 
-        extension.call_extentions(CallBacks::InitCpuFreq);
+        extension.tigger_extentions(ApiV0::InitCpuFreq);
 
         for policy in &self.policies {
             let _ = policy.init_game();
@@ -133,7 +134,7 @@ impl CpuCommon {
     pub fn init_default(&mut self, c: &Config, extension: &Extension) {
         self.reset_freq();
 
-        extension.call_extentions(CallBacks::ResetCpuFreq);
+        extension.tigger_extentions(ApiV0::ResetCpuFreq);
 
         for policy in &self.policies {
             let _ = policy.init_default(c);

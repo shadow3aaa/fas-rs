@@ -11,5 +11,19 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
-#![allow(unused_imports)]
-pub use super::{api, config::Config, node::Mode, Api, Extension, Scheduler};
+mod misc;
+mod v0;
+
+use super::core::ExtensionMap;
+pub use v0::ApiV0;
+
+pub trait Api: Send {
+    fn handle_api(&self, ext: &ExtensionMap);
+
+    fn into_box(self) -> Box<dyn Api>
+    where
+        Self: Sized + 'static,
+    {
+        Box::new(self)
+    }
+}

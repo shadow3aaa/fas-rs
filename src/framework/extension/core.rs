@@ -17,12 +17,12 @@ use inotify::{Inotify, WatchMask};
 use log::{debug, error, info};
 use mlua::Lua;
 
-use super::{callbacks::CallBacks, EXTENSIONS_PATH};
+use super::{api::Api, EXTENSIONS_PATH};
 use crate::framework::error::Result;
 
 pub type ExtensionMap = HashMap<PathBuf, Lua>;
 
-pub fn thread(rx: &Receiver<CallBacks>) {
+pub fn thread(rx: &Receiver<Box<dyn Api>>) {
     let mut extensions = load_extensions().unwrap_or_default();
     let mut inotify = Inotify::init().unwrap();
 
@@ -39,11 +39,9 @@ pub fn thread(rx: &Receiver<CallBacks>) {
             extensions = load_extensions().unwrap_or_default();
         }
 
-        let Ok(callback) = rx.recv_timeout(Duration::from_secs(1)) else {
-            continue;
-        };
-
-        callback.do_callback(&extensions);
+        if let Ok(trigger) = rx.recv_timeout(Duration::from_secs(1)) {
+            trigger.handle_api(&extensions);
+        }
     }
 }
 
@@ -91,7 +89,9 @@ fn load_extensions() -> Result<ExtensionMap> {
                 info!("Extension loaded successfully: {path:?}");
                 map.insert(path, lua);
             }
-            Err(e) => error!("Extension loading failed, reason: {e:#?}"),
+            Err(e) => {
+                error!("Extension loading failed, reason: {e:#?}");
+            }
         }
     }
 

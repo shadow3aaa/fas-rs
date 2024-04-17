@@ -19,7 +19,7 @@ use std::{
 use log::info;
 
 use super::{super::FasData, Buffer, Looper, State};
-use crate::framework::{utils::get_process_name, CallBacks};
+use crate::framework::{api::ApiV0, utils::get_process_name};
 
 const DELAY_TIME: Duration = Duration::from_secs(3);
 
@@ -31,7 +31,7 @@ impl Looper {
             } else {
                 let pkg = buffer.pkg.clone();
                 self.extension
-                    .call_extentions(CallBacks::UnloadFas(*pid, pkg));
+                    .tigger_extentions(ApiV0::UnloadFas(*pid, pkg));
                 false
             }
         });
@@ -46,7 +46,7 @@ impl Looper {
     pub fn disable_fas(&mut self) {
         match self.state {
             State::Working => {
-                self.extension.call_extentions(CallBacks::StopFas);
+                self.extension.tigger_extentions(ApiV0::StopFas);
                 self.controller.init_default(&self.config, &self.extension);
                 self.state = State::NotWorking;
             }
@@ -58,7 +58,7 @@ impl Looper {
     pub fn enable_fas(&mut self) {
         match self.state {
             State::NotWorking => {
-                self.extension.call_extentions(CallBacks::StartFas);
+                self.extension.tigger_extentions(ApiV0::StartFas);
                 self.delay_timer = Instant::now();
                 self.state = State::Waiting;
             }
@@ -101,7 +101,7 @@ impl Looper {
                 info!("New fas buffer on: [{pkg}]");
 
                 self.extension
-                    .call_extentions(CallBacks::LoadFas(d.pid, pkg.clone()));
+                    .tigger_extentions(ApiV0::LoadFas(d.pid, pkg.clone()));
 
                 let mut buffer = Buffer::new(target_fps, pkg);
                 buffer.push_frametime(frametime);
