@@ -17,8 +17,11 @@ use super::Insider;
 
 impl Insider {
     pub fn normal_policy(&mut self, max_cycles: Cycles) {
-        let target_freq = max_cycles * 100 / 65; // target usage: 65
-                                                 // target freq = cycles / target_usage
+        let target_freq = if self.is_little() {
+             max_cycles * 100 / 75 // target usage: 75
+        } else {
+            max_cycles * 100 / 70 // target usage: 70
+        };
 
         let min = Cycles::from_khz(self.freqs.first().copied().unwrap() as i64);
         let max = Cycles::from_khz(self.freqs.last().copied().unwrap() as i64);
