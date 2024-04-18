@@ -26,16 +26,6 @@ impl PolicyData {
     pub fn extract(buffer: &Buffer) -> Option<Self> {
         let target_fps = buffer.target_fps?;
         let current_fps = buffer.current_fps;
-        let target_fps_prefixed = target_fps * 119 / 120;
-
-        let target_fps = buffer
-            .current_fpses
-            .iter()
-            .copied()
-            .map(|f| f as u32)
-            .max()
-            .unwrap_or(target_fps)
-            .clamp(target_fps_prefixed, target_fps);
 
         let normalized_last_frame = buffer.frametimes.front().copied()? * target_fps;
 

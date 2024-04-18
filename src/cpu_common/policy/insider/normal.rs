@@ -18,7 +18,7 @@ use super::Insider;
 impl Insider {
     pub fn normal_policy(&mut self, max_cycles: Cycles) {
         let target_freq = if self.is_little() {
-             max_cycles * 100 / 75 // target usage: 75
+            max_cycles * 100 / 75 // target usage: 75
         } else {
             max_cycles * 100 / 70 // target usage: 70
         };
