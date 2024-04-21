@@ -103,7 +103,7 @@ impl Looper {
             debug!("{:?}", self.buffers.keys());
 
             #[cfg(feature = "use_ebpf")]
-            self.update_analyzer();
+            let _ = self.update_analyzer();
             self.retain_topapp();
 
             let target_fps = self
