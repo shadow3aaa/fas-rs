@@ -15,26 +15,26 @@ exclude = ["zygisk/rust"]
 likely_stable = "0.1.2"
 parking_lot = "0.12.1"
 log = "0.4.21"
-anyhow = "1.0.80"
-thiserror = "1.0.57"
+anyhow = "1.0.82"
+thiserror = "1.0.59"
 inotify = { version = "0.10.2", default-features = false }
 libc = "0.2.153"
-async-trait = "0.1.77"
+async-trait = "0.1.80"
 binder = { package = "binder_ndk", git = "https://github.com/shadow3aaa/binder_rs" }
 lazy_static = "1.4.0"
-flexi_logger = "0.27.4"
-toml = "0.8.10"
-serde = { version = "1.0.197", features = ["derive"] }
+flexi_logger = "0.28.0"
+toml = "0.8.12"
+serde = { version = "1.0.198", features = ["derive"] }
 cpu_cycles_reader = "1.0.1"
 sys-mount = { version = "3.0.1", default-features = false }
 quick-xml = { version = "0.31.0", features = ["serialize"] }
-mlua = { version = "0.9.6", features = ["luajit", "vendored"] }
+mlua = { version = "0.9.7", features = ["luajit", "vendored"] }
 
 [build-dependencies]
-anyhow = "1.0.80"
-toml = "0.8.10"
-serde = { version = "1.0.197", features = ["derive"] }
-serde_json = "1.0.114"
+anyhow = "1.0.82"
+toml = "0.8.12"
+serde = { version = "1.0.198", features = ["derive"] }
+serde_json = "1.0.116"
 
 [profile.dev]
 overflow-checks = false
