@@ -46,7 +46,7 @@ jobs:
           unzip "output/fas-rs-zygisk(debug).zip" -d output/artifact/zygisk/debug
           unzip "output/fas-rs-zygisk(release).zip" -d output/artifact/zygisk/release
           unzip "output/fas-rs-ebpf(debug).zip" -d output/artifact/ebpf/debug
-          unzip "output/fas-rs-zygisk(relase).zip" -d output/artifact/ebpf/release
+          unzip "output/fas-rs-zygisk(release).zip" -d output/artifact/ebpf/release
       - name: Upload zygisk debug version
         uses: actions/upload-artifact@v4
         with:
