@@ -18,10 +18,11 @@ from maketools.toolchains import Buildtools
 from pathlib import Path
 
 
-def __clippy_fix(tools: Buildtools):
+def __clippy_fix(tools: Buildtools, arg: str = ""):
     (
         tools.cargo()
         .arg("clippy --fix --allow-dirty --allow-staged --target aarch64-linux-android")
+        .arg(arg)
         .build()
     )
 
@@ -30,6 +31,7 @@ def __clippy_fix(tools: Buildtools):
         .arg(
             "clippy --fix --allow-dirty --allow-staged --target aarch64-linux-android --release"
         )
+        .arg(arg)
         .build()
     )
 
@@ -41,6 +43,7 @@ def task():
     os.system("ruff check --fix maketools")
 
     __clippy_fix(tools)
+    __clippy_fix(tools, "--features use_binder")
 
     os.chdir("zygisk")
     (

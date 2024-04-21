@@ -28,6 +28,7 @@ use crate::CpuCommon;
 
 #[cfg(feature = "use_binder")]
 use self::binder::FasServer;
+#[cfg(feature = "use_ebpf")]
 use frame_analyzer::Analyzer;
 use looper::Looper;
 

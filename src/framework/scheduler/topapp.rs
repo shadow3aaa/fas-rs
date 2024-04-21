@@ -45,6 +45,7 @@ impl TimedWatcher {
         }
     }
 
+    #[allow(dead_code)]
     pub fn top_apps(&self) -> impl Iterator<Item = i32> + '_ {
         self.cache.iter().copied()
     }

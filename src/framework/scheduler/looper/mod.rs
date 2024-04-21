@@ -22,6 +22,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+#[cfg(feature = "use_ebpf")]
 use frame_analyzer::Analyzer;
 #[cfg(debug_assertions)]
 use log::debug;

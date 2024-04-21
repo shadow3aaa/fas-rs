@@ -170,7 +170,7 @@ def __build_zygisk(
     os.chdir(root)
 
 
-def task(args):
+def __task_zygisk(args):
     try:
         tools = Buildtools()
     except Exception as err:
@@ -222,6 +222,8 @@ def task(args):
         cargo.arg("--verbose")
 
     cargo.rust_flag("-C default-linker-libraries")
+    cargo.arg("--features use_binder")
+    cargo.arg("--no-default-features")
     cargo.build()
 
     if check:
@@ -245,8 +247,99 @@ def task(args):
     shutil.copy2(bin, bin_module)
     tools.strip(bin_module)
 
+    customize_zygisk_ver_sh = temp_dir.joinpath("customize_zygisk_ver.sh")
+    customize_ebpf_ver_sh = temp_dir.joinpath("customize_ebpf_ver.sh")
+    customize_ebpf_ver_sh.unlink()
+    shutil.move(customize_zygisk_ver_sh, temp_dir.joinpath("customize.sh"))
+
     if release:
-        output = Path("output").joinpath("fas-rs(release)")
+        output = Path("output").joinpath("fas-rs-zygisk(release)")
     else:
-        output = Path("output").joinpath("fas-rs(debug)")
+        output = Path("output").joinpath("fas-rs-zygisk(debug)")
     shutil.make_archive(output, "zip", temp_dir)
+
+
+def __task_ebpf(args):
+    try:
+        tools = Buildtools()
+    except Exception as err:
+        eprint(err)
+        exit(-1)
+
+    try:
+        (check, clean, release, nightly, verbose) = __parse_args(args)
+    except Exception as err:
+        eprint(err)
+        exit(-1)
+
+    if clean:
+        __clean()
+        return
+
+    try:
+        Path("output").mkdir()
+    except Exception:
+        pass
+
+    if release:
+        temp_dir = Path("output").joinpath(".temp").joinpath("release")
+    else:
+        temp_dir = Path("output").joinpath(".temp").joinpath("debug")
+
+    try:
+        shutil.rmtree(temp_dir)
+    except Exception:
+        pass
+
+    if nightly:
+        cargo = tools.cargo_nightly()
+    else:
+        cargo = tools.cargo()
+
+    if check:
+        cargo.arg("check --target aarch64-linux-android")
+    else:
+        cargo.arg("build --target aarch64-linux-android")
+        if nightly:
+            cargo.arg("-Z build-std")
+
+    if release:
+        cargo.arg("--release")
+    if verbose:
+        cargo.arg("--verbose")
+
+    cargo.rust_flag("-C default-linker-libraries")
+    cargo.arg("--features use_ebpf")
+    cargo.build()
+
+    if check:
+        print("Finish check")
+        return
+
+    shutil.copytree("module", temp_dir)
+    bin = Path("target").joinpath("aarch64-linux-android")
+    if release:
+        bin = bin.joinpath("release")
+    else:
+        bin = bin.joinpath("debug")
+    bin = bin.joinpath("fas-rs")
+
+    bin_module = temp_dir.joinpath("fas-rs")
+    shutil.copy2(bin, bin_module)
+    tools.strip(bin_module)
+
+    customize_zygisk_ver_sh = temp_dir.joinpath("customize_zygisk_ver.sh")
+    customize_ebpf_ver_sh = temp_dir.joinpath("customize_ebpf_ver.sh")
+    customize_zygisk_ver_sh.unlink()
+    shutil.move(customize_ebpf_ver_sh, temp_dir.joinpath("customize.sh"))
+
+    if release:
+        output = Path("output").joinpath("fas-rs-ebpf(release)")
+    else:
+        output = Path("output").joinpath("fas-rs-ebpf(debug)")
+    shutil.make_archive(output, "zip", temp_dir)
+
+
+def task(args):
+    __task_zygisk(args)
+    __task_ebpf(args)
