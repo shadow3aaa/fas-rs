@@ -11,6 +11,7 @@
 *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
+#[cfg(feature = "binder")]
 mod binder;
 mod looper;
 mod topapp;
@@ -25,7 +26,9 @@ use super::{
 };
 use crate::CpuCommon;
 
+#[cfg(feature = "binder")]
 use self::binder::FasServer;
+use frame_analyzer::Analyzer;
 use looper::Looper;
 
 #[derive(Debug, Clone, Copy)]
@@ -63,7 +66,6 @@ impl Scheduler {
     }
 
     pub fn start_run(self) -> Result<()> {
-        let mut node = Node::init()?;
         let extension = Extension::init()?;
         let config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
 
@@ -71,8 +73,18 @@ impl Scheduler {
             .controller
             .ok_or(Error::SchedulerMissing("Controller"))?;
 
-        let rx = FasServer::run_server(&mut node, config.clone())?;
+        #[cfg(feature = "binder")]
+        {
+            let mut node = Node::init()?;
+            let rx = FasServer::run_server(&mut node, config.clone())?;
+            Looper::new(rx, config, node, extension, controller).enter_loop()
+        }
 
-        Looper::new(rx, config, node, extension, controller).enter_loop()
+        #[cfg(feature = "ebpf")]
+        {
+            let node = Node::init()?;
+            let analyzer = Analyzer::new()?;
+            Looper::new(analyzer, config, node, extension, controller).enter_loop()
+        }
     }
 }
