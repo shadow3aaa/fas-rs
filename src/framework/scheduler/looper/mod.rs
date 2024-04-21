@@ -15,12 +15,12 @@ mod buffer;
 mod policy;
 mod utils;
 
+#[cfg(feature = "use_binder")]
+use std::sync::mpsc::{Receiver, RecvTimeoutError};
 use std::{
     collections::HashMap,
     time::{Duration, Instant},
 };
-#[cfg(feature = "use_binder")]
-use std::sync::mpsc::{Receiver, RecvTimeoutError};
 
 use frame_analyzer::Analyzer;
 #[cfg(debug_assertions)]
@@ -28,6 +28,8 @@ use log::debug;
 use log::info;
 
 use super::{topapp::TimedWatcher, FasData};
+#[cfg(feature = "use_binder")]
+use crate::framework::error::Error;
 use crate::{
     framework::{
         config::Config,
@@ -37,8 +39,6 @@ use crate::{
     },
     CpuCommon,
 };
-#[cfg(feature = "use_binder")]
-use crate::framework::error::Error;
 
 use buffer::Buffer;
 use policy::{JankEvent, NormalEvent};
@@ -63,7 +63,7 @@ pub struct Looper {
     extension: Extension,
     mode: Mode,
     controller: CpuCommon,
-    topapp_checker: TimedWatcher,
+    topapp_watcher: TimedWatcher,
     buffers: Buffers,
     state: State,
     delay_timer: Instant,
@@ -71,10 +71,8 @@ pub struct Looper {
 
 impl Looper {
     pub fn new(
-        #[cfg(feature = "use_binder")]
-        rx: Receiver<FasData>,
-        #[cfg(feature = "use_ebpf")]
-        analyzer: Analyzer,
+        #[cfg(feature = "use_binder")] rx: Receiver<FasData>,
+        #[cfg(feature = "use_ebpf")] analyzer: Analyzer,
         config: Config,
         node: Node,
         extension: Extension,
@@ -90,7 +88,7 @@ impl Looper {
             extension,
             mode: Mode::Balance,
             controller,
-            topapp_checker: TimedWatcher::new(),
+            topapp_watcher: TimedWatcher::new(),
             buffers: Buffers::new(),
             state: State::NotWorking,
             delay_timer: Instant::now(),
@@ -103,6 +101,10 @@ impl Looper {
 
             #[cfg(debug_assertions)]
             debug!("{:?}", self.buffers.keys());
+
+            #[cfg(feature = "use_ebpf")]
+            self.update_analyzer();
+            self.retain_topapp();
 
             let target_fps = self
                 .buffers
@@ -117,7 +119,7 @@ impl Looper {
             let fas_data = self.recv_message();
 
             if let Some(data) = fas_data {
-                self.consume_data(&data);
+                self.buffer_update(&data);
                 let producer = data.pid;
                 self.do_normal_policy(producer, target_fps);
             }
@@ -152,8 +154,6 @@ impl Looper {
                     return Err(Error::Other("Binder Server Disconnected"));
                 }
 
-                self.retain_topapp();
-
                 Ok(None)
             }
         }
@@ -161,13 +161,23 @@ impl Looper {
 
     #[cfg(feature = "use_ebpf")]
     fn recv_message(&mut self) -> Option<FasData> {
-        self.analyzer.recv_timeout(Duration::from_secs(1))
+        self.analyzer
+            .recv_timeout(Duration::from_secs(1))
             .map(|(pid, frametime)| FasData { pid, frametime })
     }
 
-    fn consume_data(&mut self, data: &FasData) {
-        self.buffer_update(data);
-        self.retain_topapp();
+    #[cfg(feature = "use_ebpf")]
+    fn update_analyzer(&mut self) -> Result<()> {
+        use crate::framework::utils::get_process_name;
+
+        for pid in self.topapp_watcher.top_apps() {
+            let pkg = get_process_name(pid)?;
+            if self.config.need_fas(pkg) {
+                self.analyzer.attach_app(pid)?;
+            }
+        }
+
+        Ok(())
     }
 
     fn do_normal_policy(&mut self, _producer: Producer, target_fps: Option<u32>) {

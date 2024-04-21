@@ -26,9 +26,11 @@ const DELAY_TIME: Duration = Duration::from_secs(3);
 impl Looper {
     pub fn retain_topapp(&mut self) {
         self.buffers.retain(|pid, buffer| {
-            if self.topapp_checker.is_topapp(*pid) {
+            if self.topapp_watcher.is_topapp(*pid) {
                 true
             } else {
+                #[cfg(feature = "use_ebpf")]
+                let _ = self.analyzer.detach_app(*pid);
                 let pkg = buffer.pkg.clone();
                 self.extension
                     .tigger_extentions(ApiV0::UnloadFas(*pid, pkg));
@@ -73,7 +75,7 @@ impl Looper {
     }
 
     pub fn buffer_update(&mut self, d: &FasData) {
-        if !self.topapp_checker.is_topapp(d.pid) || d.frametime.is_zero() {
+        if !self.topapp_watcher.is_topapp(d.pid) || d.frametime.is_zero() {
             return;
         }
 
@@ -106,7 +108,7 @@ impl Looper {
                 let mut buffer = Buffer::new(target_fps, pkg);
                 buffer.push_frametime(frametime);
                 v.insert(buffer);
-                self.topapp_checker.refresh();
+                self.topapp_watcher.refresh();
             }
         }
     }

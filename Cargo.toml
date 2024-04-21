@@ -23,7 +23,7 @@ log = "0.4.21"
 anyhow = "1.0.82"
 thiserror = "1.0.59"
 inotify = { version = "0.10.2", default-features = false }
-libc = "0.2.152"
+libc = "0.2.153"
 async-trait = "0.1.80"
 binder = { package = "binder_ndk", git = "https://github.com/shadow3aaa/binder_rs", optional = true }
 lazy_static = "1.4.0"
