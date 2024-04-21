@@ -34,7 +34,7 @@ cpu_cycles_reader = "1.0.1"
 sys-mount = { version = "3.0.1", default-features = false }
 quick-xml = { version = "0.31.0", features = ["serialize"] }
 mlua = { version = "0.9.7", features = ["luajit", "vendored"] }
-frame-analyzer = { version = "0.2.0", optional = true }
+frame-analyzer = { version = "0.2.1", optional = true }
 
 [build-dependencies]
 anyhow = "1.0.82"
