@@ -25,15 +25,15 @@ pub enum Error {
     ParseNode,
     #[error("No such a node")]
     NodeNotFound,
-    #[transparent]
+    #[error(transparent)]
     SerToml(#[from] toml::ser::Error),
-    #[transparent]
+    #[error(transparent)]
     DeToml(#[from] toml::de::Error),
-    #[transparent]
+    #[error(transparent)]
     SerXml(#[from] quick_xml::DeError),
     #[error("Missing {0} when building Scheduler")]
     SchedulerMissing(&'static str),
-    #[transparent]
+    #[error(transparent)]
     Io(#[from] io::Error),
     #[error("Lua extension error: {source:?}")]
     Lua {
