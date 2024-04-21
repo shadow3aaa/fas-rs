@@ -47,15 +47,27 @@ jobs:
           unzip "output/fas-rs-zygisk(release).zip" -d output/artifact/zygisk/release
           unzip "output/fas-rs-ebpf(debug).zip" -d output/artifact/ebpf/debug
           unzip "output/fas-rs-zygisk(relase).zip" -d output/artifact/ebpf/release
-      - name: Upload release-ci
+      - name: Upload zygisk debug version
         uses: actions/upload-artifact@v4
         with:
-          name: fas-rs(release-ci)
+          name: fas-rs-zygisk(debug)
           compression-level: 9
-          path: output/.temp/release
-      - name: Upload debug-ci
+          path: output/artifact/zygisk/debug
+      - name: Upload zygisk release version
         uses: actions/upload-artifact@v4
         with:
-          name: fas-rs(debug-ci)
+            name: fas-rs-zygisk(release)
+            compression-level: 9
+            path: output/artifact/zygisk/release
+      - name: Upload ebpf debug version
+        uses: actions/upload-artifact@v4
+        with:
+          name: fas-rs-ebpf(debug)
           compression-level: 9
-          path: output/.temp/debug
+          path: output/artifact/ebpf/debug
+      - name: Upload ebpf release version
+        uses: actions/upload-artifact@v4
+        with:
+          name: fas-rs-ebpf(debug)
+          compression-level: 9
+          path: output/artifact/ebpf/release
