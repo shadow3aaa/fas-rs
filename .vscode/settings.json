@@ -8,6 +8,7 @@
         "--message-format=json"
     ],
     "rust-analyzer.linkedProjects": [
-        "./zygisk/rust/Cargo.toml"
+        "Cargo.toml",
+        "zygisk/rust/Cargo.toml",
     ],
 }
