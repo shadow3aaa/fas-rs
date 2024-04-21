@@ -13,12 +13,17 @@
 *  limitations under the License. */
 use std::io;
 
+#[cfg(feature = "ebpf")]
+use frame_analyzer::AnalyzerError;
 use thiserror::Error as ThisError;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(ThisError, Debug)]
 pub enum Error {
+    #[cfg(feature = "ebpf")]
+    #[error(transparent)]
+    FrameAnalyzer(#[from] AnalyzerError),
     #[error("Got an error when parsing config")]
     ParseConfig,
     #[error("Got an error when parsing node")]
@@ -41,5 +46,6 @@ pub enum Error {
         source: mlua::Error,
     },
     #[error("Got an error: {0}")]
+    #[allow(dead_code)]
     Other(&'static str),
 }
