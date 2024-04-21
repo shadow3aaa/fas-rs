@@ -19,7 +19,7 @@ use std::{
     collections::HashMap,
     time::{Duration, Instant},
 };
-#[cfg(feature = "binder")]
+#[cfg(feature = "use_binder")]
 use std::sync::mpsc::{Receiver, RecvTimeoutError};
 
 use frame_analyzer::Analyzer;
@@ -37,7 +37,7 @@ use crate::{
     },
     CpuCommon,
 };
-#[cfg(feature = "binder")]
+#[cfg(feature = "use_binder")]
 use crate::framework::error::Error;
 
 use buffer::Buffer;
@@ -54,9 +54,9 @@ enum State {
 }
 
 pub struct Looper {
-    #[cfg(feature = "binder")]
+    #[cfg(feature = "use_binder")]
     rx: Receiver<FasData>,
-    #[cfg(feature = "ebpf")]
+    #[cfg(feature = "use_ebpf")]
     analyzer: Analyzer,
     config: Config,
     node: Node,
@@ -71,9 +71,9 @@ pub struct Looper {
 
 impl Looper {
     pub fn new(
-        #[cfg(feature = "binder")]
+        #[cfg(feature = "use_binder")]
         rx: Receiver<FasData>,
-        #[cfg(feature = "ebpf")]
+        #[cfg(feature = "use_ebpf")]
         analyzer: Analyzer,
         config: Config,
         node: Node,
@@ -81,9 +81,9 @@ impl Looper {
         controller: CpuCommon,
     ) -> Self {
         Self {
-            #[cfg(feature = "binder")]
+            #[cfg(feature = "use_binder")]
             rx,
-            #[cfg(feature = "ebpf")]
+            #[cfg(feature = "use_ebpf")]
             analyzer,
             config,
             node,
@@ -111,9 +111,9 @@ impl Looper {
                 .filter_map(|b| b.target_fps)
                 .max(); // 只处理目标fps最大的buffer
 
-            #[cfg(feature = "binder")]
+            #[cfg(feature = "use_binder")]
             let fas_data = self.recv_message()?;
-            #[cfg(feature = "ebpf")]
+            #[cfg(feature = "use_ebpf")]
             let fas_data = self.recv_message();
 
             if let Some(data) = fas_data {
@@ -143,7 +143,7 @@ impl Looper {
         }
     }
 
-    #[cfg(feature = "binder")]
+    #[cfg(feature = "use_binder")]
     fn recv_message(&mut self) -> Result<Option<FasData>> {
         match self.rx.recv_timeout(Duration::from_secs(1)) {
             Ok(m) => Ok(Some(m)),
@@ -159,7 +159,7 @@ impl Looper {
         }
     }
 
-    #[cfg(feature = "ebpf")]
+    #[cfg(feature = "use_ebpf")]
     fn recv_message(&mut self) -> Option<FasData> {
         self.analyzer.recv_timeout(Duration::from_secs(1))
             .map(|(pid, frametime)| FasData { pid, frametime })

@@ -13,7 +13,7 @@
 *  limitations under the License. */
 use std::io;
 
-#[cfg(feature = "ebpf")]
+#[cfg(feature = "use_ebpf")]
 use frame_analyzer::AnalyzerError;
 use thiserror::Error as ThisError;
 
@@ -21,7 +21,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(ThisError, Debug)]
 pub enum Error {
-    #[cfg(feature = "ebpf")]
+    #[cfg(feature = "use_ebpf")]
     #[error(transparent)]
     FrameAnalyzer(#[from] AnalyzerError),
     #[error("Got an error when parsing config")]

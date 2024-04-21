@@ -9,9 +9,9 @@ readme = "README.md"
 repository = "https://github.com/shadow3aaa/fas-rs"
 
 [features]
-default = ["ebpf"]
-ebpf = []
-binder = []
+default = ["use_ebpf"]
+use_ebpf = []
+use_binder = ["binder"]
 
 [workspace]
 exclude = ["zygisk/rust"]
@@ -25,7 +25,7 @@ thiserror = "1.0.59"
 inotify = { version = "0.10.2", default-features = false }
 libc = "0.2.152"
 async-trait = "0.1.80"
-binder = { package = "binder_ndk", git = "https://github.com/shadow3aaa/binder_rs" }
+binder = { package = "binder_ndk", git = "https://github.com/shadow3aaa/binder_rs", optional = true }
 lazy_static = "1.4.0"
 flexi_logger = "0.28.0"
 toml = "0.8.12"

@@ -64,7 +64,7 @@ impl Config {
         Ok(Self { toml })
     }
 
-    #[cfg(feature = "binder")]
+    #[cfg(feature = "use_binder")]
     pub fn need_fas<S: AsRef<str>>(&self, pkg: S) -> bool {
         let toml = self.toml.read();
         let pkg = pkg.as_ref();
