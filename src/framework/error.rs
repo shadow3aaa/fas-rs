@@ -25,29 +25,17 @@ pub enum Error {
     ParseNode,
     #[error("No such a node")]
     NodeNotFound,
-    #[error("Got an error when serialize toml: {source:?}")]
-    SerToml {
-        #[from]
-        source: toml::ser::Error,
-    },
-    #[error("Got an error when deserialize toml: {source:?}")]
-    DeToml {
-        #[from]
-        source: toml::de::Error,
-    },
-    #[error("Got an error when (de)serialize xml: {source:?}")]
-    SerXml {
-        #[from]
-        source: quick_xml::DeError,
-    },
+    #[transparent]
+    SerToml(#[from] toml::ser::Error),
+    #[transparent]
+    DeToml(#[from] toml::de::Error),
+    #[transparent]
+    SerXml(#[from] quick_xml::DeError),
     #[error("Missing {0} when building Scheduler")]
     SchedulerMissing(&'static str),
-    #[error("Got an io error: {source:?}")]
-    Io {
-        #[from]
-        source: io::Error,
-    },
-    #[error("Lua error: {source:?}")]
+    #[transparent]
+    Io(#[from] io::Error),
+    #[error("Lua extension error: {source:?}")]
     Lua {
         #[from]
         source: mlua::Error,
