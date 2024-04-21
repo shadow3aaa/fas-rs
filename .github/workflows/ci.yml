@@ -36,7 +36,17 @@ jobs:
           export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
 
           python3 ./make.py build --release --nightly
-          python3 ./make.py build --debug
+          python3 ./make.py build --debug --nightly
+      - name: Prepare artifacts
+        run: |
+          mkdir -p output/artifact/zygisk/debug
+          mkdir -p output/artifact/zygisk/release
+          mkdir -p output/artifact/ebpf/debug
+          mkdir -p output/artifact/ebpf/release
+          unzip "output/fas-rs-zygisk(debug).zip" -d output/artifact/zygisk/debug
+          unzip "output/fas-rs-zygisk(release).zip" -d output/artifact/zygisk/release
+          unzip "output/fas-rs-ebpf(debug).zip" -d output/artifact/ebpf/debug
+          unzip "output/fas-rs-zygisk(relase).zip" -d output/artifact/ebpf/release
       - name: Upload release-ci
         uses: actions/upload-artifact@v4
         with:
