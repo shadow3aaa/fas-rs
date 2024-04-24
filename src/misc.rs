@@ -36,6 +36,14 @@ pub fn daemon_panic_handler(panic_info: &PanicInfo) {
 
     error!("fas-rs paniced! An unrecoverable error occurred!");
 
+    if let Some(location) = panic_info.location() {
+        error!(
+            "panic location: in file {} at line {}",
+            location.file(),
+            location.line()
+        );
+    }
+
     if let Some(r) = panic_info.payload().downcast_ref::<&str>() {
         error!("reason: {r:#?}");
     } else {
