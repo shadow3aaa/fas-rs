@@ -30,7 +30,7 @@ help_text = """\
     fix:
         fix codes of fas-rs
     update:
-        recursive update all depended crates"
+        recursive update all depended crates
     help:
         print this help\
 """

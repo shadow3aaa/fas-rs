@@ -230,7 +230,8 @@ def __task_zygisk(args):
         print("Finish check")
         return
 
-    shutil.copytree("module", temp_dir)
+    module = Path("module").joinpath("fas-rs-zygisk")
+    shutil.copytree(module, temp_dir)
     zygisk_lib = Path("zygisk").joinpath("output").joinpath("arm64-v8a.so")
     zygisk_module = temp_dir.joinpath("zygisk")
     zygisk_module.mkdir()
@@ -246,11 +247,6 @@ def __task_zygisk(args):
     bin_module = temp_dir.joinpath("fas-rs")
     shutil.copy2(bin, bin_module)
     tools.strip(bin_module)
-
-    customize_zygisk_ver_sh = temp_dir.joinpath("customize_zygisk_ver.sh")
-    customize_ebpf_ver_sh = temp_dir.joinpath("customize_ebpf_ver.sh")
-    customize_ebpf_ver_sh.unlink()
-    shutil.move(customize_zygisk_ver_sh, temp_dir.joinpath("customize.sh"))
 
     if release:
         output = Path("output").joinpath("fas-rs-zygisk(release)")
@@ -316,7 +312,8 @@ def __task_ebpf(args):
         print("Finish check")
         return
 
-    shutil.copytree("module", temp_dir)
+    module = Path("module").joinpath("fas-rs-ebpf")
+    shutil.copytree(module, temp_dir)
     bin = Path("target").joinpath("aarch64-linux-android")
     if release:
         bin = bin.joinpath("release")
@@ -327,11 +324,6 @@ def __task_ebpf(args):
     bin_module = temp_dir.joinpath("fas-rs")
     shutil.copy2(bin, bin_module)
     tools.strip(bin_module)
-
-    customize_zygisk_ver_sh = temp_dir.joinpath("customize_zygisk_ver.sh")
-    customize_ebpf_ver_sh = temp_dir.joinpath("customize_ebpf_ver.sh")
-    customize_zygisk_ver_sh.unlink()
-    shutil.move(customize_ebpf_ver_sh, temp_dir.joinpath("customize.sh"))
 
     if release:
         output = Path("output").joinpath("fas-rs-ebpf(release)")
