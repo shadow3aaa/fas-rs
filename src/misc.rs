@@ -12,6 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License. */
 use std::{
+    backtrace::Backtrace,
     ffi::CString,
     fs,
     panic::PanicInfo,
@@ -49,6 +50,9 @@ pub fn daemon_panic_handler(panic_info: &PanicInfo) {
     } else {
         error!("reason: Unknown");
     }
+
+    let backtrace = Backtrace::force_capture();
+    error!("BACKTRACE: {backtrace}");
 
     error!("If you're sure this shouldn't happen, open an issue on https://github.com/shadow3aaa/fas-rs/issues");
     process::exit(-1);
