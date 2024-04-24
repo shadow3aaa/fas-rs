@@ -43,7 +43,7 @@ def task():
     os.system("ruff check --fix maketools")
 
     __clippy_fix(tools)
-    __clippy_fix(tools, "--features use_binder")
+    __clippy_fix(tools, "--features use_binder --no-default-features")
 
     os.chdir("zygisk")
     (

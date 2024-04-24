@@ -149,7 +149,7 @@ class Buildtools:
             self.__cargo = "cargo ndk -p 31 -t arm64-v8a"
             self.__strip = bins.joinpath("llvm-strip")
             self.__clang_plusplus = bins.joinpath("aarch64-linux-android31-clang++")
-            self.__clang_format = bins.joinpath("clang-format")
+            self.__clang_format = "clang-format"
             self.__clang_tidy = bins.joinpath("clang-tidy")
         else:
             raise Exception("Missing env: ANDROID_NDK_HOME")

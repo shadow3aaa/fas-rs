@@ -104,7 +104,7 @@ impl Looper {
             debug!("{:?}", self.buffers.keys());
 
             #[cfg(feature = "use_ebpf")]
-            let _ = self.update_analyzer();
+            self.update_analyzer()?;
             self.retain_topapp();
 
             let target_fps = self
@@ -173,7 +173,7 @@ impl Looper {
 
         for pid in self.topapp_watcher.top_apps() {
             let pkg = get_process_name(pid)?;
-            if self.config.need_fas(pkg) {
+            if self.config.need_fas(&pkg) {
                 self.analyzer.attach_app(pid)?;
             }
         }
@@ -183,6 +183,8 @@ impl Looper {
 
     fn do_normal_policy(&mut self, _producer: Producer, target_fps: Option<u32>) {
         if self.state != State::Working {
+            #[cfg(debug_assertions)]
+            debug!("Not running policy!");
             return;
         }
 
@@ -211,6 +213,8 @@ impl Looper {
 
     fn do_jank_policy(&mut self, target_fps: Option<u32>) -> Option<JankEvent> {
         if self.state != State::Working {
+            #[cfg(debug_assertions)]
+            debug!("Not running policy!");
             return None;
         }
 

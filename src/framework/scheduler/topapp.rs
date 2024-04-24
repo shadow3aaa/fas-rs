@@ -18,36 +18,26 @@ use std::{
 
 const REFRESH_TIME: Duration = Duration::from_secs(1);
 
-pub struct TimedWatcher {
+struct Insider {
     cache: Vec<i32>,
     last_refresh: Instant,
 }
 
-impl TimedWatcher {
+impl Insider {
     pub fn new() -> Self {
-        let cache = Self::get_top_pids().unwrap_or_default();
-
         Self {
-            cache,
+            cache: Vec::new(),
             last_refresh: Instant::now(),
         }
     }
 
-    pub fn is_topapp(&mut self, pid: i32) -> bool {
-        self.refresh();
-        self.cache.contains(&pid)
-    }
-
-    pub fn refresh(&mut self) {
+    pub fn pids(&mut self) -> &Vec<i32> {
         if self.last_refresh.elapsed() > REFRESH_TIME {
             self.cache = Self::get_top_pids().unwrap_or_default();
             self.last_refresh = Instant::now();
         }
-    }
 
-    #[allow(dead_code)]
-    pub fn top_apps(&self) -> impl Iterator<Item = i32> + '_ {
-        self.cache.iter().copied()
+        &self.cache
     }
 
     fn get_top_pids() -> Option<Vec<i32>> {
@@ -67,5 +57,26 @@ impl TimedWatcher {
             .filter_map(|s| s.split(':').next())
             .map(|p| p.trim().parse().unwrap())
             .collect()
+    }
+}
+
+pub struct TimedWatcher {
+    insider: Insider,
+}
+
+impl TimedWatcher {
+    pub fn new() -> Self {
+        Self {
+            insider: Insider::new(),
+        }
+    }
+
+    pub fn is_topapp(&mut self, pid: i32) -> bool {
+        self.insider.pids().contains(&pid)
+    }
+
+    #[allow(dead_code)]
+    pub fn top_apps(&mut self) -> impl Iterator<Item = i32> + '_ {
+        self.insider.pids().iter().copied()
     }
 }

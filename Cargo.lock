@@ -373,9 +373,9 @@ dependencies = [
 
 [[package]]
 name = "frame-analyzer"
-version = "0.2.1"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2471a4026b7d014bd3a91b1143e1d82e6e027c7d9944c84c11cc109d07fa1230"
+checksum = "00b4335f3ad803bf543321df4bf529dfcabed02147ce3df8b8cf11e4f5198cd2"
 dependencies = [
  "anyhow",
  "aya",

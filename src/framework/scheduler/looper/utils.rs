@@ -108,7 +108,6 @@ impl Looper {
                 let mut buffer = Buffer::new(target_fps, pkg);
                 buffer.push_frametime(frametime);
                 v.insert(buffer);
-                self.topapp_watcher.refresh();
             }
         }
     }
