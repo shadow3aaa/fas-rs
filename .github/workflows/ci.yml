@@ -30,7 +30,8 @@ jobs:
           # Temporary removal since: https://github.com/microsoft/linux-package-repositories/issues/130
           sudo rm /etc/apt/sources.list.d/microsoft-prod.list
           sudo apt update
-          sudo apt install gcc-multilib
+          sudo apt install gcc-multilib git-lfs
+          git lfs pull
       - name: Build
         run: |
           export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
