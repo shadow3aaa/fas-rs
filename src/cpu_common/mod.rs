@@ -26,7 +26,7 @@ use policy::Policy;
 
 pub type Freq = usize; // khz
 
-const BASE_STEP: Freq = 1_000_000;
+const BASE_STEP: Freq = 700_000;
 const JANK_STEP: Freq = 500_000;
 
 #[derive(Debug)]
