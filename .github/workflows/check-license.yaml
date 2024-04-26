@@ -10,8 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: korandoru/hawkeye@v5
-      - with:
+        with:
           mode: fix
       - uses: peter-evans/create-pull-request@v6
-      - with:
+        with:
           commit-message: Add missing license header
