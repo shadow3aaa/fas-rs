@@ -4,7 +4,7 @@
 [![Stars][stars-badge]][stars-url]
 [![CI Build][ci-badge]][ci-url]
 [![Release][release-badge]][release-url]
-[![Download][download-badge][download-url]]
+[![Download][download-badge]][download-url]
 
 [readme-cn-badge]: https://img.shields.io/badge/README-简体中文-blue.svg?style=for-the-badge&logo=readme
 [readme-en-url]: README.md
