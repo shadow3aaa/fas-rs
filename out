@@ -1,0 +1,2 @@
+[2m2024-04-26T05:30:33.321162Z[0m [32m INFO[0m [2mhawkeye_fmt::git[0m[2m:[0m git.ignore=auto is resolved to enabled
+[2m2024-04-26T05:30:33.420726Z[0m [31mERROR[0m [2mhawkeye::cli[0m[2m:[0m Found missing header files: ["/root/fas-rs/.github/dependabot.yml", "/root/fas-rs/.github/workflows/ci.yml", "/root/fas-rs/.github/workflows/check-license.yaml"]

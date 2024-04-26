@@ -4,14 +4,17 @@ on:
     branches: ["master"]
   pull_request:
     branches: ["master"]
+env:
+  CARGO_TERM_COLOR: always
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: korandoru/hawkeye@v5
-        with:
-          mode: format
+      - name: Run checks
+        run: |
+          cargo install hawkeye
+          hawkeye format || true
       - uses: peter-evans/create-pull-request@v6
         with:
           commit-message: Add missing license header
