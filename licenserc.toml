@@ -13,7 +13,7 @@
 # limitations under the License.
 
 headerPath = "NOTICES"
-includes = ["licenserc.toml", "src/**", "Cargo.toml", "build.rs", "make.py", "maketools/**", "module/**", "zygisk/src/**", "zygisk/rust/Cargo.toml", "zygisk/rust/src/**",  "zygisk/rust/include/**"]
+includes = ["licenserc.toml", "src/**", "Cargo.toml", "build.rs", "make.py", "maketools/**", "module/**", "zygisk/src/**", "zygisk/rust/Cargo.toml", "zygisk/rust/src/**",  "zygisk/rust/include/**", ".github/**"]
 excludes = ["zygisk/src/zygisk.hpp", "module/fas-rs-zygisk/games.toml", "module/fas-rs-ebpf/games.toml", "module/fas-rs-zygisk/META-INF/**", "module/fas-rs-ebpf/META-INF/**", "module/fas-rs-zygisk/*.prop", "module/fas-rs-ebpf/*.prop", "module/fas-rs-zygisk/*.rule"]
 
 [properties]

@@ -1,0 +1,17 @@
+name: check-license
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: korandoru/hawkeye@v5
+      - with:
+          mode: fix
+      - uses: peter-evans/create-pull-request@v6
+      - with:
+          commit-message: Add missing license header
