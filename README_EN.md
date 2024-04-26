@@ -7,7 +7,7 @@
 [![Download][download-badge]][download-url]
 
 [readme-cn-badge]: https://img.shields.io/badge/README-简体中文-blue.svg?style=for-the-badge&logo=readme
-[readme-en-url]: README.md
+[readme-cn-url]: README.md
 [stars-badge]: https://img.shields.io/github/stars/shadow3aaa/fas-rs?style=for-the-badge&logo=github
 [stars-url]: https://github.com/shadow3aaa/fas-rs
 [ci-badge]: https://img.shields.io/github/actions/workflow/status/shadow3aaa/fas-rs/ci.yml?style=for-the-badge&label=CI%20Build&logo=githubactions
