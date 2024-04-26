@@ -1,10 +1,21 @@
 # **fas-rs**
 
-- [English](README_EN.md)
-- [![Stars](https://img.shields.io/github/stars/shadow3aaa/fas-rs)](https://github.com/shadow3aaa/fas-rs)
-- [![CI Build](https://img.shields.io/github/actions/workflow/status/shadow3aaa/fas-rs/ci.yml)](https://github.com/shadow3aaa/fas-rs/actions)
-- [![Release](https://img.shields.io/github/v/release/shadow3aaa/fas-rs)](https://github.com/shadow3aaa/fas-rs/releases/latest)
-- [![Download Total](https://img.shields.io/github/downloads/shadow3aaa/fas-rs/total)](https://github.com/shadow3aaa/fas-rs/releases)
+[![English][readme-en-badge]][readme-en-url]
+[![Stars][stars-badge]][stars-url]
+[![CI Build][ci-badge]][ci-url]
+[![Release][release-badge]][release-url]
+[![Download][download-badge][download-url]]
+
+[readme-en-badge]: https://img.shields.io/badge/README-English-blue.svg?style=for-the-badge&logo=readme
+[readme-en-url]: README_EN.md
+[stars-badge]: https://img.shields.io/github/stars/shadow3aaa/fas-rs?style=for-the-badge&logo=github
+[stars-url]: https://github.com/shadow3aaa/fas-rs
+[ci-badge]: https://img.shields.io/github/actions/workflow/status/shadow3aaa/fas-rs/ci.yml?style=for-the-badge&label=CI%20Build&logo=githubactions
+[ci-url]: https://github.com/shadow3aaa/fas-rs/actions/workflows/ci.yml
+[release-badge]: https://img.shields.io/github/v/release/shadow3aaa/fas-rs?style=for-the-badge&logo=rust
+[release-url]: https://github.com/shadow3aaa/fas-rs/releases/latest
+[download-badge]: https://img.shields.io/github/downloads/shadow3aaa/fas-rs/total?style=for-the-badge&logo=download
+[download-url]: https://github.com/shadow3aaa/fas-rs/releases/latest
 
 ## **简介**
 
