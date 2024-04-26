@@ -41,8 +41,6 @@ jobs:
         run: cargo install cargo-ndk
       - name: Other deps
         run: |
-          # Temporary removal since: https://github.com/microsoft/linux-package-repositories/issues/130
-          sudo rm /etc/apt/sources.list.d/microsoft-prod.list
           sudo apt update
           sudo apt install gcc-multilib git-lfs
           git lfs pull
