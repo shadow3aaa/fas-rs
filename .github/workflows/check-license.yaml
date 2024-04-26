@@ -17,4 +17,5 @@ jobs:
           hawkeye format || true
       - uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.PAT }}
           commit-message: Add missing license header
