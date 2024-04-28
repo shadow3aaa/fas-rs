@@ -16,7 +16,7 @@
 name = "fas-rs"
 version = "2.7.0"
 edition = "2021"
-description = "Frame aware scheduling for android"
+description = "Frame aware scheduling for android."
 authors = ["shadow3"]
 license = "Apache-2.0"
 readme = "README.md"
