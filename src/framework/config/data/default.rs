@@ -20,6 +20,10 @@ impl Config {
     }
 
     pub const fn default_value_userspace_governor() -> bool {
+        false
+    }
+
+    pub const fn default_value_scene_game_list() -> bool {
         true
     }
 }

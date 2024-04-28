@@ -68,10 +68,13 @@ pub(super) fn wait_and_read(
             }
         };
 
-        let scene_profile = Path::new(SCENE_PROFILE);
+        if toml.read().config.scene_game_list {
+            let _ = read_scene_games(toml);
+        } else {
+            toml.write().scene_game_list.clear();
+        }
 
-        let _ = read_scene_games(scene_profile, toml);
-        wait_until_update(path, scene_profile)?;
+        wait_until_update(path)?;
     }
 }
 
@@ -85,9 +88,9 @@ fn check_counter(retry_count: &mut u8, toml: &Arc<RwLock<ConfigData>>, std_confi
     }
 }
 
-fn read_scene_games(scene_profile: &Path, toml: &Arc<RwLock<ConfigData>>) -> Result<()> {
-    if scene_profile.exists() {
-        let scene_apps = fs::read_to_string(scene_profile)?;
+fn read_scene_games(toml: &Arc<RwLock<ConfigData>>) -> Result<()> {
+    if Path::new(SCENE_PROFILE).exists() {
+        let scene_apps = fs::read_to_string(SCENE_PROFILE)?;
         let scene_apps: SceneAppList = quick_xml::de::from_str(&scene_apps)?;
         let game_list = scene_apps
             .apps
@@ -102,13 +105,14 @@ fn read_scene_games(scene_profile: &Path, toml: &Arc<RwLock<ConfigData>>) -> Res
     Ok(())
 }
 
-fn wait_until_update(path: &Path, scene_profile: &Path) -> Result<()> {
+fn wait_until_update<P: AsRef<Path>>(path: P) -> Result<()> {
+    let path = path.as_ref();
     let mut inotify = Inotify::init()?;
 
-    if scene_profile.exists() {
+    if Path::new(SCENE_PROFILE).exists() {
         let _ = inotify
             .watches()
-            .add(scene_profile, WatchMask::CLOSE_WRITE | WatchMask::MODIFY);
+            .add(SCENE_PROFILE, WatchMask::CLOSE_WRITE | WatchMask::MODIFY);
     }
 
     if inotify
