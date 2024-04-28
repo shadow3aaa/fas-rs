@@ -13,10 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-BASEDIR="$(dirname $(readlink -f "$0"))"
+DIR=/sdcard/Android/fas-rs
 
-source $BASEDIR/gen_json.sh $1
-echo "$json" >/data/powercfg.json
+{
+	until [ -d $DIR ] && [ -d /data ]; do
+		sleep 1
+	done
 
-cp -af $BASEDIR/powercfg.sh /data/powercfg.sh
-chmod 755 /data/powercfg.sh
+	rm -rf $DIR
+	rm -f /data/powercfg*
+} & # do not block boot

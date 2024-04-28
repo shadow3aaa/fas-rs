@@ -1,0 +1,3 @@
+vendor.perf.framepacing.enable=false
+debug.sf.latch_unsignaled=true
+persist.sys.framepredict.enable=false

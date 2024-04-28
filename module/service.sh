@@ -13,25 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-propPath=$1
-version=$(cat $propPath | grep "version=" | cut -d "=" -f2)
-versionCode=$(cat $propPath | grep "versionCode=" | cut -d "=" -f2)
+MODDIR=${0%/*}
+DIR=/sdcard/Android/fas-rs
+MERGE_FLAG=$DIR/.need_merge
+LOG=$DIR/fas_log.txt
 
-json=$(
-	cat <<EOF
-{
-    "name": "fas-rs",
-    "author": "shadow3",
-    "version": "$version",
-    "versionCode": ${versionCode},
-    "features": {
-        "strict": true,
-        "pedestal": true
-    },
-    "module": "fas_rs",
-    "state": "/dev/fas_rs/mode",
-    "entry": "/data/powercfg.sh",
-    "projectUrl": "https://github.com/shadow3aaa/fas-rs"
-}
-EOF
-)
+sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
+
+resetprop fas-rs-installed true
+
+until [ -d $DIR ]; do
+	sleep 1
+done
+
+if [ -f $MERGE_FLAG ]; then
+	$MODDIR/fas-rs merge $MODDIR/games.toml >$DIR/.update_games.toml
+	rm $MERGE_FLAG
+	mv $DIR/.update_games.toml $DIR/games.toml
+fi
+
+killall fas-rs
+nohup $MODDIR/fas-rs run $MODDIR/games.toml >$LOG 2>&1 &
