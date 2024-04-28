@@ -30,6 +30,11 @@ struct CargoConfig {
     pub package: Package,
 }
 
+enum TracingToolType {
+    Ebpf,
+    Zygisk,
+}
+
 #[allow(non_snake_case)]
 #[derive(Serialize)]
 struct UpdateJson {
@@ -49,13 +54,14 @@ fn main() -> Result<()> {
     let toml = fs::read_to_string("Cargo.toml")?;
     let data: CargoConfig = toml::from_str(&toml)?;
 
-    module_prop(&data)?;
+    gen_module_prop(&data, TracingToolType::Ebpf)?;
+    gen_module_prop(&data, TracingToolType::Zygisk)?;
     update_json(&data)?;
 
     Ok(())
 }
 
-fn module_prop(data: &CargoConfig) -> Result<()> {
+fn gen_module_prop(data: &CargoConfig, tool_type: TracingToolType) -> Result<()> {
     let package = &data.package;
     let id = package.name.replace('-', "_");
     let version_code: usize = package.version.replace('.', "").trim().parse()?;
@@ -66,18 +72,35 @@ fn module_prop(data: &CargoConfig) -> Result<()> {
     }
     let author = author.trim();
 
+    let (prop, tool_type, description_ext) = match tool_type {
+        TracingToolType::Ebpf => (
+            "module/fas-rs-ebpf/module.prop",
+            "Ebpf",
+            "Requires kernel ebpf support.",
+        ),
+        TracingToolType::Zygisk => (
+            "module/fas-rs-zygisk/module.prop",
+            "Zygisk",
+            "Requires Magisk 24.0+ and Zygisk enabled.",
+        ),
+    };
+
     let mut file = fs::OpenOptions::new()
         .create(true)
         .truncate(true)
         .write(true)
-        .open("module/module.prop")?;
+        .open(prop)?;
 
     writeln!(file, "id={id}")?;
-    writeln!(file, "name={}", package.name)?;
+    writeln!(file, "name={tool_type} - {}", package.name)?;
     writeln!(file, "version=v{}", package.version)?;
     writeln!(file, "versionCode={version_code}")?;
     writeln!(file, "author={author}")?;
-    writeln!(file, "description={}", package.description)?;
+    writeln!(
+        file,
+        "description={} {description_ext}",
+        package.description
+    )?;
 
     Ok(())
 }
