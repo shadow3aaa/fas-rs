@@ -71,17 +71,18 @@
 [config]
 keep_std = true
 userspace_governor = false
+scene_game_list = true
 
 [game_list]
-"com.hypergryph.arknights" = [30，60]
-"com.miHoYo.Yuanshen" = [30，60]
-"com.miHoYo.enterprise.NGHSoD" = [30，60，90]
-"com.miHoYo.hkrpg" = [30，60]
-"com.mojang.minecraftpe" = [60，120]
-"com.netease.party" = [30，60]
+"com.hypergryph.arknights" = [30, 60]
+"com.miHoYo.Yuanshen" = [30, 60]
+"com.miHoYo.enterprise.NGHSoD" = [30, 60, 90]
+"com.miHoYo.hkrpg" = [30, 60]
+"com.mojang.minecraftpe" = [60, 120]
+"com.netease.party" = [30, 60]
 "com.shangyoo.neon" = 60
-"com.tencent.tmgp.pubgmhd" = [60，90，120]
-"com.tencent.tmgp.sgame" = [30，60，90，120]
+"com.tencent.tmgp.pubgmhd" = [60, 90, 120]
+"com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
 [powersave]
 margin = 4

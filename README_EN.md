@@ -71,6 +71,7 @@
 [config]
 keep_std = true
 userspace_governor = false
+scene_game_list = true
 
 [game_list]
 "com.hypergryph.arknights" = [30, 60]
