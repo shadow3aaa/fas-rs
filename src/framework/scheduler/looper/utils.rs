@@ -49,9 +49,10 @@ impl Looper {
     pub fn disable_fas(&mut self) {
         match self.state {
             State::Working => {
-                self.extension.tigger_extentions(ApiV0::StopFas);
-                self.controller.init_default(&self.config, &self.extension);
                 self.state = State::NotWorking;
+                self.cleaner.undo_cleanup();
+                self.controller.init_default(&self.config, &self.extension);
+                self.extension.tigger_extentions(ApiV0::StopFas);
             }
             State::Waiting => self.state = State::NotWorking,
             State::NotWorking => (),
@@ -61,14 +62,15 @@ impl Looper {
     pub fn enable_fas(&mut self) {
         match self.state {
             State::NotWorking => {
-                self.extension.tigger_extentions(ApiV0::StartFas);
-                self.delay_timer = Instant::now();
                 self.state = State::Waiting;
+                self.delay_timer = Instant::now();
+                self.extension.tigger_extentions(ApiV0::StartFas);
             }
             State::Waiting => {
                 if self.delay_timer.elapsed() > DELAY_TIME {
-                    self.controller.init_game(&self.extension);
                     self.state = State::Working;
+                    self.cleaner.cleanup();
+                    self.controller.init_game(&self.extension);
                 }
             }
             State::Working => (),

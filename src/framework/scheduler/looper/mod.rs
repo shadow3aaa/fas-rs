@@ -13,6 +13,7 @@
 // limitations under the License.
 
 mod buffer;
+mod clean;
 mod policy;
 mod utils;
 
@@ -43,6 +44,7 @@ use crate::{
 };
 
 use buffer::Buffer;
+use clean::Cleaner;
 use policy::{JankEvent, NormalEvent};
 
 pub type Producer = i32; // pid
@@ -66,6 +68,7 @@ pub struct Looper {
     mode: Mode,
     controller: CpuCommon,
     topapp_watcher: TimedWatcher,
+    cleaner: Cleaner,
     buffers: Buffers,
     state: State,
     delay_timer: Instant,
@@ -91,6 +94,7 @@ impl Looper {
             mode: Mode::Balance,
             controller,
             topapp_watcher: TimedWatcher::new(),
+            cleaner: Cleaner::new(),
             buffers: Buffers::new(),
             state: State::NotWorking,
             delay_timer: Instant::now(),

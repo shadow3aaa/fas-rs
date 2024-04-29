@@ -25,7 +25,6 @@
 #[cfg(any(not(target_os = "android"), not(target_arch = "aarch64")))]
 compile_error!("Only for aarch64 android");
 
-mod clean;
 mod cpu_common;
 mod framework;
 mod misc;
@@ -33,14 +32,14 @@ mod misc;
 use std::{
     env, fs,
     io::{self, prelude::*},
-    panic, process, thread,
+    panic, process,
 };
 
 use framework::prelude::*;
 
 use anyhow::Result;
 use flexi_logger::{DeferredNow, LogSpecification, Logger, Record};
-use log::{info, warn};
+use log::warn;
 
 #[cfg(debug_assertions)]
 use log::debug;
@@ -92,11 +91,6 @@ fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
 
     #[cfg(debug_assertions)]
     debug!("{cpu:#?}");
-
-    thread::Builder::new()
-        .name("CleanerThead".into())
-        .spawn(clean::cleaner)?;
-    info!("Cleaner thread started");
 
     Scheduler::new()
         .config(config)
