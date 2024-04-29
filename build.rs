@@ -56,7 +56,8 @@ fn main() -> Result<()> {
 
     gen_module_prop(&data, TracingToolType::Ebpf)?;
     gen_module_prop(&data, TracingToolType::Zygisk)?;
-    update_json(&data)?;
+    update_json(&data, TracingToolType::Ebpf)?;
+    update_json(&data, TracingToolType::Zygisk)?;
 
     Ok(())
 }
@@ -105,13 +106,19 @@ fn gen_module_prop(data: &CargoConfig, tool_type: TracingToolType) -> Result<()>
     Ok(())
 }
 
-fn update_json(data: &CargoConfig) -> Result<()> {
+fn update_json(data: &CargoConfig, tool_type: TracingToolType) -> Result<()> {
     let version = &data.package.version;
     let version_code: usize = version.replace('.', "").trim().parse()?;
-
     let version = format!("v{version}");
-    let zip_url =
-        format!("https://github.com/shadow3aaa/fas-rs/releases/download/{version}/fas-rs.zip");
+
+    let zip_url = match tool_type {
+        TracingToolType::Ebpf => format!(
+            "https://github.com/shadow3aaa/fas-rs/releases/download/{version}/fas-rs-ebpf.zip"
+        ),
+        TracingToolType::Zygisk => format!(
+            "https://github.com/shadow3aaa/fas-rs/releases/download/{version}/fas-rs-zygisk.zip"
+        ),
+    };
 
     let cn = UpdateJson {
         versionCode: version_code,
@@ -132,8 +139,16 @@ fn update_json(data: &CargoConfig) -> Result<()> {
     let cn = serde_json::to_string_pretty(&cn)?;
     let en = serde_json::to_string_pretty(&en)?;
 
-    fs::write("update/update.json", cn)?;
-    fs::write("update/update_en.json", en)?;
+    match tool_type {
+        TracingToolType::Ebpf => {
+            fs::write("update/update_ebpf.json", cn)?;
+            fs::write("update/update_ebpf_en.json", en)?;
+        }
+        TracingToolType::Zygisk => {
+            fs::write("update/update_zygisk.json", cn)?;
+            fs::write("update/update_zygisk_en.json", en)?;
+        }
+    }
 
     Ok(())
 }
