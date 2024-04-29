@@ -48,6 +48,12 @@
     - `true`: Enable the built-in user space governor
     - `false`: turn off the built-in user space governor
 
+  - **scene_game_list**
+
+    - Type: `bool`
+    - `true`: Use scene game list
+    - `false`: Not using scene game list
+
   - `*`: default configuration
 
 - ### **Game list (`game_list`) description:**

@@ -48,6 +48,12 @@
     - `true`: 开启内置用户空间调速器
     - `false`: 关闭内置用户空间调速器
 
+  - **scene_game_list**
+
+    - 类型: `bool`
+    - `true`: 使用scene游戏列表
+    - `false`: 不使用scene游戏列表
+
   - `*`: 默认配置
 
 - ### **游戏列表(`game_list`)说明:**
