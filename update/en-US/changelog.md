@@ -1,6 +1,6 @@
 # v2.8.0
 
-## Update log
+## Change log
 
 - **Added `Ebpf & Uprobe` method instead of `Zygisk + Hook` to track libgui calls**
 
