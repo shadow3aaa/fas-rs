@@ -1,15 +1,17 @@
-# v2.7.0
+# v2.8.0
 
 ## 更新日志
 
-- 取消无意义的governor控制
-- 简化zygisk注入
-- set_hook自定义panic行为
-- 修复clang18 + llvm18构建错误
-- 避免配置合并scene gamelist
-- 优化cpu控制器
-- 调整配置内容
-- 修复system_server未dlclose zygisk模块
-- 支持aarch64 linux构建
-- 忽略 #19 相关错误
-- 移除无用依赖，更新依赖版本
+- **新增`Ebpf & Uprobe`方式代替`Zygisk + Hook`跟踪libgui调用**
+
+  - 从v2.7.0开始，将同时提供`Epbf版本`和`Zygisk版本`，需要用户自行选择
+  - 内核对Ebpf支持较好的用户推荐使用`Ebpf版本`，实现更加高效并且避免被检测可能
+  - 内核对Ebpf支持差/不支持的用户(只能)使用`Zygisk版本`，保证兼容性
+
+- 调整计算基础频率
+- 可选择是否读取scene游戏列表
+- 只在fas-rs加载到游戏时强行关闭`feas/migt`
+- 稳定插件API，保证向后兼容性
+- 精简运行逻辑
+- 优化README视觉效果
+- 更新依赖
