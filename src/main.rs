@@ -39,7 +39,7 @@ use framework::prelude::*;
 
 use anyhow::Result;
 use flexi_logger::{DeferredNow, LogSpecification, Logger, Record};
-use log::warn;
+use log::{error, warn};
 
 #[cfg(debug_assertions)]
 use log::debug;
@@ -63,7 +63,7 @@ fn main() -> Result<()> {
     } else if args[1] == "run" {
         panic::set_hook(Box::new(daemon_panic_handler));
         setprop("fas-rs-server-started", "true");
-        run(&args[2]).unwrap();
+        run(&args[2]).unwrap_or_else(|e| error!("{e:#?}"));
     }
 
     Ok(())
