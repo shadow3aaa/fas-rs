@@ -1,6 +1,6 @@
 id=fas_rs
 name=Zygisk - fas-rs
-version=v2.8.0
-versionCode=280
+version=v2.8.1
+versionCode=281
 author=shadow3
 description=Frame aware scheduling for android. Requires Magisk 24.0+ and Zygisk enabled.
