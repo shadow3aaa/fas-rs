@@ -83,7 +83,7 @@ impl Insider {
         }
     }
 
-    fn find_freq(&mut self, f: Freq) -> Freq {
+    fn find_freq(&self, f: Freq) -> Freq {
         self.freqs
             .iter()
             .find(|target| **target >= f)

@@ -152,7 +152,7 @@ impl Looper {
     }
 
     #[cfg(feature = "use_binder")]
-    fn recv_message(&mut self) -> Result<Option<FasData>> {
+    fn recv_message(&self) -> Result<Option<FasData>> {
         match self.rx.recv_timeout(Duration::from_secs(1)) {
             Ok(m) => Ok(Some(m)),
             Err(e) => {

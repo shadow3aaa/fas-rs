@@ -96,7 +96,7 @@ impl Cleaner {
         lock_values!(self.map, ("/sys/module/migt/parameters/glk_disable"), "1");
     }
 
-    pub fn undo_cleanup(&mut self) {
+    pub fn undo_cleanup(&self) {
         for (path, value) in &self.map {
             unmount(path);
             let _ = fs::write(path, value);
