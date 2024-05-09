@@ -47,6 +47,7 @@ struct UpdateJson {
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=Cargo.lock");
     println!("cargo:rerun-if-changed=Cargo.toml");
+    println!("cargo:rerun-if-changed=update");
 
     println!("cargo:rustc-link-search=prebuilt");
     println!("cargo:rustc-link-lib=binder_ndk");
@@ -58,6 +59,9 @@ fn main() -> Result<()> {
     gen_module_prop(&data, TracingToolType::Zygisk)?;
     update_json(&data, TracingToolType::Ebpf)?;
     update_json(&data, TracingToolType::Zygisk)?;
+
+    fs::copy("update/update_zygisk.json", "update/update.json")?;
+    fs::copy("update/update_zygisk_en.json", "update/update_en.json")?;
 
     Ok(())
 }
