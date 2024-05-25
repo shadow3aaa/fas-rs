@@ -12,12 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{
-    collections::HashMap,
-    time::{Duration, Instant},
-};
+use std::time::Duration;
 
-use cpu_cycles_reader::{Cycles, CyclesInstant, CyclesReader};
+use anyhow::Result;
 
 use super::{Event, Insider};
 
@@ -28,15 +25,13 @@ pub enum State {
 }
 
 impl Insider {
-    pub fn event_loop(mut self) {
-        let reader = CyclesReader::new().unwrap();
-        let mut cycles: HashMap<i32, CyclesInstant> = HashMap::with_capacity(self.cpus.len());
-        let mut last_record = Instant::now();
-
+    pub fn event_loop(mut self) -> Result<()> {
         loop {
+            let usage = self.current_usage_max()?;
+            let target_freq_usage_based = self.usage_policy(usage)?;
+
             if self.always_userspace_governor() {
-                let max_cycles = self.max_cycles(&reader, &mut last_record, &mut cycles);
-                self.normal_policy(max_cycles);
+                let _ = self.set_userspace_governor_freq(target_freq_usage_based);
             }
 
             if let Some(event) = self.recv_event() {
@@ -55,26 +50,5 @@ impl Insider {
         } else {
             self.rx.recv().ok()
         }
-    }
-
-    fn max_cycles(
-        &self,
-        reader: &CyclesReader,
-        last_record: &mut Instant,
-        map: &mut HashMap<i32, CyclesInstant>,
-    ) -> Cycles {
-        let mut cycles = Cycles::ZERO;
-        for cpu in self.cpus.iter().copied() {
-            let now = reader.instant(cpu).unwrap();
-            let prev = map.entry(cpu).or_insert(now);
-
-            cycles = cycles.max(now - *prev);
-            *prev = now;
-        }
-
-        let time = last_record.elapsed();
-        *last_record = Instant::now();
-
-        cycles * Duration::from_secs(1).as_nanos() as i64 / time.as_nanos() as i64
     }
 }

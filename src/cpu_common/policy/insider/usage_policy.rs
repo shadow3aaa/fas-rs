@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use cpu_cycles_reader::Cycles;
+use anyhow::Result;
 
-use super::Insider;
+use super::{Freq, Insider};
+
+const TARGET_USAGE: f64 = 0.65;
 
 impl Insider {
-    pub fn usage_policy(&mut self, max_cycles: Cycles) {
-        let target_freq = if self.is_little() {
-            max_cycles * 100 / 75 // target usage: 75
-        } else {
-            max_cycles * 100 / 70 // target usage: 70
-        };
+    pub fn usage_policy(&self, usage: f64) -> Result<Freq> {
+        let current_freq = self.current_freq()?;
+        let current_cycles = current_freq as f64 * usage;
 
-        let min = Cycles::from_khz(self.freqs.first().copied().unwrap() as i64);
-        let max = Cycles::from_khz(self.freqs.last().copied().unwrap() as i64);
+        let min = self.freqs.first().copied().unwrap();
+        let max = self.freqs.last().copied().unwrap();
 
-        let target_freq = target_freq.clamp(min, max);
-        let _ = self.set_userspace_governor_freq(target_freq.as_khz() as usize);
+        let target_freq = ((current_cycles / TARGET_USAGE) as Freq).clamp(min, max);
+
+        Ok(target_freq)
     }
 }
