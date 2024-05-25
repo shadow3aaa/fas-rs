@@ -34,7 +34,7 @@ pub(super) fn wait_and_read(
     let std_config: ConfigData = toml::from_str(&std_config)?;
 
     loop {
-        check_counter(&mut retry_count, toml, &std_config);
+        check_counter_final(&mut retry_count, toml, &std_config);
 
         let ori = match fs::read_to_string(path) {
             Ok(s) => {
@@ -55,11 +55,16 @@ pub(super) fn wait_and_read(
                 o
             }
             Err(e) => {
-                error!("Failed to parse config {path:?}, reason: {e}");
-                error!("Trying to roll back to the last configuration that could be resolved...");
-                let latest = toml::to_string(&*toml.read())?;
-                if fs::write(path, latest).is_ok() {
-                    error!("Rollback successful");
+                if retry_count > 3 {
+                    error!("Failed to parse config {path:?}, reason: {e}");
+                    error!(
+                        "Trying to roll back to the last configuration that could be resolved..."
+                    );
+                    let latest = toml::to_string(&*toml.read())?;
+                    if fs::write(path, latest).is_ok() {
+                        error!("Rollback successful");
+                        retry_count = 0;
+                    }
                 }
 
                 retry_count += 1;
@@ -78,7 +83,11 @@ pub(super) fn wait_and_read(
     }
 }
 
-fn check_counter(retry_count: &mut u8, toml: &Arc<RwLock<ConfigData>>, std_config: &ConfigData) {
+fn check_counter_final(
+    retry_count: &mut u8,
+    toml: &Arc<RwLock<ConfigData>>,
+    std_config: &ConfigData,
+) {
     if *retry_count > 10 {
         error!("Too many read / parse user config retries");
         error!("Use std profile instead until we could read and parse user config");
