@@ -44,7 +44,6 @@ lazy_static = "1.4.0"
 flexi_logger = "0.28.0"
 toml = "0.8.12"
 serde = { version = "1.0.201", features = ["derive"] }
-cpu_cycles_reader = "1.0.1"
 sys-mount = { version = "3.0.1", default-features = false }
 quick-xml = { version = "0.31.0", features = ["serialize"] }
 mlua = { version = "0.9.7", features = ["luajit", "vendored"] }
