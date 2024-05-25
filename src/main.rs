@@ -32,7 +32,7 @@ mod misc;
 use std::{
     env, fs,
     io::{self, prelude::*},
-    panic, process,
+    process,
 };
 
 use framework::prelude::*;
@@ -45,7 +45,7 @@ use log::{error, warn};
 use log::debug;
 
 use cpu_common::CpuCommon;
-use misc::{daemon_panic_handler, setprop};
+use misc::setprop;
 
 const USER_CONFIG: &str = "/sdcard/Android/fas-rs/games.toml";
 
@@ -61,7 +61,6 @@ fn main() -> Result<()> {
 
         return Ok(());
     } else if args[1] == "run" {
-        panic::set_hook(Box::new(daemon_panic_handler));
         setprop("fas-rs-server-started", "true");
         run(&args[2]).unwrap_or_else(|e| error!("{e:#?}"));
     }
