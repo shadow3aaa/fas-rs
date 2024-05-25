@@ -34,14 +34,14 @@ impl CpuTimeSlice {
         let total_slice = self.total.saturating_sub(last_slice.total);
         let idle_slice = self.idle.saturating_sub(last_slice.idle);
 
-        idle_slice as f64 / total_slice as f64
+        (total_slice - idle_slice) as f64 / total_slice as f64
     }
 }
 
 impl Insider {
     pub fn current_freq(&self) -> Result<Freq> {
         let scaling_cur_freq = self.path.join("scaling_cur_freq");
-        let freq: Freq = fs::read_to_string(scaling_cur_freq)?.parse()?;
+        let freq: Freq = fs::read_to_string(scaling_cur_freq)?.trim().parse()?;
         Ok(freq)
     }
 

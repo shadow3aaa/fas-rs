@@ -93,7 +93,7 @@ impl Insider {
 
         thread::Builder::new()
             .name(thread_name)
-            .spawn(move || Self::event_loop(policy))?;
+            .spawn(move || Self::event_loop(policy).unwrap())?;
 
         Ok(freqs)
     }
