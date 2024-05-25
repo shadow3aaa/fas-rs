@@ -49,6 +49,7 @@ sys-mount = { version = "3.0.1", default-features = false }
 quick-xml = { version = "0.31.0", features = ["serialize"] }
 mlua = { version = "0.9.7", features = ["luajit", "vendored"] }
 frame-analyzer = { version = "0.2.6", optional = true }
+smallvec = { version = "1.13.2", features = ["const_generics"] }
 
 [build-dependencies]
 anyhow = "1.0.83"

@@ -351,6 +351,7 @@ dependencies = [
  "quick-xml",
  "serde",
  "serde_json",
+ "smallvec",
  "sys-mount",
  "thiserror",
  "toml",

@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+mod cpuinfo;
 mod event_loop;
 mod misc;
 mod normal;
 mod utils;
 
 use std::{
+    collections::HashMap,
     fs,
     path::{Path, PathBuf},
     sync::mpsc::Receiver,
@@ -27,6 +29,7 @@ use std::{
 use anyhow::Result;
 
 use super::super::Freq;
+use cpuinfo::CpuTimeSlice;
 use event_loop::State;
 
 pub enum Event {
@@ -38,6 +41,7 @@ pub enum Event {
 #[derive(Debug)]
 pub struct Insider {
     cpus: Vec<i32>,
+    cpu_stat: HashMap<i32, CpuTimeSlice>,
     path: PathBuf,
     cache: Freq,
     fas_freq: Freq,
@@ -76,6 +80,7 @@ impl Insider {
         let thread_name = format!("policy {}-{}", cpus[0], cpus.last().unwrap());
         let policy = Self {
             cpus,
+            cpu_stat: HashMap::new(),
             path: path.to_path_buf(),
             freqs: freqs.clone(),
             cache: freqs.last().copied().unwrap(),
