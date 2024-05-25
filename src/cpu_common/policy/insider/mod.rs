@@ -15,7 +15,7 @@
 mod cpuinfo;
 mod event_loop;
 mod misc;
-mod normal;
+mod usage_policy;
 mod utils;
 
 use std::{

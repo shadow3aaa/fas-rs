@@ -17,7 +17,7 @@ use cpu_cycles_reader::Cycles;
 use super::Insider;
 
 impl Insider {
-    pub fn normal_policy(&mut self, max_cycles: Cycles) {
+    pub fn usage_policy(&mut self, max_cycles: Cycles) {
         let target_freq = if self.is_little() {
             max_cycles * 100 / 75 // target usage: 75
         } else {
