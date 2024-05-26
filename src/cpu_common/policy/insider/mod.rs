@@ -33,9 +33,10 @@ use cpuinfo::CpuTimeSlice;
 use event_loop::State;
 
 pub enum Event {
-    InitDefault(bool),
-    InitGame,
-    SetFasFreq(Freq),
+    InitDefault(bool), // bool: is userspace_governor on
+    InitGame(bool),    // bool: is hybrid on
+    IncreaseFasFreq(Freq),
+    DecreaseFasFreq(Freq),
 }
 
 #[derive(Debug)]
@@ -45,15 +46,16 @@ pub struct Insider {
     path: PathBuf,
     cache: Freq,
     fas_freq: Freq,
-    governor_freq: Freq,
+    usage_based_freq: Freq,
     freqs: Vec<Freq>,
     userspace_governor: bool,
+    hybrid: bool,
     state: State,
     rx: Receiver<Event>,
 }
 
 impl Insider {
-    pub fn spawn<P: AsRef<Path>>(rx: Receiver<Event>, p: P) -> Result<Vec<Freq>> {
+    pub fn spawn<P: AsRef<Path>>(rx: Receiver<Event>, p: P) -> Result<()> {
         let path = p.as_ref();
 
         let mut freqs: Vec<Freq> = fs::read_to_string(path.join("scaling_available_frequencies"))?
@@ -82,11 +84,12 @@ impl Insider {
             cpus,
             cpu_stat: HashMap::new(),
             path: path.to_path_buf(),
-            freqs: freqs.clone(),
             cache: freqs.last().copied().unwrap(),
             fas_freq: freqs.last().copied().unwrap(),
-            governor_freq: freqs.last().copied().unwrap(),
+            usage_based_freq: freqs.last().copied().unwrap(),
+            freqs,
             userspace_governor: false,
+            hybrid: false,
             state: State::Normal,
             rx,
         };
@@ -94,7 +97,7 @@ impl Insider {
         thread::Builder::new()
             .name(thread_name)
             .spawn(move || Self::event_loop(policy).unwrap())?;
-
-        Ok(freqs)
+        
+        Ok(())
     }
 }

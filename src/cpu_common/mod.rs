@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod misc;
 mod policy;
 
-use std::{cmp, collections::HashSet, ffi::OsStr, fs, time::Duration};
+use std::{ffi::OsStr, fs, time::Duration};
 
 use anyhow::Result;
 #[cfg(debug_assertions)]
@@ -29,12 +28,10 @@ pub type Freq = usize; // khz
 
 const BASE_STEP: Freq = 700_000;
 const JANK_STEP: Freq = 500_000;
+const BIG_JANK_STEP: Freq = 800_000;
 
 #[derive(Debug)]
 pub struct CpuCommon {
-    freqs: Vec<Freq>,
-    fas_freq: Freq,
-    cache: Freq,
     policies: Vec<Policy>,
 }
 
@@ -52,27 +49,13 @@ impl CpuCommon {
             .map(|p| Policy::new(c, p))
             .map(Result::unwrap)
             .collect();
-
-        let mut freqs: Vec<_> = policies
-            .iter()
-            .flat_map(|p| p.freqs.iter().copied())
-            .collect::<HashSet<_>>()
-            .into_iter()
-            .collect();
-        freqs.sort_unstable();
-
-        let fas_freq = freqs.last().copied().unwrap();
-        let cache = fas_freq;
-
+        
         Ok(Self {
-            freqs,
-            fas_freq,
-            cache,
             policies,
         })
     }
 
-    pub fn limit(&mut self, target_fps: u32, frame: Duration, target: Duration) {
+    pub fn limit(&self, target_fps: u32, frame: Duration, target: Duration) {
         let target = target.as_nanos() as Freq;
         let frame = frame.as_nanos() as Freq;
 
@@ -82,15 +65,10 @@ impl CpuCommon {
         #[cfg(debug_assertions)]
         debug!("step: -{step}khz");
 
-        self.fas_freq = cmp::max(
-            self.fas_freq.saturating_sub(step),
-            self.freqs.first().copied().unwrap(),
-        );
-
-        self.set_freq_cached(self.fas_freq);
+        self.decrease_fas_freq(step);
     }
 
-    pub fn release(&mut self, target_fps: u32, frame: Duration, target: Duration) {
+    pub fn release(&self, target_fps: u32, frame: Duration, target: Duration) {
         let target = target.as_nanos() as Freq;
         let frame = frame.as_nanos() as Freq;
 
@@ -100,45 +78,42 @@ impl CpuCommon {
         #[cfg(debug_assertions)]
         debug!("step: +{step}khz");
 
-        self.fas_freq = cmp::min(
-            self.fas_freq.saturating_add(step),
-            self.freqs.last().copied().unwrap(),
-        );
-
-        self.set_freq_cached(self.fas_freq);
+        self.increase_fas_freq(step);
     }
 
-    pub fn jank(&mut self) {
-        let jank_freq = self
-            .fas_freq
-            .saturating_add(JANK_STEP)
-            .min(self.freqs.last().copied().unwrap());
-
-        self.set_freq_cached(jank_freq);
+    pub fn jank(&self) {
+        self.increase_fas_freq(JANK_STEP);
     }
 
-    pub fn big_jank(&mut self) {
-        let max_freq = self.freqs.last().copied().unwrap();
-        self.set_freq_cached(max_freq);
+    pub fn big_jank(&self) {
+        self.increase_fas_freq(BIG_JANK_STEP);
     }
 
-    pub fn init_game(&mut self, extension: &Extension) {
-        self.reset_freq();
-
+    pub fn init_game(&self, config: &Config, extension: &Extension) {
         extension.tigger_extentions(ApiV0::InitCpuFreq);
 
         for policy in &self.policies {
-            let _ = policy.init_game();
+            let _ = policy.init_game(config);
         }
     }
 
-    pub fn init_default(&mut self, c: &Config, extension: &Extension) {
-        self.reset_freq();
-
+    pub fn init_default(&self, config: &Config, extension: &Extension) {
         extension.tigger_extentions(ApiV0::ResetCpuFreq);
 
         for policy in &self.policies {
-            let _ = policy.init_default(c);
+            let _ = policy.init_default(config);
+        }
+    }
+    
+    fn increase_fas_freq(&self, step: Freq)  {
+        for policy in &self.policies {
+            let _ = policy.increase_fas_freq(step);
+        }
+    }
+    
+    fn decrease_fas_freq(&self, step: Freq)  {
+        for policy in &self.policies {
+            let _ = policy.decrease_fas_freq(step);
         }
     }
 }

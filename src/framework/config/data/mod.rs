@@ -31,6 +31,7 @@ pub struct ConfigData {
     pub fast: ModeConfig,
 }
 
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct Config {
     #[serde(default = "Config::default_value_keep_std")]
@@ -39,6 +40,8 @@ pub struct Config {
     pub userspace_governor: bool,
     #[serde(default = "Config::default_value_scene_game_list")]
     pub scene_game_list: bool,
+    #[serde(default = "Config::default_value_hybrid")]
+    pub hybrid: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]

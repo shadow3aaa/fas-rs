@@ -27,16 +27,15 @@ use insider::{Event, Insider};
 
 #[derive(Debug)]
 pub struct Policy {
-    pub freqs: Vec<Freq>,
     sx: Sender<Event>,
 }
 
 impl Policy {
     pub fn new<P: AsRef<Path>>(c: &Config, p: P) -> Result<Self> {
         let (sx, rx) = mpsc::channel();
-        let freqs = Insider::spawn(rx, p)?;
+        Insider::spawn(rx, p)?;
 
-        let result = Self { freqs, sx };
+        let result = Self { sx };
         result.init_default(c)?;
         Ok(result)
     }
@@ -47,13 +46,19 @@ impl Policy {
         Ok(())
     }
 
-    pub fn init_game(&self) -> Result<()> {
-        self.sx.send(Event::InitGame)?;
+    pub fn init_game(&self, c: &Config) -> Result<()> {
+        let hybrid = c.config().hybrid;
+        self.sx.send(Event::InitGame(hybrid))?;
         Ok(())
     }
 
-    pub fn set_fas_freq(&self, f: Freq) -> Result<()> {
-        self.sx.send(Event::SetFasFreq(f))?;
+    pub fn increase_fas_freq(&self, step: Freq) -> Result<()> {
+        self.sx.send(Event::IncreaseFasFreq(step))?;
+        Ok(())
+    }
+    
+    pub fn decrease_fas_freq(&self, step: Freq) -> Result<()> {
+        self.sx.send(Event::DecreaseFasFreq(step))?;
         Ok(())
     }
 }
