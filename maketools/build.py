@@ -136,7 +136,8 @@ def __build_zygisk(
     cargo.build()
 
     if check:
-        print("Finish check (zygisk)")
+        print("Finish check (zygisk dynlib)")
+        os.chdir(root)
         return
 
     os.chdir(zygisk_root)
@@ -227,7 +228,7 @@ def __task_zygisk(args):
     cargo.build()
 
     if check:
-        print("Finish check")
+        print("Finish check (zygisk ver)")
         return
 
     module = Path("module").joinpath("fas-rs-zygisk")
@@ -253,6 +254,7 @@ def __task_zygisk(args):
     else:
         output = Path("output").joinpath("fas-rs-zygisk(debug)")
     shutil.make_archive(output, "zip", temp_dir)
+    print("fas-rs-zygisk build successfully: {}.zip".format(output))
 
 
 def __task_ebpf(args):
@@ -309,7 +311,7 @@ def __task_ebpf(args):
     cargo.build()
 
     if check:
-        print("Finish check")
+        print("Finish check (ebpf ver)")
         return
 
     module = Path("module").joinpath("fas-rs-ebpf")
@@ -330,6 +332,7 @@ def __task_ebpf(args):
     else:
         output = Path("output").joinpath("fas-rs-ebpf(debug)")
     shutil.make_archive(output, "zip", temp_dir)
+    print("fas-rs-ebpf build successfully: {}.zip".format(output))
 
 
 def task(args):

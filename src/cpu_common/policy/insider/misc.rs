@@ -94,11 +94,11 @@ impl Insider {
             .copied()
             .unwrap_or_else(|| self.freqs.last().copied().unwrap())
     }
-    
+
     pub fn clamp_freq(&self, freq: Freq) -> Freq {
         let min = self.freqs.first().copied().unwrap();
         let max = self.freqs.last().copied().unwrap();
-        
+
         freq.clamp(min, max)
     }
 }

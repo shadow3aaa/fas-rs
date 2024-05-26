@@ -56,7 +56,7 @@ impl Policy {
         self.sx.send(Event::IncreaseFasFreq(step))?;
         Ok(())
     }
-    
+
     pub fn decrease_fas_freq(&self, step: Freq) -> Result<()> {
         self.sx.send(Event::DecreaseFasFreq(step))?;
         Ok(())

@@ -30,17 +30,21 @@ impl Insider {
             let usage = self.current_usage_max()?;
             let target_freq_usage_based = self.usage_policy(usage)?;
 
-            let _ = self.set_usage_based_freq(target_freq_usage_based);
+            let () = self.set_usage_based_freq(target_freq_usage_based);
 
             if let Some(event) = self.recv_event() {
                 match event {
                     Event::InitDefault(userspace_governor) => self.init_default(userspace_governor),
                     Event::InitGame(hybrid) => self.init_game(hybrid),
-                    Event::IncreaseFasFreq(step) => self.set_fas_freq(self.current_freq()?.saturating_add(step)),
-                    Event::DecreaseFasFreq(step) => self.set_fas_freq(self.current_freq()?.saturating_sub(step)),
+                    Event::IncreaseFasFreq(step) => {
+                        self.set_fas_freq(self.current_freq()?.saturating_add(step));
+                    }
+                    Event::DecreaseFasFreq(step) => {
+                        self.set_fas_freq(self.current_freq()?.saturating_sub(step));
+                    }
                 };
             }
-            
+
             let _ = self.write_freq();
         }
     }

@@ -16,6 +16,30 @@
 import os
 import platform
 from pathlib import Path
+import shutil
+
+
+def find_ndk_home():
+    if (ndk_home := os.getenv("ANDROID_NDK_HOME")) is not None:
+        return ndk_home
+    elif (ndk_home := os.getenv("NDK_HOME")) is not None:
+        return ndk_home
+    elif (android_home := os.getenv("ANDROID_HOME")) is not None:
+        ndks = Path(android_home).joinpath("sdk").joinpath("ndk")
+        ndk_home = next(ndks.iterdir())
+
+        if ndk_home.exists():
+            return ndk_home
+        else:
+            raise FileNotFoundError("Failed to find ndk from ANDROID_HOME")
+    elif (android_home := Path.home().joinpath("Android")).exists():
+        ndks = Path(android_home).joinpath("sdk").joinpath("ndk")
+        ndk_home = next(ndks.iterdir())
+
+        if ndk_home.exists():
+            return ndk_home
+        else:
+            raise FileNotFoundError("Failed to find ndk from ANDROID_HOME")
 
 
 class Cargo:
@@ -43,7 +67,13 @@ class Cargo:
         command = "RUSTFLAGS='{}' {} {} -- {}".format(
             self.__rust_flags, self.__cargo, self.__args, self.__extra_args
         )
-        os.system(command)
+
+        print("Rust build:")
+        print("Working dir: {}".format(Path.cwd()))
+        print("Command: {}".format(command))
+
+        if os.system(command) != 0:
+            raise Exception("Rust build failed!")
 
 
 class CargoNightly:
@@ -56,10 +86,10 @@ class CargoNightly:
         if os.getenv("TERMUX_VERSION") is not None:
             prefix = os.getenv("PREFIX")
             self.__cargo = Path(prefix).joinpath("opt/rust-nightly/bin/cargo")
-        elif os.getenv("ANDROID_NDK_HOME") is not None:
+        elif shutil.which("cargo-ndk") is not None:
             self.__cargo = "cargo +nightly ndk -p 31 -t arm64-v8a"
         else:
-            raise Exception("Missing env: ANDROID_NDK_HOME")
+            raise Exception("Install cargo-ndk first")
 
     def arg(self, arg: str):
         self.__args += "{} ".format(arg)
@@ -77,7 +107,12 @@ class CargoNightly:
         command = "RUSTFLAGS='{}' {} {} -- {}".format(
             self.__rust_flags, self.__cargo, self.__args, self.__extra_args
         )
-        os.system(command)
+        print("Rust build:")
+        print("Working dir: {}".format(Path.cwd()))
+        print("Command: {}".format(command))
+
+        if os.system(command) != 0:
+            raise Exception("Rust build failed!")
 
 
 class Cpp:
@@ -93,7 +128,12 @@ class Cpp:
 
     def build(self):
         command = "{} {}".format(self.__clang_plusplus, self.__args)
-        os.system(command)
+        print("C++ build:")
+        print("Working dir: {}".format(Path.cwd()))
+        print("Command: {}".format(command))
+
+        if os.system(command) != 0:
+            raise Exception("C++ build failed!")
 
 
 class CppTidy:
@@ -109,7 +149,12 @@ class CppTidy:
 
     def tidy(self):
         command = "{} {}".format(self.__clang_tidy, self.__args)
-        os.system(command)
+        print("Clang tidy:")
+        print("Working dir: {}".format(Path.cwd()))
+        print("Command: {}".format(command))
+
+        if os.system(command) != 0:
+            raise Exception("Clang tidy failed!")
 
 
 class Buildtools:
@@ -126,7 +171,8 @@ class Buildtools:
             self.__clang_plusplus = "clang++"
             self.__clang_format = "clang-format"
             self.__clang_tidy = "clang-tidy"
-        elif (ndk_home := os.getenv("ANDROID_NDK_HOME")) is not None:
+        else:
+            ndk_home = find_ndk_home()
             system = platform.system()
             arch = platform.machine()
             prebuilt = (
@@ -151,8 +197,6 @@ class Buildtools:
             self.__clang_plusplus = bins.joinpath("aarch64-linux-android31-clang++")
             self.__clang_format = "clang-format"
             self.__clang_tidy = bins.joinpath("clang-tidy")
-        else:
-            raise Exception("Missing env: ANDROID_NDK_HOME")
 
     def cargo(self):
         return Cargo(self.__cargo)
@@ -169,7 +213,9 @@ class Buildtools:
 
     def cpp_format(self, path: Path):
         command = "{} -i --verbose {}".format(self.__clang_format, path)
-        os.system(command)
+
+        if os.system(command) != 0:
+            raise Exception("C++ codes format failed!")
 
     def cpp_tidy(self):
         return CppTidy(self.__clang_tidy)

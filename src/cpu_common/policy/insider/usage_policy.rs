@@ -23,7 +23,7 @@ impl Insider {
     pub fn usage_policy(&self, usage: f64) -> Result<Freq> {
         let current_freq = self.current_freq()?;
         let current_cycles = current_freq as f64 * usage;
-        
+
         let target_usage = if self.hybrid_mode() {
             TARGET_USAGE_HYBRID
         } else {

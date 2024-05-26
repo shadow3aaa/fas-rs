@@ -49,10 +49,8 @@ impl CpuCommon {
             .map(|p| Policy::new(c, p))
             .map(Result::unwrap)
             .collect();
-        
-        Ok(Self {
-            policies,
-        })
+
+        Ok(Self { policies })
     }
 
     pub fn limit(&self, target_fps: u32, frame: Duration, target: Duration) {
@@ -104,14 +102,14 @@ impl CpuCommon {
             let _ = policy.init_default(config);
         }
     }
-    
-    fn increase_fas_freq(&self, step: Freq)  {
+
+    fn increase_fas_freq(&self, step: Freq) {
         for policy in &self.policies {
             let _ = policy.increase_fas_freq(step);
         }
     }
-    
-    fn decrease_fas_freq(&self, step: Freq)  {
+
+    fn decrease_fas_freq(&self, step: Freq) {
         for policy in &self.policies {
             let _ = policy.decrease_fas_freq(step);
         }
