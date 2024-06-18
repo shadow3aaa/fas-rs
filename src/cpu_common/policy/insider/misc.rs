@@ -25,8 +25,7 @@ impl Insider {
         self.set_usage_based_freq(self.freqs.last().copied().unwrap());
     }
 
-    pub fn init_game(&mut self, hybrid: bool) {
-        self.hybrid = hybrid;
+    pub fn init_game(&mut self) {
         self.state = State::Fas;
         let last_freq = self.freqs.last().copied().unwrap();
         self.set_fas_freq(last_freq);
@@ -42,10 +41,6 @@ impl Insider {
 
     pub fn always_userspace_governor(&self) -> bool {
         self.userspace_governor && self.state == State::Normal
-    }
-
-    pub fn hybrid_mode(&self) -> bool {
-        self.hybrid && self.state == State::Fas
     }
 
     pub fn is_little(&self) -> bool {
@@ -68,8 +63,6 @@ impl Insider {
                     } else {
                         return Ok(());
                     }
-                } else if self.hybrid_mode() {
-                    self.fas_freq.min(self.usage_based_freq)
                 } else {
                     self.fas_freq
                 }

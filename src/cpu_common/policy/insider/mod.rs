@@ -34,7 +34,7 @@ use event_loop::State;
 
 pub enum Event {
     InitDefault(bool), // bool: is userspace_governor on
-    InitGame(bool),    // bool: is hybrid on
+    InitGame,
     IncreaseFasFreq(Freq),
     DecreaseFasFreq(Freq),
 }
@@ -49,7 +49,6 @@ pub struct Insider {
     usage_based_freq: Freq,
     freqs: Vec<Freq>,
     userspace_governor: bool,
-    hybrid: bool,
     state: State,
     rx: Receiver<Event>,
 }
@@ -89,7 +88,6 @@ impl Insider {
             usage_based_freq: freqs.last().copied().unwrap(),
             freqs,
             userspace_governor: false,
-            hybrid: false,
             state: State::Normal,
             rx,
         };

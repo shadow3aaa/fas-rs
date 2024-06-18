@@ -87,11 +87,11 @@ impl CpuCommon {
         self.increase_fas_freq(BIG_JANK_STEP);
     }
 
-    pub fn init_game(&self, config: &Config, extension: &Extension) {
+    pub fn init_game(&self, extension: &Extension) {
         extension.tigger_extentions(ApiV0::InitCpuFreq);
 
         for policy in &self.policies {
-            let _ = policy.init_game(config);
+            let _ = policy.init_game();
         }
     }
 

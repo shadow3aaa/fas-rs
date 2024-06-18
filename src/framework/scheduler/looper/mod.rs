@@ -145,7 +145,7 @@ impl Looper {
                 self.mode = new_mode;
 
                 if self.state == State::Working {
-                    self.controller.init_game(&self.config, &self.extension);
+                    self.controller.init_game(&self.extension);
                 }
             }
         }

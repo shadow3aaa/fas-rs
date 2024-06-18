@@ -46,9 +46,8 @@ impl Policy {
         Ok(())
     }
 
-    pub fn init_game(&self, c: &Config) -> Result<()> {
-        let hybrid = c.config().hybrid;
-        self.sx.send(Event::InitGame(hybrid))?;
+    pub fn init_game(&self) -> Result<()> {
+        self.sx.send(Event::InitGame)?;
         Ok(())
     }
 

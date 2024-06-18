@@ -17,19 +17,13 @@ use anyhow::Result;
 use super::{Freq, Insider};
 
 const TARGET_USAGE_DEFAULT: f64 = 0.65;
-const TARGET_USAGE_HYBRID: f64 = 0.5;
 
 impl Insider {
     pub fn usage_policy(&self, usage: f64) -> Result<Freq> {
         let current_freq = self.current_freq()?;
         let current_cycles = current_freq as f64 * usage;
 
-        let target_usage = if self.hybrid_mode() {
-            TARGET_USAGE_HYBRID
-        } else {
-            TARGET_USAGE_DEFAULT
-        };
-        let target_freq = (current_cycles / target_usage) as Freq;
+        let target_freq = (current_cycles / TARGET_USAGE_DEFAULT) as Freq;
 
         Ok(target_freq)
     }

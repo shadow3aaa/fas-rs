@@ -70,7 +70,7 @@ impl Looper {
                 if self.delay_timer.elapsed() > DELAY_TIME {
                     self.state = State::Working;
                     self.cleaner.cleanup();
-                    self.controller.init_game(&self.config, &self.extension);
+                    self.controller.init_game(&self.extension);
                 }
             }
             State::Working => (),

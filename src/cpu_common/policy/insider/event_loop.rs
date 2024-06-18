@@ -35,7 +35,7 @@ impl Insider {
             if let Some(event) = self.recv_event() {
                 match event {
                     Event::InitDefault(userspace_governor) => self.init_default(userspace_governor),
-                    Event::InitGame(hybrid) => self.init_game(hybrid),
+                    Event::InitGame => self.init_game(),
                     Event::IncreaseFasFreq(step) => {
                         self.set_fas_freq(self.current_freq()?.saturating_add(step));
                     }
@@ -50,7 +50,7 @@ impl Insider {
     }
 
     fn recv_event(&self) -> Option<Event> {
-        if self.always_userspace_governor() || self.hybrid_mode() {
+        if self.always_userspace_governor() {
             self.rx.recv_timeout(Duration::from_millis(25)).ok()
         } else {
             self.rx.recv().ok()
