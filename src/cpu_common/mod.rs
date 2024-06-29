@@ -1,10 +1,12 @@
 mod cpu_info;
+mod file_handler;
 
-use std::{fs, os::unix::fs::PermissionsExt, path::Path, time::Duration};
+use std::{fs, path::Path, time::Duration};
 
 use anyhow::Result;
 
 use cpu_info::Info;
+use file_handler::FileHandler;
 #[cfg(debug_assertions)]
 use log::debug;
 use log::error;
@@ -19,6 +21,7 @@ pub struct Controller {
     min_freq: isize,
     policy_freq: isize,
     cpu_infos: Vec<Info>,
+    file_handler: FileHandler,
 }
 
 impl Controller {
@@ -59,6 +62,7 @@ impl Controller {
             min_freq,
             policy_freq: max_freq,
             cpu_infos,
+            file_handler: FileHandler::new(),
         })
     }
 
@@ -68,11 +72,13 @@ impl Controller {
 
         let walt_extra = Path::new("/proc/sys/walt/sched_fmax_cap");
         if walt_extra.exists() {
-            let _ = unlock_write(walt_extra, self.max_freq.to_string());
+            let _ = self
+                .file_handler
+                .write(walt_extra, self.max_freq.to_string());
         }
 
         for cpu in &self.cpu_infos {
-            cpu.write_freq(self.max_freq)
+            cpu.write_freq(self.max_freq, &mut self.file_handler)
                 .unwrap_or_else(|e| error!("{e:?}"));
         }
     }
@@ -83,11 +89,14 @@ impl Controller {
 
         let walt_extra = Path::new("/proc/sys/walt/sched_fmax_cap");
         if walt_extra.exists() {
-            let _ = unlock_write(walt_extra, self.max_freq.to_string());
+            let _ = self
+                .file_handler
+                .write(walt_extra, self.max_freq.to_string());
         }
 
         for cpu in &self.cpu_infos {
-            cpu.reset_freq().unwrap_or_else(|e| error!("{e:?}"));
+            cpu.reset_freq(&mut self.file_handler)
+                .unwrap_or_else(|e| error!("{e:?}"));
         }
     }
 
@@ -99,11 +108,13 @@ impl Controller {
 
         let walt_extra = Path::new("/proc/sys/walt/sched_fmax_cap");
         if walt_extra.exists() {
-            let _ = unlock_write(walt_extra, self.policy_freq.to_string());
+            let _ = self
+                .file_handler
+                .write(walt_extra, self.policy_freq.to_string());
         }
 
         for cpu in &self.cpu_infos {
-            cpu.write_freq(self.policy_freq)
+            cpu.write_freq(self.policy_freq, &mut self.file_handler)
                 .unwrap_or_else(|e| error!("{e:?}"));
         }
     }
@@ -111,22 +122,12 @@ impl Controller {
     pub fn scale_factor(target_fps: u32, frame: Duration, target: Duration) -> f64 {
         if frame > target {
             let factor_a = (frame - target).as_nanos() as f64 / target.as_nanos() as f64;
-            let factor_b = 120.0 / target_fps as f64;
-            factor_a * f64::from(factor_b)
+            let factor_b = 120.0 / f64::from(target_fps);
+            factor_a * factor_b
         } else {
             let factor_a = (target - frame).as_nanos() as f64 / target.as_nanos() as f64;
-            let factor_b = 120.0 / target_fps as f64;
-            factor_a * f64::from(factor_b) * -1.0
+            let factor_b = 120.0 / f64::from(target_fps);
+            factor_a * factor_b * -1.0
         }
     }
-}
-
-fn unlock_write<P, C>(path: P, contents: C) -> Result<()>
-where
-    P: AsRef<Path>,
-    C: AsRef<[u8]>,
-{
-    let _ = fs::set_permissions(path.as_ref(), PermissionsExt::from_mode(0o644));
-    fs::write(path, contents)?;
-    Ok(())
 }

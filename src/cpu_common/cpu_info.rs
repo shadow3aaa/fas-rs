@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use anyhow::Result;
 
-use super::unlock_write;
+use super::file_handler::FileHandler;
 
 #[derive(Debug)]
 pub struct Info {
@@ -36,25 +36,25 @@ impl Info {
         })
     }
 
-    pub fn write_freq(&self, freq: isize) -> Result<()> {
+    pub fn write_freq(&self, freq: isize, file_handler: &mut FileHandler) -> Result<()> {
         let freq = freq.to_string();
         let max_freq_path = self.max_freq_path();
-        unlock_write(max_freq_path, &freq)?;
+        file_handler.write(max_freq_path, &freq)?;
 
         if self.policy != 0 {
             let min_freq_path = self.min_freq_path();
-            unlock_write(min_freq_path, &freq)?;
+            file_handler.write(min_freq_path, &freq)?;
         }
 
         Ok(())
     }
 
-    pub fn reset_freq(&self) -> Result<()> {
+    pub fn reset_freq(&self, file_handler: &mut FileHandler) -> Result<()> {
         let max_freq_path = self.max_freq_path();
         let min_freq_path = self.min_freq_path();
 
-        unlock_write(max_freq_path, self.freqs.last().unwrap().to_string())?;
-        unlock_write(min_freq_path, self.freqs.first().unwrap().to_string())?;
+        file_handler.write(max_freq_path, self.freqs.last().unwrap().to_string())?;
+        file_handler.write(min_freq_path, self.freqs.first().unwrap().to_string())?;
 
         Ok(())
     }
