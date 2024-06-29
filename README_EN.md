@@ -41,12 +41,6 @@
     - `true`: Always keep the standard configuration profile when merging configurations, retain the local configuration application list, and other places are the same as false *
     - `false`: see [default behavior of config merge](#config merge)
 
-  - **userspace_governor**
-
-    - Type: `bool`
-    - `true`: Enable the built-in user space governor
-    - `false`: turn off the built-in user space governor
-
   - **scene_game_list**
 
     - Type: `bool`
@@ -72,10 +66,9 @@
 
 ### **`games.toml` configuration standard example:**
 
-```
+```toml
 [config]
 keep_std = true
-userspace_governor = false
 scene_game_list = true
 
 [game_list]

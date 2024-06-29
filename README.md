@@ -41,12 +41,6 @@
     - `true`: 永远在配置合并时保持标准配置的profile，保留本地配置的应用列表，其它地方和false相同 *
     - `false`: 见[配置合并的默认行为](#配置合并)
 
-  - **userspace_governor**
-
-    - 类型: `bool`
-    - `true`: 开启内置用户空间调速器
-    - `false`: 关闭内置用户空间调速器
-
   - **scene_game_list**
 
     - 类型: `bool`
@@ -72,10 +66,9 @@
 
 ### **`games.toml`配置标准例:**
 
-```
+```toml
 [config]
 keep_std = true
-userspace_governor = false
 scene_game_list = true
 
 [game_list]
