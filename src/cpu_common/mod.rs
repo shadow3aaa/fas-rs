@@ -84,13 +84,7 @@ impl Controller {
         self.policy_freq = self.max_freq;
         extension.tigger_extentions(ApiV0::InitCpuFreq);
 
-        let walt_extra = Path::new("/proc/sys/walt/sched_fmax_cap");
-        if walt_extra.exists() {
-            let _ = self
-                .file_handler
-                .write(walt_extra, self.max_freq.to_string());
-        }
-
+        // self.walt_extra(self.max_freq);
         for cpu in &self.cpu_infos {
             cpu.write_freq(self.max_freq, &mut self.file_handler)
                 .unwrap_or_else(|e| error!("{e:?}"));
@@ -101,13 +95,7 @@ impl Controller {
         self.policy_freq = self.max_freq;
         extension.tigger_extentions(ApiV0::ResetCpuFreq);
 
-        let walt_extra = Path::new("/proc/sys/walt/sched_fmax_cap");
-        if walt_extra.exists() {
-            let _ = self
-                .file_handler
-                .write(walt_extra, self.max_freq.to_string());
-        }
-
+        // self.walt_extra(self.max_freq);
         for cpu in &self.cpu_infos {
             cpu.reset_freq(&mut self.file_handler)
                 .unwrap_or_else(|e| error!("{e:?}"));
@@ -120,13 +108,7 @@ impl Controller {
             .saturating_add((BASE_FREQ as f64 * factor) as isize)
             .clamp(self.min_freq, self.max_freq);
 
-        let walt_extra = Path::new("/proc/sys/walt/sched_fmax_cap");
-        if walt_extra.exists() {
-            let _ = self
-                .file_handler
-                .write(walt_extra, self.policy_freq.to_string());
-        }
-
+        // self.walt_extra(self.policy_freq);
         for cpu in &self.cpu_infos {
             cpu.write_freq(self.policy_freq, &mut self.file_handler)
                 .unwrap_or_else(|e| error!("{e:?}"));
@@ -144,4 +126,19 @@ impl Controller {
             factor_a * factor_b * -1.0
         }
     }
+
+    /* fn walt_extra(&mut self, freq: isize) {
+        let walt_extra = Path::new("/proc/sys/walt/sched_fmax_cap");
+        if walt_extra.exists() {
+            let freq = freq.to_string();
+
+            let mut msg = String::new();
+            for _ in 0..self.cpu_infos.len() {
+                msg += " ";
+                msg += &freq;
+            }
+
+            let _ = self.file_handler.write(walt_extra, msg);
+        }
+    } */
 }
