@@ -1,6 +1,6 @@
 mod cpu_info;
 
-use std::{fs, time::Duration};
+use std::{fs, os::unix::fs::PermissionsExt, path::Path, time::Duration};
 
 use anyhow::Result;
 
@@ -66,6 +66,11 @@ impl Controller {
         self.policy_freq = self.max_freq;
         extension.tigger_extentions(ApiV0::InitCpuFreq);
 
+        let walt_extra = Path::new("/proc/sys/walt/sched_fmax_cap");
+        if walt_extra.exists() {
+            let _ = unlock_write(walt_extra, self.max_freq.to_string());
+        }
+
         for cpu in &self.cpu_infos {
             cpu.write_freq(self.max_freq)
                 .unwrap_or_else(|e| error!("{e:?}"));
@@ -75,6 +80,11 @@ impl Controller {
     pub fn init_default(&mut self, extension: &Extension) {
         self.policy_freq = self.max_freq;
         extension.tigger_extentions(ApiV0::ResetCpuFreq);
+
+        let walt_extra = Path::new("/proc/sys/walt/sched_fmax_cap");
+        if walt_extra.exists() {
+            let _ = unlock_write(walt_extra, self.max_freq.to_string());
+        }
 
         for cpu in &self.cpu_infos {
             cpu.reset_freq().unwrap_or_else(|e| error!("{e:?}"));
@@ -86,6 +96,11 @@ impl Controller {
             .policy_freq
             .saturating_add((BASE_FREQ as f64 * factor) as isize)
             .clamp(self.min_freq, self.max_freq);
+
+        let walt_extra = Path::new("/proc/sys/walt/sched_fmax_cap");
+        if walt_extra.exists() {
+            let _ = unlock_write(walt_extra, self.policy_freq.to_string());
+        }
 
         for cpu in &self.cpu_infos {
             cpu.write_freq(self.policy_freq)
@@ -104,4 +119,14 @@ impl Controller {
             factor_a * f64::from(factor_b) * -1.0
         }
     }
+}
+
+fn unlock_write<P, C>(path: P, contents: C) -> Result<()>
+where
+    P: AsRef<Path>,
+    C: AsRef<[u8]>,
+{
+    let _ = fs::set_permissions(path.as_ref(), PermissionsExt::from_mode(0o644));
+    fs::write(path, contents)?;
+    Ok(())
 }

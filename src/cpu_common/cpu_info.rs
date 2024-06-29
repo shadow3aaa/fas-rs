@@ -1,10 +1,8 @@
-use std::{
-    fs,
-    os::unix::fs::PermissionsExt,
-    path::{Path, PathBuf},
-};
+use std::{fs, path::PathBuf};
 
 use anyhow::Result;
+
+use super::unlock_write;
 
 #[derive(Debug)]
 pub struct Info {
@@ -68,14 +66,4 @@ impl Info {
     fn min_freq_path(&self) -> PathBuf {
         self.path.join("scaling_min_freq")
     }
-}
-
-fn unlock_write<P, C>(path: P, contents: C) -> Result<()>
-where
-    P: AsRef<Path>,
-    C: AsRef<[u8]>,
-{
-    let _ = fs::set_permissions(path.as_ref(), PermissionsExt::from_mode(0o644));
-    fs::write(path, contents)?;
-    Ok(())
 }
