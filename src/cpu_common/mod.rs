@@ -86,7 +86,7 @@ impl Controller {
             .policy_freq
             .saturating_add((BASE_FREQ as f64 * factor) as isize)
             .clamp(self.min_freq, self.max_freq);
-        println!("{} {factor:.4}", self.policy_freq);
+
         for cpu in &self.cpu_infos {
             cpu.write_freq(self.policy_freq)
                 .unwrap_or_else(|e| error!("{e:?}"));
