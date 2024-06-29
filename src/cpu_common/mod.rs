@@ -1,117 +1,107 @@
-// Copyright 2023 shadow3aaa@gitbub.com
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+mod cpu_info;
 
-mod policy;
-
-use std::{ffi::OsStr, fs, time::Duration};
+use std::{fs, time::Duration};
 
 use anyhow::Result;
+
+use cpu_info::Info;
 #[cfg(debug_assertions)]
 use log::debug;
+use log::error;
 
-use crate::framework::prelude::*;
-use api::ApiV0;
-use policy::Policy;
+use crate::{api::ApiV0, Extension};
 
-pub type Freq = usize; // khz
-
-const BASE_STEP: Freq = 700_000;
-const JANK_STEP: Freq = 500_000;
-const BIG_JANK_STEP: Freq = 800_000;
+const BASE_FREQ: isize = 700_000;
 
 #[derive(Debug)]
-pub struct CpuCommon {
-    policies: Vec<Policy>,
+pub struct Controller {
+    max_freq: isize,
+    min_freq: isize,
+    policy_freq: isize,
+    cpu_infos: Vec<Info>,
 }
 
-impl CpuCommon {
-    pub fn new(c: &Config) -> Result<Self> {
-        let policies: Vec<_> = fs::read_dir("/sys/devices/system/cpu/cpufreq")?
-            .filter_map(|d| Some(d.ok()?.path()))
-            .filter(|p| p.is_dir())
-            .filter(|p| {
-                p.file_name()
-                    .and_then(OsStr::to_str)
-                    .unwrap()
-                    .contains("policy")
+impl Controller {
+    pub fn new() -> Result<Self> {
+        let cpu_infos: Vec<_> = fs::read_dir("/sys/devices/system/cpu/cpufreq")?
+            .map(|entry| entry.unwrap().path())
+            .filter(|path| {
+                path.is_dir()
+                    && path
+                        .file_name()
+                        .unwrap()
+                        .to_str()
+                        .unwrap()
+                        .starts_with("policy")
             })
-            .map(|p| Policy::new(c, p))
-            .map(Result::unwrap)
+            .map(|path| Info::new(path).unwrap())
             .collect();
 
-        Ok(Self { policies })
-    }
-
-    pub fn limit(&self, target_fps: u32, frame: Duration, target: Duration) {
-        let target = target.as_nanos() as Freq;
-        let frame = frame.as_nanos() as Freq;
-
-        let step = BASE_STEP * (target - frame) / target;
-        let step = step * 120 / target_fps as Freq;
-
         #[cfg(debug_assertions)]
-        debug!("step: -{step}khz");
+        debug!("cpu infos: {cpu_infos:?}");
 
-        self.decrease_fas_freq(step);
+        let max_freq = cpu_infos
+            .iter()
+            .flat_map(|info| info.freqs.iter())
+            .max()
+            .copied()
+            .unwrap();
+
+        let min_freq = cpu_infos
+            .iter()
+            .flat_map(|info| info.freqs.iter())
+            .min()
+            .copied()
+            .unwrap();
+
+        Ok(Self {
+            max_freq,
+            min_freq,
+            policy_freq: max_freq,
+            cpu_infos,
+        })
     }
 
-    pub fn release(&self, target_fps: u32, frame: Duration, target: Duration) {
-        let target = target.as_nanos() as Freq;
-        let frame = frame.as_nanos() as Freq;
-
-        let step = BASE_STEP * (frame - target) / target;
-        let step = step * 120 / target_fps as Freq;
-
-        #[cfg(debug_assertions)]
-        debug!("step: +{step}khz");
-
-        self.increase_fas_freq(step);
-    }
-
-    pub fn jank(&self) {
-        self.increase_fas_freq(JANK_STEP);
-    }
-
-    pub fn big_jank(&self) {
-        self.increase_fas_freq(BIG_JANK_STEP);
-    }
-
-    pub fn init_game(&self, extension: &Extension) {
+    pub fn init_game(&mut self, extension: &Extension) {
+        self.policy_freq = self.max_freq;
         extension.tigger_extentions(ApiV0::InitCpuFreq);
 
-        for policy in &self.policies {
-            let _ = policy.init_game();
+        for cpu in &self.cpu_infos {
+            cpu.write_freq(self.max_freq)
+                .unwrap_or_else(|e| error!("{e:?}"));
         }
     }
 
-    pub fn init_default(&self, config: &Config, extension: &Extension) {
+    pub fn init_default(&mut self, extension: &Extension) {
+        self.policy_freq = self.max_freq;
         extension.tigger_extentions(ApiV0::ResetCpuFreq);
 
-        for policy in &self.policies {
-            let _ = policy.init_default(config);
+        for cpu in &self.cpu_infos {
+            cpu.reset_freq().unwrap_or_else(|e| error!("{e:?}"));
         }
     }
 
-    fn increase_fas_freq(&self, step: Freq) {
-        for policy in &self.policies {
-            let _ = policy.increase_fas_freq(step);
+    pub fn fas_update_freq(&mut self, factor: f64) {
+        self.policy_freq = self
+            .policy_freq
+            .saturating_add((BASE_FREQ as f64 * factor) as isize)
+            .clamp(self.min_freq, self.max_freq);
+        println!("{} {factor:.4}", self.policy_freq);
+        for cpu in &self.cpu_infos {
+            cpu.write_freq(self.policy_freq)
+                .unwrap_or_else(|e| error!("{e:?}"));
         }
     }
 
-    fn decrease_fas_freq(&self, step: Freq) {
-        for policy in &self.policies {
-            let _ = policy.decrease_fas_freq(step);
+    pub fn scale_factor(target_fps: u32, frame: Duration, target: Duration) -> f64 {
+        if frame > target {
+            let factor_a = (frame - target).as_nanos() as f64 / target.as_nanos() as f64;
+            let factor_b = 120.0 / target_fps as f64;
+            factor_a * f64::from(factor_b)
+        } else {
+            let factor_a = (target - frame).as_nanos() as f64 / target.as_nanos() as f64;
+            let factor_b = 120.0 / target_fps as f64;
+            factor_a * f64::from(factor_b) * -1.0
         }
     }
 }

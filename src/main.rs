@@ -44,7 +44,7 @@ use log::{error, warn};
 #[cfg(debug_assertions)]
 use log::debug;
 
-use cpu_common::CpuCommon;
+use cpu_common::Controller;
 use misc::setprop;
 
 const USER_CONFIG: &str = "/sdcard/Android/fas-rs/games.toml";
@@ -86,7 +86,7 @@ fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
     let _ = fs::write("/dev/cpuset/background/cgroup.procs", self_pid.to_string());
 
     let config = Config::new(USER_CONFIG, std_path)?;
-    let cpu = CpuCommon::new(&config)?;
+    let cpu = Controller::new()?;
 
     #[cfg(debug_assertions)]
     debug!("{cpu:#?}");

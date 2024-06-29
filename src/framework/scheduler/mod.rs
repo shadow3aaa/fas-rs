@@ -25,7 +25,7 @@ use super::{
     node::Node,
     Extension,
 };
-use crate::CpuCommon;
+use crate::Controller;
 
 #[cfg(feature = "use_binder")]
 use self::binder::FasServer;
@@ -40,7 +40,7 @@ pub struct FasData {
 }
 
 pub struct Scheduler {
-    controller: Option<CpuCommon>,
+    controller: Option<Controller>,
     config: Option<Config>,
 }
 
@@ -62,7 +62,7 @@ impl Scheduler {
 
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
-    pub fn controller(mut self, c: CpuCommon) -> Self {
+    pub fn controller(mut self, c: Controller) -> Self {
         self.controller = Some(c);
         self
     }

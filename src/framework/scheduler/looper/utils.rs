@@ -51,7 +51,7 @@ impl Looper {
             State::Working => {
                 self.state = State::NotWorking;
                 self.cleaner.undo_cleanup();
-                self.controller.init_default(&self.config, &self.extension);
+                self.controller.init_default(&self.extension);
                 self.extension.tigger_extentions(ApiV0::StopFas);
             }
             State::Waiting => self.state = State::NotWorking,

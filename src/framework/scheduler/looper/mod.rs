@@ -40,12 +40,11 @@ use crate::{
         node::{Mode, Node},
         Extension,
     },
-    CpuCommon,
+    Controller,
 };
 
 use buffer::Buffer;
 use clean::Cleaner;
-use policy::{JankEvent, NormalEvent};
 
 pub type Producer = i32; // pid
 pub type Buffers = HashMap<Producer, Buffer>;
@@ -66,7 +65,7 @@ pub struct Looper {
     node: Node,
     extension: Extension,
     mode: Mode,
-    controller: CpuCommon,
+    controller: Controller,
     topapp_watcher: TimedWatcher,
     cleaner: Cleaner,
     buffers: Buffers,
@@ -81,7 +80,7 @@ impl Looper {
         config: Config,
         node: Node,
         extension: Extension,
-        controller: CpuCommon,
+        controller: Controller,
     ) -> Self {
         Self {
             #[cfg(feature = "use_binder")]
@@ -126,11 +125,8 @@ impl Looper {
 
             if let Some(data) = fas_data {
                 self.buffer_update(&data);
-                let producer = data.pid;
-                self.do_normal_policy(producer, target_fps);
+                self.do_policy(target_fps);
             }
-
-            self.do_jank_policy(target_fps);
         }
     }
 
@@ -186,7 +182,7 @@ impl Looper {
         Ok(())
     }
 
-    fn do_normal_policy(&mut self, _producer: Producer, target_fps: Option<u32>) {
+    fn do_policy(&mut self, target_fps: Option<u32>) {
         if self.state != State::Working {
             #[cfg(debug_assertions)]
             debug!("Not running policy!");
@@ -197,7 +193,7 @@ impl Looper {
             .buffers
             .values_mut()
             .filter(|buffer| buffer.target_fps == target_fps)
-            .filter_map(|buffer| buffer.normal_event(&self.config, self.mode))
+            .filter_map(|buffer| buffer.event(&self.config, self.mode))
             .max()
         else {
             self.disable_fas();
@@ -206,40 +202,7 @@ impl Looper {
 
         let target_fps = target_fps.unwrap_or(120);
 
-        match event {
-            NormalEvent::Release(frame, target) => {
-                self.controller.release(target_fps, frame, target);
-            }
-            NormalEvent::Restrictable(frame, target) => {
-                self.controller.limit(target_fps, frame, target);
-            }
-        }
-    }
-
-    fn do_jank_policy(&mut self, target_fps: Option<u32>) -> Option<JankEvent> {
-        if self.state != State::Working {
-            #[cfg(debug_assertions)]
-            debug!("Not running policy!");
-            return None;
-        }
-
-        let Some(event) = self
-            .buffers
-            .values_mut()
-            .filter(|buffer| buffer.target_fps == target_fps)
-            .filter_map(|buffer| buffer.jank_event())
-            .max()
-        else {
-            self.disable_fas();
-            return None;
-        };
-
-        match event {
-            JankEvent::BigJank => self.controller.big_jank(),
-            JankEvent::Jank => self.controller.jank(),
-            JankEvent::None => (),
-        }
-
-        Some(event)
+        let factor = Controller::scale_factor(target_fps, event.frame, event.target);
+        self.controller.fas_update_freq(factor);
     }
 }
