@@ -1,6 +1,6 @@
 {
-  "versionCode": 281,
-  "version": "v2.8.1",
-  "zipUrl": "https://github.com/shadow3aaa/fas-rs/releases/download/v2.8.1/fas-rs-ebpf.zip",
+  "versionCode": 290,
+  "version": "v2.9.0",
+  "zipUrl": "https://github.com/shadow3aaa/fas-rs/releases/download/v2.9.0/fas-rs-ebpf.zip",
   "changelog": "https://github.com/shadow3aaa/fas-rs/raw/master/update/zh-CN/changelog.md"
 }

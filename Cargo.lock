@@ -334,7 +334,7 @@ dependencies = [
 
 [[package]]
 name = "fas-rs"
-version = "2.8.1"
+version = "2.9.0"
 dependencies = [
  "anyhow",
  "async-trait",
