@@ -23,18 +23,18 @@ crate-type = ["staticlib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-android_logger = "0.13.3"
+android_logger = "0.14.1"
 cpp_demangle = "0.4.3"
 dobby-api = "1.0.1"
 goblin = "0.8.2"
-libc = "0.2.154"
-log = "0.4.21"
-anyhow = "1.0.83"
+libc = "0.2.155"
+log = "0.4.22"
+anyhow = "1.0.86"
 async-trait = "0.1.80"
 binder = { package = "binder_ndk", git = "https://github.com/shadow3aaa/binder_rs" }
-lazy_static = "1.4.0"
+lazy_static = "1.5.0"
 once_cell = "1.19.0"
-thiserror = "1.0.60"
+thiserror = "1.0.61"
 
 [profile.dev]
 overflow-checks = false
