@@ -18,33 +18,21 @@ use dumpsys_rs::Dumpsys;
 
 const REFRESH_TIME: Duration = Duration::from_secs(1);
 
-struct Insider {
-    windows_dumper: Dumpsys,
-    cache: Vec<i32>,
-    last_refresh: Instant,
+#[derive(Default)]
+struct WindowsInfo {
+    pub visible_freeform_window: bool,
+    pub pids: Vec<i32>,
 }
 
-impl Insider {
-    pub fn new() -> Self {
+impl WindowsInfo {
+    pub fn new(dump: String) -> Self {
+        let pids = Self::parse_top_app(&dump);
+        let visible_freeform_window = dump.contains("freeform");
+
         Self {
-            windows_dumper: Dumpsys::new("window").unwrap(),
-            cache: Vec::new(),
-            last_refresh: Instant::now(),
+            visible_freeform_window,
+            pids,
         }
-    }
-
-    pub fn pids(&mut self) -> &Vec<i32> {
-        if self.last_refresh.elapsed() > REFRESH_TIME {
-            self.cache = self.get_top_pids().unwrap_or_default();
-            self.last_refresh = Instant::now();
-        }
-
-        &self.cache
-    }
-
-    fn get_top_pids(&self) -> Option<Vec<i32>> {
-        let dump = self.windows_dumper.dump(&["visible-apps"]).ok()?;
-        Some(Self::parse_top_app(&dump))
     }
 
     fn parse_top_app(dump: &str) -> Vec<i32> {
@@ -58,22 +46,36 @@ impl Insider {
 }
 
 pub struct TimedWatcher {
-    insider: Insider,
+    windows_dumper: Dumpsys,
+    cache: WindowsInfo,
+    last_refresh: Instant,
 }
 
 impl TimedWatcher {
     pub fn new() -> Self {
         Self {
-            insider: Insider::new(),
+            windows_dumper: Dumpsys::new("window").unwrap(),
+            cache: WindowsInfo::default(),
+            last_refresh: Instant::now(),
         }
     }
 
-    pub fn is_topapp(&mut self, pid: i32) -> bool {
-        self.insider.pids().contains(&pid)
+    pub fn topapp_pids(&mut self) -> &Vec<i32> {
+        &self.cache().pids
     }
 
-    #[allow(dead_code)]
-    pub fn top_apps(&mut self) -> impl Iterator<Item = i32> + '_ {
-        self.insider.pids().iter().copied()
+    pub fn visible_freeform_window(&mut self) -> bool {
+        self.cache().visible_freeform_window
+    }
+
+    fn cache(&mut self) -> &WindowsInfo {
+        if self.last_refresh.elapsed() > REFRESH_TIME {
+            let dump = self.windows_dumper.dump(&["visible-apps"]).unwrap();
+            self.cache = WindowsInfo::new(dump);
+
+            self.last_refresh = Instant::now();
+        }
+
+        &self.cache
     }
 }

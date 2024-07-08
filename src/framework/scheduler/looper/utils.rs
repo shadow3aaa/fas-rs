@@ -27,7 +27,7 @@ const DELAY_TIME: Duration = Duration::from_secs(3);
 impl Looper {
     pub fn retain_topapp(&mut self) {
         self.buffers.retain(|pid, buffer| {
-            if self.topapp_watcher.is_topapp(*pid) {
+            if self.windows_watcher.topapp_pids().contains(pid) {
                 true
             } else {
                 #[cfg(feature = "use_ebpf")]
@@ -78,7 +78,7 @@ impl Looper {
     }
 
     pub fn buffer_update(&mut self, d: &FasData) {
-        if !self.topapp_watcher.is_topapp(d.pid) || d.frametime.is_zero() {
+        if !self.windows_watcher.topapp_pids().contains(&d.pid) || d.frametime.is_zero() {
             return;
         }
 

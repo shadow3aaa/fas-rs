@@ -66,7 +66,7 @@ pub struct Looper {
     extension: Extension,
     mode: Mode,
     controller: Controller,
-    topapp_watcher: TimedWatcher,
+    windows_watcher: TimedWatcher,
     cleaner: Cleaner,
     buffers: Buffers,
     state: State,
@@ -92,7 +92,7 @@ impl Looper {
             extension,
             mode: Mode::Balance,
             controller,
-            topapp_watcher: TimedWatcher::new(),
+            windows_watcher: TimedWatcher::new(),
             cleaner: Cleaner::new(),
             buffers: Buffers::new(),
             state: State::NotWorking,
@@ -122,6 +122,11 @@ impl Looper {
             let fas_data = self.recv_message()?;
             #[cfg(feature = "use_ebpf")]
             let fas_data = self.recv_message();
+
+            if self.windows_watcher.visible_freeform_window() {
+                self.disable_fas();
+                continue;
+            }
 
             if let Some(data) = fas_data {
                 self.buffer_update(&data);
@@ -172,7 +177,7 @@ impl Looper {
     fn update_analyzer(&mut self) -> Result<()> {
         use crate::framework::utils::get_process_name;
 
-        for pid in self.topapp_watcher.top_apps() {
+        for pid in self.windows_watcher.topapp_pids().iter().copied() {
             let pkg = get_process_name(pid)?;
             if self.config.need_fas(&pkg) {
                 self.analyzer.attach_app(pid)?;
