@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{
-    process::Command,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
+
+use dumpsys_rs::Dumpsys;
 
 const REFRESH_TIME: Duration = Duration::from_secs(1);
 
 struct Insider {
+    windows_dumper: Dumpsys,
     cache: Vec<i32>,
     last_refresh: Instant,
 }
@@ -27,6 +27,7 @@ struct Insider {
 impl Insider {
     pub fn new() -> Self {
         Self {
+            windows_dumper: Dumpsys::new("window").unwrap(),
             cache: Vec::new(),
             last_refresh: Instant::now(),
         }
@@ -34,20 +35,15 @@ impl Insider {
 
     pub fn pids(&mut self) -> &Vec<i32> {
         if self.last_refresh.elapsed() > REFRESH_TIME {
-            self.cache = Self::get_top_pids().unwrap_or_default();
+            self.cache = self.get_top_pids().unwrap_or_default();
             self.last_refresh = Instant::now();
         }
 
         &self.cache
     }
 
-    fn get_top_pids() -> Option<Vec<i32>> {
-        let dump = Command::new("dumpsys")
-            .args(["window", "visible-apps"])
-            .output()
-            .ok()?;
-        let dump = String::from_utf8_lossy(&dump.stdout).into_owned();
-
+    fn get_top_pids(&self) -> Option<Vec<i32>> {
+        let dump = self.windows_dumper.dump(&["visible-apps"]).ok()?;
         Some(Self::parse_top_app(&dump))
     }
 
