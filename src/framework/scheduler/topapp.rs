@@ -25,8 +25,8 @@ struct WindowsInfo {
 }
 
 impl WindowsInfo {
-    pub fn new(dump: String) -> Self {
-        let pids = Self::parse_top_app(&dump);
+    pub fn new(dump: &str) -> Self {
+        let pids = Self::parse_top_app(dump);
         let visible_freeform_window = dump.contains("freeform");
 
         Self {
@@ -71,7 +71,7 @@ impl TimedWatcher {
     fn cache(&mut self) -> &WindowsInfo {
         if self.last_refresh.elapsed() > REFRESH_TIME {
             let dump = self.windows_dumper.dump(&["visible-apps"]).unwrap();
-            self.cache = WindowsInfo::new(dump);
+            self.cache = WindowsInfo::new(&dump);
 
             self.last_refresh = Instant::now();
         }
