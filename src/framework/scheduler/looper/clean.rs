@@ -43,8 +43,8 @@ fn mount_bind(src_path: &str, dest_path: &str) {
         umount2(dest_path.as_ptr(), libc::MNT_DETACH);
 
         mount(
-            src_path.as_ptr().cast::<u8>(),
-            dest_path.as_ptr().cast::<u8>(),
+            src_path.as_ptr().cast(),
+            dest_path.as_ptr().cast(),
             ptr::null(),
             MS_BIND | MS_REC,
             ptr::null(),
