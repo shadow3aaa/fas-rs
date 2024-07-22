@@ -93,7 +93,14 @@ impl Cleaner {
             "0"
         );
 
-        lock_values!(self.map, ("/sys/module/migt/parameters/glk_disable", "/proc/game_opt/disable_cpufreq_limit"), "1");
+        lock_values!(
+            self.map,
+            (
+                "/sys/module/migt/parameters/glk_disable",
+                "/proc/game_opt/disable_cpufreq_limit"
+            ),
+            "1"
+        );
     }
 
     pub fn undo_cleanup(&self) {
