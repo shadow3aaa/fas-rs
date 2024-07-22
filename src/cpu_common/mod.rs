@@ -84,7 +84,6 @@ impl Controller {
         self.policy_freq = self.max_freq;
         extension.tigger_extentions(ApiV0::InitCpuFreq);
 
-        // self.walt_extra(self.max_freq);
         for cpu in &self.cpu_infos {
             cpu.write_freq(self.max_freq, &mut self.file_handler)
                 .unwrap_or_else(|e| error!("{e:?}"));
@@ -95,7 +94,6 @@ impl Controller {
         self.policy_freq = self.max_freq;
         extension.tigger_extentions(ApiV0::ResetCpuFreq);
 
-        // self.walt_extra(self.max_freq);
         for cpu in &self.cpu_infos {
             cpu.reset_freq(&mut self.file_handler)
                 .unwrap_or_else(|e| error!("{e:?}"));
@@ -108,7 +106,6 @@ impl Controller {
             .saturating_add((BASE_FREQ as f64 * factor) as isize)
             .clamp(self.min_freq, self.max_freq);
 
-        // self.walt_extra(self.policy_freq);
         for cpu in &self.cpu_infos {
             cpu.write_freq(self.policy_freq, &mut self.file_handler)
                 .unwrap_or_else(|e| error!("{e:?}"));
