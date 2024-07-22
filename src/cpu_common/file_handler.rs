@@ -14,8 +14,9 @@
 
 use std::{
     collections::{hash_map::Entry, HashMap},
-    fs::File,
-    io::prelude::*,
+    fs::{set_permissions, File},
+    io::{self, prelude::*, ErrorKind},
+    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
 
@@ -50,7 +51,26 @@ impl FileHandler {
         Ok(string)
     }
 
-    pub fn write(&mut self, path: impl AsRef<Path>, content: impl AsRef<[u8]>) -> Result<()> {
+    pub fn write_with_workround(
+        &mut self,
+        path: impl AsRef<Path>,
+        content: impl AsRef<[u8]>,
+    ) -> Result<()> {
+        if let Err(e) = self.write(path.as_ref(), content.as_ref()) {
+            match e.kind() {
+                ErrorKind::PermissionDenied => {
+                    set_permissions(path.as_ref(), PermissionsExt::from_mode(0o644))?;
+                    self.write(path, content)?;
+                    Ok(())
+                }
+                _ => Err(e.into()),
+            }
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn write(&mut self, path: impl AsRef<Path>, content: impl AsRef<[u8]>) -> io::Result<()> {
         match self.files.entry(path.as_ref().to_path_buf()) {
             Entry::Occupied(mut entry) => {
                 entry.get_mut().write_all(content.as_ref())?;
