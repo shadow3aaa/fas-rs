@@ -16,6 +16,8 @@ use std::{fs, path::PathBuf};
 
 use anyhow::Result;
 
+use crate::framework::Config;
+
 use super::file_handler::FileHandler;
 
 #[derive(Debug)]
@@ -50,12 +52,17 @@ impl Info {
         })
     }
 
-    pub fn write_freq(&self, freq: isize, file_handler: &mut FileHandler) -> Result<()> {
+    pub fn write_freq(
+        &self,
+        freq: isize,
+        file_handler: &mut FileHandler,
+        config: &Config,
+    ) -> Result<()> {
         let freq = freq.to_string();
         let max_freq_path = self.max_freq_path();
         file_handler.write_with_workround(max_freq_path, &freq)?;
 
-        if self.policy != 0 {
+        if self.policy != 0 && config.config().controll_min_freq {
             let min_freq_path = self.min_freq_path();
             file_handler.write_with_workround(min_freq_path, &freq)?;
         }
@@ -68,7 +75,8 @@ impl Info {
         let min_freq_path = self.min_freq_path();
 
         file_handler.write_with_workround(max_freq_path, self.freqs.last().unwrap().to_string())?;
-        file_handler.write_with_workround(min_freq_path, self.freqs.first().unwrap().to_string())?;
+        file_handler
+            .write_with_workround(min_freq_path, self.freqs.first().unwrap().to_string())?;
 
         Ok(())
     }

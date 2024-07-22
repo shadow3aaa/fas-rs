@@ -26,4 +26,8 @@ impl Config {
     pub const fn default_value_scene_game_list() -> bool {
         true
     }
+
+    pub const fn default_value_controll_min_freq() -> bool {
+        true
+    }
 }
