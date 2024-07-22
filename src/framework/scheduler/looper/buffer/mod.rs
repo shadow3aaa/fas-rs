@@ -62,7 +62,7 @@ impl Buffer {
         self.frametimes.push_front(d);
         self.calculate_current_fps();
 
-        if self.timer.elapsed() >= Duration::from_secs(5) {
+        if self.timer.elapsed() >= Duration::from_secs(10) {
             self.timer = Instant::now();
             self.calculate_target_fps();
         }
