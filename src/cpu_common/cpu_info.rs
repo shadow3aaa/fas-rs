@@ -36,13 +36,6 @@ impl Info {
             .map(|f| f.parse().unwrap())
             .collect();
 
-        if let Ok(boost_freqs) = fs::read_to_string(path.join("scaling_boost_frequencies")) {
-            let boost_freqs = boost_freqs
-                .split_whitespace()
-                .map(|f| f.parse::<isize>().unwrap());
-            freqs.extend(boost_freqs);
-        }
-
         freqs.sort_unstable();
 
         Ok(Self {
