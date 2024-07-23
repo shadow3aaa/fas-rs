@@ -35,15 +35,15 @@ likely_stable = "0.1.2"
 parking_lot = "0.12.3"
 log = "0.4.22"
 anyhow = { version  = "1.0.86", features = ["backtrace"] }
-thiserror = "1.0.61"
+thiserror = "1.0.63"
 inotify = { version = "0.10.2", default-features = false }
 libc = "0.2.155"
-async-trait = "0.1.80"
+async-trait = "0.1.81"
 binder = { package = "binder_ndk", git = "https://github.com/shadow3aaa/binder_rs", optional = true }
 lazy_static = "1.5.0"
 flexi_logger = "0.28.5"
 toml = "0.8.14"
-serde = { version = "1.0.203", features = ["derive"] }
+serde = { version = "1.0.204", features = ["derive"] }
 sys-mount = { version = "3.0.1", default-features = false }
 quick-xml = { version = "0.35.0", features = ["serialize"] }
 mlua = { version = "0.9.9", features = ["luajit", "vendored"] }
