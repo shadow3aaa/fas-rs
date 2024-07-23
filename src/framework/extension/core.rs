@@ -92,7 +92,7 @@ fn load_extensions() -> Result<ExtensionMap> {
             lua.globals().set(
                 "set_policy_freq_offset",
                 lua.create_function(|_, (policy, offset): (i32, isize)| {
-                    v1::set_policy_freq_offset(policy, offset);
+                    v1::set_policy_freq_offset(policy, offset)?;
                     Ok(())
                 })?,
             )?;

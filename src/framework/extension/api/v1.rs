@@ -66,7 +66,7 @@ pub fn set_policy_freq_offset(policy: i32, offset: isize) -> mlua::Result<()> {
         .get()
         .unwrap()
         .get(&policy)
-        .ok_or(mlua::Error::runtime("Policy Not Found!"))?
+        .ok_or_else(|| mlua::Error::runtime("Policy Not Found!"))?
         .store(offset, Ordering::Release);
     Ok(())
 }
