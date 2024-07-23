@@ -19,7 +19,7 @@ use std::{
 
 use log::info;
 
-use super::{super::FasData, Buffer, Looper, State};
+use super::{super::FasData, buffer::BufferState, Buffer, Looper, State};
 use crate::framework::{api::ApiV0, utils::get_process_name};
 
 const DELAY_TIME: Duration = Duration::from_secs(3);
@@ -77,9 +77,9 @@ impl Looper {
         }
     }
 
-    pub fn buffer_update(&mut self, d: &FasData) {
+    pub fn buffer_update(&mut self, d: &FasData) -> Option<BufferState> {
         if !self.windows_watcher.topapp_pids().contains(&d.pid) || d.frametime.is_zero() {
-            return;
+            return None;
         }
 
         let producer = d.pid;
@@ -94,14 +94,13 @@ impl Looper {
         match self.buffers.entry(producer) {
             Entry::Occupied(mut o) => {
                 o.get_mut().push_frametime(frametime);
+                Some(o.get().state)
             }
             Entry::Vacant(v) => {
                 let Ok(pkg) = get_process_name(d.pid) else {
-                    return;
+                    return None;
                 };
-                let Some(target_fps) = self.config.target_fps(&pkg) else {
-                    return;
-                };
+                let target_fps = self.config.target_fps(&pkg)?;
 
                 info!("New fas buffer on: [{pkg}]");
 
@@ -111,6 +110,8 @@ impl Looper {
                 let mut buffer = Buffer::new(target_fps, pkg);
                 buffer.push_frametime(frametime);
                 v.insert(buffer);
+
+                Some(BufferState::Unusable)
             }
         }
     }

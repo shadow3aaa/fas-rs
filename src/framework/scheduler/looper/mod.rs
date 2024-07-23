@@ -43,7 +43,7 @@ use crate::{
     Controller,
 };
 
-use buffer::Buffer;
+use buffer::{Buffer, BufferState};
 use clean::Cleaner;
 
 pub type Producer = i32; // pid
@@ -129,8 +129,12 @@ impl Looper {
             }
 
             if let Some(data) = fas_data {
-                self.buffer_update(&data);
-                self.do_policy(target_fps);
+                if let Some(state) = self.buffer_update(&data) {
+                    match state {
+                        BufferState::Usable => self.do_policy(target_fps),
+                        BufferState::Unusable => self.disable_fas(),
+                    }
+                }
             }
         }
     }

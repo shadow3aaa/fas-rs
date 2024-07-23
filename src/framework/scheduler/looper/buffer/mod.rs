@@ -21,6 +21,12 @@ use std::{
 
 use crate::framework::config::TargetFps;
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum BufferState {
+    Unusable,
+    Usable,
+}
+
 #[derive(Debug)]
 pub struct Buffer {
     pub pkg: String,
@@ -33,6 +39,8 @@ pub struct Buffer {
     pub last_update: Instant,
     target_fps_config: TargetFps,
     timer: Instant,
+    pub state: BufferState,
+    state_timer: Instant,
 }
 
 impl Buffer {
@@ -48,6 +56,8 @@ impl Buffer {
             frame_prepare: Duration::ZERO,
             last_update: Instant::now(),
             timer: Instant::now(),
+            state: BufferState::Unusable,
+            state_timer: Instant::now(),
         }
     }
 
@@ -57,20 +67,38 @@ impl Buffer {
 
         while self.frametimes.len() >= self.target_fps.unwrap_or(144) as usize {
             self.frametimes.pop_back();
+            self.try_usable();
         }
 
         self.frametimes.push_front(d);
-        self.calculate_current_fps();
 
-        if self.timer.elapsed() >= Duration::from_secs(10) {
+        if self.timer.elapsed() >= Duration::from_secs(1) {
             self.timer = Instant::now();
+            self.calculate_current_fps();
             self.calculate_target_fps();
         }
     }
 
+    pub fn try_usable(&mut self) {
+        if self.state == BufferState::Unusable
+            && self.state_timer.elapsed() >= Duration::from_secs(1)
+        {
+            self.state = BufferState::Usable;
+        }
+    }
+
+    pub fn unusable(&mut self) {
+        self.state = BufferState::Unusable;
+        self.state_timer = Instant::now();
+    }
+
     pub fn frame_prepare(&mut self) {
         self.frame_prepare = self.last_update.elapsed();
-        self.calculate_current_fps();
-        self.calculate_target_fps();
+
+        if self.timer.elapsed() >= Duration::from_secs(1) {
+            self.timer = Instant::now();
+            self.calculate_current_fps();
+            self.calculate_target_fps();
+        }
     }
 }

@@ -41,7 +41,7 @@ impl Buffer {
 
         self.current_fps = current_fps;
 
-        while self.current_fpses.len() > 60 {
+        while self.current_fpses.len() >= 5 {
             self.current_fpses.pop_back();
         }
 
@@ -49,7 +49,11 @@ impl Buffer {
     }
 
     pub fn calculate_target_fps(&mut self) {
-        self.target_fps = self.target_fps();
+        let new_target_fps = self.target_fps();
+        if self.target_fps != new_target_fps {
+            self.target_fps = new_target_fps;
+            self.unusable();
+        }
     }
 
     fn target_fps(&self) -> Option<u32> {
