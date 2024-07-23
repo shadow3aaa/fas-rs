@@ -27,7 +27,7 @@ use log::error;
 
 use crate::{api::ApiV0, framework::Config, Extension};
 
-const BASE_FREQ: isize = 700_000;
+const BASE_FREQ: isize = 600_000;
 
 #[derive(Debug)]
 pub struct Controller {
