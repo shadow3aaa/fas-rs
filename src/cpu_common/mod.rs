@@ -30,7 +30,11 @@ use file_handler::FileHandler;
 use log::debug;
 use log::error;
 
-use crate::{api::{v1::ApiV1, ApiV0}, framework::Config, Extension};
+use crate::{
+    api::{v1::ApiV1, ApiV0},
+    framework::Config,
+    Extension,
+};
 
 const BASE_FREQ: isize = 600_000;
 

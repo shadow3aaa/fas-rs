@@ -20,7 +20,10 @@ use std::{
 use log::info;
 
 use super::{super::FasData, buffer::BufferState, Buffer, Looper, State};
-use crate::{api::v1::ApiV1, framework::{api::ApiV0, utils::get_process_name}};
+use crate::{
+    api::v1::ApiV1,
+    framework::{api::ApiV0, utils::get_process_name},
+};
 
 const DELAY_TIME: Duration = Duration::from_secs(3);
 
