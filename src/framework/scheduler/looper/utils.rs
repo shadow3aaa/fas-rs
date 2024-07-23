@@ -34,7 +34,9 @@ impl Looper {
                 let _ = self.analyzer.detach_app(*pid);
                 let pkg = buffer.pkg.clone();
                 self.extension
-                    .tigger_extentions(ApiV0::UnloadFas(*pid, pkg));
+                    .tigger_extentions(ApiV0::UnloadFas(*pid, pkg.clone()));
+                self.extension
+                    .tigger_extentions(ApiV1::UnloadFas(*pid, pkg));
                 false
             }
         });
@@ -108,6 +110,8 @@ impl Looper {
 
                 self.extension
                     .tigger_extentions(ApiV0::LoadFas(d.pid, pkg.clone()));
+                self.extension
+                    .tigger_extentions(ApiV1::LoadFas(d.pid, pkg.clone()));
 
                 let mut buffer = Buffer::new(target_fps, pkg);
                 buffer.push_frametime(frametime);
