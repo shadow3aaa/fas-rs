@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod misc;
-mod v0;
+pub mod misc;
+pub mod v0;
+pub mod v1;
 
 use super::core::ExtensionMap;
 pub use v0::ApiV0;

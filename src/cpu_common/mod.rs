@@ -15,7 +15,12 @@
 mod cpu_info;
 mod file_handler;
 
-use std::{fs, time::Duration};
+use std::{
+    collections::HashMap,
+    fs,
+    sync::{atomic::AtomicIsize, OnceLock},
+    time::Duration,
+};
 
 use anyhow::Result;
 
@@ -28,6 +33,8 @@ use log::error;
 use crate::{api::ApiV0, framework::Config, Extension};
 
 const BASE_FREQ: isize = 600_000;
+
+pub static OFFSET_MAP: OnceLock<HashMap<i32, AtomicIsize>> = OnceLock::new();
 
 #[derive(Debug)]
 pub struct Controller {
@@ -53,6 +60,13 @@ impl Controller {
             })
             .map(|path| Info::new(path).unwrap())
             .collect();
+
+        OFFSET_MAP.get_or_init(|| {
+            cpu_infos
+                .iter()
+                .map(|cpu| (cpu.policy, AtomicIsize::new(0)))
+                .collect()
+        });
 
         #[cfg(debug_assertions)]
         debug!("cpu infos: {cpu_infos:?}");
