@@ -1,6 +1,6 @@
 id=fas_rs
 name=Ebpf - fas-rs
-version=v2.9.0
-versionCode=290
+version=v3.0.0
+versionCode=300
 author=shadow3
 description=Frame aware scheduling for android. Requires kernel ebpf support.
