@@ -85,6 +85,8 @@ def __parse_args(args):
 
 
 def __clean():
+    root = Path.cwd()
+
     try:
         shutil.rmtree("output")
     except Exception:
@@ -100,6 +102,8 @@ def __clean():
 
     os.chdir("rust")
     os.system("cargo clean")
+
+    os.chdir(root)
 
 
 def __build_zygisk(
