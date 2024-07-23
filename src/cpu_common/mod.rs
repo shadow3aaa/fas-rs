@@ -30,7 +30,7 @@ use file_handler::FileHandler;
 use log::debug;
 use log::error;
 
-use crate::{api::ApiV0, framework::Config, Extension};
+use crate::{api::{v1::ApiV1, ApiV0}, framework::Config, Extension};
 
 const BASE_FREQ: isize = 600_000;
 
@@ -97,6 +97,7 @@ impl Controller {
     pub fn init_game(&mut self, config: &Config, extension: &Extension) {
         self.policy_freq = self.max_freq;
         extension.tigger_extentions(ApiV0::InitCpuFreq);
+        extension.tigger_extentions(ApiV1::InitCpuFreq);
 
         for cpu in &self.cpu_infos {
             cpu.write_freq(self.max_freq, &mut self.file_handler, config)
@@ -107,6 +108,7 @@ impl Controller {
     pub fn init_default(&mut self, extension: &Extension) {
         self.policy_freq = self.max_freq;
         extension.tigger_extentions(ApiV0::ResetCpuFreq);
+        extension.tigger_extentions(ApiV1::ResetCpuFreq);
 
         for cpu in &self.cpu_infos {
             cpu.reset_freq(&mut self.file_handler)

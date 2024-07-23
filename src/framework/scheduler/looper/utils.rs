@@ -20,7 +20,7 @@ use std::{
 use log::info;
 
 use super::{super::FasData, buffer::BufferState, Buffer, Looper, State};
-use crate::framework::{api::ApiV0, utils::get_process_name};
+use crate::{api::v1::ApiV1, framework::{api::ApiV0, utils::get_process_name}};
 
 const DELAY_TIME: Duration = Duration::from_secs(3);
 
@@ -53,6 +53,7 @@ impl Looper {
                 self.cleaner.undo_cleanup();
                 self.controller.init_default(&self.extension);
                 self.extension.tigger_extentions(ApiV0::StopFas);
+                self.extension.tigger_extentions(ApiV1::StopFas);
             }
             State::Waiting => self.state = State::NotWorking,
             State::NotWorking => (),
@@ -65,6 +66,7 @@ impl Looper {
                 self.state = State::Waiting;
                 self.delay_timer = Instant::now();
                 self.extension.tigger_extentions(ApiV0::StartFas);
+                self.extension.tigger_extentions(ApiV1::StartFas);
             }
             State::Waiting => {
                 if self.delay_timer.elapsed() > DELAY_TIME {
