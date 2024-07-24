@@ -23,3 +23,4 @@ lock_val() {
 }
 
 lock_val "" "/odm/bin/hw/vendor.oplus.hardware.ormsHalService-aidl-service"
+lock_val "" "/odm/bin/hw/vendor.oplus.hardware.urcc-service"
