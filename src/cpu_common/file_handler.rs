@@ -63,6 +63,7 @@ impl FileHandler {
                     self.write(path, content)?;
                     Ok(())
                 }
+                ErrorKind::InvalidInput => Ok(()),
                 _ => Err(e.into()),
             }
         } else {
