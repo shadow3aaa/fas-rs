@@ -19,7 +19,7 @@ use log::{debug, error, info};
 use mlua::Lua;
 
 use super::{
-    api::{misc::get_api_version, v1, Api},
+    api::{v1, Api},
     EXTENSIONS_PATH,
 };
 use crate::framework::error::Result;
