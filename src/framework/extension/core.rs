@@ -88,15 +88,14 @@ fn load_extensions() -> Result<ExtensionMap> {
             })?,
         )?;
 
-        if get_api_version(&lua) == 1 {
-            lua.globals().set(
-                "set_policy_freq_offset",
-                lua.create_function(|_, (policy, offset): (i32, isize)| {
-                    v1::set_policy_freq_offset(policy, offset)?;
-                    Ok(())
-                })?,
-            )?;
-        }
+        // Add in api v1
+        lua.globals().set(
+            "set_policy_freq_offset",
+            lua.create_function(|_, (policy, offset): (i32, isize)| {
+                v1::set_policy_freq_offset(policy, offset)?;
+                Ok(())
+            })?,
+        )?;
 
         match lua.load(&file).exec() {
             Ok(()) => {
