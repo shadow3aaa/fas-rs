@@ -1,3 +1,7 @@
+## v3.0.1 (2024-07-24)
+
+- fix: apiv1的新增函数未注册
+
 ## v3.0.0 (2024-07-23)
 
 * build: 更新依赖 ([a1c6680](https://github.com/shadow3aaa/fas-rs/commit/a1c6680))

@@ -1,3 +1,7 @@
+## v3.0.1 (2024-07-24)
+
+- fix: The new function of apiv1 is not registered
+
 ## v3.0.0 (2024-07-23)
 
 * build: Update dependencies ([a1c6680](https://github.com/shadow3aaa/fas-rs/commit/a1c6680))
