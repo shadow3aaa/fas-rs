@@ -63,7 +63,7 @@ impl Info {
         let max_freq_path = self.max_freq_path();
         file_handler.write_with_workround(max_freq_path, &freq)?;
 
-        if self.policy != 0 && config.config().controll_min_freq {
+        if self.policy != 0 && config.config().control_min_freq {
             let min_freq_path = self.min_freq_path();
             file_handler.write_with_workround(min_freq_path, &freq)?;
         }

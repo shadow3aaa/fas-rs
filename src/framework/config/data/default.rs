@@ -27,7 +27,7 @@ impl Config {
         true
     }
 
-    pub const fn default_value_controll_min_freq() -> bool {
+    pub const fn default_value_control_min_freq() -> bool {
         true
     }
 }

@@ -40,8 +40,8 @@ pub struct Config {
     pub userspace_governor: bool,
     #[serde(default = "Config::default_value_scene_game_list")]
     pub scene_game_list: bool,
-    #[serde(default = "Config::default_value_controll_min_freq")]
-    pub controll_min_freq: bool,
+    #[serde(default = "Config::default_value_control_min_freq")]
+    pub control_min_freq: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
