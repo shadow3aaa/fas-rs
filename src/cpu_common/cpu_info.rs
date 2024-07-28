@@ -60,7 +60,10 @@ impl Info {
                     .unwrap()
                     .load(Ordering::Acquire),
             )
-            .clamp(self.freqs.first().unwrap(), self.freqs.last().unwrap());
+            .clamp(
+                self.freqs.first().copied().unwrap(),
+                self.freqs.last().copied().unwrap(),
+            );
         let freq = freq.to_string();
         let max_freq_path = self.max_freq_path();
         file_handler.write_with_workround(max_freq_path, &freq)?;
