@@ -123,8 +123,7 @@ impl Controller {
     pub fn fas_update_freq(&mut self, factor: f64, config: &Config) {
         self.policy_freq = self
             .policy_freq
-            .saturating_add((BASE_FREQ as f64 * factor) as isize)
-            .clamp(self.min_freq, self.max_freq);
+            .saturating_add((BASE_FREQ as f64 * factor) as isize);
 
         for cpu in &self.cpu_infos {
             cpu.write_freq(self.policy_freq, &mut self.file_handler, config)
