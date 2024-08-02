@@ -51,7 +51,7 @@ pub struct Controller {
 
 impl Controller {
     pub fn new() -> Result<Self> {
-        let cpu_infos: Vec<_> = fs::read_dir("/sys/devices/system/cpu/cpufreq")?
+        let mut cpu_infos: Vec<_> = fs::read_dir("/sys/devices/system/cpu/cpufreq")?
             .map(|entry| entry.unwrap().path())
             .filter(|path| {
                 path.is_dir()
@@ -64,6 +64,8 @@ impl Controller {
             })
             .map(|path| Info::new(path).unwrap())
             .collect();
+
+        cpu_infos.last_mut().unwrap().is_prime = true;
 
         OFFSET_MAP.get_or_init(|| {
             cpu_infos

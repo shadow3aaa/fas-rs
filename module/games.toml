@@ -1,7 +1,6 @@
 [config]
 keep_std = true
 scene_game_list = true
-control_min_freq = true
 
 [game_list]
 "com.hypergryph.arknights" = [30, 60]

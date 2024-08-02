@@ -25,6 +25,7 @@ pub struct Info {
     pub policy: i32,
     path: PathBuf,
     pub freqs: Vec<isize>,
+    pub is_prime: bool,
 }
 
 impl Info {
@@ -42,6 +43,7 @@ impl Info {
             policy,
             path,
             freqs,
+            is_prime: false,
         })
     }
 
@@ -68,7 +70,7 @@ impl Info {
         let max_freq_path = self.max_freq_path();
         file_handler.write_with_workround(max_freq_path, &freq)?;
 
-        if self.policy != 0 && config.config().control_min_freq {
+        if self.is_prime {
             let min_freq_path = self.min_freq_path();
             file_handler.write_with_workround(min_freq_path, &freq)?;
         }
