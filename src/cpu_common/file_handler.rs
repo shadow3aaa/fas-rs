@@ -77,6 +77,7 @@ impl FileHandler {
                 entry.get_mut().write_all(content.as_ref())?;
             }
             Entry::Vacant(entry) => {
+                set_permissions(path.as_ref(), PermissionsExt::from_mode(0o644))?;
                 let mut file = File::create(path)?;
                 file.write_all(content.as_ref())?;
                 entry.insert(file);
