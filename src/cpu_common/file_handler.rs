@@ -21,6 +21,7 @@ use std::{
 };
 
 use anyhow::Result;
+use sys_mount::{unmount, UnmountFlags};
 
 #[derive(Debug)]
 pub struct FileHandler {
@@ -77,6 +78,7 @@ impl FileHandler {
                 entry.get_mut().write_all(content.as_ref())?;
             }
             Entry::Vacant(entry) => {
+                let _ = unmount(path.as_ref(), UnmountFlags::DETACH);
                 set_permissions(path.as_ref(), PermissionsExt::from_mode(0o644))?;
                 let mut file = File::create(path)?;
                 file.write_all(content.as_ref())?;
