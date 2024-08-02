@@ -19,7 +19,7 @@
 
 ## **Introduction**
 
-  > If the picture seen by the naked eye can be directly reflected in the scheduling, that is to say, the scheduler is placed from the perspective of the viewer to determine the performance, can perfect performance control and maximized experience be achieved? `FAS (Frame Aware Scheduling)` is this scheduling concept, trying to control performance by monitoring screen rendering to minimize overhead while ensuring rendering time.
+> If the picture seen by the naked eye can be directly reflected in the scheduling, that is to say, the scheduler is placed from the perspective of the viewer to determine the performance, can perfect performance control and maximized experience be achieved? `FAS (Frame Aware Scheduling)` is this scheduling concept, trying to control performance by monitoring screen rendering to minimize overhead while ensuring rendering time.
 
 - ### **What is `fas-rs`?**
 
@@ -38,7 +38,7 @@
   - **keep_std**
 
     - Type: `bool`
-    - `true`: Always keep the standard configuration profile when merging configurations, retain the local configuration application list, and other places are the same as false *
+    - `true`: Always keep the standard configuration profile when merging configurations, retain the local configuration application list, and other places are the same as false \*
     - `false`: see [default behavior of config merge](#config merge)
 
   - **scene_game_list**
@@ -46,6 +46,12 @@
     - Type: `bool`
     - `true`: Use scene game list
     - `false`: Not using scene game list
+
+  - **control_min_freq**
+
+    - Type: `bool`
+      - `true`: Fas will control the minimum and maximum frequencies
+      - `false`: Fas will only controls the maximum frequency
 
   - `*`: default configuration
 
@@ -120,9 +126,6 @@ margin = 1
 ## **Compile**
 
 ```bash
-# Termux
-apt install rust zip ndk* clang binutils-is-llvm shfmt git-lfs python3
-
 # Ubuntu(NDK is required)
 apt install gcc-multilib git-lfs clang python3
 

@@ -19,7 +19,7 @@
 
 ## **简介**
 
-  > 假如肉眼看到的画面能直接反映在调度上，也就是说以把调度器放在观看者的角度来决定性能，是否就能实现完美的性能控制和最大化体验? `FAS (Frame Aware Scheduling)`就是这种调度概念，通过监视画面渲染来尽量控制性能以在保证渲染时间的同时实现最小化开销
+> 假如肉眼看到的画面能直接反映在调度上，也就是说以把调度器放在观看者的角度来决定性能，是否就能实现完美的性能控制和最大化体验? `FAS (Frame Aware Scheduling)`就是这种调度概念，通过监视画面渲染来尽量控制性能以在保证渲染时间的同时实现最小化开销
 
 - ### **什么是`fas-rs`?**
 
@@ -38,14 +38,20 @@
   - **keep_std**
 
     - 类型: `bool`
-    - `true`: 永远在配置合并时保持标准配置的profile，保留本地配置的应用列表，其它地方和false相同 *
+    - `true`: 永远在配置合并时保持标准配置的 profile，保留本地配置的应用列表，其它地方和 false 相同 \*
     - `false`: 见[配置合并的默认行为](#配置合并)
 
   - **scene_game_list**
 
     - 类型: `bool`
-    - `true`: 使用scene游戏列表
-    - `false`: 不使用scene游戏列表
+    - `true`: 使用 scene 游戏列表
+    - `false`: 不使用 scene 游戏列表
+
+  - **control_min_freq**
+
+    - 类型: `bool`
+    - `true`: fas 将控制最小频率和最大频率
+    - `false`: fas 只控制最大频率
 
   - `*`: 默认配置
 
@@ -59,8 +65,8 @@
 - ### **模式(`powersave` / `balance` / `performance` / `fast`)说明:**
 
   - **mode:**
-    - 目前`fas-rs`还没有官方的切换模式的管理器，而是接入了[`scene`](http://vtools.omarea.com)的配置接口，如果你不用scene则默认使用`balance`的配置
-    - 如果你有在linux上编程的一些了解，向`/dev/fas_rs/mode`节点写入4模式中的任意一个即可切换到对应模式，同时读取它也可以知道现在`fas-rs`所处的模式
+    - 目前`fas-rs`还没有官方的切换模式的管理器，而是接入了[`scene`](http://vtools.omarea.com)的配置接口，如果你不用 scene 则默认使用`balance`的配置
+    - 如果你有在 linux 上编程的一些了解，向`/dev/fas_rs/mode`节点写入 4 模式中的任意一个即可切换到对应模式，同时读取它也可以知道现在`fas-rs`所处的模式
   - **模式参数说明:**
     - margin(ms): 允许的掉帧余量，越小帧率越高，越大越省电(0 < margin < 1000)
 
@@ -120,9 +126,6 @@ margin = 1
 ## **编译**
 
 ```bash
-# Termux
-apt install rust zip ndk* clang binutils-is-llvm shfmt git-lfs python3
-
 # Ubuntu(NDK is required)
 apt install gcc-multilib git-lfs clang python3
 
