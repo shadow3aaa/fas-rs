@@ -22,9 +22,6 @@
     clippy::cast_precision_loss
 )]
 
-#[cfg(any(not(target_os = "android"), not(target_arch = "aarch64")))]
-compile_error!("Only for aarch64 android");
-
 mod IRemoteService;
 mod analyze;
 mod channel;
