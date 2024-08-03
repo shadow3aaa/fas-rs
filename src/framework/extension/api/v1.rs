@@ -63,7 +63,6 @@ impl Api for ApiV1 {
 }
 
 pub fn set_policy_freq_offset(policy: i32, offset: isize) -> mlua::Result<()> {
-    warn!("Setting offset is deprecated after fas-rs v3.1.0. You should stop using offset.");
     OFFSET_MAP
         .get()
         .unwrap()
