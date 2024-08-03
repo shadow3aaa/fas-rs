@@ -39,6 +39,7 @@ done
 stop vendor.oplus.ormsHalService-aidl-default
 stop vendor.urcc-hal-aidl
 stop horae
+stop gameopt_hal_service-1-0
 
 lock_val "0" /sys/module/cpufreq_bouncing/parameters/enable
 lock_val "0" /sys/module/cpufreq_effiency/parameters/affect_mode
