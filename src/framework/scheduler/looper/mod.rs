@@ -150,7 +150,7 @@ impl Looper {
                 self.mode = new_mode;
 
                 if self.state == State::Working {
-                    self.controller.init_game(&self.config, &self.extension);
+                    self.controller.init_game(&self.extension);
                 }
             }
         }
@@ -212,6 +212,6 @@ impl Looper {
         let target_fps = target_fps.unwrap_or(120);
 
         let factor = Controller::scale_factor(target_fps, event.frame, event.target);
-        self.controller.fas_update_freq(factor, &self.config);
+        self.controller.fas_update_freq(factor);
     }
 }

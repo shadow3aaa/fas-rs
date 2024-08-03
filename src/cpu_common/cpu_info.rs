@@ -15,22 +15,27 @@
 use std::{fs, path::PathBuf, sync::atomic::Ordering};
 
 use anyhow::Result;
-
-use crate::framework::Config;
+use cpu_cycles_reader::{Cycles, CyclesInstant, CyclesReader};
 
 use super::{file_handler::FileHandler, OFFSET_MAP};
 
 #[derive(Debug)]
 pub struct Info {
     pub policy: i32,
+    cpus: Vec<i32>,
     path: PathBuf,
     pub freqs: Vec<isize>,
-    pub is_prime: bool,
+    pub cycles_instants: Vec<CyclesInstant>,
 }
 
 impl Info {
-    pub fn new(path: PathBuf) -> Result<Self> {
+    pub fn new(path: PathBuf, cycles_reader: &CyclesReader) -> Result<Self> {
         let policy = path.file_name().unwrap().to_str().unwrap()[6..].parse()?;
+
+        let cpus: Vec<i32> = fs::read_to_string(path.join("affected_cpus"))?
+            .split_whitespace()
+            .map(|c| c.parse::<i32>().unwrap())
+            .collect();
 
         let mut freqs: Vec<_> = fs::read_to_string(path.join("scaling_available_frequencies"))?
             .split_whitespace()
@@ -39,11 +44,14 @@ impl Info {
 
         freqs.sort_unstable();
 
+        let cycles_instants = Self::cycles_instants(cycles_reader, &cpus);
+
         Ok(Self {
             policy,
+            cpus,
             path,
             freqs,
-            is_prime: false,
+            cycles_instants,
         })
     }
 
@@ -51,7 +59,7 @@ impl Info {
         &self,
         freq: isize,
         file_handler: &mut FileHandler,
-        config: &Config,
+        controll_min_freq: bool,
     ) -> Result<()> {
         let freq = freq
             .saturating_add(
@@ -70,9 +78,12 @@ impl Info {
         let max_freq_path = self.max_freq_path();
         file_handler.write_with_workround(max_freq_path, &freq)?;
 
-        if self.is_prime {
-            let min_freq_path = self.min_freq_path();
+        let min_freq_path = self.min_freq_path();
+        if self.policy != 0 && controll_min_freq {
             file_handler.write_with_workround(min_freq_path, &freq)?;
+        } else {
+            file_handler
+                .write_with_workround(min_freq_path, self.freqs.first().unwrap().to_string())?;
         }
 
         Ok(())
@@ -95,5 +106,23 @@ impl Info {
 
     fn min_freq_path(&self) -> PathBuf {
         self.path.join("scaling_min_freq")
+    }
+
+    fn cycles_instants(reader: &CyclesReader, cpus: &[i32]) -> Vec<CyclesInstant> {
+        cpus.iter().map(|c| reader.instant(*c).unwrap()).collect()
+    }
+
+    pub fn cycles_update(&mut self, reader: &CyclesReader) -> Cycles {
+        let instants = Self::cycles_instants(reader, &self.cpus);
+        let cycles = self
+            .cycles_instants
+            .iter()
+            .copied()
+            .zip(instants.iter().copied())
+            .map(|(last, now)| now - last)
+            .max()
+            .unwrap_or(Cycles::ZERO);
+        self.cycles_instants = instants;
+        cycles
     }
 }

@@ -24,6 +24,7 @@ use std::{
 
 use anyhow::Result;
 
+use cpu_cycles_reader::CyclesReader;
 use cpu_info::Info;
 use file_handler::FileHandler;
 #[cfg(debug_assertions)]
@@ -32,11 +33,10 @@ use log::error;
 
 use crate::{
     api::{v1::ApiV1, ApiV0},
-    framework::Config,
     Extension,
 };
 
-const BASE_FREQ: isize = 600_000;
+const BASE_FREQ: isize = 500_000;
 
 pub static OFFSET_MAP: OnceLock<HashMap<i32, AtomicIsize>> = OnceLock::new();
 
@@ -47,11 +47,13 @@ pub struct Controller {
     policy_freq: isize,
     cpu_infos: Vec<Info>,
     file_handler: FileHandler,
+    cycles_reader: CyclesReader,
 }
 
 impl Controller {
     pub fn new() -> Result<Self> {
-        let mut cpu_infos: Vec<_> = fs::read_dir("/sys/devices/system/cpu/cpufreq")?
+        let cycles_reader = CyclesReader::new()?;
+        let cpu_infos: Vec<_> = fs::read_dir("/sys/devices/system/cpu/cpufreq")?
             .map(|entry| entry.unwrap().path())
             .filter(|path| {
                 path.is_dir()
@@ -62,10 +64,8 @@ impl Controller {
                         .unwrap()
                         .starts_with("policy")
             })
-            .map(|path| Info::new(path).unwrap())
+            .map(|path| Info::new(path, &cycles_reader).unwrap())
             .collect();
-
-        cpu_infos.last_mut().unwrap().is_prime = true;
 
         OFFSET_MAP.get_or_init(|| {
             cpu_infos
@@ -97,16 +97,17 @@ impl Controller {
             policy_freq: max_freq,
             cpu_infos,
             file_handler: FileHandler::new(),
+            cycles_reader,
         })
     }
 
-    pub fn init_game(&mut self, config: &Config, extension: &Extension) {
+    pub fn init_game(&mut self, extension: &Extension) {
         self.policy_freq = self.max_freq;
         extension.tigger_extentions(ApiV0::InitCpuFreq);
         extension.tigger_extentions(ApiV1::InitCpuFreq);
 
         for cpu in &self.cpu_infos {
-            cpu.write_freq(self.max_freq, &mut self.file_handler, config)
+            cpu.write_freq(self.max_freq, &mut self.file_handler, false)
                 .unwrap_or_else(|e| error!("{e:?}"));
         }
     }
@@ -122,15 +123,27 @@ impl Controller {
         }
     }
 
-    pub fn fas_update_freq(&mut self, factor: f64, config: &Config) {
+    pub fn fas_update_freq(&mut self, factor: f64) {
         self.policy_freq = self
             .policy_freq
             .saturating_add((BASE_FREQ as f64 * factor) as isize)
             .clamp(self.min_freq, self.max_freq);
 
+        let heaviest_policy = self
+            .cpu_infos
+            .iter_mut()
+            .skip(1) // skip little
+            .map(|cpu| (cpu.policy, cpu.cycles_update(&self.cycles_reader)))
+            .max_by_key(|(_, cycles)| *cycles)
+            .map(|(policy, _)| policy);
+
         for cpu in &self.cpu_infos {
-            cpu.write_freq(self.policy_freq, &mut self.file_handler, config)
-                .unwrap_or_else(|e| error!("{e:?}"));
+            cpu.write_freq(
+                self.policy_freq,
+                &mut self.file_handler,
+                Some(cpu.policy) == heaviest_policy,
+            )
+            .unwrap_or_else(|e| error!("{e:?}"));
         }
     }
 
