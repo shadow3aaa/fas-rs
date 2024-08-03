@@ -129,6 +129,12 @@ impl Controller {
             .saturating_add((BASE_FREQ as f64 * factor) as isize)
             .clamp(self.min_freq, self.max_freq);
 
+        #[cfg(debug_assertions)]
+        {
+            debug!("change freq: {}", (BASE_FREQ as f64 * factor) as isize);
+            debug!("policy freq: {}", self.policy_freq);
+        }
+
         let heaviest_policy = self
             .cpu_infos
             .iter_mut()
