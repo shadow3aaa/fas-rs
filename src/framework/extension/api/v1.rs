@@ -15,7 +15,6 @@
 use std::sync::atomic::Ordering;
 
 use libc::pid_t;
-use log::warn;
 
 use crate::cpu_common::OFFSET_MAP;
 
