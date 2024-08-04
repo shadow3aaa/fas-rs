@@ -270,12 +270,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "373e9fafaa20882876db20562275ff58d50e0caa2590077fe7ce7bef90211d0d"
 
 [[package]]
-name = "convert_case"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
-
-[[package]]
 name = "core-error"
 version = "0.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -289,19 +283,6 @@ name = "core-foundation-sys"
 version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
-
-[[package]]
-name = "cpu_cycles_reader"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "734a58774f32794fc70fddc0433f8dfdcf7f3baaa3945aac447b5e0584657fee"
-dependencies = [
- "cc",
- "derive_more",
- "libc",
- "num_cpus",
- "thiserror",
-]
 
 [[package]]
 name = "ctor"
@@ -321,19 +302,6 @@ checksum = "672465ae37dc1bc6380a6547a8883d5dd397b0f1faaad4f265726cc7042a5345"
 dependencies = [
  "nix",
  "windows-sys 0.52.0",
-]
-
-[[package]]
-name = "derive_more"
-version = "0.99.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f33878137e4dafd7fa914ad4e259e18a4e8e532b9617a2d0150262bf53abfce"
-dependencies = [
- "convert_case",
- "proc-macro2",
- "quote",
- "rustc_version 0.4.0",
- "syn",
 ]
 
 [[package]]
@@ -381,7 +349,6 @@ dependencies = [
  "anyhow",
  "async-trait",
  "binder_ndk",
- "cpu_cycles_reader",
  "dumpsys-rs",
  "flexi_logger",
  "frame-analyzer",
@@ -461,12 +428,6 @@ dependencies = [
  "ahash",
  "allocator-api2",
 ]
-
-[[package]]
-name = "hermit-abi"
-version = "0.3.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d231dfb89cfffdbc30e7fc41579ed6066ad03abda9e567ccafae602b97ec5024"
 
 [[package]]
 name = "home"
@@ -589,7 +550,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "69ab205e1b568682c454d1f6c1937c80dddb1b08c28d8606f510f4b89f24de6a"
 dependencies = [
  "const_fn",
- "rustc_version 0.3.3",
+ "rustc_version",
 ]
 
 [[package]]
@@ -730,16 +691,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
-]
-
-[[package]]
-name = "num_cpus"
-version = "1.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4161fcb6d602d4d2081af7c3a45852d875a03dd337a6bfdd6e06407b61342a43"
-dependencies = [
- "hermit-abi",
- "libc",
 ]
 
 [[package]]
@@ -922,16 +873,7 @@ version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0dfe2087c51c460008730de8b57e6a320782fbfb312e1f4d520e6c6fae155ee"
 dependencies = [
- "semver 0.11.0",
-]
-
-[[package]]
-name = "rustc_version"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
-dependencies = [
- "semver 1.0.23",
+ "semver",
 ]
 
 [[package]]
@@ -967,12 +909,6 @@ checksum = "f301af10236f6df4160f7c3f04eec6dbc70ace82d23326abad5edee88801c6b6"
 dependencies = [
  "semver-parser",
 ]
-
-[[package]]
-name = "semver"
-version = "1.0.23"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61697e0a1c7e512e84a621326239844a24d8207b4669b41bc18b32ea5cbf988b"
 
 [[package]]
 name = "semver-parser"

@@ -13,9 +13,11 @@
 // limitations under the License.
 
 mod cpu_info;
+mod cpu_usage;
 mod file_handler;
 
 use std::{
+    cmp,
     collections::HashMap,
     fs,
     sync::{atomic::AtomicIsize, OnceLock},
@@ -23,9 +25,8 @@ use std::{
 };
 
 use anyhow::Result;
-
-use cpu_cycles_reader::CyclesReader;
 use cpu_info::Info;
+use cpu_usage::UsageReader;
 use file_handler::FileHandler;
 #[cfg(debug_assertions)]
 use log::debug;
@@ -47,12 +48,12 @@ pub struct Controller {
     policy_freq: isize,
     cpu_infos: Vec<Info>,
     file_handler: FileHandler,
-    cycles_reader: CyclesReader,
+    usage_reader: UsageReader,
 }
 
 impl Controller {
     pub fn new() -> Result<Self> {
-        let cycles_reader = CyclesReader::new()?;
+        let usage_reader = UsageReader::new();
         let cpu_infos: Vec<_> = fs::read_dir("/sys/devices/system/cpu/cpufreq")?
             .map(|entry| entry.unwrap().path())
             .filter(|path| {
@@ -64,7 +65,7 @@ impl Controller {
                         .unwrap()
                         .starts_with("policy")
             })
-            .map(|path| Info::new(path, &cycles_reader).unwrap())
+            .map(|path| Info::new(path).unwrap())
             .collect();
 
         OFFSET_MAP.get_or_init(|| {
@@ -97,7 +98,7 @@ impl Controller {
             policy_freq: max_freq,
             cpu_infos,
             file_handler: FileHandler::new(),
-            cycles_reader,
+            usage_reader,
         })
     }
 
@@ -135,21 +136,24 @@ impl Controller {
             debug!("policy freq: {}", self.policy_freq);
         }
 
-        let heaviest_policy = self
-            .cpu_infos
-            .iter_mut()
-            .skip(1) // skip little
-            .map(|cpu| (cpu.policy, cpu.cycles_update(&self.cycles_reader)))
-            .max_by_key(|(_, cycles)| *cycles)
-            .map(|(policy, _)| policy);
+        let heaviest_cpu = self
+            .usage_reader
+            .update()
+            .iter()
+            .max_by(|(_, usage_a), (_, usage_b)| {
+                usage_a.partial_cmp(usage_b).unwrap_or(cmp::Ordering::Equal)
+            })
+            .map(|(cpu, _)| cpu)
+            .copied();
 
-        for cpu in &self.cpu_infos {
-            cpu.write_freq(
-                self.policy_freq,
-                &mut self.file_handler,
-                Some(cpu.policy) == heaviest_policy,
-            )
-            .unwrap_or_else(|e| error!("{e:?}"));
+        for policy in &self.cpu_infos {
+            policy
+                .write_freq(
+                    self.policy_freq,
+                    &mut self.file_handler,
+                    heaviest_cpu.is_some_and(|core| policy.cpus.contains(&core)),
+                )
+                .unwrap_or_else(|e| error!("{e:?}"));
         }
     }
 

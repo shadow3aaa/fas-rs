@@ -15,21 +15,19 @@
 use std::{fs, path::PathBuf, sync::atomic::Ordering};
 
 use anyhow::Result;
-use cpu_cycles_reader::{Cycles, CyclesInstant, CyclesReader};
 
 use super::{file_handler::FileHandler, OFFSET_MAP};
 
 #[derive(Debug)]
 pub struct Info {
     pub policy: i32,
-    cpus: Vec<i32>,
+    pub cpus: Vec<i32>,
     path: PathBuf,
     pub freqs: Vec<isize>,
-    pub cycles_instants: Vec<CyclesInstant>,
 }
 
 impl Info {
-    pub fn new(path: PathBuf, cycles_reader: &CyclesReader) -> Result<Self> {
+    pub fn new(path: PathBuf) -> Result<Self> {
         let policy = path.file_name().unwrap().to_str().unwrap()[6..].parse()?;
 
         let cpus: Vec<i32> = fs::read_to_string(path.join("affected_cpus"))?
@@ -44,14 +42,11 @@ impl Info {
 
         freqs.sort_unstable();
 
-        let cycles_instants = Self::cycles_instants(cycles_reader, &cpus);
-
         Ok(Self {
             policy,
             cpus,
             path,
             freqs,
-            cycles_instants,
         })
     }
 
@@ -106,23 +101,5 @@ impl Info {
 
     fn min_freq_path(&self) -> PathBuf {
         self.path.join("scaling_min_freq")
-    }
-
-    fn cycles_instants(reader: &CyclesReader, cpus: &[i32]) -> Vec<CyclesInstant> {
-        cpus.iter().map(|c| reader.instant(*c).unwrap()).collect()
-    }
-
-    pub fn cycles_update(&mut self, reader: &CyclesReader) -> Cycles {
-        let instants = Self::cycles_instants(reader, &self.cpus);
-        let cycles = self
-            .cycles_instants
-            .iter()
-            .copied()
-            .zip(instants.iter().copied())
-            .map(|(last, now)| now - last)
-            .max()
-            .unwrap_or(Cycles::ZERO);
-        self.cycles_instants = instants;
-        cycles
     }
 }
