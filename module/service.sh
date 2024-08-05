@@ -37,13 +37,7 @@ until [ -d $DIR ]; do
 done
 
 stop vendor.oplus.ormsHalService-aidl-default
-stop vendor.urcc-hal-aidl
-stop horae
 stop gameopt_hal_service-1-0
-
-lock_val "0" /sys/module/cpufreq_bouncing/parameters/enable
-lock_val "0" /sys/module/cpufreq_effiency/parameters/affect_mode
-lock_val "0" /sys/devices/platform/soc/soc:oplus-omrg/oplus-omrg0/ruler_enable
 
 for i in $(seq 0 2); do
 	lock_val "$i 20000" /proc/shell-temp
