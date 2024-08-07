@@ -54,7 +54,7 @@ impl Info {
         &self,
         freq: isize,
         file_handler: &mut FileHandler,
-        controll_min_freq: bool,
+        weight: f64,
     ) -> Result<()> {
         let freq = freq
             .saturating_add(
@@ -65,21 +65,14 @@ impl Info {
                     .unwrap()
                     .load(Ordering::Acquire),
             )
-            .clamp(
-                self.freqs.first().copied().unwrap(),
-                self.freqs.last().copied().unwrap(),
-            );
-        let freq = freq.to_string();
-        let max_freq_path = self.max_freq_path();
-        file_handler.write_with_workround(max_freq_path, &freq)?;
+            .max(self.freqs.first().copied().unwrap());
 
+        let max_freq_path = self.max_freq_path();
         let min_freq_path = self.min_freq_path();
-        if self.policy != 0 && controll_min_freq {
-            file_handler.write_with_workround(min_freq_path, &freq)?;
-        } else {
-            file_handler
-                .write_with_workround(min_freq_path, self.freqs.first().unwrap().to_string())?;
-        }
+
+        let freq = format!("{:.0}", freq as f64 * weight);
+        file_handler.write_with_workround(max_freq_path, &freq)?;
+        file_handler.write_with_workround(min_freq_path, &freq)?;
 
         Ok(())
     }

@@ -26,7 +26,7 @@ impl Buffer {
             .frametimes
             .iter()
             .sum::<Duration>()
-            .saturating_add(self.frame_prepare)
+            .saturating_add(self.additional_frametime)
             .checked_div(self.frametimes.len().try_into().unwrap())
             .unwrap_or_default();
         #[cfg(debug_assertions)]

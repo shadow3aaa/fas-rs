@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{
-    collections::hash_map::Entry,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 use log::info;
 
@@ -29,22 +26,20 @@ const DELAY_TIME: Duration = Duration::from_secs(3);
 
 impl Looper {
     pub fn retain_topapp(&mut self) {
-        self.buffers.retain(|pid, buffer| {
-            if self.windows_watcher.topapp_pids().contains(pid) {
-                true
-            } else {
+        if let Some(buffer) = self.buffer.as_ref() {
+            if !self.windows_watcher.topapp_pids().contains(&buffer.pid) {
                 #[cfg(feature = "use_ebpf")]
-                let _ = self.analyzer.detach_app(*pid);
+                let _ = self.analyzer.detach_app(buffer.pid);
                 let pkg = buffer.pkg.clone();
                 self.extension
-                    .tigger_extentions(ApiV0::UnloadFas(*pid, pkg.clone()));
+                    .tigger_extentions(ApiV0::UnloadFas(buffer.pid, pkg.clone()));
                 self.extension
-                    .tigger_extentions(ApiV1::UnloadFas(*pid, pkg));
-                false
+                    .tigger_extentions(ApiV1::UnloadFas(buffer.pid, pkg));
+                self.buffer = None;
             }
-        });
+        }
 
-        if self.buffers.is_empty() {
+        if self.buffer.is_none() {
             self.disable_fas();
         } else {
             self.enable_fas();
@@ -89,39 +84,31 @@ impl Looper {
             return None;
         }
 
-        let producer = d.pid;
+        let pid = d.pid;
         let frametime = d.frametime;
 
-        for (process, buffer) in &mut self.buffers {
-            if *process != producer {
-                buffer.frame_prepare(); // 其它buffer计算额外超时时间
-            }
-        }
+        if let Some(buffer) = self.buffer.as_mut() {
+            buffer.push_frametime(frametime);
+            Some(buffer.state)
+        } else {
+            let Ok(pkg) = get_process_name(d.pid) else {
+                return None;
+            };
+            let target_fps = self.config.target_fps(&pkg)?;
 
-        match self.buffers.entry(producer) {
-            Entry::Occupied(mut o) => {
-                o.get_mut().push_frametime(frametime);
-                Some(o.get().state)
-            }
-            Entry::Vacant(v) => {
-                let Ok(pkg) = get_process_name(d.pid) else {
-                    return None;
-                };
-                let target_fps = self.config.target_fps(&pkg)?;
+            info!("New fas buffer on: [{pkg}]");
 
-                info!("New fas buffer on: [{pkg}]");
+            self.extension
+                .tigger_extentions(ApiV0::LoadFas(pid, pkg.clone()));
+            self.extension
+                .tigger_extentions(ApiV1::LoadFas(pid, pkg.clone()));
 
-                self.extension
-                    .tigger_extentions(ApiV0::LoadFas(d.pid, pkg.clone()));
-                self.extension
-                    .tigger_extentions(ApiV1::LoadFas(d.pid, pkg.clone()));
+            let mut buffer = Buffer::new(target_fps, pid, pkg);
+            buffer.push_frametime(frametime);
 
-                let mut buffer = Buffer::new(target_fps, pkg);
-                buffer.push_frametime(frametime);
-                v.insert(buffer);
+            self.buffer = Some(buffer);
 
-                Some(BufferState::Unusable)
-            }
+            Some(BufferState::Unusable)
         }
     }
 }

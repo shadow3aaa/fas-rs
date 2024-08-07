@@ -19,10 +19,7 @@ mod utils;
 
 #[cfg(feature = "use_binder")]
 use std::sync::mpsc::{Receiver, RecvTimeoutError};
-use std::{
-    collections::HashMap,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 #[cfg(feature = "use_ebpf")]
 use frame_analyzer::Analyzer;
@@ -46,9 +43,6 @@ use crate::{
 use buffer::{Buffer, BufferState};
 use clean::Cleaner;
 
-pub type Producer = i32; // pid
-pub type Buffers = HashMap<Producer, Buffer>;
-
 #[derive(PartialEq)]
 enum State {
     NotWorking,
@@ -68,7 +62,7 @@ pub struct Looper {
     controller: Controller,
     windows_watcher: TimedWatcher,
     cleaner: Cleaner,
-    buffers: Buffers,
+    buffer: Option<Buffer>,
     state: State,
     delay_timer: Instant,
 }
@@ -94,7 +88,7 @@ impl Looper {
             controller,
             windows_watcher: TimedWatcher::new(),
             cleaner: Cleaner::new(),
-            buffers: Buffers::new(),
+            buffer: None,
             state: State::NotWorking,
             delay_timer: Instant::now(),
         }
@@ -104,19 +98,11 @@ impl Looper {
         loop {
             self.switch_mode();
 
-            #[cfg(debug_assertions)]
-            debug!("{:?}", self.buffers.keys());
-
             #[cfg(feature = "use_ebpf")]
             let _ = self.update_analyzer();
             self.retain_topapp();
 
-            let target_fps = self
-                .buffers
-                .values()
-                .filter(|b| b.last_update.elapsed() < Duration::from_secs(1))
-                .filter_map(|b| b.target_fps)
-                .max(); // 只处理目标fps最大的buffer
+            let target_fps = self.buffer.as_ref().and_then(|b| b.target_fps);
 
             #[cfg(feature = "use_binder")]
             let fas_data = self.recv_message()?;
@@ -135,6 +121,8 @@ impl Looper {
                         BufferState::Unusable => self.disable_fas(),
                     }
                 }
+            } else if let Some(buffer) = self.buffer.as_mut() {
+                buffer.additional_frametime();
             }
         }
     }
@@ -158,7 +146,7 @@ impl Looper {
 
     #[cfg(feature = "use_binder")]
     fn recv_message(&self) -> Result<Option<FasData>> {
-        match self.rx.recv_timeout(Duration::from_secs(1)) {
+        match self.rx.recv_timeout(Duration::from_millis(500)) {
             Ok(m) => Ok(Some(m)),
             Err(e) => {
                 if e == RecvTimeoutError::Disconnected {
@@ -173,7 +161,7 @@ impl Looper {
     #[cfg(feature = "use_ebpf")]
     fn recv_message(&mut self) -> Option<FasData> {
         self.analyzer
-            .recv_timeout(Duration::from_secs(1))
+            .recv_timeout(Duration::from_millis(500))
             .map(|(pid, frametime)| FasData { pid, frametime })
     }
 
@@ -199,11 +187,9 @@ impl Looper {
         }
 
         let Some(event) = self
-            .buffers
-            .values_mut()
-            .filter(|buffer| buffer.target_fps == target_fps)
-            .filter_map(|buffer| buffer.event(&self.config, self.mode))
-            .max()
+            .buffer
+            .as_ref()
+            .and_then(|buffer| buffer.event(&self.config, self.mode))
         else {
             self.disable_fas();
             return;
@@ -212,6 +198,8 @@ impl Looper {
         let target_fps = target_fps.unwrap_or(120);
 
         let factor = Controller::scale_factor(target_fps, event.frame, event.target);
-        self.controller.fas_update_freq(factor);
+        if let Some(process) = self.buffer.as_ref().map(|b| b.pid) {
+            self.controller.fas_update_freq(process, factor);
+        }
     }
 }

@@ -13,11 +13,10 @@
 // limitations under the License.
 
 mod cpu_info;
-mod cpu_usage;
 mod file_handler;
+mod weighting;
 
 use std::{
-    cmp,
     collections::HashMap,
     fs,
     sync::{atomic::AtomicIsize, OnceLock},
@@ -26,8 +25,8 @@ use std::{
 
 use anyhow::Result;
 use cpu_info::Info;
-use cpu_usage::UsageReader;
 use file_handler::FileHandler;
+use libc::pid_t;
 #[cfg(debug_assertions)]
 use log::debug;
 use log::error;
@@ -36,8 +35,9 @@ use crate::{
     api::{v1::ApiV1, ApiV0},
     Extension,
 };
+use weighting::WeightedCalculator;
 
-const BASE_FREQ: isize = 500_000;
+const BASE_FREQ: isize = 600_000;
 
 pub static OFFSET_MAP: OnceLock<HashMap<i32, AtomicIsize>> = OnceLock::new();
 
@@ -48,12 +48,11 @@ pub struct Controller {
     policy_freq: isize,
     cpu_infos: Vec<Info>,
     file_handler: FileHandler,
-    usage_reader: UsageReader,
+    weighted_calculator: WeightedCalculator,
 }
 
 impl Controller {
     pub fn new() -> Result<Self> {
-        let usage_reader = UsageReader::new();
         let cpu_infos: Vec<_> = fs::read_dir("/sys/devices/system/cpu/cpufreq")?
             .map(|entry| entry.unwrap().path())
             .filter(|path| {
@@ -98,7 +97,7 @@ impl Controller {
             policy_freq: max_freq,
             cpu_infos,
             file_handler: FileHandler::new(),
-            usage_reader,
+            weighted_calculator: WeightedCalculator::new(),
         })
     }
 
@@ -108,12 +107,13 @@ impl Controller {
         extension.tigger_extentions(ApiV1::InitCpuFreq);
 
         for cpu in &self.cpu_infos {
-            cpu.write_freq(self.max_freq, &mut self.file_handler, false)
+            cpu.write_freq(self.max_freq, &mut self.file_handler, 1.0)
                 .unwrap_or_else(|e| error!("{e:?}"));
         }
     }
 
     pub fn init_default(&mut self, extension: &Extension) {
+        self.weighted_calculator.clear();
         self.policy_freq = self.max_freq;
         extension.tigger_extentions(ApiV0::ResetCpuFreq);
         extension.tigger_extentions(ApiV1::ResetCpuFreq);
@@ -124,7 +124,7 @@ impl Controller {
         }
     }
 
-    pub fn fas_update_freq(&mut self, factor: f64) {
+    pub fn fas_update_freq(&mut self, process: pid_t, factor: f64) {
         self.policy_freq = self
             .policy_freq
             .saturating_add((BASE_FREQ as f64 * factor) as isize)
@@ -136,23 +136,14 @@ impl Controller {
             debug!("policy freq: {}", self.policy_freq);
         }
 
-        let heaviest_cpu = self
-            .usage_reader
-            .update()
-            .iter()
-            .max_by(|(_, usage_a), (_, usage_b)| {
-                usage_a.partial_cmp(usage_b).unwrap_or(cmp::Ordering::Equal)
-            })
-            .map(|(cpu, _)| cpu)
-            .copied();
+        let weights = self.weighted_calculator.update(process).unwrap();
 
         for policy in &self.cpu_infos {
+            let weight = weights.weight(&policy.cpus).unwrap_or(1.0);
+            #[cfg(debug_assertions)]
+            debug!("policy{}: weight {:.2}", policy.policy, weight);
             policy
-                .write_freq(
-                    self.policy_freq,
-                    &mut self.file_handler,
-                    heaviest_cpu.is_some_and(|core| policy.cpus.contains(&core)),
-                )
+                .write_freq(self.policy_freq, &mut self.file_handler, weight)
                 .unwrap_or_else(|e| error!("{e:?}"));
         }
     }

@@ -19,6 +19,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+use libc::pid_t;
+
 use crate::framework::config::TargetFps;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -29,23 +31,25 @@ pub enum BufferState {
 
 #[derive(Debug)]
 pub struct Buffer {
+    pub pid: pid_t,
     pub pkg: String,
     pub target_fps: Option<u32>,
     pub current_fps: f64,
     pub current_fpses: VecDeque<f64>,
     pub avg_time: Duration,
     pub frametimes: VecDeque<Duration>,
-    pub frame_prepare: Duration,
     pub last_update: Instant,
     target_fps_config: TargetFps,
     timer: Instant,
     pub state: BufferState,
     state_timer: Instant,
+    additional_frametime: Duration,
 }
 
 impl Buffer {
-    pub fn new(target_fps_config: TargetFps, pkg: String) -> Self {
+    pub fn new(target_fps_config: TargetFps, pid: pid_t, pkg: String) -> Self {
         Self {
+            pid,
             pkg,
             target_fps: None,
             target_fps_config,
@@ -53,17 +57,17 @@ impl Buffer {
             current_fpses: VecDeque::with_capacity(144 * 3),
             avg_time: Duration::ZERO,
             frametimes: VecDeque::with_capacity(144),
-            frame_prepare: Duration::ZERO,
             last_update: Instant::now(),
             timer: Instant::now(),
             state: BufferState::Unusable,
             state_timer: Instant::now(),
+            additional_frametime: Duration::ZERO,
         }
     }
 
     pub fn push_frametime(&mut self, d: Duration) {
+        self.additional_frametime = Duration::ZERO;
         self.last_update = Instant::now();
-        self.frame_prepare = Duration::ZERO;
 
         while self.frametimes.len() >= self.target_fps.unwrap_or(144) as usize {
             self.frametimes.pop_back();
@@ -92,13 +96,7 @@ impl Buffer {
         self.state_timer = Instant::now();
     }
 
-    pub fn frame_prepare(&mut self) {
-        self.frame_prepare = self.last_update.elapsed();
-
-        if self.timer.elapsed() >= Duration::from_secs(1) {
-            self.timer = Instant::now();
-            self.calculate_current_fps();
-            self.calculate_target_fps();
-        }
+    pub fn additional_frametime(&mut self) {
+        self.additional_frametime = self.last_update.elapsed();
     }
 }
