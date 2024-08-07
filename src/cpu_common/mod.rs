@@ -32,7 +32,7 @@ use log::debug;
 use log::error;
 
 use crate::{
-    api::{v1::ApiV1, ApiV0},
+    api::{v1::ApiV1, v2::ApiV2, ApiV0},
     Extension,
 };
 use weighting::WeightedCalculator;
@@ -105,6 +105,7 @@ impl Controller {
         self.policy_freq = self.max_freq;
         extension.tigger_extentions(ApiV0::InitCpuFreq);
         extension.tigger_extentions(ApiV1::InitCpuFreq);
+        extension.tigger_extentions(ApiV2::InitCpuFreq);
 
         for cpu in &self.cpu_infos {
             cpu.write_freq(self.max_freq, &mut self.file_handler, 1.0)
@@ -117,6 +118,7 @@ impl Controller {
         self.policy_freq = self.max_freq;
         extension.tigger_extentions(ApiV0::ResetCpuFreq);
         extension.tigger_extentions(ApiV1::ResetCpuFreq);
+        extension.tigger_extentions(ApiV2::ResetCpuFreq);
 
         for cpu in &self.cpu_infos {
             cpu.reset_freq(&mut self.file_handler)

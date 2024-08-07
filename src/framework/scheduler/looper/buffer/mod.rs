@@ -21,7 +21,7 @@ use std::{
 
 use libc::pid_t;
 
-use crate::framework::config::TargetFps;
+use crate::{framework::config::TargetFps, Extension};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BufferState {
@@ -65,7 +65,7 @@ impl Buffer {
         }
     }
 
-    pub fn push_frametime(&mut self, d: Duration) {
+    pub fn push_frametime(&mut self, d: Duration, extension: &Extension) {
         self.additional_frametime = Duration::ZERO;
         self.last_update = Instant::now();
 
@@ -79,7 +79,7 @@ impl Buffer {
         if self.timer.elapsed() >= Duration::from_secs(1) {
             self.timer = Instant::now();
             self.calculate_current_fps();
-            self.calculate_target_fps();
+            self.calculate_target_fps(extension);
         }
     }
 

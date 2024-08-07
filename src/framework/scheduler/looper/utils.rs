@@ -18,7 +18,7 @@ use log::info;
 
 use super::{super::FasData, buffer::BufferState, Buffer, Looper, State};
 use crate::{
-    api::v1::ApiV1,
+    api::{v1::ApiV1, v2::ApiV2},
     framework::{api::ApiV0, utils::get_process_name},
 };
 
@@ -34,7 +34,9 @@ impl Looper {
                 self.extension
                     .tigger_extentions(ApiV0::UnloadFas(buffer.pid, pkg.clone()));
                 self.extension
-                    .tigger_extentions(ApiV1::UnloadFas(buffer.pid, pkg));
+                    .tigger_extentions(ApiV1::UnloadFas(buffer.pid, pkg.clone()));
+                self.extension
+                    .tigger_extentions(ApiV2::UnloadFas(buffer.pid, pkg));
                 self.buffer = None;
             }
         }
@@ -54,6 +56,7 @@ impl Looper {
                 self.controller.init_default(&self.extension);
                 self.extension.tigger_extentions(ApiV0::StopFas);
                 self.extension.tigger_extentions(ApiV1::StopFas);
+                self.extension.tigger_extentions(ApiV2::StopFas);
             }
             State::Waiting => self.state = State::NotWorking,
             State::NotWorking => (),
@@ -67,6 +70,7 @@ impl Looper {
                 self.delay_timer = Instant::now();
                 self.extension.tigger_extentions(ApiV0::StartFas);
                 self.extension.tigger_extentions(ApiV1::StartFas);
+                self.extension.tigger_extentions(ApiV2::StartFas);
             }
             State::Waiting => {
                 if self.delay_timer.elapsed() > DELAY_TIME {
@@ -88,7 +92,7 @@ impl Looper {
         let frametime = d.frametime;
 
         if let Some(buffer) = self.buffer.as_mut() {
-            buffer.push_frametime(frametime);
+            buffer.push_frametime(frametime, &self.extension);
             Some(buffer.state)
         } else {
             let Ok(pkg) = get_process_name(d.pid) else {
@@ -102,9 +106,11 @@ impl Looper {
                 .tigger_extentions(ApiV0::LoadFas(pid, pkg.clone()));
             self.extension
                 .tigger_extentions(ApiV1::LoadFas(pid, pkg.clone()));
+            self.extension
+                .tigger_extentions(ApiV2::LoadFas(pid, pkg.clone()));
 
             let mut buffer = Buffer::new(target_fps, pid, pkg);
-            buffer.push_frametime(frametime);
+            buffer.push_frametime(frametime, &self.extension);
 
             self.buffer = Some(buffer);
 

@@ -18,7 +18,7 @@ use std::time::Duration;
 use log::debug;
 
 use super::Buffer;
-use crate::framework::config::TargetFps;
+use crate::{api::v2::ApiV2, framework::config::TargetFps, Extension};
 
 impl Buffer {
     pub fn calculate_current_fps(&mut self) {
@@ -48,9 +48,13 @@ impl Buffer {
         self.current_fpses.push_front(current_fps);
     }
 
-    pub fn calculate_target_fps(&mut self) {
+    pub fn calculate_target_fps(&mut self, extension: &Extension) {
         let new_target_fps = self.target_fps();
         if self.target_fps != new_target_fps {
+            if let Some(target_fps) = new_target_fps {
+                extension.tigger_extentions(ApiV2::TargetFpsChange(target_fps, self.pkg.clone()));
+            }
+
             self.target_fps = new_target_fps;
             self.unusable();
         }
