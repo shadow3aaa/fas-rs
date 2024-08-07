@@ -106,11 +106,11 @@ impl WeightedCalculator {
         let new_cpu_times: HashMap<_, _> = self
             .map
             .keys()
-            .map(|task| {
-                (
+            .filter_map(|task| {
+                Some((
                     task,
-                    fs::read_to_string(format!("/proc/{process}/task/{task}/schedstat")).unwrap(),
-                )
+                    fs::read_to_string(format!("/proc/{process}/task/{task}/schedstat")).ok()?,
+                ))
             })
             .map(|(task, stat)| {
                 (
