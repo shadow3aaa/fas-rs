@@ -33,7 +33,7 @@ pub enum ApiV2 {
 
 impl Api for ApiV2 {
     fn handle_api(&self, ext: &ExtensionMap) {
-        for (extension, lua) in ext.iter().filter(|(_, lua)| get_api_version(lua) == 1) {
+        for (extension, lua) in ext.iter().filter(|(_, lua)| get_api_version(lua) == 2) {
             match self.clone() {
                 Self::LoadFas(pid, pkg) => {
                     do_callback(extension, lua, "load_fas", (pid, pkg));
