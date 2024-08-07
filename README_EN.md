@@ -47,12 +47,6 @@
     - `true`: Use scene game list
     - `false`: Not using scene game list
 
-  - **control_min_freq**
-
-    - Type: `bool`
-      - `true`: Fas will control the minimum and maximum frequencies
-      - `false`: Fas will only controls the maximum frequency
-
   - `*`: default configuration
 
 - ### **Game list (`game_list`) description:**

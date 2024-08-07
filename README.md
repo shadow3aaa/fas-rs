@@ -47,12 +47,6 @@
     - `true`: 使用 scene 游戏列表
     - `false`: 不使用 scene 游戏列表
 
-  - **control_min_freq**
-
-    - 类型: `bool`
-    - `true`: fas 将控制最小频率和最大频率
-    - `false`: fas 只控制最大频率
-
   - `*`: 默认配置
 
 - ### **游戏列表(`game_list`)说明:**
