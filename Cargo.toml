@@ -52,6 +52,7 @@ smallvec = { version = "1.13.2", features = ["const_generics"] }
 dumpsys-rs = { git = "https://github.com/shadow3aaa/dumpsys-rs" }
 cpu_cycles_reader = "1.2.0"
 num_cpus = "1.16.0"
+cpu-instructions-reader = "0.1.0"
 
 [build-dependencies]
 anyhow = "1.0.86"

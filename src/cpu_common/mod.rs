@@ -37,7 +37,7 @@ use crate::{
 };
 use weighting::WeightedCalculator;
 
-const BASE_FREQ: isize = 600_000;
+const BASE_FREQ: isize = 400_000;
 
 pub static OFFSET_MAP: OnceLock<HashMap<i32, AtomicIsize>> = OnceLock::new();
 
