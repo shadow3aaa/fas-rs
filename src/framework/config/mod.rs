@@ -15,11 +15,12 @@
 mod data;
 mod merge;
 mod read;
+mod inner;
 
-use std::{fs, path::Path, sync::Arc, thread};
+use std::{fs, path::Path, sync::mpsc, thread};
 
+use inner::Inner;
 use log::{error, info};
-use parking_lot::RwLock;
 use toml::Value;
 
 use crate::framework::{error::Result, node::Mode};
@@ -32,53 +33,51 @@ pub enum TargetFps {
     Array(Vec<u32>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Config {
-    toml: Arc<RwLock<ConfigData>>,
+    inner: Inner,
 }
 
 impl Config {
     pub fn new<P: AsRef<Path>>(p: P, sp: P) -> Result<Self> {
         let path = p.as_ref();
         let std_path = sp.as_ref();
+        let toml_raw = fs::read_to_string(path)?;
+        let toml: ConfigData = toml::from_str(&toml_raw)?;
 
-        let ori = fs::read_to_string(path)?;
-
-        let toml: ConfigData = toml::from_str(&ori)?;
-        let toml = Arc::new(RwLock::new(toml));
+        let (sx, rx) = mpsc::channel();
+        let inner = Inner::new(toml, rx);
 
         {
             let path = path.to_owned();
             let std_path = std_path.to_owned();
-            let toml = toml.clone();
 
             thread::Builder::new()
                 .name("ConfigThread".into())
                 .spawn(move || {
-                    wait_and_read(&path, &std_path, &toml).unwrap_or_else(|e| error!("{e:#?}"));
+                    wait_and_read(&path, &std_path, &sx).unwrap_or_else(|e| error!("{e:#?}"));
                     panic!("An unrecoverable error occurred!");
                 })?;
         }
 
         info!("Config watcher started");
 
-        Ok(Self { toml })
+        Ok(Self { inner })
     }
 
-    pub fn need_fas<S: AsRef<str>>(&self, pkg: S) -> bool {
-        let toml = self.toml.read();
+    pub fn need_fas<S: AsRef<str>>(&mut self, pkg: S) -> bool {
         let pkg = pkg.as_ref();
 
-        toml.game_list.contains_key(pkg) || toml.scene_game_list.contains(pkg)
+        self.inner.config().game_list.contains_key(pkg) || self.inner.config().scene_game_list.contains(pkg)
     }
 
-    pub fn target_fps<S: AsRef<str>>(&self, pkg: S) -> Option<TargetFps> {
+    pub fn target_fps<S: AsRef<str>>(&mut self, pkg: S) -> Option<TargetFps> {
         let pkg = pkg.as_ref();
         let pkg = pkg.split(':').next()?;
 
-        self.toml.read().game_list.get(pkg).map_or_else(
+        self.inner.config().game_list.get(pkg).cloned().map_or_else(
             || {
-                if self.toml.read().scene_game_list.contains(pkg) {
+                if self.inner.config().scene_game_list.contains(pkg) {
                     Some(TargetFps::Array(vec![30, 45, 60, 90, 120, 144]))
                 } else {
                     None
@@ -94,7 +93,7 @@ impl Config {
                     arr.sort_unstable();
                     Some(TargetFps::Array(arr))
                 }
-                Value::Integer(i) => Some(TargetFps::Value(*i as u32)),
+                Value::Integer(i) => Some(TargetFps::Value(i as u32)),
                 Value::String(s) => {
                     if s == "auto" {
                         Some(TargetFps::Array(vec![30, 45, 60, 90, 120, 144]))
@@ -114,19 +113,17 @@ impl Config {
     }
 
     #[must_use]
-    pub fn mode_config(&self, m: Mode) -> ModeConfig {
-        let toml = self.toml.read();
-
+    pub fn mode_config(&mut self, m: Mode) -> ModeConfig {
         match m {
-            Mode::Powersave => toml.powersave,
-            Mode::Balance => toml.balance,
-            Mode::Performance => toml.performance,
-            Mode::Fast => toml.fast,
+            Mode::Powersave =>self.inner.config().powersave,
+            Mode::Balance => self.inner.config().balance,
+            Mode::Performance => self.inner.config().performance,
+            Mode::Fast => self.inner.config().fast,
         }
     }
 
     #[must_use]
-    pub fn config(&self) -> ConfigConfig {
-        self.toml.read().config
+    pub fn config(&mut self) -> ConfigConfig {
+        self.inner.config().config
     }
 }

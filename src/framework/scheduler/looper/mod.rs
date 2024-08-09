@@ -189,7 +189,7 @@ impl Looper {
         let Some(event) = self
             .buffer
             .as_ref()
-            .and_then(|buffer| buffer.event(&self.config, self.mode))
+            .and_then(|buffer| buffer.event(&mut self.config, self.mode))
         else {
             self.disable_fas();
             return;
