@@ -16,25 +16,21 @@
 mod IRemoteService;
 
 use std::{
-    process,
-    sync::mpsc::{self, Receiver, Sender},
-    thread,
-    time::Duration,
+    fs, process, sync::mpsc::{self, Receiver, Sender}, thread, time::Duration
 };
 
-use binder::{BinderFeatures, Interface, ProcessState};
+use binder::{BinderFeatures, Interface, ProcessState, Status};
 use log::{error, info};
 
 use super::FasData;
-use crate::framework::{
-    config::Config,
+use crate::{framework::{
+    config::ConfigData,
     error::{Error, Result},
     node::Node,
-};
+}, USER_CONFIG};
 use IRemoteService::BnRemoteService;
 
 pub struct FasServer {
-    config: Config,
     sx: Sender<FasData>,
 }
 
@@ -42,7 +38,12 @@ impl Interface for FasServer {}
 
 impl IRemoteService::IRemoteService for FasServer {
     fn needFas(&self, pkg: &str) -> binder::Result<bool> {
-        Ok(self.config.need_fas(pkg))
+        let config_raw = fs::read_to_string(USER_CONFIG).map_err(|_| Status::ok())?;
+        if let Ok(config) = toml::from_str::<ConfigData>(&config_raw) {
+            Ok(config.game_list.contains_key(pkg) || config.scene_game_list.contains(pkg))
+        } else {
+            Ok(false)
+        }
     }
 
     fn sendData(&self, pid: i32, frametime_ns: i64) -> binder::Result<bool> {
@@ -60,12 +61,12 @@ impl IRemoteService::IRemoteService for FasServer {
 }
 
 impl FasServer {
-    pub fn run_server(node: &mut Node, config: Config) -> Result<Receiver<FasData>> {
+    pub fn run_server(node: &mut Node) -> Result<Receiver<FasData>> {
         let (sx, rx) = mpsc::channel();
 
         thread::Builder::new()
             .name("BinderServer".into())
-            .spawn(|| Self::run(sx, config))?;
+            .spawn(|| Self::run(sx))?;
 
         unsafe {
             node.create_node("pid", &libc::getpid().to_string())
@@ -75,8 +76,8 @@ impl FasServer {
         Ok(rx)
     }
 
-    fn run(sx: Sender<FasData>, config: Config) -> Result<()> {
-        let server = Self { config, sx };
+    fn run(sx: Sender<FasData>) -> Result<()> {
+        let server = Self { sx };
         let server = BnRemoteService::new_binder(server, BinderFeatures::default());
 
         binder::add_service("fas_rs_server", server.as_binder())

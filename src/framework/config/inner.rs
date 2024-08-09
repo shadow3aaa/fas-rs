@@ -9,8 +9,8 @@ pub struct Inner {
 }
 
 impl Inner {
-    pub fn new(config: ConfigData, rx: Receiver<ConfigData>) -> Self {
-        Self { config, rx }
+    pub const fn new(config: ConfigData, rx: Receiver<ConfigData>) -> Self {
+        Self { rx, config }
     }
 
     pub fn config(&mut self) -> &mut ConfigData {

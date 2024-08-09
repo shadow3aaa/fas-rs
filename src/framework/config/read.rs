@@ -12,22 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{fs, path::Path, sync::{mpsc::Sender, Arc}, thread, time::Duration};
+use std::{fs, path::Path, sync::mpsc::Sender, thread, time::Duration};
 
 use inotify::{Inotify, WatchMask};
 use log::{debug, error};
-use parking_lot::RwLock;
 
 use super::data::{ConfigData, SceneAppList};
 use crate::framework::error::Result;
 
 const SCENE_PROFILE: &str = "/data/data/com.omarea.vtools/shared_prefs/games.xml";
 
-pub(super) fn wait_and_read(
-    path: &Path,
-    std_path: &Path,
-    sx: &Sender<ConfigData>,
-) -> Result<()> {
+pub(super) fn wait_and_read(path: &Path, std_path: &Path, sx: &Sender<ConfigData>) -> Result<()> {
     let mut retry_count = 0;
 
     let std_config = fs::read_to_string(std_path)?;
@@ -55,9 +50,10 @@ pub(super) fn wait_and_read(
                 o
             }
             Err(e) => {
-                if retry_count > 3 {
-                    panic!("Failed to parse config {path:?}, reason: {e}, go panic.");
-                }
+                assert!(
+                    retry_count <= 3,
+                    "Failed to parse config {path:?}, reason: {e}, go panic."
+                );
 
                 retry_count += 1;
                 thread::sleep(Duration::from_secs(1));
@@ -75,11 +71,7 @@ pub(super) fn wait_and_read(
     }
 }
 
-fn check_counter_final(
-    retry_count: &mut u8,
-    sx: &Sender<ConfigData>,
-    std_config: &ConfigData,
-) {
+fn check_counter_final(retry_count: &mut u8, sx: &Sender<ConfigData>, std_config: &ConfigData) {
     if *retry_count > 10 {
         error!("Too many read / parse user config retries");
         error!("Use std profile instead until we could read and parse user config");

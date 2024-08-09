@@ -13,9 +13,9 @@
 // limitations under the License.
 
 mod data;
+mod inner;
 mod merge;
 mod read;
-mod inner;
 
 use std::{fs, path::Path, sync::mpsc, thread};
 
@@ -24,7 +24,7 @@ use log::{error, info};
 use toml::Value;
 
 use crate::framework::{error::Result, node::Mode};
-use data::{Config as ConfigConfig, ConfigData, ModeConfig};
+pub use data::{Config as ConfigConfig, ConfigData, ModeConfig};
 use read::wait_and_read;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -68,7 +68,8 @@ impl Config {
     pub fn need_fas<S: AsRef<str>>(&mut self, pkg: S) -> bool {
         let pkg = pkg.as_ref();
 
-        self.inner.config().game_list.contains_key(pkg) || self.inner.config().scene_game_list.contains(pkg)
+        self.inner.config().game_list.contains_key(pkg)
+            || self.inner.config().scene_game_list.contains(pkg)
     }
 
     pub fn target_fps<S: AsRef<str>>(&mut self, pkg: S) -> Option<TargetFps> {
@@ -115,7 +116,7 @@ impl Config {
     #[must_use]
     pub fn mode_config(&mut self, m: Mode) -> ModeConfig {
         match m {
-            Mode::Powersave =>self.inner.config().powersave,
+            Mode::Powersave => self.inner.config().powersave,
             Mode::Balance => self.inner.config().balance,
             Mode::Performance => self.inner.config().performance,
             Mode::Fast => self.inner.config().fast,
