@@ -37,7 +37,6 @@ until [ -d $DIR ]; do
 done
 
 stop vendor.oplus.ormsHalService-aidl-default
-stop gameopt_hal_service-1-0
 
 for i in $(seq 0 2); do
 	lock_val "$i 20000" /proc/shell-temp
