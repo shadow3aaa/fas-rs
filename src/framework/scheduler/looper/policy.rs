@@ -27,8 +27,33 @@ pub struct FrameEvent {
 }
 
 impl Buffer {
-    pub fn event(&self, config: &Config, mode: Mode) -> Option<FrameEvent> {
-        let normalized_last_frame = self.frametimes.front().copied()? * self.target_fps?;
+    pub fn event(&self, config: &mut Config, mode: Mode) -> Option<FrameEvent> {
+        let target_fps = self.target_fps?;
+        let target_fps_prefixed = {
+            let fpses: Vec<_> = self
+                .current_fpses
+                .iter()
+                .copied()
+                .filter(|fps| {
+                    *fps >= f64::from(target_fps) * 119.0 / 120.0 && *fps <= f64::from(target_fps)
+                })
+                .collect();
+            let count = fpses.len();
+            let prefixed = fpses.into_iter().sum::<f64>() / count as f64;
+            if prefixed.is_normal() {
+                prefixed
+            } else {
+                f64::from(target_fps)
+            }
+        };
+        let normalized_last_frame = if self.additional_frametime == Duration::ZERO {
+            self.frametimes
+                .front()
+                .copied()?
+                .mul_f64(target_fps_prefixed)
+        } else {
+            self.additional_frametime
+        };
 
         #[cfg(debug_assertions)]
         debug!("normalized_last_frame: {normalized_last_frame:?}");
