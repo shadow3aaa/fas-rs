@@ -78,7 +78,7 @@ impl Scheduler {
         #[cfg(feature = "use_binder")]
         {
             let mut node = Node::init()?;
-            let rx = FasServer::run_server(&mut node, config.clone())?;
+            let rx = FasServer::run_server(&mut node)?;
             Looper::new(rx, config, node, extension, controller).enter_loop()
         }
 

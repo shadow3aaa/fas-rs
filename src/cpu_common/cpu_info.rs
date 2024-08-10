@@ -16,7 +16,8 @@ use std::{fs, path::PathBuf, sync::atomic::Ordering};
 
 use anyhow::Result;
 
-use super::{file_handler::FileHandler, OFFSET_MAP};
+use super::OFFSET_MAP;
+use crate::file_handler::FileHandler;
 
 #[derive(Debug)]
 pub struct Info {
@@ -71,8 +72,8 @@ impl Info {
         let min_freq_path = self.min_freq_path();
 
         let freq = format!("{:.0}", freq as f64 * weight);
+
         file_handler.write_with_workround(max_freq_path, &freq)?;
-        
         if self.policy != 0 {
             file_handler.write_with_workround(min_freq_path, &freq)?;
         }

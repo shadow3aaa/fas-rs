@@ -16,18 +16,24 @@
 mod IRemoteService;
 
 use std::{
-    fs, process, sync::mpsc::{self, Receiver, Sender}, thread, time::Duration
+    fs, process,
+    sync::mpsc::{self, Receiver, Sender},
+    thread,
+    time::Duration,
 };
 
 use binder::{BinderFeatures, Interface, ProcessState, Status};
 use log::{error, info};
 
 use super::FasData;
-use crate::{framework::{
-    config::ConfigData,
-    error::{Error, Result},
-    node::Node,
-}, USER_CONFIG};
+use crate::{
+    framework::{
+        config::ConfigData,
+        error::{Error, Result},
+        node::Node,
+    },
+    USER_CONFIG,
+};
 use IRemoteService::BnRemoteService;
 
 pub struct FasServer {

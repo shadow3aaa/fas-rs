@@ -23,19 +23,21 @@ use std::{
 };
 
 use anyhow::Result;
-use cpu_cycles_reader::Cycles;
+use cpu_instructions_reader::InstructionNumber;
 use libc::pid_t;
 #[cfg(debug_assertions)]
 use log::debug;
 use task::TaskMeta;
-use weights::Weights;
+pub use weights::Weights;
 
 #[derive(Debug)]
 pub struct WeightedCalculator {
     map: HashMap<i32, TaskMeta>,
     cpu_times_long: HashMap<i32, u64>,
     cpu_times_short: HashMap<i32, u64>,
-    timer: Instant,
+    short_timer: Instant,
+    long_timer: Instant,
+    cache: Weights,
 }
 
 impl WeightedCalculator {
@@ -44,7 +46,9 @@ impl WeightedCalculator {
             map: HashMap::new(),
             cpu_times_long: HashMap::new(),
             cpu_times_short: HashMap::new(),
-            timer: Instant::now(),
+            short_timer: Instant::now(),
+            long_timer: Instant::now(),
+            cache: Weights::new(),
         }
     }
 
@@ -52,39 +56,43 @@ impl WeightedCalculator {
         self.map.clear();
         self.cpu_times_short.clear();
         self.cpu_times_long.clear();
-        self.timer = Instant::now();
+        self.short_timer = Instant::now();
+        self.long_timer = Instant::now();
     }
 
-    pub fn update(&mut self, process: pid_t) -> Result<Weights> {
-        let weights = self.calculate_weights()?;
+    pub fn update(&mut self, process: pid_t) -> Result<&Weights> {
+        if self.short_timer.elapsed() <= Duration::from_secs(1) {
+            return Ok(&self.cache);
+        }
+
+        self.short_timer = Instant::now();
+
         self.update_top_tasks(process)?;
-        Ok(weights)
+        self.calculate_weights()?;
+
+        Ok(&self.cache)
     }
 
-    fn calculate_weights(&self) -> Result<Weights> {
-        let mut weights = Weights {
-            map: HashMap::new(),
-        };
-
+    fn calculate_weights(&mut self) -> Result<()> {
         for meta in self.map.values() {
             let num_cpus = num_cpus::get();
-            let mut cycles_instants = Vec::new();
+            let mut instructions_instants = Vec::new();
 
             for cpu in 0..num_cpus {
-                cycles_instants.push(meta.cycles_reader.instant(cpu as i32)?);
+                instructions_instants.push(meta.instructions_reader.instant(cpu as i32)?);
             }
 
-            let cycles: Vec<_> = cycles_instants
+            let instructions: Vec<_> = instructions_instants
                 .iter()
-                .zip(meta.cycles_trace.iter())
+                .zip(meta.instructions_trace.iter())
                 .map(|(now, last)| *now - *last)
                 .collect();
-            let cycles_sum: Cycles = cycles.iter().copied().sum();
+            let instructions_sum: InstructionNumber = instructions.iter().copied().sum();
 
-            for (cpu, cycles) in cycles.iter().enumerate() {
-                let cpu_weight = cycles.as_hz() as f64 / cycles_sum.as_hz() as f64;
+            for (cpu, instructions) in instructions.iter().enumerate() {
+                let cpu_weight = instructions.as_raw() as f64 / instructions_sum.as_raw() as f64;
                 let final_weight = cpu_weight * meta.weight;
-                match weights.map.entry(cpu as i32) {
+                match self.cache.map.entry(cpu as i32) {
                     hash_map::Entry::Occupied(mut o) => {
                         *o.get_mut() += final_weight;
                     }
@@ -95,7 +103,7 @@ impl WeightedCalculator {
             }
         }
 
-        Ok(weights)
+        Ok(())
     }
 
     fn update_cpu_times(&mut self, process: pid_t) {
@@ -148,12 +156,12 @@ impl WeightedCalculator {
     }
 
     fn update_top_tasks(&mut self, process: pid_t) -> Result<()> {
-        if self.timer.elapsed() <= Duration::from_secs(3) {
+        if self.long_timer.elapsed() <= Duration::from_secs(5) {
             self.update_cpu_times(process);
             return Ok(());
         }
 
-        self.timer = Instant::now();
+        self.long_timer = Instant::now();
 
         let cpu_times: HashMap<_, _> = fs::read_dir(format!("/proc/{process}/task"))?
             .map(|e| e.unwrap().path())

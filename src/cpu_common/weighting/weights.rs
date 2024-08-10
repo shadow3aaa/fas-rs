@@ -14,11 +14,18 @@
 
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub struct Weights {
     pub map: HashMap<i32, f64>,
 }
 
 impl Weights {
+    pub fn new() -> Self {
+        Self {
+            map: HashMap::new(),
+        }
+    }
+
     pub fn weight(&self, cpus: &Vec<i32>) -> Option<f64> {
         if self.map.is_empty() {
             return None;
@@ -32,7 +39,7 @@ impl Weights {
             }
         }
 
-        let weight = weight.min(1.5);
+        let weight = weight.min(1.8);
 
         Some(weight)
     }

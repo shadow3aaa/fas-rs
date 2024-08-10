@@ -123,6 +123,7 @@ impl Looper {
                 }
             } else if let Some(buffer) = self.buffer.as_mut() {
                 buffer.additional_frametime();
+                self.do_policy(target_fps);
             }
         }
     }
@@ -146,7 +147,7 @@ impl Looper {
 
     #[cfg(feature = "use_binder")]
     fn recv_message(&self) -> Result<Option<FasData>> {
-        match self.rx.recv_timeout(Duration::from_millis(500)) {
+        match self.rx.recv_timeout(Duration::from_millis(100)) {
             Ok(m) => Ok(Some(m)),
             Err(e) => {
                 if e == RecvTimeoutError::Disconnected {
@@ -161,7 +162,7 @@ impl Looper {
     #[cfg(feature = "use_ebpf")]
     fn recv_message(&mut self) -> Option<FasData> {
         self.analyzer
-            .recv_timeout(Duration::from_millis(500))
+            .recv_timeout(Duration::from_millis(100))
             .map(|(pid, frametime)| FasData { pid, frametime })
     }
 

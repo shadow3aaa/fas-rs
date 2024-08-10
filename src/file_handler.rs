@@ -38,8 +38,9 @@ impl FileHandler {
     pub fn read_to_string(&mut self, path: impl AsRef<Path>) -> Result<String> {
         let mut string = String::new();
         match self.files.entry(path.as_ref().to_path_buf()) {
-            Entry::Occupied(entry) => {
+            Entry::Occupied(mut entry) => {
                 let mut string = String::new();
+                entry.get_mut().rewind()?;
                 entry.get().read_to_string(&mut string)?;
             }
             Entry::Vacant(entry) => {

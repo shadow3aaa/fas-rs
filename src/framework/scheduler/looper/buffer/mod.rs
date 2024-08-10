@@ -43,7 +43,7 @@ pub struct Buffer {
     timer: Instant,
     pub state: BufferState,
     state_timer: Instant,
-    additional_frametime: Duration,
+    pub additional_frametime: Duration,
 }
 
 impl Buffer {
