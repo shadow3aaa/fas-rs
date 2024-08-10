@@ -13,10 +13,10 @@
 // limitations under the License.
 
 mod cpu_info;
-mod file_handler;
 mod weighting;
 
 use std::{
+    cmp,
     collections::HashMap,
     fs,
     sync::{atomic::AtomicIsize, OnceLock},
@@ -25,7 +25,6 @@ use std::{
 
 use anyhow::Result;
 use cpu_info::Info;
-use file_handler::FileHandler;
 use libc::pid_t;
 #[cfg(debug_assertions)]
 use log::debug;
@@ -33,11 +32,12 @@ use log::error;
 
 use crate::{
     api::{v1::ApiV1, v2::ApiV2, ApiV0},
+    file_handler::FileHandler,
     Extension,
 };
 use weighting::WeightedCalculator;
 
-const BASE_FREQ: isize = 400_000;
+const BASE_FREQ: isize = 600_000;
 
 pub static OFFSET_MAP: OnceLock<HashMap<i32, AtomicIsize>> = OnceLock::new();
 
@@ -53,7 +53,7 @@ pub struct Controller {
 
 impl Controller {
     pub fn new() -> Result<Self> {
-        let cpu_infos: Vec<_> = fs::read_dir("/sys/devices/system/cpu/cpufreq")?
+        let mut cpu_infos: Vec<_> = fs::read_dir("/sys/devices/system/cpu/cpufreq")?
             .map(|entry| entry.unwrap().path())
             .filter(|path| {
                 path.is_dir()
@@ -66,6 +66,8 @@ impl Controller {
             })
             .map(|path| Info::new(path).unwrap())
             .collect();
+
+        cpu_infos.sort_by_key(|cpu| cpu.policy);
 
         OFFSET_MAP.get_or_init(|| {
             cpu_infos
@@ -120,7 +122,7 @@ impl Controller {
         extension.tigger_extentions(ApiV1::ResetCpuFreq);
         extension.tigger_extentions(ApiV2::ResetCpuFreq);
 
-        for cpu in &self.cpu_infos {
+        for cpu in &mut self.cpu_infos {
             cpu.reset_freq(&mut self.file_handler)
                 .unwrap_or_else(|e| error!("{e:?}"));
         }
@@ -139,13 +141,27 @@ impl Controller {
         }
 
         let weights = self.weighted_calculator.update(process).unwrap();
+        let auto_offset = weights
+            .map
+            .iter()
+            .max_by(|(_, weight_a), (_, weight_b)| {
+                weight_a
+                    .partial_cmp(weight_b)
+                    .unwrap_or(cmp::Ordering::Equal)
+            })
+            .and_then(|(core, _)| self.cpu_infos.last().map(|cpu| cpu.cpus.contains(core)))
+            .unwrap_or(false);
 
-        for policy in &self.cpu_infos {
-            let weight = weights.weight(&policy.cpus).unwrap_or(1.0);
+        for cpu in &self.cpu_infos {
+            let weight = if auto_offset {
+                weights.weight(&cpu.cpus).unwrap_or(1.0)
+            } else {
+                1.0
+            };
+
             #[cfg(debug_assertions)]
-            debug!("policy{}: weight {:.2}", policy.policy, weight);
-            policy
-                .write_freq(self.policy_freq, &mut self.file_handler, weight)
+            debug!("policy{}: weight {:.2}", cpu.policy, weight);
+            cpu.write_freq(self.policy_freq, &mut self.file_handler, weight)
                 .unwrap_or_else(|e| error!("{e:?}"));
         }
     }
