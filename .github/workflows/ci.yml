@@ -37,6 +37,7 @@ jobs:
           rustup default nightly
           rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
           rustup component add rust-src
+          rustup update
       - name: Install cargo ndk
         run: cargo install cargo-ndk
       - name: Other deps
