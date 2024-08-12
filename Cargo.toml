@@ -53,6 +53,7 @@ dumpsys-rs = { git = "https://github.com/shadow3aaa/dumpsys-rs" }
 cpu_cycles_reader = "1.2.0"
 num_cpus = "1.16.0"
 cpu-instructions-reader = "0.2.0"
+mimalloc = "0.1.43"
 
 [build-dependencies]
 anyhow = "1.0.86"

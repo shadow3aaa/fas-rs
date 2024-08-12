@@ -38,12 +38,16 @@ use framework::prelude::*;
 use anyhow::Result;
 use flexi_logger::{DeferredNow, LogSpecification, Logger, Record};
 use log::{error, warn};
+use mimalloc::MiMalloc;
 
 #[cfg(debug_assertions)]
 use log::debug;
 
 use cpu_common::Controller;
 use misc::setprop;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 const USER_CONFIG: &str = "/sdcard/Android/fas-rs/games.toml";
 
