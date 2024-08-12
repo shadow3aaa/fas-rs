@@ -14,33 +14,22 @@
 
 use std::collections::HashMap;
 
+use crate::cpu_common::cpu_info::Info;
+
 #[derive(Debug)]
 pub struct Weights {
-    pub map: HashMap<i32, f64>,
+    pub map: HashMap<Vec<i32>, f64>,
 }
 
 impl Weights {
-    pub fn new() -> Self {
+    pub fn new(policys: &Vec<Info>) -> Self {
+        let map = policys.iter().map(|policy| (policy.cpus.clone(), 1.0)).collect();
         Self {
-            map: HashMap::new(),
+            map,
         }
     }
 
-    pub fn weight(&self, cpus: &Vec<i32>) -> Option<f64> {
-        if self.map.is_empty() {
-            return None;
-        }
-
-        let mut weight = 1.0;
-        for cpu in cpus {
-            let partial_weight = *self.map.get(cpu)?;
-            if partial_weight.is_normal() {
-                weight += partial_weight;
-            }
-        }
-
-        let weight = weight.min(1.8);
-
-        Some(weight)
+    pub fn weight(&self, cpus: &Vec<i32>) -> f64 {
+       self.map.get(cpus).unwrap().min(1.8)
     }
 }

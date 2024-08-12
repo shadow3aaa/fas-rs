@@ -30,6 +30,8 @@ use log::debug;
 use task::TaskMeta;
 pub use weights::Weights;
 
+use super::cpu_info::Info;
+
 #[derive(Debug)]
 pub struct WeightedCalculator {
     map: HashMap<i32, TaskMeta>,
@@ -41,14 +43,14 @@ pub struct WeightedCalculator {
 }
 
 impl WeightedCalculator {
-    pub fn new() -> Self {
+    pub fn new(policys: &Vec<Info>) -> Self {
         Self {
             map: HashMap::new(),
             cpu_times_long: HashMap::new(),
             cpu_times_short: HashMap::new(),
             short_timer: Instant::now(),
             long_timer: Instant::now(),
-            cache: Weights::new(),
+            cache: Weights::new(policys),
         }
     }
 
@@ -82,24 +84,35 @@ impl WeightedCalculator {
                 instructions_instants.push(meta.instructions_reader.instant(cpu as i32)?);
             }
 
-            let instructions: Vec<_> = instructions_instants
+            let instructions_per_cpu: HashMap<_, _> = instructions_instants
                 .iter()
                 .zip(meta.instructions_trace.iter())
                 .map(|(now, last)| *now - *last)
+                .enumerate()
                 .collect();
-            let instructions_sum: InstructionNumber = instructions.iter().copied().sum();
+            let instructions_per_policy: HashMap<_, _> = self
+                .cache
+                .map
+                .keys()
+                .map(|cpus| {
+                    (
+                        cpus.clone(),
+                        *cpus
+                            .iter()
+                            .copied()
+                            .map(|cpu| instructions_per_cpu.get(&(cpu as usize)).unwrap())
+                            .max()
+                            .unwrap(),
+                    )
+                })
+                .collect();
+            let instructions_sum: InstructionNumber =
+                instructions_per_policy.values().copied().sum();
 
-            for (cpu, instructions) in instructions.iter().enumerate() {
-                let cpu_weight = instructions.as_raw() as f64 / instructions_sum.as_raw() as f64;
-                let final_weight = cpu_weight * meta.weight;
-                match self.cache.map.entry(cpu as i32) {
-                    hash_map::Entry::Occupied(mut o) => {
-                        *o.get_mut() += final_weight;
-                    }
-                    hash_map::Entry::Vacant(v) => {
-                        v.insert(final_weight);
-                    }
-                }
+            for (cpus, weight) in self.cache.map.iter_mut() {
+                let policy_weight = instructions_per_policy.get(cpus).unwrap().as_raw() as f64
+                    / instructions_sum.as_raw() as f64;
+                *weight = policy_weight * meta.weight;
             }
         }
 
