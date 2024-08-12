@@ -13,29 +13,27 @@
 // limitations under the License.
 
 use anyhow::Result;
-use cpu_instructions_reader::{InstructionNumberInstant, InstructionNumberReader};
+use cpu_cycles_reader::{CyclesInstant, CyclesReader};
 use libc::pid_t;
 
 #[derive(Debug)]
 pub struct TaskMeta {
-    pub weight: f64,
-    pub instructions_trace: Vec<InstructionNumberInstant>,
-    pub instructions_reader: InstructionNumberReader,
+    pub cycles_trace: Vec<CyclesInstant>,
+    pub cycles_reader: CyclesReader,
 }
 
 impl TaskMeta {
     pub fn new(tid: pid_t, num_cpus: usize) -> Result<Self> {
-        let instructions_reader = InstructionNumberReader::new(Some(tid))?;
-        let mut instructions_trace = Vec::new();
+        let cycles_reader = CyclesReader::new(Some(tid))?;
+        let mut cycles_trace = Vec::new();
 
         for cpu in 0..num_cpus {
-            instructions_trace.push(instructions_reader.instant(cpu as i32)?);
+            cycles_trace.push(cycles_reader.instant(cpu as i32)?);
         }
 
         Ok(Self {
-            weight: 0.0,
-            instructions_reader,
-            instructions_trace,
+            cycles_trace,
+            cycles_reader,
         })
     }
 }

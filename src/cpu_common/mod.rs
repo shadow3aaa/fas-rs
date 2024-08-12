@@ -16,7 +16,6 @@ mod cpu_info;
 mod weighting;
 
 use std::{
-    cmp,
     collections::HashMap,
     fs,
     sync::{atomic::AtomicIsize, OnceLock},
@@ -161,23 +160,24 @@ impl Controller {
         }
 
         let weights = self.weighted_calculator.update(process).unwrap();
-        let auto_offset = weights
-            .map
-            .iter()
-            .max_by(|(_, weight_a), (_, weight_b)| {
-                weight_a
-                    .partial_cmp(weight_b)
-                    .unwrap_or(cmp::Ordering::Equal)
-            })
-            .map(|(cpus, _)| cpus)
-            == Some(&self.cpu_infos.last().unwrap().cpus);
+        /* let auto_offset = weights
+        .map
+        .iter()
+        .max_by(|(_, weight_a), (_, weight_b)| {
+            weight_a
+                .partial_cmp(weight_b)
+                .unwrap_or(cmp::Ordering::Equal)
+        })
+        .map(|(cpus, _)| cpus)
+        == Some(&self.cpu_infos.last().unwrap().cpus); */
 
         for cpu in &self.cpu_infos {
-            let weight = if auto_offset {
+            /* let weight = if auto_offset {
                 weights.weight(&cpu.cpus)
             } else {
                 1.0
-            };
+            }; */
+            let weight = weights.weight(&cpu.cpus);
 
             #[cfg(debug_assertions)]
             debug!("policy{}: weight {:.2}", cpu.policy, weight);

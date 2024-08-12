@@ -18,12 +18,11 @@ mod weights;
 use std::{
     collections::HashMap,
     fs,
-    path::Path,
     time::{Duration, Instant},
 };
 
 use anyhow::Result;
-use cpu_instructions_reader::InstructionNumber;
+use cpu_cycles_reader::Cycles;
 use libc::pid_t;
 #[cfg(debug_assertions)]
 use log::debug;
@@ -63,11 +62,10 @@ impl WeightedCalculator {
     }
 
     pub fn update(&mut self, process: pid_t) -> Result<&Weights> {
-        if self.short_timer.elapsed() <= Duration::from_secs(1) {
-            return Ok(&self.cache);
-        }
+        /* if self.short_timer.elapsed() >= Duration::from_secs(1) {
+            self.short_timer = Instant::now();
 
-        self.short_timer = Instant::now();
+        } */
 
         self.update_top_tasks(process)?;
         self.calculate_weights()?;
@@ -76,101 +74,49 @@ impl WeightedCalculator {
     }
 
     fn calculate_weights(&mut self) -> Result<()> {
-        for meta in self.map.values() {
-            let num_cpus = num_cpus::get();
-            let mut instructions_instants = Vec::new();
+        let num_cpus = num_cpus::get() as i32;
+        let mut cycles_per_cpu: HashMap<_, _> =
+            (0..num_cpus).map(|cpu| (cpu, Cycles::ZERO)).collect();
 
+        for meta in self.map.values_mut() {
             for cpu in 0..num_cpus {
-                instructions_instants.push(meta.instructions_reader.instant(cpu as i32)?);
+                let now = meta.cycles_reader.instant(cpu)?;
+                let last = meta.cycles_trace.get_mut(cpu as usize).unwrap();
+                *cycles_per_cpu.get_mut(&cpu).unwrap() += now - *last;
+                *last = now;
             }
+        }
 
-            let instructions_per_cpu: HashMap<_, _> = instructions_instants
-                .iter()
-                .zip(meta.instructions_trace.iter())
-                .map(|(now, last)| *now - *last)
-                .enumerate()
-                .collect();
-            let instructions_per_policy: HashMap<_, _> = self
-                .cache
-                .map
-                .keys()
-                .map(|cpus| {
-                    (
-                        cpus.clone(),
-                        *cpus
-                            .iter()
-                            .copied()
-                            .map(|cpu| instructions_per_cpu.get(&(cpu as usize)).unwrap())
-                            .max()
-                            .unwrap(),
-                    )
-                })
-                .collect();
-            let instructions_sum: InstructionNumber =
-                instructions_per_policy.values().copied().sum();
+        #[cfg(debug_assertions)]
+        debug!("cycles per cpu: {cycles_per_cpu:#?}");
 
-            for (cpus, weight) in &mut self.cache.map {
-                let policy_weight = instructions_per_policy.get(cpus).unwrap().as_raw() as f64
-                    / instructions_sum.as_raw() as f64;
-                *weight = policy_weight * meta.weight;
-            }
+        let cycles_per_policy_max: HashMap<_, _> = self
+            .cache
+            .map
+            .keys()
+            .map(|cpus| {
+                (
+                    cpus.clone(),
+                    *cycles_per_cpu
+                        .iter()
+                        .filter(|(cpu, _)| cpus.contains(cpu))
+                        .map(|(_, n)| n)
+                        .max()
+                        .unwrap(),
+                )
+            })
+            .collect();
+        let cycles_sum: Cycles = cycles_per_policy_max.values().copied().sum();
+        for (cpus, weight) in &mut self.cache.map {
+            *weight =
+                cycles_per_policy_max.get(cpus).unwrap().as_hz() as f64 / cycles_sum.as_hz() as f64;
         }
 
         Ok(())
     }
 
-    fn update_cpu_times(&mut self, process: pid_t) {
-        self.map.retain(|task, _| {
-            Path::new(&format!("/proc/{process}/task/{task}/schedstat")).exists()
-        });
-
-        let new_cpu_times: HashMap<_, _> = self
-            .map
-            .keys()
-            .filter_map(|task| {
-                Some((
-                    task,
-                    fs::read_to_string(format!("/proc/{process}/task/{task}/schedstat")).ok()?,
-                ))
-            })
-            .map(|(task, stat)| {
-                (
-                    *task,
-                    stat.split_whitespace()
-                        .next()
-                        .map(|t| t.parse::<u64>().unwrap())
-                        .unwrap(),
-                )
-            })
-            .collect();
-
-        let cpu_slices: HashMap<_, _> = new_cpu_times
-            .iter()
-            .map(|(tid, cputime)| {
-                (
-                    *tid,
-                    self.cpu_times_short
-                        .get(tid)
-                        .map_or(0, |last| cputime - last),
-                )
-            })
-            .collect();
-
-        #[cfg(debug_assertions)]
-        debug!("cpu_slices: {cpu_slices:?}");
-
-        self.cpu_times_short = new_cpu_times;
-
-        let total_time: u64 = cpu_slices.values().sum();
-        for (task, time) in cpu_slices {
-            let weight = time as f64 / total_time as f64;
-            self.map.get_mut(&task).unwrap().weight = weight;
-        }
-    }
-
     fn update_top_tasks(&mut self, process: pid_t) -> Result<()> {
-        if self.long_timer.elapsed() <= Duration::from_secs(5) {
-            self.update_cpu_times(process);
+        if self.long_timer.elapsed() <= Duration::from_secs(1) {
             return Ok(());
         }
 
@@ -223,13 +169,10 @@ impl WeightedCalculator {
         self.map.retain(|t, _| cpu_slices.contains_key(t));
 
         let num_cpus = num_cpus::get();
-        let total_time: u64 = cpu_slices.values().sum();
-        for (task, time) in cpu_slices {
-            let weight = time as f64 / total_time as f64;
+        for (task, _) in cpu_slices {
             self.map
                 .entry(task)
-                .or_insert(TaskMeta::new(task, num_cpus)?)
-                .weight = weight;
+                .or_insert(TaskMeta::new(task, num_cpus)?);
         }
 
         Ok(())

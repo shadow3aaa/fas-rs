@@ -25,12 +25,12 @@ impl Weights {
     pub fn new(policys: &Vec<Info>) -> Self {
         let map = policys
             .iter()
-            .map(|policy| (policy.cpus.clone(), 1.0))
+            .map(|policy| (policy.cpus.clone(), 0.0))
             .collect();
         Self { map }
     }
 
     pub fn weight(&self, cpus: &Vec<i32>) -> f64 {
-        self.map.get(cpus).unwrap().min(1.8)
+        (self.map.get(cpus).unwrap() + 1.0).min(1.8)
     }
 }
