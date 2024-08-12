@@ -169,7 +169,8 @@ impl Controller {
                     .partial_cmp(weight_b)
                     .unwrap_or(cmp::Ordering::Equal)
             })
-            .map(|(cpus, _)| cpus) == Some(&self.cpu_infos.last().unwrap().cpus);
+            .map(|(cpus, _)| cpus)
+            == Some(&self.cpu_infos.last().unwrap().cpus);
 
         for cpu in &self.cpu_infos {
             let weight = if auto_offset {

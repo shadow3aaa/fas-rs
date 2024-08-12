@@ -160,13 +160,9 @@ impl Looper {
         let time = if self.state != State::Working {
             Duration::from_millis(100)
         } else if self.janked {
-            target_frametime
-                .map(|time| time / 4)
-                .unwrap_or(Duration::from_millis(100))
+            target_frametime.map_or(Duration::from_millis(100), |time| time / 4)
         } else {
-            target_frametime
-                .map(|time| time * 3 / 2)
-                .unwrap_or(Duration::from_millis(100))
+            target_frametime.map_or(Duration::from_millis(100), |time| time * 3 / 2)
         };
 
         match self.rx.recv_timeout(target_frametime.unwrap_or(time)) {
@@ -188,13 +184,9 @@ impl Looper {
         let time = if self.state != State::Working {
             Duration::from_millis(100)
         } else if self.janked {
-            target_frametime
-                .map(|time| time / 4)
-                .unwrap_or(Duration::from_millis(100))
+            target_frametime.map_or(Duration::from_millis(100), |time| time / 4)
         } else {
-            target_frametime
-                .map(|time| time * 3 / 2)
-                .unwrap_or(Duration::from_millis(100))
+            target_frametime.map_or(Duration::from_millis(100), |time| time * 3 / 2)
         };
 
         self.analyzer
@@ -236,7 +228,8 @@ impl Looper {
 
         let factor = Controller::scale_factor(target_fps, event.frame, event.target, self.janked);
         if let Some(process) = self.buffer.as_ref().map(|b| b.pid) {
-            self.controller.fas_update_freq(process, factor, self.janked);
+            self.controller
+                .fas_update_freq(process, factor, self.janked);
         }
     }
 }

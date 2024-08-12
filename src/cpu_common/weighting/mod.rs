@@ -16,7 +16,7 @@ mod task;
 mod weights;
 
 use std::{
-    collections::{hash_map, HashMap},
+    collections::HashMap,
     fs,
     path::Path,
     time::{Duration, Instant},
@@ -109,7 +109,7 @@ impl WeightedCalculator {
             let instructions_sum: InstructionNumber =
                 instructions_per_policy.values().copied().sum();
 
-            for (cpus, weight) in self.cache.map.iter_mut() {
+            for (cpus, weight) in &mut self.cache.map {
                 let policy_weight = instructions_per_policy.get(cpus).unwrap().as_raw() as f64
                     / instructions_sum.as_raw() as f64;
                 *weight = policy_weight * meta.weight;
