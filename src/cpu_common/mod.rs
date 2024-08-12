@@ -37,7 +37,7 @@ use crate::{
 };
 use weighting::WeightedCalculator;
 
-const BASE_FREQ: isize = 600_000;
+const BASE_FREQ: isize = 800_000;
 
 pub static OFFSET_MAP: OnceLock<HashMap<i32, AtomicIsize>> = OnceLock::new();
 
@@ -46,6 +46,7 @@ pub struct Controller {
     max_freq: isize,
     min_freq: isize,
     policy_freq: isize,
+    jank_freq: Option<isize>,
     cpu_infos: Vec<Info>,
     file_handler: FileHandler,
     weighted_calculator: WeightedCalculator,
@@ -96,15 +97,17 @@ impl Controller {
         Ok(Self {
             max_freq,
             min_freq,
+            jank_freq: None,
             policy_freq: max_freq,
+            weighted_calculator: WeightedCalculator::new(&cpu_infos),
             cpu_infos,
             file_handler: FileHandler::new(),
-            weighted_calculator: WeightedCalculator::new(),
         })
     }
 
     pub fn init_game(&mut self, extension: &Extension) {
         self.policy_freq = self.max_freq;
+        self.jank_freq = None;
         extension.tigger_extentions(ApiV0::InitCpuFreq);
         extension.tigger_extentions(ApiV1::InitCpuFreq);
         extension.tigger_extentions(ApiV2::InitCpuFreq);
@@ -118,6 +121,7 @@ impl Controller {
     pub fn init_default(&mut self, extension: &Extension) {
         self.weighted_calculator.clear();
         self.policy_freq = self.max_freq;
+        self.jank_freq = None;
         extension.tigger_extentions(ApiV0::ResetCpuFreq);
         extension.tigger_extentions(ApiV1::ResetCpuFreq);
         extension.tigger_extentions(ApiV2::ResetCpuFreq);
@@ -128,16 +132,32 @@ impl Controller {
         }
     }
 
-    pub fn fas_update_freq(&mut self, process: pid_t, factor: f64) {
-        self.policy_freq = self
-            .policy_freq
-            .saturating_add((BASE_FREQ as f64 * factor) as isize)
-            .clamp(self.min_freq, self.max_freq);
+    pub fn fas_update_freq(&mut self, process: pid_t, factor: f64, jank: bool) {
+        if jank {
+            self.jank_freq = Some(
+                self.policy_freq
+                    .saturating_add((BASE_FREQ as f64 * factor) as isize)
+                    .clamp(self.min_freq, self.max_freq),
+            );
+        } else if let Some(jank_freq) = self.jank_freq {
+            self.policy_freq = self
+                .policy_freq
+                .saturating_add((BASE_FREQ as f64 * factor) as isize)
+                .clamp(self.min_freq, self.max_freq);
+            self.policy_freq = self.policy_freq.max(jank_freq);
+            self.jank_freq = None;
+        } else {
+            self.policy_freq = self
+                .policy_freq
+                .saturating_add((BASE_FREQ as f64 * factor) as isize)
+                .clamp(self.min_freq, self.max_freq);
+        }
 
         #[cfg(debug_assertions)]
         {
             debug!("change freq: {}", (BASE_FREQ as f64 * factor) as isize);
             debug!("policy freq: {}", self.policy_freq);
+            debug!("jank freq: {:?}", self.jank_freq);
         }
 
         let weights = self.weighted_calculator.update(process).unwrap();
@@ -149,25 +169,28 @@ impl Controller {
                     .partial_cmp(weight_b)
                     .unwrap_or(cmp::Ordering::Equal)
             })
-            .and_then(|(core, _)| self.cpu_infos.last().map(|cpu| cpu.cpus.contains(core)))
-            .unwrap_or(false);
+            .map(|(cpus, _)| cpus) == Some(&self.cpu_infos.last().unwrap().cpus);
 
         for cpu in &self.cpu_infos {
             let weight = if auto_offset {
-                weights.weight(&cpu.cpus).unwrap_or(1.0)
+                weights.weight(&cpu.cpus)
             } else {
                 1.0
             };
 
             #[cfg(debug_assertions)]
             debug!("policy{}: weight {:.2}", cpu.policy, weight);
-            cpu.write_freq(self.policy_freq, &mut self.file_handler, weight)
-                .unwrap_or_else(|e| error!("{e:?}"));
+            cpu.write_freq(
+                self.jank_freq.unwrap_or(self.policy_freq),
+                &mut self.file_handler,
+                weight,
+            )
+            .unwrap_or_else(|e| error!("{e:?}"));
         }
     }
 
-    pub fn scale_factor(target_fps: u32, frame: Duration, target: Duration) -> f64 {
-        if frame > target {
+    pub fn scale_factor(target_fps: u32, frame: Duration, target: Duration, jank: bool) -> f64 {
+        let basic = if frame > target {
             let factor_a = (frame - target).as_nanos() as f64 / target.as_nanos() as f64;
             let factor_b = 120.0 / f64::from(target_fps);
             factor_a * factor_b
@@ -175,6 +198,12 @@ impl Controller {
             let factor_a = (target - frame).as_nanos() as f64 / target.as_nanos() as f64;
             let factor_b = 120.0 / f64::from(target_fps);
             factor_a * factor_b * -1.0
+        };
+
+        if jank {
+            basic * 2.0
+        } else {
+            basic
         }
     }
 }

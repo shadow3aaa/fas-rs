@@ -65,6 +65,7 @@ pub struct Looper {
     buffer: Option<Buffer>,
     state: State,
     delay_timer: Instant,
+    janked: bool,
 }
 
 impl Looper {
@@ -91,6 +92,7 @@ impl Looper {
             buffer: None,
             state: State::NotWorking,
             delay_timer: Instant::now(),
+            janked: false,
         }
     }
 
@@ -105,9 +107,9 @@ impl Looper {
             let target_fps = self.buffer.as_ref().and_then(|b| b.target_fps);
 
             #[cfg(feature = "use_binder")]
-            let fas_data = self.recv_message()?;
+            let fas_data = self.recv_message(target_fps)?;
             #[cfg(feature = "use_ebpf")]
-            let fas_data = self.recv_message();
+            let fas_data = self.recv_message(target_fps);
 
             if self.windows_watcher.visible_freeform_window() {
                 self.disable_fas();
@@ -115,6 +117,9 @@ impl Looper {
             }
 
             if let Some(data) = fas_data {
+                self.janked = false;
+                #[cfg(debug_assertions)]
+                debug!("janked: {}", self.janked);
                 if let Some(state) = self.buffer_update(&data) {
                     match state {
                         BufferState::Usable => self.do_policy(target_fps),
@@ -122,6 +127,9 @@ impl Looper {
                     }
                 }
             } else if let Some(buffer) = self.buffer.as_mut() {
+                self.janked = true;
+                #[cfg(debug_assertions)]
+                debug!("janked: {}", self.janked);
                 buffer.additional_frametime();
                 self.do_policy(target_fps);
             }
@@ -146,8 +154,22 @@ impl Looper {
     }
 
     #[cfg(feature = "use_binder")]
-    fn recv_message(&self) -> Result<Option<FasData>> {
-        match self.rx.recv_timeout(Duration::from_millis(100)) {
+    fn recv_message(&self, target_fps: Option<u32>) -> Result<Option<FasData>> {
+        let target_frametime = target_fps.map(|fps| Duration::from_secs(1) / fps);
+
+        let time = if self.state != State::Working {
+            Duration::from_millis(100)
+        } else if self.janked {
+            target_frametime
+                .map(|time| time / 4)
+                .unwrap_or(Duration::from_millis(100))
+        } else {
+            target_frametime
+                .map(|time| time * 3 / 2)
+                .unwrap_or(Duration::from_millis(100))
+        };
+
+        match self.rx.recv_timeout(target_frametime.unwrap_or(time)) {
             Ok(m) => Ok(Some(m)),
             Err(e) => {
                 if e == RecvTimeoutError::Disconnected {
@@ -160,9 +182,23 @@ impl Looper {
     }
 
     #[cfg(feature = "use_ebpf")]
-    fn recv_message(&mut self) -> Option<FasData> {
+    fn recv_message(&mut self, target_fps: Option<u32>) -> Option<FasData> {
+        let target_frametime = target_fps.map(|fps| Duration::from_secs(1) / fps);
+
+        let time = if self.state != State::Working {
+            Duration::from_millis(100)
+        } else if self.janked {
+            target_frametime
+                .map(|time| time / 4)
+                .unwrap_or(Duration::from_millis(100))
+        } else {
+            target_frametime
+                .map(|time| time * 3 / 2)
+                .unwrap_or(Duration::from_millis(100))
+        };
+
         self.analyzer
-            .recv_timeout(Duration::from_millis(100))
+            .recv_timeout(time)
             .map(|(pid, frametime)| FasData { pid, frametime })
     }
 
@@ -198,9 +234,9 @@ impl Looper {
 
         let target_fps = target_fps.unwrap_or(120);
 
-        let factor = Controller::scale_factor(target_fps, event.frame, event.target);
+        let factor = Controller::scale_factor(target_fps, event.frame, event.target, self.janked);
         if let Some(process) = self.buffer.as_ref().map(|b| b.pid) {
-            self.controller.fas_update_freq(process, factor);
+            self.controller.fas_update_freq(process, factor, self.janked);
         }
     }
 }

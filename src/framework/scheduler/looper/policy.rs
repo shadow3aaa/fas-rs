@@ -52,7 +52,7 @@ impl Buffer {
                 .copied()?
                 .mul_f64(target_fps_prefixed)
         } else {
-            self.additional_frametime
+            self.additional_frametime.mul_f64(target_fps_prefixed)
         };
 
         #[cfg(debug_assertions)]
