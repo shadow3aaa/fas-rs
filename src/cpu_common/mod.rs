@@ -98,7 +98,7 @@ impl Controller {
             min_freq,
             jank_freq: None,
             policy_freq: max_freq,
-            weighted_calculator: WeightedCalculator::new(&cpu_infos),
+            weighted_calculator: WeightedCalculator::new(&cpu_infos)?,
             cpu_infos,
             file_handler: FileHandler::new(),
         })
@@ -159,7 +159,7 @@ impl Controller {
             debug!("jank freq: {:?}", self.jank_freq);
         }
 
-        let weights = self.weighted_calculator.update(process).unwrap();
+        let weights = self.weighted_calculator.update().unwrap();
         /* let auto_offset = weights
         .map
         .iter()
