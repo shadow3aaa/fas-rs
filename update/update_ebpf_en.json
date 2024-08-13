@@ -1,6 +1,6 @@
 {
-  "versionCode": 320,
-  "version": "v3.2.0",
-  "zipUrl": "https://github.com/shadow3aaa/fas-rs/releases/download/v3.2.0/fas-rs-ebpf.zip",
+  "versionCode": 330,
+  "version": "v3.3.0",
+  "zipUrl": "https://github.com/shadow3aaa/fas-rs/releases/download/v3.3.0/fas-rs-ebpf.zip",
   "changelog": "https://github.com/shadow3aaa/fas-rs/raw/master/update/en-US/changelog.md"
 }
