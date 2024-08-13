@@ -14,7 +14,7 @@
 
 use std::collections::HashMap;
 
-use crate::cpu_common::cpu_info::Info;
+use crate::{cpu_common::cpu_info::Info, Mode};
 
 #[derive(Debug)]
 pub struct Weights {
@@ -30,18 +30,25 @@ impl Weights {
         Self { map }
     }
 
-    pub fn weight(&self, cpus: &Vec<i32>) -> f64 {
-        *self.amplify_probabilities_log().get(cpus).unwrap() + 1.0
+    pub fn weight(&self, cpus: &Vec<i32>, mode: Mode) -> f64 {
+        *self.amplify_probabilities_log(mode).get(cpus).unwrap() + 1.0
     }
 
-    fn amplify_probabilities_log(&self) -> HashMap<Vec<i32>, f64> {
+    fn amplify_probabilities_log(&self, mode: Mode) -> HashMap<Vec<i32>, f64> {
         let mut map = self.map.clone();
         let epsilon = 1e-10;
         let mut log_sum = 0.0;
 
+        let factor = match mode {
+            Mode::Powersave => 6.3,
+            Mode::Balance => 6.0,
+            Mode::Performance => 5.9,
+            Mode::Fast => 5.8,
+        };
+
         // Apply the logarithmic transformation and multiply by the amplification factor
         for weight in map.values_mut() {
-            *weight = (*weight + epsilon).ln() * 6.0;
+            *weight = (*weight + epsilon).ln() * factor;
             log_sum += (*weight).exp();
         }
 

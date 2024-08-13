@@ -31,7 +31,7 @@ use log::error;
 use crate::{
     api::{v1::ApiV1, v2::ApiV2, ApiV0},
     file_handler::FileHandler,
-    Extension,
+    Extension, Mode,
 };
 use weighting::WeightedCalculator;
 
@@ -130,7 +130,7 @@ impl Controller {
         }
     }
 
-    pub fn fas_update_freq(&mut self, factor: f64, jank: bool) {
+    pub fn fas_update_freq(&mut self, factor: f64, jank: bool, mode: Mode) {
         if jank {
             self.jank_freq = Some(
                 self.policy_freq
@@ -161,7 +161,7 @@ impl Controller {
         let weights = self.weighted_calculator.update();
 
         for cpu in &self.cpu_infos {
-            let weight = weights.weight(&cpu.cpus);
+            let weight = weights.weight(&cpu.cpus, mode);
 
             #[cfg(debug_assertions)]
             debug!("policy{}: weight {:.2}", cpu.policy, weight);
