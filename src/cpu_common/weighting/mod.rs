@@ -32,7 +32,7 @@ pub struct WeightedCalculator {
 }
 
 impl WeightedCalculator {
-    pub fn new(policys: &Vec<Info>) -> Result<Self> {
+    pub fn new(policys: &[Info]) -> Result<Self> {
         Ok(Self {
             map: HashMap::new(),
             reader: CyclesReader::new(None)?,
@@ -44,12 +44,12 @@ impl WeightedCalculator {
         self.map.clear();
     }
 
-    pub fn update(&mut self) -> Result<&Weights> {
-        self.calculate_weights()?;
-        Ok(&self.cache)
+    pub fn update(&mut self) -> &Weights {
+        self.calculate_weights();
+        &self.cache
     }
 
-    fn calculate_weights(&mut self) -> Result<()> {
+    fn calculate_weights(&mut self) {
         let num_cpus = num_cpus::get();
 
         let cycles_per_cpu: HashMap<_, _> = (0..num_cpus)
@@ -80,7 +80,5 @@ impl WeightedCalculator {
             *weight =
                 cycles_per_policy_max.get(cpus).unwrap().as_hz() as f64 / cycles_sum.as_hz() as f64;
         }
-
-        Ok(())
     }
 }

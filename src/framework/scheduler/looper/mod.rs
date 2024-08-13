@@ -227,9 +227,6 @@ impl Looper {
         let target_fps = target_fps.unwrap_or(120);
 
         let factor = Controller::scale_factor(target_fps, event.frame, event.target, self.janked);
-        if let Some(process) = self.buffer.as_ref().map(|b| b.pid) {
-            self.controller
-                .fas_update_freq(process, factor, self.janked);
-        }
+        self.controller.fas_update_freq(factor, self.janked);
     }
 }

@@ -24,7 +24,6 @@ use std::{
 
 use anyhow::Result;
 use cpu_info::Info;
-use libc::pid_t;
 #[cfg(debug_assertions)]
 use log::debug;
 use log::error;
@@ -131,7 +130,7 @@ impl Controller {
         }
     }
 
-    pub fn fas_update_freq(&mut self, process: pid_t, factor: f64, jank: bool) {
+    pub fn fas_update_freq(&mut self, factor: f64, jank: bool) {
         if jank {
             self.jank_freq = Some(
                 self.policy_freq
@@ -159,24 +158,9 @@ impl Controller {
             debug!("jank freq: {:?}", self.jank_freq);
         }
 
-        let weights = self.weighted_calculator.update().unwrap();
-        /* let auto_offset = weights
-        .map
-        .iter()
-        .max_by(|(_, weight_a), (_, weight_b)| {
-            weight_a
-                .partial_cmp(weight_b)
-                .unwrap_or(cmp::Ordering::Equal)
-        })
-        .map(|(cpus, _)| cpus)
-        == Some(&self.cpu_infos.last().unwrap().cpus); */
+        let weights = self.weighted_calculator.update();
 
         for cpu in &self.cpu_infos {
-            /* let weight = if auto_offset {
-                weights.weight(&cpu.cpus)
-            } else {
-                1.0
-            }; */
             let weight = weights.weight(&cpu.cpus);
 
             #[cfg(debug_assertions)]
