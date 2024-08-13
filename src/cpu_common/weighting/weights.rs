@@ -31,6 +31,22 @@ impl Weights {
     }
 
     pub fn weight(&self, cpus: &Vec<i32>) -> f64 {
-        (self.map.get(cpus).unwrap() + 1.0).min(1.8)
+        *self.transformed_weights().get(cpus).unwrap() + 1.0
+    }
+
+    fn transformed_weights(&self) -> HashMap<&Vec<i32>, f64> {
+        let mut transformed_weights: HashMap<_, _> = self
+            .map
+            .iter()
+            .map(|(key, &value)| {
+                let transformed_value = value.powi(2);
+                (key, transformed_value)
+            })
+            .collect();
+        let sum: f64 = transformed_weights.values().sum();
+        transformed_weights
+            .values_mut()
+            .for_each(|value| *value /= sum);
+        transformed_weights
     }
 }
