@@ -162,7 +162,7 @@ impl Looper {
         } else if self.janked {
             target_frametime.map_or(Duration::from_millis(100), |time| time / 4)
         } else {
-            target_frametime.map_or(Duration::from_millis(100), |time| time * 3 / 2)
+            target_frametime.map_or(Duration::from_millis(100), |time| time * 2)
         };
 
         match self.rx.recv_timeout(target_frametime.unwrap_or(time)) {
@@ -186,7 +186,7 @@ impl Looper {
         } else if self.janked {
             target_frametime.map_or(Duration::from_millis(100), |time| time / 4)
         } else {
-            target_frametime.map_or(Duration::from_millis(100), |time| time * 3 / 2)
+            target_frametime.map_or(Duration::from_millis(100), |time| time * 2)
         };
 
         self.analyzer
