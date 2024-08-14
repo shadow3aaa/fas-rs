@@ -15,25 +15,6 @@
 
 import os
 from maketools.toolchains import Buildtools
-from pathlib import Path
-
-
-def __clippy_fix(tools: Buildtools, arg: str = ""):
-    (
-        tools.cargo()
-        .arg("clippy --fix --allow-dirty --allow-staged --target aarch64-linux-android")
-        .arg(arg)
-        .build()
-    )
-
-    (
-        tools.cargo()
-        .arg(
-            "clippy --fix --allow-dirty --allow-staged --target aarch64-linux-android --release"
-        )
-        .arg(arg)
-        .build()
-    )
 
 
 def task():
@@ -42,22 +23,16 @@ def task():
     os.system("ruff check --fix make.py")
     os.system("ruff check --fix maketools")
 
-    __clippy_fix(tools)
-    __clippy_fix(tools, "--features use_binder --no-default-features")
-
-    os.chdir("zygisk")
     (
-        tools.cpp_tidy()
-        .arg("-fix-errors")
-        .arg("--fix")
-        .arg("--header-filter='.*.cpp'")
-        .arg(
-            "{} -- -I{}".format(
-                Path("src").joinpath("*.cpp"), Path("rust").joinpath("include")
-            )
-        )
-        .tidy()
+        tools.cargo()
+        .arg("clippy --fix --allow-dirty --allow-staged --target aarch64-linux-android")
+        .build()
     )
 
-    os.chdir("rust")
-    __clippy_fix(tools)
+    (
+        tools.cargo()
+        .arg(
+            "clippy --fix --allow-dirty --allow-staged --target aarch64-linux-android --release"
+        )
+        .build()
+    )

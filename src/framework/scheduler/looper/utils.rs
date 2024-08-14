@@ -28,7 +28,6 @@ impl Looper {
     pub fn retain_topapp(&mut self) {
         if let Some(buffer) = self.buffer.as_ref() {
             if !self.windows_watcher.topapp_pids().contains(&buffer.pid) {
-                #[cfg(feature = "use_ebpf")]
                 let _ = self.analyzer.detach_app(buffer.pid);
                 let pkg = buffer.pkg.clone();
                 self.extension

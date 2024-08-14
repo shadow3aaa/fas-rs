@@ -30,11 +30,6 @@ struct CargoConfig {
     pub package: Package,
 }
 
-enum TracingToolType {
-    Ebpf,
-    Zygisk,
-}
-
 #[allow(non_snake_case)]
 #[derive(Serialize)]
 struct UpdateJson {
@@ -55,18 +50,13 @@ fn main() -> Result<()> {
     let toml = fs::read_to_string("Cargo.toml")?;
     let data: CargoConfig = toml::from_str(&toml)?;
 
-    gen_module_prop(&data, TracingToolType::Ebpf)?;
-    gen_module_prop(&data, TracingToolType::Zygisk)?;
-    update_json(&data, TracingToolType::Ebpf)?;
-    update_json(&data, TracingToolType::Zygisk)?;
-
-    fs::copy("update/update_zygisk.json", "update/update.json")?;
-    fs::copy("update/update_zygisk_en.json", "update/update_en.json")?;
+    gen_module_prop(&data)?;
+    update_json(&data)?;
 
     Ok(())
 }
 
-fn gen_module_prop(data: &CargoConfig, tool_type: TracingToolType) -> Result<()> {
+fn gen_module_prop(data: &CargoConfig) -> Result<()> {
     let package = &data.package;
     let id = package.name.replace('-', "_");
     let version_code: usize = package.version.replace('.', "").trim().parse()?;
@@ -77,52 +67,29 @@ fn gen_module_prop(data: &CargoConfig, tool_type: TracingToolType) -> Result<()>
     }
     let author = author.trim();
 
-    let (prop, tool_type, description_ext) = match tool_type {
-        TracingToolType::Ebpf => (
-            "module/fas-rs-ebpf/module.prop",
-            "Ebpf",
-            "Requires kernel ebpf support.",
-        ),
-        TracingToolType::Zygisk => (
-            "module/fas-rs-zygisk/module.prop",
-            "Zygisk",
-            "Requires Magisk 24.0+ and Zygisk enabled.",
-        ),
-    };
-
     let mut file = fs::OpenOptions::new()
         .create(true)
         .truncate(true)
         .write(true)
-        .open(prop)?;
+        .open("module/module.prop")?;
 
     writeln!(file, "id={id}")?;
-    writeln!(file, "name={tool_type} - {}", package.name)?;
+    writeln!(file, "name={}", package.name)?;
     writeln!(file, "version=v{}", package.version)?;
     writeln!(file, "versionCode={version_code}")?;
     writeln!(file, "author={author}")?;
-    writeln!(
-        file,
-        "description={} {description_ext}",
-        package.description
-    )?;
+    writeln!(file, "description={}", package.description)?;
 
     Ok(())
 }
 
-fn update_json(data: &CargoConfig, tool_type: TracingToolType) -> Result<()> {
+fn update_json(data: &CargoConfig) -> Result<()> {
     let version = &data.package.version;
     let version_code: usize = version.replace('.', "").trim().parse()?;
     let version = format!("v{version}");
 
-    let zip_url = match tool_type {
-        TracingToolType::Ebpf => format!(
-            "https://github.com/shadow3aaa/fas-rs/releases/download/{version}/fas-rs-ebpf.zip"
-        ),
-        TracingToolType::Zygisk => format!(
-            "https://github.com/shadow3aaa/fas-rs/releases/download/{version}/fas-rs-zygisk.zip"
-        ),
-    };
+    let zip_url =
+        format!("https://github.com/shadow3aaa/fas-rs/releases/download/{version}/fas-rs-ebpf.zip");
 
     let cn = UpdateJson {
         versionCode: version_code,
@@ -143,16 +110,8 @@ fn update_json(data: &CargoConfig, tool_type: TracingToolType) -> Result<()> {
     let cn = serde_json::to_string_pretty(&cn)?;
     let en = serde_json::to_string_pretty(&en)?;
 
-    match tool_type {
-        TracingToolType::Ebpf => {
-            fs::write("update/update_ebpf.json", cn)?;
-            fs::write("update/update_ebpf_en.json", en)?;
-        }
-        TracingToolType::Zygisk => {
-            fs::write("update/update_zygisk.json", cn)?;
-            fs::write("update/update_zygisk_en.json", en)?;
-        }
-    }
+    fs::write("update/update.json", cn)?;
+    fs::write("update/update_en.json", en)?;
 
     Ok(())
 }

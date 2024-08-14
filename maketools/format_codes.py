@@ -14,25 +14,10 @@
 # limitations under the License.
 
 import os
-from pathlib import Path
-from maketools.toolchains import Buildtools
 
 
 def task():
-    tools = Buildtools()
-
     os.system("ruff format make.py")
     os.system("ruff format maketools")
-
     os.system("shfmt -l -s -w -p $(shfmt -f module)")
-
-    os.system("cargo fmt -v")
-
-    os.chdir("zygisk")
-    cpp_src = Path("src").joinpath("*")
-    rust_header = Path("rust").joinpath("include").joinpath("*")
-    tools.cpp_format(cpp_src)
-    tools.cpp_format(rust_header)
-
-    os.chdir("rust")
     os.system("cargo fmt -v")

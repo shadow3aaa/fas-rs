@@ -9,5 +9,5 @@
     "--workspace",
     "--message-format=json"
   ],
-  "rust-analyzer.linkedProjects": ["Cargo.toml", "zygisk/rust/Cargo.toml"]
+  "rust-analyzer.linkedProjects": ["Cargo.toml"]
 }

@@ -85,260 +85,86 @@ def __parse_args(args):
 
 
 def __clean():
-    root = Path.cwd()
-
     try:
         shutil.rmtree("output")
     except Exception:
         pass
 
     os.system("cargo clean")
-    os.chdir("zygisk")
-
-    try:
-        shutil.rmtree("output")
-    except Exception:
-        pass
-
-    os.chdir("rust")
-    os.system("cargo clean")
-
-    os.chdir(root)
-
-
-def __build_zygisk(
-    tools: Buildtools, check: bool, release: bool, verbose: bool, nightly: bool
-):
-    root = Path.cwd()
-    zygisk_root = root.joinpath("zygisk")
-    os.chdir(zygisk_root)
-
-    try:
-        Path("output").mkdir()
-    except Exception:
-        pass
-
-    os.chdir("rust")
-
-    if nightly:
-        cargo = tools.cargo_nightly()
-    else:
-        cargo = tools.cargo()
-
-    if check:
-        cargo.arg("check --target aarch64-linux-android")
-    else:
-        cargo.arg("build --target aarch64-linux-android")
-        if nightly:
-            cargo.arg("-Z build-std")
-
-    if release:
-        cargo.arg("--release")
-    if verbose:
-        cargo.arg("--verbose")
-
-    cargo.build()
-
-    if check:
-        print("Finish check (zygisk dynlib)")
-        os.chdir(root)
-        return
-
-    os.chdir(zygisk_root)
-
-    source = Path("rust").joinpath("target").joinpath("aarch64-linux-android")
-
-    if release:
-        source = source.joinpath("release")
-    else:
-        source = source.joinpath("debug")
-
-    source = source.joinpath("librust.a")
-    destination = Path("output").joinpath("librust.a")
-    shutil.copy2(source, destination)
-
-    output = Path("output").joinpath("arm64-v8a.so")
-
-    (
-        tools.cpp()
-        .arg("--shared {}".format(Path("src").joinpath("*.cpp")))
-        .arg("-I {}".format(Path("rust").joinpath("include")))
-        .arg("-L output -L {}".format(Path("..").joinpath("prebuilt")))
-        .arg("-fPIC -nostdlib++ -Wl,-lrust,-llog,-lbinder_ndk")
-        .arg(CFLAGS)
-        .arg("-o {}".format(output))
-        .arg("-Wl,--threads=1")
-        .build()
-    )
-
-    tools.strip(output)
-    os.chdir(root)
-
-
-def __task_zygisk(args):
-    try:
-        tools = Buildtools()
-    except Exception as err:
-        eprint(err)
-        exit(-1)
-
-    try:
-        (check, clean, release, nightly, verbose) = __parse_args(args)
-    except Exception as err:
-        eprint(err)
-        exit(-1)
-
-    if clean:
-        __clean()
-        return
-
-    try:
-        Path("output").mkdir()
-    except Exception:
-        pass
-
-    if release:
-        temp_dir = Path("output").joinpath(".temp").joinpath("release")
-    else:
-        temp_dir = Path("output").joinpath(".temp").joinpath("debug")
-
-    try:
-        shutil.rmtree(temp_dir)
-    except Exception:
-        pass
-
-    __build_zygisk(tools, check, release, nightly, verbose)
-
-    if nightly:
-        cargo = tools.cargo_nightly()
-    else:
-        cargo = tools.cargo()
-
-    if check:
-        cargo.arg("check --target aarch64-linux-android")
-    else:
-        cargo.arg("build --target aarch64-linux-android")
-        if nightly:
-            cargo.arg("-Z build-std")
-
-    if release:
-        cargo.arg("--release")
-    if verbose:
-        cargo.arg("--verbose")
-
-    cargo.rust_flag("-C default-linker-libraries")
-    cargo.arg("--features use_binder")
-    cargo.arg("--no-default-features")
-    cargo.build()
-
-    if check:
-        print("Finish check (zygisk ver)")
-        return
-
-    module = Path("module").joinpath("fas-rs-zygisk")
-    shutil.copytree(module, temp_dir)
-    zygisk_lib = Path("zygisk").joinpath("output").joinpath("arm64-v8a.so")
-    zygisk_module = temp_dir.joinpath("zygisk")
-    zygisk_module.mkdir()
-    shutil.copy2(zygisk_lib, zygisk_module)
-
-    bin = Path("target").joinpath("aarch64-linux-android")
-    if release:
-        bin = bin.joinpath("release")
-    else:
-        bin = bin.joinpath("debug")
-    bin = bin.joinpath("fas-rs")
-
-    bin_module = temp_dir.joinpath("fas-rs")
-    shutil.copy2(bin, bin_module)
-    tools.strip(bin_module)
-
-    if release:
-        output = Path("output").joinpath("fas-rs-zygisk(release)")
-    else:
-        output = Path("output").joinpath("fas-rs-zygisk(debug)")
-    shutil.make_archive(output, "zip", temp_dir)
-    print("fas-rs-zygisk build successfully: {}.zip".format(output))
-
-
-def __task_ebpf(args):
-    try:
-        tools = Buildtools()
-    except Exception as err:
-        eprint(err)
-        exit(-1)
-
-    try:
-        (check, clean, release, nightly, verbose) = __parse_args(args)
-    except Exception as err:
-        eprint(err)
-        exit(-1)
-
-    if clean:
-        __clean()
-        return
-
-    try:
-        Path("output").mkdir()
-    except Exception:
-        pass
-
-    if release:
-        temp_dir = Path("output").joinpath(".temp").joinpath("release")
-    else:
-        temp_dir = Path("output").joinpath(".temp").joinpath("debug")
-
-    try:
-        shutil.rmtree(temp_dir)
-    except Exception:
-        pass
-
-    if nightly:
-        cargo = tools.cargo_nightly()
-    else:
-        cargo = tools.cargo()
-
-    if check:
-        cargo.arg("check --target aarch64-linux-android")
-    else:
-        cargo.arg("build --target aarch64-linux-android")
-        if nightly:
-            cargo.arg("-Z build-std")
-
-    if release:
-        cargo.arg("--release")
-    if verbose:
-        cargo.arg("--verbose")
-
-    cargo.rust_flag("-C default-linker-libraries")
-    cargo.arg("--features use_ebpf")
-    cargo.build()
-
-    if check:
-        print("Finish check (ebpf ver)")
-        return
-
-    module = Path("module").joinpath("fas-rs-ebpf")
-    shutil.copytree(module, temp_dir)
-    bin = Path("target").joinpath("aarch64-linux-android")
-    if release:
-        bin = bin.joinpath("release")
-    else:
-        bin = bin.joinpath("debug")
-    bin = bin.joinpath("fas-rs")
-
-    bin_module = temp_dir.joinpath("fas-rs")
-    shutil.copy2(bin, bin_module)
-    tools.strip(bin_module)
-
-    if release:
-        output = Path("output").joinpath("fas-rs-ebpf(release)")
-    else:
-        output = Path("output").joinpath("fas-rs-ebpf(debug)")
-    shutil.make_archive(output, "zip", temp_dir)
-    print("fas-rs-ebpf build successfully: {}.zip".format(output))
 
 
 def task(args):
-    __task_zygisk(args)
-    __task_ebpf(args)
+    try:
+        tools = Buildtools()
+    except Exception as err:
+        eprint(err)
+        exit(-1)
+
+    try:
+        (check, clean, release, nightly, verbose) = __parse_args(args)
+    except Exception as err:
+        eprint(err)
+        exit(-1)
+
+    if clean:
+        __clean()
+        return
+
+    try:
+        Path("output").mkdir()
+    except Exception:
+        pass
+
+    if release:
+        temp_dir = Path("output").joinpath(".temp").joinpath("release")
+    else:
+        temp_dir = Path("output").joinpath(".temp").joinpath("debug")
+
+    try:
+        shutil.rmtree(temp_dir)
+    except Exception:
+        pass
+
+    if nightly:
+        cargo = tools.cargo_nightly()
+    else:
+        cargo = tools.cargo()
+
+    if check:
+        cargo.arg("check --target aarch64-linux-android")
+    else:
+        cargo.arg("build --target aarch64-linux-android")
+        if nightly:
+            cargo.arg("-Z build-std")
+
+    if release:
+        cargo.arg("--release")
+    if verbose:
+        cargo.arg("--verbose")
+
+    cargo.rust_flag("-C default-linker-libraries")
+    cargo.build()
+
+    if check:
+        print("Finish check")
+        return
+
+    module = Path("module")
+    shutil.copytree(module, temp_dir)
+    bin = Path("target").joinpath("aarch64-linux-android")
+    if release:
+        bin = bin.joinpath("release")
+    else:
+        bin = bin.joinpath("debug")
+    bin = bin.joinpath("fas-rs")
+
+    bin_module = temp_dir.joinpath("fas-rs")
+    shutil.copy2(bin, bin_module)
+    tools.strip(bin_module)
+
+    if release:
+        output = Path("output").joinpath("fas-rs(release)")
+    else:
+        output = Path("output").joinpath("fas-rs(debug)")
+    shutil.make_archive(output, "zip", temp_dir)
+    print("fas-rs build successfully: {}.zip".format(output))

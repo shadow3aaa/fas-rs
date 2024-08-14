@@ -380,7 +380,6 @@ version = "3.3.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "binder_ndk",
  "cpu_cycles_reader",
  "dumpsys-rs",
  "flexi_logger",

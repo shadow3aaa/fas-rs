@@ -54,35 +54,19 @@ jobs:
           python3 ./make.py build --debug --nightly
       - name: Prepare artifacts
         run: |
-          mkdir -p output/artifact/zygisk/debug
-          mkdir -p output/artifact/zygisk/release
-          mkdir -p output/artifact/ebpf/debug
-          mkdir -p output/artifact/ebpf/release
-          unzip "output/fas-rs-zygisk(debug).zip" -d output/artifact/zygisk/debug
-          unzip "output/fas-rs-zygisk(release).zip" -d output/artifact/zygisk/release
-          unzip "output/fas-rs-ebpf(debug).zip" -d output/artifact/ebpf/debug
-          unzip "output/fas-rs-ebpf(release).zip" -d output/artifact/ebpf/release
-      - name: Upload zygisk debug version
+          mkdir -p output/artifact/debug
+          mkdir -p output/artifact/release
+          unzip "output/fas-rs(debug).zip" -d output/artifact/debug
+          unzip "output/fas-rs(release).zip" -d output/artifact/release
+      - name: Upload debug version
         uses: actions/upload-artifact@v4
         with:
-          name: fas-rs-zygisk(debug)
+          name: fas-rs(debug)
           compression-level: 9
-          path: output/artifact/zygisk/debug
-      - name: Upload zygisk release version
+          path: output/artifact/debug
+      - name: Upload release version
         uses: actions/upload-artifact@v4
         with:
-            name: fas-rs-zygisk(release)
-            compression-level: 9
-            path: output/artifact/zygisk/release
-      - name: Upload ebpf debug version
-        uses: actions/upload-artifact@v4
-        with:
-          name: fas-rs-ebpf(debug)
+          name: fas-rs(release)
           compression-level: 9
-          path: output/artifact/ebpf/debug
-      - name: Upload ebpf release version
-        uses: actions/upload-artifact@v4
-        with:
-          name: fas-rs-ebpf(release)
-          compression-level: 9
-          path: output/artifact/ebpf/release
+          path: output/artifact/release

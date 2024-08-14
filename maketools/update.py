@@ -14,13 +14,7 @@
 # limitations under the License.
 
 import os
-from pathlib import Path
 
 
 def task():
-    os.system("cargo update --recursive")
-
-    zygisk = Path("zygisk").joinpath("rust")
-    os.chdir(zygisk)
-
     os.system("cargo update --recursive")

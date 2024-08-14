@@ -14,7 +14,7 @@
             "--message-format=json"
           ]
         },
-        "linkedProjects": ["Cargo.toml", "zygisk/rust/Cargo.toml"]
+        "linkedProjects": ["Cargo.toml"]
       }
     }
   }

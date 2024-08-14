@@ -17,19 +17,14 @@ mod clean;
 mod policy;
 mod utils;
 
-#[cfg(feature = "use_binder")]
-use std::sync::mpsc::{Receiver, RecvTimeoutError};
 use std::time::{Duration, Instant};
 
-#[cfg(feature = "use_ebpf")]
 use frame_analyzer::Analyzer;
 #[cfg(debug_assertions)]
 use log::debug;
 use log::info;
 
 use super::{topapp::TimedWatcher, FasData};
-#[cfg(feature = "use_binder")]
-use crate::framework::error::Error;
 use crate::{
     framework::{
         config::Config,
@@ -51,9 +46,6 @@ enum State {
 }
 
 pub struct Looper {
-    #[cfg(feature = "use_binder")]
-    rx: Receiver<FasData>,
-    #[cfg(feature = "use_ebpf")]
     analyzer: Analyzer,
     config: Config,
     node: Node,
@@ -70,17 +62,13 @@ pub struct Looper {
 
 impl Looper {
     pub fn new(
-        #[cfg(feature = "use_binder")] rx: Receiver<FasData>,
-        #[cfg(feature = "use_ebpf")] analyzer: Analyzer,
+        analyzer: Analyzer,
         config: Config,
         node: Node,
         extension: Extension,
         controller: Controller,
     ) -> Self {
         Self {
-            #[cfg(feature = "use_binder")]
-            rx,
-            #[cfg(feature = "use_ebpf")]
             analyzer,
             config,
             node,
@@ -100,15 +88,10 @@ impl Looper {
         loop {
             self.switch_mode();
 
-            #[cfg(feature = "use_ebpf")]
             let _ = self.update_analyzer();
             self.retain_topapp();
 
             let target_fps = self.buffer.as_ref().and_then(|b| b.target_fps);
-
-            #[cfg(feature = "use_binder")]
-            let fas_data = self.recv_message(target_fps)?;
-            #[cfg(feature = "use_ebpf")]
             let fas_data = self.recv_message(target_fps);
 
             if self.windows_watcher.visible_freeform_window() {
@@ -153,31 +136,6 @@ impl Looper {
         }
     }
 
-    #[cfg(feature = "use_binder")]
-    fn recv_message(&self, target_fps: Option<u32>) -> Result<Option<FasData>> {
-        let target_frametime = target_fps.map(|fps| Duration::from_secs(1) / fps);
-
-        let time = if self.state != State::Working {
-            Duration::from_millis(100)
-        } else if self.janked {
-            target_frametime.map_or(Duration::from_millis(100), |time| time / 4)
-        } else {
-            target_frametime.map_or(Duration::from_millis(100), |time| time * 2)
-        };
-
-        match self.rx.recv_timeout(target_frametime.unwrap_or(time)) {
-            Ok(m) => Ok(Some(m)),
-            Err(e) => {
-                if e == RecvTimeoutError::Disconnected {
-                    return Err(Error::Other("Binder Server Disconnected"));
-                }
-
-                Ok(None)
-            }
-        }
-    }
-
-    #[cfg(feature = "use_ebpf")]
     fn recv_message(&mut self, target_fps: Option<u32>) -> Option<FasData> {
         let target_frametime = target_fps.map(|fps| Duration::from_secs(1) / fps);
 
@@ -194,7 +152,6 @@ impl Looper {
             .map(|(pid, frametime)| FasData { pid, frametime })
     }
 
-    #[cfg(feature = "use_ebpf")]
     fn update_analyzer(&mut self) -> Result<()> {
         use crate::framework::utils::get_process_name;
 

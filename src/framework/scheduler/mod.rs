@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#[cfg(feature = "use_binder")]
-mod binder;
 mod looper;
 mod topapp;
 
@@ -27,9 +25,6 @@ use super::{
 };
 use crate::Controller;
 
-#[cfg(feature = "use_binder")]
-use self::binder::FasServer;
-#[cfg(feature = "use_ebpf")]
 use frame_analyzer::Analyzer;
 use looper::Looper;
 
@@ -75,18 +70,8 @@ impl Scheduler {
             .controller
             .ok_or(Error::SchedulerMissing("Controller"))?;
 
-        #[cfg(feature = "use_binder")]
-        {
-            let mut node = Node::init()?;
-            let rx = FasServer::run_server(&mut node)?;
-            Looper::new(rx, config, node, extension, controller).enter_loop()
-        }
-
-        #[cfg(feature = "use_ebpf")]
-        {
-            let node = Node::init()?;
-            let analyzer = Analyzer::new()?;
-            Looper::new(analyzer, config, node, extension, controller).enter_loop()
-        }
+        let node = Node::init()?;
+        let analyzer = Analyzer::new()?;
+        Looper::new(analyzer, config, node, extension, controller).enter_loop()
     }
 }

@@ -16,19 +16,11 @@
 name = "fas-rs"
 version = "3.3.0"
 edition = "2021"
-description = "Frame aware scheduling for android."
+description = "Frame aware scheduling for android. Requires kernel ebpf support."
 authors = ["shadow3"]
 license = "Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/shadow3aaa/fas-rs"
-
-[features]
-default = ["use_ebpf"]
-use_ebpf = ["frame-analyzer"]
-use_binder = ["binder"]
-
-[workspace]
-exclude = ["zygisk/rust"]
 
 [dependencies]
 likely_stable = "0.1.2"
@@ -39,7 +31,6 @@ thiserror = "1.0.63"
 inotify = { version = "0.10.2", default-features = false }
 libc = "0.2.155"
 async-trait = "0.1.81"
-binder = { package = "binder_ndk", git = "https://github.com/shadow3aaa/binder_rs", optional = true }
 lazy_static = "1.5.0"
 flexi_logger = "0.28.5"
 toml = "0.8.14"
@@ -47,7 +38,7 @@ serde = { version = "1.0.204", features = ["derive"] }
 sys-mount = { version = "3.0.1", default-features = false }
 quick-xml = { version = "0.36.1", features = ["serialize"] }
 mlua = { version = "0.9.9", features = ["luajit", "vendored"] }
-frame-analyzer = { version = "0.2.6", optional = true }
+frame-analyzer = "0.2.6"
 smallvec = { version = "1.13.2", features = ["const_generics"] }
 dumpsys-rs = { git = "https://github.com/shadow3aaa/dumpsys-rs" }
 cpu_cycles_reader = "1.2.0"
