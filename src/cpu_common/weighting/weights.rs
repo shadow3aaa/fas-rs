@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::collections::HashMap;
+use std::{cmp, collections::HashMap};
 
 use crate::{cpu_common::cpu_info::Info, Mode};
 
@@ -31,7 +31,11 @@ impl Weights {
     }
 
     pub fn weight(&self, cpus: &Vec<i32>, mode: Mode) -> f64 {
-        *self.amplify_probabilities_log(mode).get(cpus).unwrap() + 1.0
+        self.amplify_probabilities_log(mode)
+            .get(cpus)
+            .unwrap()
+            .min(0.8)
+            + 1.0
     }
 
     fn amplify_probabilities_log(&self, mode: Mode) -> HashMap<Vec<i32>, f64> {
@@ -56,6 +60,17 @@ impl Weights {
         for weight in map.values_mut() {
             *weight = (*weight).exp() / log_sum;
         }
+
+        let min = map
+            .values()
+            .min_by(|weight_a, weight_b| {
+                weight_a
+                    .partial_cmp(weight_b)
+                    .unwrap_or(cmp::Ordering::Equal)
+            })
+            .copied()
+            .unwrap_or(0.0);
+        map.values_mut().for_each(|weight| *weight -= min);
 
         map
     }

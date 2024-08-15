@@ -136,20 +136,20 @@ impl Controller {
             self.jank_freq = Some(
                 self.policy_freq
                     .saturating_add((BASE_FREQ as f64 * factor) as isize)
-                    .clamp(self.min_freq, self.max_freq),
+                    .clamp(0, self.max_freq),
             );
         } else if let Some(jank_freq) = self.jank_freq {
             self.policy_freq = self
                 .policy_freq
                 .saturating_add((BASE_FREQ as f64 * factor) as isize)
-                .clamp(self.min_freq, self.max_freq);
+                .clamp(0, self.max_freq);
             self.policy_freq = self.policy_freq.max(jank_freq);
             self.jank_freq = None;
         } else {
             self.policy_freq = self
                 .policy_freq
                 .saturating_add((BASE_FREQ as f64 * factor) as isize)
-                .clamp(self.min_freq, self.max_freq);
+                .clamp(0, self.max_freq);
         }
 
         #[cfg(debug_assertions)]
