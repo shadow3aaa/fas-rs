@@ -102,7 +102,7 @@ pub fn affinity_helper(receiver: &Receiver<Command>) {
                             context.instant = Instant::now();
                             context.threads = list_threads(context.pid).unwrap();
                             let mut top_threads = context.top_threads.result();
-                            top_threads.truncate(5);
+                            top_threads.truncate(10);
                             context.flower.set_top_threads(Some(top_threads));
                             context.top_threads = TopThreads::new(&context.threads);
                         }
