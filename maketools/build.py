@@ -94,6 +94,8 @@ def __clean():
 
 
 def task(args):
+    os.putenv("CARGO_CFG_BPF_TARGET_ARCH", "aarch64")
+
     try:
         tools = Buildtools()
     except Exception as err:
