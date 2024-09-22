@@ -26,6 +26,7 @@ use log::info;
 
 use super::{topapp::TimedWatcher, FasData};
 use crate::{
+    affinity::Affinity,
     framework::{
         config::Config,
         error::Result,
@@ -52,6 +53,7 @@ pub struct Looper {
     extension: Extension,
     mode: Mode,
     controller: Controller,
+    affinity: Affinity,
     windows_watcher: TimedWatcher,
     cleaner: Cleaner,
     buffer: Option<Buffer>,
@@ -67,6 +69,7 @@ impl Looper {
         node: Node,
         extension: Extension,
         controller: Controller,
+        affinity: Affinity,
     ) -> Self {
         Self {
             analyzer,
@@ -75,6 +78,7 @@ impl Looper {
             extension,
             mode: Mode::Balance,
             controller,
+            affinity,
             windows_watcher: TimedWatcher::new(),
             cleaner: Cleaner::new(),
             buffer: None,
@@ -103,6 +107,7 @@ impl Looper {
                 self.janked = false;
                 #[cfg(debug_assertions)]
                 debug!("janked: {}", self.janked);
+
                 if let Some(state) = self.buffer_update(&data) {
                     match state {
                         BufferState::Usable => self.do_policy(target_fps),
@@ -182,9 +187,8 @@ impl Looper {
         };
 
         let target_fps = target_fps.unwrap_or(120);
-
         let factor = Controller::scale_factor(target_fps, event.frame, event.target, self.janked);
-        self.controller
-            .fas_update_freq(factor, self.janked, self.mode);
+        self.controller.fas_update_freq(factor, self.janked);
+        self.affinity.apply();
     }
 }

@@ -22,6 +22,7 @@
     clippy::cast_possible_wrap
 )]
 
+mod affinity;
 mod cpu_common;
 mod file_handler;
 mod framework;

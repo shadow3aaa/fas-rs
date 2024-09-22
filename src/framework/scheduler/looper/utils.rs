@@ -29,6 +29,7 @@ impl Looper {
         if let Some(buffer) = self.buffer.as_ref() {
             if !self.windows_watcher.topapp_pids().contains(&buffer.pid) {
                 let _ = self.analyzer.detach_app(buffer.pid);
+                self.affinity.detach();
                 let pkg = buffer.pkg.clone();
                 self.extension
                     .tigger_extentions(ApiV0::UnloadFas(buffer.pid, pkg.clone()));
@@ -98,6 +99,8 @@ impl Looper {
                 return None;
             };
             let target_fps = self.config.target_fps(&pkg)?;
+
+            self.affinity.attach(pid);
 
             info!("New fas buffer on: [{pkg}]");
 
