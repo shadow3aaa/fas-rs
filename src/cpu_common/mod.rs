@@ -13,10 +13,8 @@
 // limitations under the License.
 
 mod cpu_info;
-mod weighting;
 
 use std::{
-    cmp,
     collections::HashMap,
     fs,
     sync::{atomic::AtomicIsize, OnceLock},
@@ -32,11 +30,10 @@ use log::error;
 use crate::{
     api::{v1::ApiV1, v2::ApiV2, ApiV0},
     file_handler::FileHandler,
-    Extension, Mode,
+    Extension,
 };
-use weighting::WeightedCalculator;
 
-const BASE_FREQ: isize = 800_000;
+const BASE_FREQ: isize = 600_000;
 
 pub static OFFSET_MAP: OnceLock<HashMap<i32, AtomicIsize>> = OnceLock::new();
 
@@ -48,7 +45,6 @@ pub struct Controller {
     jank_freq: Option<isize>,
     cpu_infos: Vec<Info>,
     file_handler: FileHandler,
-    weighted_calculator: WeightedCalculator,
 }
 
 impl Controller {
@@ -98,7 +94,6 @@ impl Controller {
             min_freq,
             jank_freq: None,
             policy_freq: max_freq,
-            weighted_calculator: WeightedCalculator::new(&cpu_infos)?,
             cpu_infos,
             file_handler: FileHandler::new(),
         })
@@ -112,13 +107,12 @@ impl Controller {
         extension.tigger_extentions(ApiV2::InitCpuFreq);
 
         for cpu in &self.cpu_infos {
-            cpu.write_freq(self.max_freq, &mut self.file_handler, 1.0)
+            cpu.write_freq(self.max_freq, &mut self.file_handler)
                 .unwrap_or_else(|e| error!("{e:?}"));
         }
     }
 
     pub fn init_default(&mut self, extension: &Extension) {
-        self.weighted_calculator.clear();
         self.policy_freq = self.max_freq;
         self.jank_freq = None;
         extension.tigger_extentions(ApiV0::ResetCpuFreq);
@@ -131,7 +125,7 @@ impl Controller {
         }
     }
 
-    pub fn fas_update_freq(&mut self, factor: f64, jank: bool, mode: Mode) {
+    pub fn fas_update_freq(&mut self, factor: f64, jank: bool) {
         if jank {
             self.jank_freq = Some(
                 self.policy_freq
@@ -159,31 +153,10 @@ impl Controller {
             debug!("jank freq: {:?}", self.jank_freq);
         }
 
-        let weights = self.weighted_calculator.update();
-        let auto_offset = weights
-            .map
-            .iter()
-            .max_by(|(_, weight_a), (_, weight_b)| {
-                weight_a
-                    .partial_cmp(weight_b)
-                    .unwrap_or(cmp::Ordering::Equal)
-            })
-            .map(|(cpus, _)| cpus)
-            == self.cpu_infos.last().map(|info| &info.cpus);
-
         for cpu in &self.cpu_infos {
-            let weight = if auto_offset {
-                weights.weight(&cpu.cpus, mode)
-            } else {
-                1.0
-            };
-
-            #[cfg(debug_assertions)]
-            debug!("policy{}: weight {:.2}", cpu.policy, weight);
             cpu.write_freq(
                 self.jank_freq.unwrap_or(self.policy_freq),
                 &mut self.file_handler,
-                weight,
             )
             .unwrap_or_else(|e| error!("{e:?}"));
         }

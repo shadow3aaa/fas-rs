@@ -51,12 +51,7 @@ impl Info {
         })
     }
 
-    pub fn write_freq(
-        &self,
-        freq: isize,
-        file_handler: &mut FileHandler,
-        weight: f64,
-    ) -> Result<()> {
+    pub fn write_freq(&self, freq: isize, file_handler: &mut FileHandler) -> Result<()> {
         let freq = freq
             .saturating_add(
                 OFFSET_MAP
@@ -71,7 +66,7 @@ impl Info {
         let max_freq_path = self.max_freq_path();
         let min_freq_path = self.min_freq_path();
 
-        let freq = format!("{:.0}", freq as f64 * weight);
+        let freq = format!("{:.0}", freq as f64);
 
         file_handler.write_with_workround(max_freq_path, &freq)?;
         if self.policy != 0 {
