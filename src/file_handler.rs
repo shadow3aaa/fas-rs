@@ -21,6 +21,7 @@ use std::{
 };
 
 use anyhow::Result;
+use likely_stable::if_unlikely;
 use sys_mount::{unmount, UnmountFlags};
 
 #[derive(Debug)]
@@ -58,19 +59,19 @@ impl FileHandler {
         path: impl AsRef<Path>,
         content: impl AsRef<[u8]>,
     ) -> Result<()> {
-        if let Err(e) = self.write(path.as_ref(), content.as_ref()) {
+        if_unlikely! { let Err(e) = self.write(path.as_ref(), content.as_ref()) => {
             match e.kind() {
                 ErrorKind::PermissionDenied => {
                     set_permissions(path.as_ref(), PermissionsExt::from_mode(0o644))?;
                     self.write(path, content)?;
-                    Ok(())
+                    return Ok(());
                 }
                 ErrorKind::InvalidInput => Ok(()),
-                _ => Err(e.into()),
+                _ => return Err(e.into()),
             }
         } else {
-            Ok(())
-        }
+            return Ok(());
+        }}
     }
 
     pub fn write(&mut self, path: impl AsRef<Path>, content: impl AsRef<[u8]>) -> io::Result<()> {

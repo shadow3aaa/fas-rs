@@ -14,6 +14,7 @@
 
 use std::path::Path;
 
+use likely_stable::LikelyResult;
 use log::error;
 use mlua::{Function, IntoLuaMulti, Lua};
 
@@ -31,7 +32,7 @@ pub fn do_callback<P: AsRef<Path>, S: AsRef<str>, A: for<'lua> IntoLuaMulti<'lua
     let extension = extension.as_ref();
 
     if let Ok(func) = lua.globals().get::<_, Function>(function) {
-        func.call(args).unwrap_or_else(|e| {
+        func.call(args).unwrap_or_else_likely(|e| {
             error!("Got an error when executing extension '{extension:?}', reason: {e:#?}");
         });
     }

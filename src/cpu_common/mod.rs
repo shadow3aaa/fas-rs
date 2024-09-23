@@ -23,6 +23,7 @@ use std::{
 
 use anyhow::Result;
 use cpu_info::Info;
+use likely_stable::unlikely;
 #[cfg(debug_assertions)]
 use log::debug;
 use log::error;
@@ -126,7 +127,7 @@ impl Controller {
     }
 
     pub fn fas_update_freq(&mut self, factor: f64, jank: bool) {
-        if jank {
+        if unlikely(jank) {
             self.jank_freq = Some(
                 self.policy_freq
                     .saturating_add((BASE_FREQ as f64 * factor) as isize)
@@ -173,7 +174,7 @@ impl Controller {
             factor_a * factor_b * -1.0
         };
 
-        if jank {
+        if unlikely(jank) {
             basic * 2.0
         } else {
             basic

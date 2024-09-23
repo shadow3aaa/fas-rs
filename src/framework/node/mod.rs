@@ -8,6 +8,7 @@ use std::{
 };
 
 use crate::framework::error::{Error, Result};
+use likely_stable::unlikely;
 pub use power_mode::Mode;
 
 const NODE_PATH: &str = "/dev/fas_rs";
@@ -54,7 +55,7 @@ impl Node {
     pub fn get_node<S: AsRef<str>>(&mut self, id: S) -> Result<String> {
         let id = id.as_ref();
 
-        if self.timer.elapsed() > REFRESH_TIME {
+        if unlikely(self.timer.elapsed() > REFRESH_TIME) {
             self.refresh()?;
         }
 

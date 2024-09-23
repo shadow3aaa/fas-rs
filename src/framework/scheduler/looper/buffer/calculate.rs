@@ -14,6 +14,7 @@
 
 use std::time::Duration;
 
+use likely_stable::unlikely;
 #[cfg(debug_assertions)]
 use log::debug;
 
@@ -77,7 +78,7 @@ impl Buffer {
 
         let current_fps = current_fps?;
 
-        if current_fps < (target_fpses[0].saturating_sub(10).max(10)).into() {
+        if unlikely(current_fps < (target_fpses[0].saturating_sub(10).max(10)).into()) {
             return None;
         }
 

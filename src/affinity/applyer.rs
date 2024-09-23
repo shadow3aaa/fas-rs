@@ -140,14 +140,18 @@ impl AffinityApplyer {
                 continue;
             }
 
-            if self.task_map
+            if self
+                .task_map
                 .get(&tid)
                 .and_then(|data| data.get())
                 .copied()
                 .unwrap_or(true)
             {
-                self.task_map.insert(tid, ForgetData::new(false, Duration::from_millis(100)));
-                let _ = self.file_handler.write("/dev/cpuset/fas-rs/simple/tasks", tid.to_string());
+                self.task_map
+                    .insert(tid, ForgetData::new(false, Duration::from_millis(100)));
+                let _ = self
+                    .file_handler
+                    .write("/dev/cpuset/fas-rs/simple/tasks", tid.to_string());
             }
         }
     }

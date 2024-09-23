@@ -14,6 +14,7 @@
 
 use std::time::Duration;
 
+use likely_stable::likely;
 #[cfg(debug_assertions)]
 use log::debug;
 
@@ -40,7 +41,7 @@ impl Buffer {
                 .collect();
             let count = fpses.len();
             let prefixed = fpses.into_iter().sum::<f64>() / count as f64;
-            if prefixed.is_normal() {
+            if likely(prefixed.is_normal()) {
                 prefixed
             } else {
                 f64::from(target_fps)

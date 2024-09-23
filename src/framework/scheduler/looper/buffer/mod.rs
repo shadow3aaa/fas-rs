@@ -20,6 +20,7 @@ use std::{
 };
 
 use libc::pid_t;
+use likely_stable::unlikely;
 
 use crate::{framework::config::TargetFps, Extension};
 
@@ -76,7 +77,7 @@ impl Buffer {
 
         self.frametimes.push_front(d);
 
-        if self.timer.elapsed() >= Duration::from_secs(1) {
+        if unlikely(self.timer.elapsed() >= Duration::from_secs(1)) {
             self.timer = Instant::now();
             self.calculate_current_fps();
             self.calculate_target_fps(extension);

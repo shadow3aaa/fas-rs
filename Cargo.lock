@@ -430,7 +430,7 @@ dependencies = [
 [[package]]
 name = "flower"
 version = "0.1.0"
-source = "git+https://github.com/shadow3aaa/flower#8778ac95aff4a54e789562bd13dc169c8e892f8d"
+source = "git+https://github.com/shadow3aaa/flower#8ed1cc9a1e759338de1b6d1b02ede620372cdf30"
 dependencies = [
  "anyhow",
  "aya 0.12.0 (git+https://github.com/aya-rs/aya)",
@@ -445,7 +445,7 @@ dependencies = [
 [[package]]
 name = "flower-common"
 version = "0.1.0"
-source = "git+https://github.com/shadow3aaa/flower#8778ac95aff4a54e789562bd13dc169c8e892f8d"
+source = "git+https://github.com/shadow3aaa/flower#8ed1cc9a1e759338de1b6d1b02ede620372cdf30"
 dependencies = [
  "aya 0.12.0 (git+https://github.com/aya-rs/aya)",
 ]
@@ -908,9 +908,9 @@ checksum = "bda66fc9667c18cb2758a2ac84d1167245054bcf85d5d1aaa6923f45801bdd02"
 
 [[package]]
 name = "pkg-config"
-version = "0.3.30"
+version = "0.3.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d231b230927b5e4ad203db57bbcbee2802f6bce620b1e4a9024a07d94e2907ec"
+checksum = "953ec861398dccce10c670dfeaf3ec4911ca479e9c02154b3a215178c5f566f2"
 
 [[package]]
 name = "prettyplease"
