@@ -20,6 +20,7 @@ mod utils;
 use std::time::{Duration, Instant};
 
 use frame_analyzer::Analyzer;
+use likely_stable::unlikely;
 #[cfg(debug_assertions)]
 use log::debug;
 use log::info;
@@ -144,9 +145,9 @@ impl Looper {
     fn recv_message(&mut self, target_fps: Option<u32>) -> Option<FasData> {
         let target_frametime = target_fps.map(|fps| Duration::from_secs(1) / fps);
 
-        let time = if self.state != State::Working {
+        let time = if unlikely(self.state != State::Working) {
             Duration::from_millis(100)
-        } else if self.janked {
+        } else if unlikely(self.janked) {
             target_frametime.map_or(Duration::from_millis(100), |time| time / 4)
         } else {
             target_frametime.map_or(Duration::from_millis(100), |time| time * 2)
@@ -171,7 +172,7 @@ impl Looper {
     }
 
     fn do_policy(&mut self, target_fps: Option<u32>) {
-        if self.state != State::Working {
+        if unlikely(self.state != State::Working) {
             #[cfg(debug_assertions)]
             debug!("Not running policy!");
             return;
@@ -189,6 +190,6 @@ impl Looper {
         let target_fps = target_fps.unwrap_or(120);
         let factor = Controller::scale_factor(target_fps, event.frame, event.target, self.janked);
         self.controller.fas_update_freq(factor, self.janked);
-        self.affinity.apply();
+        self.affinity.start_analyze();
     }
 }

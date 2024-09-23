@@ -68,8 +68,8 @@ impl Info {
 
         let freq = format!("{:.0}", freq as f64);
 
-        file_handler.write_with_workround(max_freq_path, &freq)?;
         if self.policy != 0 {
+            file_handler.write_with_workround(max_freq_path, &freq)?; 
             file_handler.write_with_workround(min_freq_path, &freq)?;
         }
         Ok(())

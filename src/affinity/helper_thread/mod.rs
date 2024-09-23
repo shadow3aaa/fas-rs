@@ -24,15 +24,16 @@ use std::{
 };
 
 use flower::{list_threads, Flower};
+use likely_stable::{if_likely, if_unlikely, unlikely};
 use log::info;
 
-use super::applyer_thread::{affinity_applyer, Data};
+use super::applyer::{AffinityApplyer, Data};
 use top_threads::TopThreads;
 
 pub enum Command {
     Attach(i32),
     Detach,
-    Apply,
+    StartAnalyze,
 }
 
 struct Context {
@@ -71,14 +72,10 @@ pub fn affinity_helper(receiver: &Receiver<Command>) {
     info!("cpuset big: {cpuset_big:#?}");
     info!("cpuset middle: {cpuset_middle:#?}");
 
-    let (sx, rx) = mpsc::channel();
-    thread::Builder::new()
-        .name("AffinityApplyer".into())
-        .spawn(move || affinity_applyer(&rx, &cpuset_big, &cpuset_middle))
-        .unwrap();
+    let mut applyer = AffinityApplyer::new(&cpuset_big, &cpuset_middle);
 
     loop {
-        if let Ok(event) = receiver.recv() {
+        if_unlikely! { let Ok(event) = receiver.try_recv() => {
             match event {
                 Command::Attach(target_pid) => {
                     let threads = list_threads(target_pid as u32).unwrap();
@@ -93,31 +90,37 @@ pub fn affinity_helper(receiver: &Receiver<Command>) {
                 Command::Detach => {
                     context = None;
                 }
-                Command::Apply => {
-                    if let Some(context) = &mut context {
-                        context.flower.try_update();
-
-                        if context.instant.elapsed() > Duration::from_secs(1) {
-                            context.instant = Instant::now();
-                            context.threads = list_threads(context.pid).unwrap();
-                            let mut top_threads = context.top_threads.result();
-                            top_threads.truncate(10);
-                            context.flower.set_top_threads(Some(top_threads));
-                            context.top_threads = TopThreads::new(&context.threads);
-                        }
-
-                        if let Some(datas) = context.flower.analyze() {
-                            let data = Data {
-                                datas,
-                                threads: context.threads.clone(),
-                            };
-                            let _ = sx.send(data);
-                        }
-
+                Command::StartAnalyze => {
+                    if_likely! { let Some(context) = &mut context => {
                         context.flower.clear();
-                    }
+                    }}
                 }
             }
-        }
+        }}
+
+        if_likely! { let Some(context) = &mut context => {
+            if unlikely(context.instant.elapsed() > Duration::from_secs(1)) {
+                context.instant = Instant::now();
+                context.threads = list_threads(context.pid).unwrap();
+                let mut top_threads = context.top_threads.result();
+                top_threads.truncate(5);
+                context.flower.set_top_threads(Some(top_threads));
+                context.top_threads = TopThreads::new(&context.threads);
+            }
+
+            if !context.flower.update(Some(Duration::from_secs(1))) {
+                continue;
+            }
+
+            if let Some(datas) = context.flower.analyze() {
+                let data = Data {
+                    datas,
+                    threads: context.threads.clone(),
+                };
+                applyer.apply(data);
+            }
+        } else {
+            thread::sleep(Duration::from_millis(10));
+        }}
     }
 }

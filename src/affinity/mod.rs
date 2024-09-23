@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod applyer_thread;
+mod applyer;
 mod helper_thread;
 
 use std::{
@@ -44,7 +44,7 @@ impl Affinity {
         let _ = self.sx.send(Command::Detach);
     }
 
-    pub fn apply(&self) {
-        let _ = self.sx.send(Command::Apply);
+    pub fn start_analyze(&self) {
+        let _ = self.sx.send(Command::StartAnalyze);
     }
 }

@@ -13,15 +13,15 @@
 // limitations under the License.
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     fs,
     os::unix,
-    sync::mpsc::Receiver,
     time::{Duration, Instant},
 };
 
 use anyhow::Result;
 use flower::flow_web::AnalyzeData;
+use likely_stable::unlikely;
 
 use crate::file_handler::FileHandler;
 
@@ -47,7 +47,7 @@ impl<T> ForgetData<T> {
     }
 
     pub fn get(&self) -> Option<&T> {
-        if self.outed() {
+        if unlikely(self.outed()) {
             None
         } else {
             Some(&self.data)
@@ -95,61 +95,59 @@ fn init_cgroup_fs(cpuset_big: &[usize], cpuset_middle: &[usize]) -> Result<()> {
     Ok(())
 }
 
-pub fn affinity_applyer(rx: &Receiver<Data>, cpuset_big: &[usize], cpuset_middle: &[usize]) {
-    let _ = init_cgroup_fs(cpuset_big, cpuset_middle);
+pub struct AffinityApplyer {
+    file_handler: FileHandler,
+    task_map: HashMap<u32, ForgetData<bool>>,
+    gc_instant: Instant,
+}
 
-    let mut file_handler = FileHandler::new();
-    let mut task_map: HashMap<u32, ForgetData<bool>> = HashMap::new();
-    let mut gc_instant = Instant::now();
+impl AffinityApplyer {
+    pub fn new(cpuset_big: &[usize], cpuset_middle: &[usize]) -> Self {
+        let _ = init_cgroup_fs(cpuset_big, cpuset_middle);
+        Self {
+            file_handler: FileHandler::new(),
+            task_map: HashMap::new(),
+            gc_instant: Instant::now(),
+        }
+    }
 
-    loop {
-        if let Ok(data) = rx.recv() {
-            if gc_instant.elapsed() > Duration::from_secs(1) {
-                task_map.retain(|_, data| !data.outed());
-                gc_instant = Instant::now();
+    pub fn apply(&mut self, data: Data) {
+        if unlikely(self.gc_instant.elapsed() > Duration::from_secs(1)) {
+            self.task_map.retain(|_, data| !data.outed());
+            self.gc_instant = Instant::now();
+        }
+
+        let critical_thread = data.datas.iter().last().map(|data| data.tid).unwrap();
+        if !self
+            .task_map
+            .get(&critical_thread)
+            .and_then(|data| data.get())
+            .copied()
+            .unwrap_or(false)
+        {
+            self.task_map.insert(
+                critical_thread,
+                ForgetData::new(true, Duration::from_millis(100)),
+            );
+            let _ = self.file_handler.write(
+                "/dev/cpuset/fas-rs/critical/tasks",
+                critical_thread.to_string(),
+            );
+        }
+
+        for tid in data.threads {
+            if critical_thread == tid {
+                continue;
             }
 
-            let critical_threads: HashSet<_> = data.datas.iter().map(|data| data.tid).collect();
-            for critical_thread in &critical_threads {
-                if task_map
-                    .get(critical_thread)
-                    .and_then(|data| data.get())
-                    .copied()
-                    .unwrap_or(false)
-                {
-                    continue;
-                }
-
-                task_map.insert(
-                    *critical_thread,
-                    ForgetData::new(true, Duration::from_millis(100)),
-                );
-                file_handler
-                    .write(
-                        "/dev/cpuset/fas-rs/critical/tasks",
-                        critical_thread.to_string(),
-                    )
-                    .unwrap();
-            }
-
-            for tid in data.threads {
-                if critical_threads.contains(&tid) {
-                    continue;
-                }
-
-                if !task_map
-                    .get(&tid)
-                    .and_then(|data| data.get())
-                    .copied()
-                    .unwrap_or(true)
-                {
-                    continue;
-                }
-
-                task_map.insert(tid, ForgetData::new(false, Duration::from_millis(100)));
-                file_handler
-                    .write("/dev/cpuset/fas-rs/simple/tasks", tid.to_string())
-                    .unwrap();
+            if self.task_map
+                .get(&tid)
+                .and_then(|data| data.get())
+                .copied()
+                .unwrap_or(true)
+            {
+                self.task_map.insert(tid, ForgetData::new(false, Duration::from_millis(100)));
+                let _ = self.file_handler.write("/dev/cpuset/fas-rs/simple/tasks", tid.to_string());
             }
         }
     }
