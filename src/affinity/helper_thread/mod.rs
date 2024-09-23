@@ -25,7 +25,6 @@ use std::{
 
 use flower::{list_threads, Flower};
 use log::info;
-use rustix::process::CpuSet;
 
 use super::applyer_thread::{affinity_applyer, Data};
 use top_threads::TopThreads;
@@ -61,8 +60,8 @@ pub fn affinity_helper(receiver: &Receiver<Command>) {
         let capacity: usize = fs::read_to_string(path).unwrap().trim().parse().unwrap();
         capacity_map
             .entry(capacity)
-            .or_insert_with(CpuSet::new)
-            .set(cpu);
+            .or_insert_with(Vec::new)
+            .push(cpu);
     }
 
     let mut cpu_sets = capacity_map.into_values().rev().take(2);
@@ -75,7 +74,7 @@ pub fn affinity_helper(receiver: &Receiver<Command>) {
     let (sx, rx) = mpsc::channel();
     thread::Builder::new()
         .name("AffinityApplyer".into())
-        .spawn(move || affinity_applyer(&rx, cpuset_big, cpuset_middle))
+        .spawn(move || affinity_applyer(&rx, &cpuset_big, &cpuset_middle))
         .unwrap();
 
     loop {

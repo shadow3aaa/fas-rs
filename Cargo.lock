@@ -100,7 +100,7 @@ dependencies = [
 [[package]]
 name = "aya"
 version = "0.12.0"
-source = "git+https://github.com/aya-rs/aya#48ca623a1fe44551f6368987cbd01c2135d78e21"
+source = "git+https://github.com/aya-rs/aya#5b2900869112990eb8478f2700bd067b20fa7d3d"
 dependencies = [
  "assert_matches",
  "aya-obj 0.1.0 (git+https://github.com/aya-rs/aya)",
@@ -117,7 +117,7 @@ dependencies = [
 [[package]]
 name = "aya-log"
 version = "0.2.0"
-source = "git+https://github.com/aya-rs/aya#48ca623a1fe44551f6368987cbd01c2135d78e21"
+source = "git+https://github.com/aya-rs/aya#5b2900869112990eb8478f2700bd067b20fa7d3d"
 dependencies = [
  "aya 0.12.0 (git+https://github.com/aya-rs/aya)",
  "aya-log-common",
@@ -130,7 +130,7 @@ dependencies = [
 [[package]]
 name = "aya-log-common"
 version = "0.1.14"
-source = "git+https://github.com/aya-rs/aya#48ca623a1fe44551f6368987cbd01c2135d78e21"
+source = "git+https://github.com/aya-rs/aya#5b2900869112990eb8478f2700bd067b20fa7d3d"
 dependencies = [
  "num_enum",
 ]
@@ -152,7 +152,7 @@ dependencies = [
 [[package]]
 name = "aya-obj"
 version = "0.1.0"
-source = "git+https://github.com/aya-rs/aya#48ca623a1fe44551f6368987cbd01c2135d78e21"
+source = "git+https://github.com/aya-rs/aya#5b2900869112990eb8478f2700bd067b20fa7d3d"
 dependencies = [
  "bytes",
  "core-error",
@@ -406,7 +406,6 @@ dependencies = [
  "num_cpus",
  "parking_lot",
  "quick-xml",
- "rustix",
  "serde",
  "serde_json",
  "sys-mount",
@@ -1159,18 +1158,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.63"
+version = "1.0.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0342370b38b6a11b6cc11d6a805569958d54cfa061a29969c3b5ce2ea405724"
+checksum = "d50af8abc119fb8bb6dbabcfa89656f46f84aa0ac7688088608076ad2b459a84"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.63"
+version = "1.0.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4558b58466b9ad7ca0f102865eccc95938dca1a74a856f2b57b6629050da261"
+checksum = "08904e7672f5eb876eaaf87e0ce17857500934f4981c4a0ab2b4aa98baac7fc3"
 dependencies = [
  "proc-macro2",
  "quote",

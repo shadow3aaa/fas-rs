@@ -73,7 +73,7 @@ impl FileHandler {
         }
     }
 
-    fn write(&mut self, path: impl AsRef<Path>, content: impl AsRef<[u8]>) -> io::Result<()> {
+    pub fn write(&mut self, path: impl AsRef<Path>, content: impl AsRef<[u8]>) -> io::Result<()> {
         match self.files.entry(path.as_ref().to_path_buf()) {
             Entry::Occupied(mut entry) => {
                 entry.get_mut().write_all(content.as_ref())?;

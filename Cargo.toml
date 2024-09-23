@@ -40,7 +40,6 @@ frame-analyzer = "0.2.6"
 dumpsys-rs = { git = "https://github.com/shadow3aaa/dumpsys-rs" }
 mimalloc = "0.1.43"
 flower = { git = "https://github.com/shadow3aaa/flower" }
-rustix = { version = "0.38.37", features = ["process"] }
 num_cpus = "1.16.0"
 
 [build-dependencies]
