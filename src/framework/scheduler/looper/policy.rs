@@ -14,56 +14,94 @@
 
 use std::time::Duration;
 
-use likely_stable::likely;
+use likely_stable::{likely, unlikely};
 #[cfg(debug_assertions)]
 use log::debug;
 
 use super::buffer::Buffer;
 use crate::framework::prelude::*;
 
-#[derive(Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
-pub struct FrameEvent {
-    pub frame: Duration,
-    pub target: Duration,
+const KP: f64 = 0.0005;
+const KI: f64 = 0.00001;
+const KD: f64 = 0.00005;
+
+pub fn pid_control(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<isize> {
+    if unlikely(buffer.frametimes.len() < 60) {
+        return None;
+    }
+    let target_fps = buffer.target_fps?;
+    let target_fps_prefixed = {
+        let fpses: Vec<_> = buffer
+            .current_fpses
+            .iter()
+            .copied()
+            .filter(|fps| {
+                *fps >= f64::from(target_fps) * 119.0 / 120.0 && *fps <= f64::from(target_fps)
+            })
+            .collect();
+        let count = fpses.len();
+        let prefixed = fpses.into_iter().sum::<f64>() / count as f64;
+        if likely(prefixed.is_normal()) {
+            prefixed
+        } else {
+            f64::from(target_fps)
+        }
+    };
+    let normalized_last_frame = if buffer.additional_frametime == Duration::ZERO {
+        buffer
+            .frametimes
+            .front()
+            .copied()?
+            .mul_f64(target_fps_prefixed)
+    } else {
+        buffer.additional_frametime.mul_f64(target_fps_prefixed)
+    };
+
+    #[cfg(debug_assertions)]
+    debug!("normalized_last_frame: {normalized_last_frame:?}");
+
+    let frame = normalized_last_frame;
+    let margin = config.mode_config(mode).margin;
+    let margin = Duration::from_millis(margin);
+    let target = Duration::from_secs(1) + margin;
+
+    Some(pid_control_inner(
+        frame,
+        target,
+        buffer
+            .frametimes
+            .iter()
+            .copied()
+            .map(|ft| ft.mul_f64(target_fps_prefixed))
+            .take(30)
+            .sum(),
+        buffer
+            .frametimes
+            .iter()
+            .copied()
+            .map(|ft| ft.mul_f64(target_fps_prefixed))
+            .take(60)
+            .sum(),
+    ))
 }
 
-impl Buffer {
-    pub fn event(&self, config: &mut Config, mode: Mode) -> Option<FrameEvent> {
-        let target_fps = self.target_fps?;
-        let target_fps_prefixed = {
-            let fpses: Vec<_> = self
-                .current_fpses
-                .iter()
-                .copied()
-                .filter(|fps| {
-                    *fps >= f64::from(target_fps) * 119.0 / 120.0 && *fps <= f64::from(target_fps)
-                })
-                .collect();
-            let count = fpses.len();
-            let prefixed = fpses.into_iter().sum::<f64>() / count as f64;
-            if likely(prefixed.is_normal()) {
-                prefixed
-            } else {
-                f64::from(target_fps)
-            }
-        };
-        let normalized_last_frame = if self.additional_frametime == Duration::ZERO {
-            self.frametimes
-                .front()
-                .copied()?
-                .mul_f64(target_fps_prefixed)
-        } else {
-            self.additional_frametime.mul_f64(target_fps_prefixed)
-        };
-
-        #[cfg(debug_assertions)]
-        debug!("normalized_last_frame: {normalized_last_frame:?}");
-
-        let frame = normalized_last_frame;
-        let margin = config.mode_config(mode).margin;
-        let margin = Duration::from_millis(margin);
-        let target = Duration::from_secs(1) + margin;
-
-        Some(FrameEvent { frame, target })
+fn pid_control_inner(
+    current_frametime: Duration,
+    target_frametime: Duration,
+    last_30_frametimes_sum: Duration,
+    last_60_frametimes_sum: Duration,
+) -> isize {
+    let error_p = (current_frametime.as_nanos() as f64 - target_frametime.as_nanos() as f64) * KP;
+    let error_i =
+        (last_30_frametimes_sum.as_nanos() as f64 - target_frametime.as_nanos() as f64 * 30.0) * KI;
+    let error_d = (last_30_frametimes_sum.as_nanos() as f64 * 2.0
+        - last_60_frametimes_sum.as_nanos() as f64)
+        * KD;
+    #[cfg(debug_assertions)]
+    {
+        debug!("error_p {error_p}");
+        debug!("error_i {error_i}");
+        debug!("error_d {error_d}");
     }
+    (error_p + error_i + error_d) as isize
 }

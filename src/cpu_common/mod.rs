@@ -18,12 +18,10 @@ use std::{
     collections::HashMap,
     fs,
     sync::{atomic::AtomicIsize, OnceLock},
-    time::Duration,
 };
 
 use anyhow::Result;
 use cpu_info::Info;
-use likely_stable::unlikely;
 #[cfg(debug_assertions)]
 use log::debug;
 use log::error;
@@ -34,8 +32,6 @@ use crate::{
     Extension,
 };
 
-const BASE_FREQ: isize = 600_000;
-
 pub static OFFSET_MAP: OnceLock<HashMap<i32, AtomicIsize>> = OnceLock::new();
 
 #[derive(Debug)]
@@ -43,7 +39,6 @@ pub struct Controller {
     max_freq: isize,
     min_freq: isize,
     policy_freq: isize,
-    jank_freq: Option<isize>,
     cpu_infos: Vec<Info>,
     file_handler: FileHandler,
 }
@@ -93,7 +88,6 @@ impl Controller {
         Ok(Self {
             max_freq,
             min_freq,
-            jank_freq: None,
             policy_freq: max_freq,
             cpu_infos,
             file_handler: FileHandler::new(),
@@ -102,7 +96,6 @@ impl Controller {
 
     pub fn init_game(&mut self, extension: &Extension) {
         self.policy_freq = self.max_freq;
-        self.jank_freq = None;
         extension.tigger_extentions(ApiV0::InitCpuFreq);
         extension.tigger_extentions(ApiV1::InitCpuFreq);
         extension.tigger_extentions(ApiV2::InitCpuFreq);
@@ -115,7 +108,6 @@ impl Controller {
 
     pub fn init_default(&mut self, extension: &Extension) {
         self.policy_freq = self.max_freq;
-        self.jank_freq = None;
         extension.tigger_extentions(ApiV0::ResetCpuFreq);
         extension.tigger_extentions(ApiV1::ResetCpuFreq);
         extension.tigger_extentions(ApiV2::ResetCpuFreq);
@@ -126,58 +118,21 @@ impl Controller {
         }
     }
 
-    pub fn fas_update_freq(&mut self, factor: f64, jank: bool) {
-        if unlikely(jank) {
-            self.jank_freq = Some(
-                self.policy_freq
-                    .saturating_add((BASE_FREQ as f64 * factor) as isize)
-                    .clamp(0, self.max_freq),
-            );
-        } else if let Some(jank_freq) = self.jank_freq {
-            self.policy_freq = self
-                .policy_freq
-                .saturating_add((BASE_FREQ as f64 * factor) as isize)
-                .clamp(0, self.max_freq);
-            self.policy_freq = self.policy_freq.max(jank_freq);
-            self.jank_freq = None;
-        } else {
-            self.policy_freq = self
-                .policy_freq
-                .saturating_add((BASE_FREQ as f64 * factor) as isize)
-                .clamp(0, self.max_freq);
-        }
+    pub fn fas_update_freq(&mut self, control: isize) {
+        self.policy_freq = self
+            .policy_freq
+            .saturating_add(control)
+            .clamp(0, self.max_freq);
 
         #[cfg(debug_assertions)]
         {
-            debug!("change freq: {}", (BASE_FREQ as f64 * factor) as isize);
+            debug!("change freq: {}", control);
             debug!("policy freq: {}", self.policy_freq);
-            debug!("jank freq: {:?}", self.jank_freq);
         }
 
         for cpu in &self.cpu_infos {
-            cpu.write_freq(
-                self.jank_freq.unwrap_or(self.policy_freq),
-                &mut self.file_handler,
-            )
-            .unwrap_or_else(|e| error!("{e:?}"));
-        }
-    }
-
-    pub fn scale_factor(target_fps: u32, frame: Duration, target: Duration, jank: bool) -> f64 {
-        let basic = if frame > target {
-            let factor_a = (frame - target).as_nanos() as f64 / target.as_nanos() as f64;
-            let factor_b = 120.0 / f64::from(target_fps);
-            factor_a * factor_b
-        } else {
-            let factor_a = (target - frame).as_nanos() as f64 / target.as_nanos() as f64;
-            let factor_b = 120.0 / f64::from(target_fps);
-            factor_a * factor_b * -1.0
-        };
-
-        if unlikely(jank) {
-            basic * 2.0
-        } else {
-            basic
+            cpu.write_freq(self.policy_freq, &mut self.file_handler)
+                .unwrap_or_else(|e| error!("{e:?}"));
         }
     }
 }
