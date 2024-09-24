@@ -21,9 +21,9 @@ use log::debug;
 use super::buffer::Buffer;
 use crate::framework::prelude::*;
 
-const KP: f64 = 0.0005;
-const KI: f64 = 0.00001;
-const KD: f64 = 0.00005;
+const KP: f64 = 0.0008;
+const KI: f64 = 0.00003;
+const KD: f64 = 0.00007;
 
 pub fn pid_control(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<isize> {
     if unlikely(buffer.frametimes.len() < 60) {
@@ -65,24 +65,27 @@ pub fn pid_control(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<i
     let margin = Duration::from_millis(margin);
     let target = Duration::from_secs(1) + margin;
 
-    Some(pid_control_inner(
-        frame,
-        target,
-        buffer
-            .frametimes
-            .iter()
-            .copied()
-            .map(|ft| ft.mul_f64(target_fps_prefixed))
-            .take(30)
-            .sum(),
-        buffer
-            .frametimes
-            .iter()
-            .copied()
-            .map(|ft| ft.mul_f64(target_fps_prefixed))
-            .take(60)
-            .sum(),
-    ) * 60 / target_fps as isize)
+    Some(
+        pid_control_inner(
+            frame,
+            target,
+            buffer
+                .frametimes
+                .iter()
+                .copied()
+                .map(|ft| ft.mul_f64(target_fps_prefixed))
+                .take(30)
+                .sum(),
+            buffer
+                .frametimes
+                .iter()
+                .copied()
+                .map(|ft| ft.mul_f64(target_fps_prefixed))
+                .take(60)
+                .sum(),
+        ) * 60
+            / target_fps as isize,
+    )
 }
 
 fn pid_control_inner(
@@ -104,5 +107,6 @@ fn pid_control_inner(
         debug!("error_i {error_i}");
         debug!("error_d {error_d}");
     }
+
     (error_p + error_i + error_d) as isize
 }
