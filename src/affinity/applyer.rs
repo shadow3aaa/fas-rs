@@ -63,8 +63,16 @@ fn init_cgroup_fs(cpuset_big: &[usize], cpuset_middle: &[usize]) -> Result<()> {
     let _ = fs::create_dir("/dev/cpuset/fas-rs");
 
     let cpus = fs::read_to_string("/sys/devices/system/cpu/possible")?;
-    let _ = fs::write("/dev/cpuset/fas-rs/cpus", cpus);
+    let _ = fs::write("/dev/cpuset/fas-rs/cpus", &cpus);
     let _ = fs::write("/dev/cpuset/fas-rs/mems", "0");
+
+    let _ = fs::create_dir("/dev/cpuset/fas-rs/all-cpus");
+    let _ = fs::set_permissions(
+        "/dev/cpuset/fas-rs/all-cpus",
+        unix::fs::PermissionsExt::from_mode(0o755),
+    );
+    let _ = fs::write("/dev/cpuset/fas-rs/all-cpus/cpus", cpus);
+    let _ = fs::write("/dev/cpuset/fas-rs/all-cpus/mems", "0");
 
     let _ = fs::create_dir("/dev/cpuset/fas-rs/critical");
     let _ = fs::set_permissions(
@@ -154,5 +162,21 @@ impl AffinityApplyer {
                     .write("/dev/cpuset/fas-rs/simple/tasks", tid.to_string());
             }
         }
+    }
+
+    pub fn detach(&mut self) -> Result<()> {
+        let tasks = fs::read_to_string("/dev/cpuset/fas-rs/simple/tasks")?;
+        for task in tasks.lines() {
+            let _ = fs::write("/dev/cpuset/fas-rs/all-cpus/tasks", task);
+        }
+
+        let tasks = fs::read_to_string("/dev/cpuset/fas-rs/critical/tasks")?;
+        for task in tasks.lines() {
+            let _ = fs::write("/dev/cpuset/fas-rs/all-cpus/tasks", task);
+        }
+
+        self.task_map.clear();
+
+        Ok(())
     }
 }

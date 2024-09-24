@@ -88,6 +88,7 @@ pub fn affinity_helper(receiver: &Receiver<Command>) {
                     });
                 }
                 Command::Detach => {
+                    let _ = applyer.detach();
                     context = None;
                 }
                 Command::StartAnalyze => {

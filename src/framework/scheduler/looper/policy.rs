@@ -36,7 +36,7 @@ pub fn pid_control(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<i
             .iter()
             .copied()
             .filter(|fps| {
-                *fps >= f64::from(target_fps) * 119.0 / 120.0 && *fps <= f64::from(target_fps)
+                *fps >= f64::from(target_fps) * 119.7 / 120.0 && *fps <= f64::from(target_fps)
             })
             .collect();
         let count = fpses.len();
@@ -82,7 +82,7 @@ pub fn pid_control(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<i
             .map(|ft| ft.mul_f64(target_fps_prefixed))
             .take(60)
             .sum(),
-    ))
+    ) * 60 / target_fps as isize)
 }
 
 fn pid_control_inner(
