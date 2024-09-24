@@ -18,13 +18,13 @@ use std::{
     collections::BTreeMap,
     fs,
     path::Path,
-    sync::mpsc::{self, Receiver},
+    sync::mpsc::Receiver,
     thread,
     time::{Duration, Instant},
 };
 
 use flower::{list_threads, Flower};
-use likely_stable::{if_likely, if_unlikely, unlikely};
+use likely_stable::unlikely;
 use log::info;
 
 use super::applyer::{AffinityApplyer, Data};
@@ -75,7 +75,7 @@ pub fn affinity_helper(receiver: &Receiver<Command>) {
     let mut applyer = AffinityApplyer::new(&cpuset_big, &cpuset_middle);
 
     loop {
-        if_unlikely! { let Ok(event) = receiver.try_recv() => {
+        if let Ok(event) = receiver.try_recv() {
             match event {
                 Command::Attach(target_pid) => {
                     let threads = list_threads(target_pid as u32).unwrap();
@@ -91,14 +91,14 @@ pub fn affinity_helper(receiver: &Receiver<Command>) {
                     context = None;
                 }
                 Command::StartAnalyze => {
-                    if_likely! { let Some(context) = &mut context => {
+                    if let Some(context) = &mut context {
                         context.flower.clear();
-                    }}
+                    }
                 }
             }
-        }}
+        }
 
-        if_likely! { let Some(context) = &mut context => {
+        if let Some(context) = &mut context {
             if unlikely(context.instant.elapsed() > Duration::from_secs(1)) {
                 context.instant = Instant::now();
                 context.threads = list_threads(context.pid).unwrap();
@@ -121,6 +121,6 @@ pub fn affinity_helper(receiver: &Receiver<Command>) {
             }
         } else {
             thread::sleep(Duration::from_millis(10));
-        }}
+        }
     }
 }

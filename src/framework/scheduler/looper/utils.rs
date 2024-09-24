@@ -14,7 +14,7 @@
 
 use std::time::{Duration, Instant};
 
-use likely_stable::{if_likely, unlikely};
+use likely_stable::unlikely;
 use log::info;
 
 use super::{super::FasData, buffer::BufferState, Buffer, Looper, State};
@@ -92,7 +92,7 @@ impl Looper {
         let pid = d.pid;
         let frametime = d.frametime;
 
-        if_likely! { let Some(buffer) = self.buffer.as_mut() => {
+        if let Some(buffer) = self.buffer.as_mut() {
             buffer.push_frametime(frametime, &self.extension);
             Some(buffer.state)
         } else {
@@ -118,6 +118,6 @@ impl Looper {
             self.buffer = Some(buffer);
 
             Some(BufferState::Unusable)
-        }}
+        }
     }
 }

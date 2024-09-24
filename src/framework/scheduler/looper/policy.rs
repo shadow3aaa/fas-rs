@@ -92,10 +92,11 @@ fn pid_control_inner(
     last_60_frametimes_sum: Duration,
 ) -> isize {
     let error_p = (current_frametime.as_nanos() as f64 - target_frametime.as_nanos() as f64) * KP;
-    let error_i =
-        (last_30_frametimes_sum.as_nanos() as f64 - target_frametime.as_nanos() as f64 * 30.0) * KI;
-    let error_d = (last_30_frametimes_sum.as_nanos() as f64 * 2.0
-        - last_60_frametimes_sum.as_nanos() as f64)
+    let error_i = (target_frametime.as_nanos() as f64)
+        .mul_add(-30.0, last_30_frametimes_sum.as_nanos() as f64)
+        * KI;
+    let error_d = (last_30_frametimes_sum.as_nanos() as f64)
+        .mul_add(2.0, -(last_60_frametimes_sum.as_nanos() as f64))
         * KD;
     #[cfg(debug_assertions)]
     {
