@@ -55,7 +55,6 @@ impl Looper {
                 self.state = State::NotWorking;
                 self.cleaner.undo_cleanup();
                 self.controller.init_default(&self.extension);
-                self.affinity.detach();
                 self.extension.tigger_extentions(ApiV0::StopFas);
                 self.extension.tigger_extentions(ApiV1::StopFas);
                 self.extension.tigger_extentions(ApiV2::StopFas);
