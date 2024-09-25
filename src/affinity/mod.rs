@@ -43,8 +43,4 @@ impl Affinity {
     pub fn detach(&self) {
         let _ = self.sx.send(Command::Detach);
     }
-
-    pub fn start_analyze(&self) {
-        let _ = self.sx.send(Command::StartAnalyze);
-    }
 }

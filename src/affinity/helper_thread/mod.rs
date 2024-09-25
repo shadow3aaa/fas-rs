@@ -33,7 +33,6 @@ use top_threads::TopThreads;
 pub enum Command {
     Attach(i32),
     Detach,
-    StartAnalyze,
 }
 
 struct Context {
@@ -80,7 +79,7 @@ pub fn affinity_helper(receiver: &Receiver<Command>) {
                 Command::Attach(target_pid) => {
                     let threads = list_threads(target_pid as u32).unwrap();
                     context = Some(Context {
-                        flower: Flower::new(target_pid as u32).unwrap(),
+                        flower: Flower::new(target_pid as u32, Duration::from_millis(20)).unwrap(),
                         pid: target_pid as u32,
                         instant: Instant::now(),
                         top_threads: TopThreads::new(&threads),
@@ -90,11 +89,6 @@ pub fn affinity_helper(receiver: &Receiver<Command>) {
                 Command::Detach => {
                     let _ = applyer.detach();
                     context = None;
-                }
-                Command::StartAnalyze => {
-                    if let Some(context) = &mut context {
-                        context.flower.clear();
-                    }
                 }
             }
         }

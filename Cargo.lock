@@ -430,7 +430,7 @@ dependencies = [
 [[package]]
 name = "flower"
 version = "0.1.0"
-source = "git+https://github.com/shadow3aaa/flower#8ed1cc9a1e759338de1b6d1b02ede620372cdf30"
+source = "git+https://github.com/shadow3aaa/flower#c9b014aa2b1e29cdae10f0262a0ad36a00ec01fe"
 dependencies = [
  "anyhow",
  "aya 0.12.0 (git+https://github.com/aya-rs/aya)",
@@ -445,7 +445,7 @@ dependencies = [
 [[package]]
 name = "flower-common"
 version = "0.1.0"
-source = "git+https://github.com/shadow3aaa/flower#8ed1cc9a1e759338de1b6d1b02ede620372cdf30"
+source = "git+https://github.com/shadow3aaa/flower#c9b014aa2b1e29cdae10f0262a0ad36a00ec01fe"
 dependencies = [
  "aya 0.12.0 (git+https://github.com/aya-rs/aya)",
 ]

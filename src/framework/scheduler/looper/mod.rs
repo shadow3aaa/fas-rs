@@ -191,6 +191,5 @@ impl Looper {
         debug!("control: {control}khz");
 
         self.controller.fas_update_freq(control);
-        self.affinity.start_analyze();
     }
 }
