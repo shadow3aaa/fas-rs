@@ -21,9 +21,9 @@ use log::debug;
 use super::buffer::Buffer;
 use crate::framework::prelude::*;
 
-const KP: f64 = 0.0008;
-const KI: f64 = 0.00003;
-const KD: f64 = 0.00007;
+const KP: f64 = 0.0004;
+const KI: f64 = 0.000015;
+const KD: f64 = 0.00005;
 
 pub fn pid_control(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<isize> {
     if unlikely(buffer.frametimes.len() < 60) {
