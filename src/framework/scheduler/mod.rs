@@ -23,7 +23,7 @@ use super::{
     node::Node,
     Extension,
 };
-use crate::{affinity::Affinity, Controller};
+use crate::Controller;
 
 use frame_analyzer::Analyzer;
 use looper::Looper;
@@ -70,10 +70,8 @@ impl Scheduler {
             .controller
             .ok_or(Error::SchedulerMissing("Controller"))?;
 
-        let affinity = Affinity::new();
-
         let node = Node::init()?;
         let analyzer = Analyzer::new()?;
-        Looper::new(analyzer, config, node, extension, controller, affinity).enter_loop()
+        Looper::new(analyzer, config, node, extension, controller).enter_loop()
     }
 }

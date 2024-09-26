@@ -27,7 +27,6 @@ use log::info;
 
 use super::{topapp::TimedWatcher, FasData};
 use crate::{
-    affinity::Affinity,
     framework::{
         config::Config,
         error::Result,
@@ -54,7 +53,6 @@ pub struct Looper {
     extension: Extension,
     mode: Mode,
     controller: Controller,
-    affinity: Affinity,
     windows_watcher: TimedWatcher,
     cleaner: Cleaner,
     buffer: Option<Buffer>,
@@ -70,7 +68,6 @@ impl Looper {
         node: Node,
         extension: Extension,
         controller: Controller,
-        affinity: Affinity,
     ) -> Self {
         Self {
             analyzer,
@@ -79,7 +76,6 @@ impl Looper {
             extension,
             mode: Mode::Balance,
             controller,
-            affinity,
             windows_watcher: TimedWatcher::new(),
             cleaner: Cleaner::new(),
             buffer: None,
