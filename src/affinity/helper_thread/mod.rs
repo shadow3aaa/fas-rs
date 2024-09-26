@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod top_threads;
-
 use std::{
     collections::BTreeMap,
     fs,
@@ -28,7 +26,6 @@ use likely_stable::unlikely;
 use log::info;
 
 use super::applyer::{AffinityApplyer, Data};
-use top_threads::TopThreads;
 
 pub enum Command {
     Attach(i32),
@@ -39,7 +36,6 @@ struct Context {
     pub flower: Flower,
     pub pid: u32,
     pub instant: Instant,
-    pub top_threads: TopThreads,
     pub threads: Vec<u32>,
 }
 
@@ -82,7 +78,6 @@ pub fn affinity_helper(receiver: &Receiver<Command>) {
                         flower: Flower::new(target_pid as u32, Duration::from_millis(20)).unwrap(),
                         pid: target_pid as u32,
                         instant: Instant::now(),
-                        top_threads: TopThreads::new(&threads),
                         threads,
                     });
                 }
@@ -97,10 +92,6 @@ pub fn affinity_helper(receiver: &Receiver<Command>) {
             if unlikely(context.instant.elapsed() > Duration::from_secs(1)) {
                 context.instant = Instant::now();
                 context.threads = list_threads(context.pid).unwrap();
-                let mut top_threads = context.top_threads.result();
-                top_threads.truncate(5);
-                context.flower.set_top_threads(Some(top_threads));
-                context.top_threads = TopThreads::new(&context.threads);
             }
 
             if !context.flower.update(Some(Duration::from_secs(1))) {
