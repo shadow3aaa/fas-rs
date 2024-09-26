@@ -66,13 +66,13 @@ fn init_cgroup_fs(cpuset_big: &[usize], cpuset_middle: &[usize]) -> Result<()> {
     let _ = fs::write("/dev/cpuset/fas-rs/cpus", &cpus);
     let _ = fs::write("/dev/cpuset/fas-rs/mems", "0");
 
-    let _ = fs::create_dir("/dev/cpuset/fas-rs/all-cpus");
+    let _ = fs::create_dir("/dev/cpuset/fas-rs/simple");
     let _ = fs::set_permissions(
-        "/dev/cpuset/fas-rs/all-cpus",
+        "/dev/cpuset/fas-rs/simple",
         unix::fs::PermissionsExt::from_mode(0o755),
     );
-    let _ = fs::write("/dev/cpuset/fas-rs/all-cpus/cpus", cpus);
-    let _ = fs::write("/dev/cpuset/fas-rs/all-cpus/mems", "0");
+    let _ = fs::write("/dev/cpuset/fas-rs/simple/cpus", cpus);
+    let _ = fs::write("/dev/cpuset/fas-rs/simple/mems", "0");
 
     let _ = fs::create_dir("/dev/cpuset/fas-rs/critical");
     let _ = fs::set_permissions(
@@ -80,25 +80,14 @@ fn init_cgroup_fs(cpuset_big: &[usize], cpuset_middle: &[usize]) -> Result<()> {
         unix::fs::PermissionsExt::from_mode(0o755),
     );
     let cpus = format!(
-        "{}-{}",
+        "{}-{},{}-{}",
+        cpuset_middle.iter().min().unwrap(),
+        cpuset_middle.iter().max().unwrap(),
         cpuset_big.iter().min().unwrap(),
         cpuset_big.iter().max().unwrap()
     );
     let _ = fs::write("/dev/cpuset/fas-rs/critical/cpus", cpus);
     let _ = fs::write("/dev/cpuset/fas-rs/critical/mems", "0");
-
-    let _ = fs::create_dir("/dev/cpuset/fas-rs/simple");
-    let _ = fs::set_permissions(
-        "/dev/cpuset/fas-rs/simple",
-        unix::fs::PermissionsExt::from_mode(0o755),
-    );
-    let cpus = format!(
-        "{}-{}",
-        cpuset_middle.iter().min().unwrap(),
-        cpuset_middle.iter().max().unwrap()
-    );
-    let _ = fs::write("/dev/cpuset/fas-rs/simple/cpus", cpus);
-    let _ = fs::write("/dev/cpuset/fas-rs/simple/mems", "0");
 
     Ok(())
 }
@@ -165,14 +154,9 @@ impl AffinityApplyer {
     }
 
     pub fn detach(&mut self) -> Result<()> {
-        let tasks = fs::read_to_string("/dev/cpuset/fas-rs/simple/tasks")?;
-        for task in tasks.lines() {
-            let _ = fs::write("/dev/cpuset/fas-rs/all-cpus/tasks", task);
-        }
-
         let tasks = fs::read_to_string("/dev/cpuset/fas-rs/critical/tasks")?;
         for task in tasks.lines() {
-            let _ = fs::write("/dev/cpuset/fas-rs/all-cpus/tasks", task);
+            let _ = fs::write("/dev/cpuset/fas-rs/simple/tasks", task);
         }
 
         self.task_map.clear();
