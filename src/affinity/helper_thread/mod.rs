@@ -75,7 +75,7 @@ pub fn affinity_helper(receiver: &Receiver<Command>) {
                 Command::Attach(target_pid) => {
                     let threads = list_threads(target_pid as u32).unwrap();
                     context = Some(Context {
-                        flower: Flower::new(target_pid as u32, Duration::from_millis(20)).unwrap(),
+                        flower: Flower::new(target_pid as u32, Some(Duration::from_millis(20))).unwrap(),
                         pid: target_pid as u32,
                         instant: Instant::now(),
                         threads,
