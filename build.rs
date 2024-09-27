@@ -89,7 +89,7 @@ fn update_json(data: &CargoConfig) -> Result<()> {
     let version = format!("v{version}");
 
     let zip_url =
-        format!("https://github.com/shadow3aaa/fas-rs/releases/download/{version}/fas-rs-ebpf.zip");
+        format!("https://github.com/shadow3aaa/fas-rs/releases/download/{version}/fas-rs.zip");
 
     let cn = UpdateJson {
         versionCode: version_code,
