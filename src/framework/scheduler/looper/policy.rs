@@ -21,9 +21,9 @@ use log::debug;
 use super::buffer::Buffer;
 use crate::framework::prelude::*;
 
-const KP: f64 = 0.0004;
-const KI: f64 = 0.000015;
-const KD: f64 = 0.00005;
+const KP: f64 = 0.00003;
+const KI: f64 = 0.00002;
+const KD: f64 = 0.000_005;
 
 pub fn pid_control(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<isize> {
     if unlikely(buffer.frametimes.len() < 60) {
@@ -67,6 +67,7 @@ pub fn pid_control(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<i
 
     Some(
         pid_control_inner(
+            buffer.avg_time,
             frame,
             target,
             buffer
@@ -89,6 +90,7 @@ pub fn pid_control(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<i
 }
 
 fn pid_control_inner(
+    avg_time: Duration,
     current_frametime: Duration,
     target_frametime: Duration,
     last_30_frametimes_sum: Duration,
@@ -98,9 +100,16 @@ fn pid_control_inner(
     let error_i = (target_frametime.as_nanos() as f64)
         .mul_add(-30.0, last_30_frametimes_sum.as_nanos() as f64)
         * KI;
-    let error_d = (last_30_frametimes_sum.as_nanos() as f64)
+    let mut error_d = (last_30_frametimes_sum.as_nanos() as f64)
         .mul_add(2.0, -(last_60_frametimes_sum.as_nanos() as f64))
         * KD;
+
+    if avg_time > target_frametime {
+        error_d = error_d.max(0.0);
+    } else {
+        error_d = error_d.min(0.0);
+    }
+
     #[cfg(debug_assertions)]
     {
         debug!("error_p {error_p}");
