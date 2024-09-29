@@ -21,9 +21,10 @@ use log::debug;
 use super::buffer::Buffer;
 use crate::framework::prelude::*;
 
-const KP: f64 = 0.00003;
-const KI: f64 = 0.00002;
-const KD: f64 = 0.000_005;
+const KP: f64 = 0.00008;
+const KI_UP: f64 = 0.000005;
+const KI_DOWN: f64 = 0.0004;
+const KD: f64 = 0.000_0025;
 
 pub fn pid_control(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<isize> {
     if unlikely(buffer.frametimes.len() < 60) {
@@ -67,23 +68,23 @@ pub fn pid_control(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<i
 
     Some(
         pid_control_inner(
-            buffer.avg_time,
+            buffer.avg_time.mul_f64(target_fps_prefixed),
             frame,
             target,
             buffer
                 .frametimes
                 .iter()
                 .copied()
-                .map(|ft| ft.mul_f64(target_fps_prefixed))
                 .take(30)
-                .sum(),
+                .sum::<Duration>()
+                .mul_f64(target_fps_prefixed),
             buffer
                 .frametimes
                 .iter()
                 .copied()
-                .map(|ft| ft.mul_f64(target_fps_prefixed))
                 .take(60)
-                .sum(),
+                .sum::<Duration>()
+                .mul_f64(target_fps_prefixed),
         ) * 60
             / target_fps as isize,
     )
@@ -99,10 +100,13 @@ fn pid_control_inner(
     let error_p = (current_frametime.as_nanos() as f64 - target_frametime.as_nanos() as f64) * KP;
     let error_i = (target_frametime.as_nanos() as f64)
         .mul_add(-30.0, last_30_frametimes_sum.as_nanos() as f64)
-        * KI;
+        * if avg_time > target_frametime {
+            KI_UP
+        } else {
+            KI_DOWN
+        };
     let mut error_d = (last_30_frametimes_sum.as_nanos() as f64)
-        .mul_add(2.0, -(last_60_frametimes_sum.as_nanos() as f64))
-        * KD;
+        .mul_add(2.0, -(last_60_frametimes_sum.as_nanos() as f64)) * KD;
 
     if avg_time > target_frametime {
         error_d = error_d.max(0.0);
