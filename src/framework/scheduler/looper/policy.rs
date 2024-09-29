@@ -22,9 +22,9 @@ use super::buffer::Buffer;
 use crate::framework::prelude::*;
 
 const KP: f64 = 0.00008;
-const KI_UP: f64 = 0.000005;
+const KI_UP: f64 = 0.000_005;
 const KI_DOWN: f64 = 0.0004;
-const KD: f64 = 0.000_0025;
+const KD: f64 = 0.000_002_5;
 
 pub fn pid_control(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<isize> {
     if unlikely(buffer.frametimes.len() < 60) {
@@ -106,7 +106,8 @@ fn pid_control_inner(
             KI_DOWN
         };
     let mut error_d = (last_30_frametimes_sum.as_nanos() as f64)
-        .mul_add(2.0, -(last_60_frametimes_sum.as_nanos() as f64)) * KD;
+        .mul_add(2.0, -(last_60_frametimes_sum.as_nanos() as f64))
+        * KD;
 
     if avg_time > target_frametime {
         error_d = error_d.max(0.0);
