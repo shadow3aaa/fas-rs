@@ -21,7 +21,7 @@ use log::debug;
 use super::buffer::Buffer;
 use crate::framework::prelude::*;
 
-const KP: f64 = 0.00008;
+const KP: f64 = 0.0001;
 const KI_UP: f64 = 0.000_005;
 const KI_DOWN: f64 = 0.0004;
 const KD: f64 = 0.000_002_5;
