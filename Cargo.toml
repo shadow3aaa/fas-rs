@@ -40,6 +40,8 @@ frame-analyzer = "0.2.6"
 dumpsys-rs = { git = "https://github.com/shadow3aaa/dumpsys-rs" }
 mimalloc = "0.1.43"
 num_cpus = "1.16.0"
+rand = "0.8.5"
+rusqlite = { version = "0.32.1", features = ["bundled"]}
 
 [build-dependencies]
 anyhow = "1.0.89"

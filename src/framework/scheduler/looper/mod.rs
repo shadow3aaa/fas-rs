@@ -17,13 +17,22 @@ mod clean;
 mod policy;
 mod utils;
 
-use std::time::{Duration, Instant};
+use std::{
+    collections::VecDeque,
+    time::{Duration, Instant},
+};
 
 use frame_analyzer::Analyzer;
 use likely_stable::unlikely;
 #[cfg(debug_assertions)]
 use log::debug;
 use log::info;
+use policy::{
+    evolution::{evaluate_fitness, mutate_params, open_database},
+    pid_controll::pid_control,
+    PidParams,
+};
+use rusqlite::Connection;
 
 use super::{topapp::TimedWatcher, FasData};
 use crate::{
@@ -59,6 +68,11 @@ pub struct Looper {
     state: State,
     delay_timer: Instant,
     janked: bool,
+    database: Connection,
+    pid_params: PidParams,
+    mutated_pid_params: PidParams,
+    fitness: f64,
+    control_history: VecDeque<isize>,
 }
 
 impl Looper {
@@ -82,6 +96,11 @@ impl Looper {
             state: State::NotWorking,
             delay_timer: Instant::now(),
             janked: false,
+            database: open_database().unwrap(),
+            pid_params: PidParams::default(),
+            mutated_pid_params: PidParams::default(),
+            fitness: f64::MIN,
+            control_history: VecDeque::with_capacity(30),
         }
     }
 
@@ -174,11 +193,20 @@ impl Looper {
             return;
         }
 
-        let Some(control) = self
-            .buffer
-            .as_ref()
-            .and_then(|buffer| policy::pid_control(buffer, &mut self.config, self.mode))
-        else {
+        if let Some(fitness) = self.buffer.as_ref().and_then(|buffer| {
+            evaluate_fitness(buffer, &mut self.config, self.mode, &self.control_history)
+        }) {
+            if fitness > self.fitness {
+                self.pid_params = self.mutated_pid_params;
+            }
+
+            self.fitness = fitness;
+        }
+
+        self.mutated_pid_params = mutate_params(self.pid_params);
+        let Some(control) = self.buffer.as_ref().and_then(|buffer| {
+            pid_control(buffer, &mut self.config, self.mode, self.mutated_pid_params)
+        }) else {
             self.disable_fas();
             return;
         };
@@ -187,5 +215,10 @@ impl Looper {
         debug!("control: {control}khz");
 
         self.controller.fas_update_freq(control);
+
+        if self.control_history.len() >= 30 {
+            self.control_history.pop_back();
+        }
+        self.control_history.push_front(control);
     }
 }

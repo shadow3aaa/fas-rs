@@ -17,10 +17,19 @@ use std::time::{Duration, Instant};
 use likely_stable::unlikely;
 use log::info;
 
-use super::{super::FasData, buffer::BufferState, Buffer, Looper, State};
+use super::{
+    super::FasData,
+    buffer::BufferState,
+    policy::evolution::{open_database, save_pid_params},
+    Buffer, Looper, State,
+};
 use crate::{
     api::{v1::ApiV1, v2::ApiV2},
-    framework::{api::ApiV0, utils::get_process_name},
+    framework::{
+        api::ApiV0,
+        scheduler::looper::policy::{evolution::load_pid_params, PidParams},
+        utils::get_process_name,
+    },
 };
 
 const DELAY_TIME: Duration = Duration::from_secs(3);
@@ -31,6 +40,9 @@ impl Looper {
             if !self.windows_watcher.topapp_pids().contains(&buffer.pid) {
                 let _ = self.analyzer.detach_app(buffer.pid);
                 let pkg = buffer.pkg.clone();
+                if save_pid_params(&self.database, &pkg, self.pid_params).is_err() {
+                    self.database = open_database().unwrap();
+                }
                 self.extension
                     .tigger_extentions(ApiV0::UnloadFas(buffer.pid, pkg.clone()));
                 self.extension
@@ -83,24 +95,32 @@ impl Looper {
         }
     }
 
-    pub fn buffer_update(&mut self, d: &FasData) -> Option<BufferState> {
-        if unlikely(!self.windows_watcher.topapp_pids().contains(&d.pid) || d.frametime.is_zero()) {
+    pub fn buffer_update(&mut self, data: &FasData) -> Option<BufferState> {
+        if unlikely(
+            !self.windows_watcher.topapp_pids().contains(&data.pid) || data.frametime.is_zero(),
+        ) {
             return None;
         }
 
-        let pid = d.pid;
-        let frametime = d.frametime;
+        let pid = data.pid;
+        let frametime = data.frametime;
 
         if let Some(buffer) = self.buffer.as_mut() {
             buffer.push_frametime(frametime, &self.extension);
             Some(buffer.state)
         } else {
-            let Ok(pkg) = get_process_name(d.pid) else {
+            let Ok(pkg) = get_process_name(data.pid) else {
                 return None;
             };
             let target_fps = self.config.target_fps(&pkg)?;
 
             info!("New fas buffer on: [{pkg}]");
+
+            self.pid_params =
+                load_pid_params(&self.database, &pkg).unwrap_or_else(|_| PidParams::default());
+            self.mutated_pid_params = self.pid_params;
+            self.fitness = f64::MIN;
+            self.control_history.clear();
 
             self.extension
                 .tigger_extentions(ApiV0::LoadFas(pid, pkg.clone()));
