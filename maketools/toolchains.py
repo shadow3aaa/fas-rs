@@ -190,9 +190,9 @@ class Buildtools:
                 case ("aarch64", "Linux"):
                     bins = prebuilt.joinpath("linux-aarch64").joinpath("bin")
                 case (_, "Darwin"):
-                    dir = prebuilt.joinpath("darwin-x86_64")
-                    bins = dir.joinpath("bin")
-                    sysroot = dir.joinpath("sysroot")
+                    _dir = prebuilt.joinpath("darwin-x86_64")
+                    bins = _dir.joinpath("bin")
+                    sysroot = _dir.joinpath("sysroot")
                     os.environ["BINDGEN_EXTRA_CLANG_ARGS"] = "--sysroot={}".format(
                         sysroot
                     )
