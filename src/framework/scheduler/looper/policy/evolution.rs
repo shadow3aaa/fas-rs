@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{collections::VecDeque, time::Duration};
+use std::time::Duration;
 
 use anyhow::Result;
+use likely_stable::unlikely;
 use rand::Rng;
 use rusqlite::{params, Connection};
 
@@ -74,16 +75,10 @@ pub fn mutate_params(params: PidParams) -> PidParams {
     }
 }
 
-pub fn evaluate_fitness(
-    buffer: &Buffer,
-    config: &mut Config,
-    mode: Mode,
-    control_history: &VecDeque<isize>,
-) -> Option<f64> {
+pub fn evaluate_fitness(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<f64> {
     let target_fps = buffer.target_fps?;
 
-    if buffer.frametimes.len() < (target_fps * 5).try_into().unwrap() || control_history.len() < 30
-    {
+    if unlikely(buffer.frametimes.len() < target_fps.try_into().unwrap()) {
         return None;
     }
 
@@ -100,14 +95,6 @@ pub fn evaluate_fitness(
         .sum::<f64>()
         / buffer.frametimes.len() as f64
         * -1.0;
-    let fitness_control = control_history
-        .iter()
-        .copied()
-        .map(|control| (control as f64).powi(2))
-        .sum::<f64>()
-        / control_history.len() as f64
-        * -1.0
-        * 0.01;
 
-    Some(fitness_frametime + fitness_control)
+    Some(fitness_frametime)
 }

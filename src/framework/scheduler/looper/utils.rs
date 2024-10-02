@@ -120,7 +120,6 @@ impl Looper {
                 load_pid_params(&self.database, &pkg).unwrap_or_else(|_| PidParams::default());
             self.mutated_pid_params = self.pid_params;
             self.fitness = f64::MIN;
-            self.control_history.clear();
 
             self.extension
                 .tigger_extentions(ApiV0::LoadFas(pid, pkg.clone()));

@@ -17,13 +17,10 @@ mod clean;
 mod policy;
 mod utils;
 
-use std::{
-    collections::VecDeque,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 use frame_analyzer::Analyzer;
-use likely_stable::unlikely;
+use likely_stable::{likely, unlikely};
 #[cfg(debug_assertions)]
 use log::debug;
 use log::info;
@@ -71,8 +68,8 @@ pub struct Looper {
     database: Connection,
     pid_params: PidParams,
     mutated_pid_params: PidParams,
+    mutate_timer: Instant,
     fitness: f64,
-    control_history: VecDeque<isize>,
 }
 
 impl Looper {
@@ -99,8 +96,8 @@ impl Looper {
             database: open_database().unwrap(),
             pid_params: PidParams::default(),
             mutated_pid_params: PidParams::default(),
+            mutate_timer: Instant::now(),
             fitness: f64::MIN,
-            control_history: VecDeque::with_capacity(30),
         }
     }
 
@@ -142,7 +139,7 @@ impl Looper {
 
     fn switch_mode(&mut self) {
         if let Ok(new_mode) = self.node.get_mode() {
-            if self.mode != new_mode {
+            if likely(self.mode != new_mode) {
                 info!(
                     "Switch mode: {} -> {}",
                     self.mode.to_string(),
@@ -193,17 +190,24 @@ impl Looper {
             return;
         }
 
-        if let Some(fitness) = self.buffer.as_ref().and_then(|buffer| {
-            evaluate_fitness(buffer, &mut self.config, self.mode, &self.control_history)
-        }) {
-            if fitness > self.fitness {
-                self.pid_params = self.mutated_pid_params;
+        if unlikely(self.mutate_timer.elapsed() > Duration::from_secs(1)) {
+            self.mutate_timer = Instant::now();
+
+            if let Some(fitness) = self
+                .buffer
+                .as_ref()
+                .and_then(|buffer| evaluate_fitness(buffer, &mut self.config, self.mode))
+            {
+                if fitness > self.fitness {
+                    self.pid_params = self.mutated_pid_params;
+                }
+
+                self.fitness = fitness;
             }
 
-            self.fitness = fitness;
+            self.mutated_pid_params = mutate_params(self.pid_params);
         }
 
-        self.mutated_pid_params = mutate_params(self.pid_params);
         let Some(control) = self.buffer.as_ref().and_then(|buffer| {
             pid_control(buffer, &mut self.config, self.mode, self.mutated_pid_params)
         }) else {
@@ -215,10 +219,5 @@ impl Looper {
         debug!("control: {control}khz");
 
         self.controller.fas_update_freq(control);
-
-        if self.control_history.len() >= 30 {
-            self.control_history.pop_back();
-        }
-        self.control_history.push_front(control);
     }
 }

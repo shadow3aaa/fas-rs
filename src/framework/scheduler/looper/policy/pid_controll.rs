@@ -48,7 +48,6 @@ pub fn pid_control(
     Some(
         pid_control_inner(
             pid_params,
-            buffer.avg_time * target_fps,
             frame,
             target,
             buffer.frametimes.iter().copied().take(30).sum::<Duration>() * target_fps,
@@ -60,7 +59,6 @@ pub fn pid_control(
 
 fn pid_control_inner(
     pid_params: PidParams,
-    avg_time: Duration,
     current_frametime: Duration,
     target_frametime: Duration,
     last_30_frametimes_sum: Duration,
@@ -71,15 +69,9 @@ fn pid_control_inner(
     let error_i = (target_frametime.as_nanos() as f64)
         .mul_add(-30.0, last_30_frametimes_sum.as_nanos() as f64)
         * pid_params.ki;
-    let mut error_d = (last_30_frametimes_sum.as_nanos() as f64)
+    let error_d = (last_30_frametimes_sum.as_nanos() as f64)
         .mul_add(2.0, -(last_60_frametimes_sum.as_nanos() as f64))
         * pid_params.kd;
-
-    if avg_time > target_frametime {
-        error_d = error_d.max(0.0);
-    } else {
-        error_d = error_d.min(0.0);
-    }
 
     #[cfg(debug_assertions)]
     {
