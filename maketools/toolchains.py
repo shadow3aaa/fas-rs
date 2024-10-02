@@ -189,6 +189,13 @@ class Buildtools:
                     bins = prebuilt.joinpath("linux-x86_64").joinpath("bin")
                 case ("aarch64", "Linux"):
                     bins = prebuilt.joinpath("linux-aarch64").joinpath("bin")
+                case (_, "Darwin"):
+                    _dir = prebuilt.joinpath("darwin-x86_64")
+                    bins = _dir.joinpath("bin")
+                    sysroot = _dir.joinpath("sysroot")
+                    os.environ["BINDGEN_EXTRA_CLANG_ARGS"] = "--sysroot={}".format(
+                        sysroot
+                    )
                 case _:
                     raise Exception("Unsupported platform: {} {}".format(arch, system))
 
