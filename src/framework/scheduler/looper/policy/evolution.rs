@@ -71,7 +71,7 @@ pub fn mutate_params(params: PidParams) -> PidParams {
     PidParams {
         kp: (params.kp + rng.gen_range(-0.000_1..0.000_1)).clamp(0.000_4, 0.000_8),
         ki: (params.ki + rng.gen_range(-0.000_01..0.000_01)).clamp(0.000_015, 0.000_08),
-        kd: (params.kd + rng.gen_range(-0.000_01..0.000_01)).clamp(0.000_05, 0.000_08),
+        kd: (params.kd + rng.gen_range(-0.000_001..0.000_001)).clamp(0.000_025, 0.000_035),
     }
 }
 
