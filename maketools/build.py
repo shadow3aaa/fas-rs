@@ -153,6 +153,7 @@ def task(args):
 
     module = Path("module")
     shutil.copytree(module, temp_dir)
+    temp_dir.joinpath(".gitignore").unlink()
     bin = Path("target").joinpath("aarch64-linux-android")
     if release:
         bin = bin.joinpath("release")
