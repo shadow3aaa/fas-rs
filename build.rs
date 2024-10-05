@@ -44,9 +44,6 @@ fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=Cargo.toml");
     println!("cargo:rerun-if-changed=update");
 
-    println!("cargo:rustc-link-search=prebuilt");
-    println!("cargo:rustc-link-lib=binder_ndk");
-
     let toml = fs::read_to_string("Cargo.toml")?;
     let data: CargoConfig = toml::from_str(&toml)?;
 

@@ -1,2 +1,0 @@
-prebuilt/*.so filter=lfs diff=lfs merge=lfs -text
-prebuilt/*.a filter=lfs diff=lfs merge=lfs -text
