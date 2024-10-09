@@ -21,9 +21,9 @@ import shutil
 
 def find_ndk_home():
     if (ndk_home := os.getenv("ANDROID_NDK_HOME")) is not None:
-        return ndk_home
+        return Path(ndk_home)
     elif (ndk_home := os.getenv("NDK_HOME")) is not None:
-        return ndk_home
+        return Path(ndk_home)
     elif (android_home := os.getenv("ANDROID_HOME")) is not None:
         ndks = Path(android_home).joinpath("sdk").joinpath("ndk")
         ndk_home = next(ndks.iterdir())
@@ -85,7 +85,10 @@ class CargoNightly:
     def __init__(self):
         if os.getenv("TERMUX_VERSION") is not None:
             prefix = os.getenv("PREFIX")
-            self.__cargo = Path(prefix).joinpath("opt/rust-nightly/bin/cargo")
+            if prefix is not None:
+                self.__cargo = Path(prefix).joinpath("opt/rust-nightly/bin/cargo")
+            else:
+                raise Exception("missing env 'PREFIX'")
         elif shutil.which("cargo-ndk") is not None:
             self.__cargo = "cargo +nightly ndk -p 31 -t arm64-v8a"
         else:
@@ -175,6 +178,8 @@ class Buildtools:
             ndk_home = find_ndk_home()
             system = platform.system()
             arch = platform.machine()
+            if ndk_home is None:
+                raise Exception("Failed to find ndk")
             prebuilt = (
                 Path(ndk_home)
                 .joinpath("toolchains")
@@ -216,7 +221,7 @@ class Buildtools:
         os.system(command)
 
     def cpp(self):
-        return Cpp(self.__clang_plusplus)
+        return Cpp(str(self.__clang_plusplus))
 
     def cpp_format(self, path: Path):
         command = "{} -i --verbose {}".format(self.__clang_format, path)
@@ -225,4 +230,4 @@ class Buildtools:
             raise Exception("C++ codes format failed!")
 
     def cpp_tidy(self):
-        return CppTidy(self.__clang_tidy)
+        return CppTidy(str(self.__clang_tidy))
