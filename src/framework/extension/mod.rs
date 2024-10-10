@@ -42,7 +42,7 @@ impl Extension {
         Ok(Self { sx })
     }
 
-    pub fn tigger_extentions(&self, trigger: impl Api + 'static) {
+    pub fn trigger_extentions(&self, trigger: impl Api + 'static) {
         let _ = self.sx.try_send(trigger.into_box());
     }
 }

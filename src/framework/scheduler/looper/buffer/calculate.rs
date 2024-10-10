@@ -53,7 +53,7 @@ impl Buffer {
         let new_target_fps = self.target_fps();
         if self.target_fps != new_target_fps {
             if let Some(target_fps) = new_target_fps {
-                extension.tigger_extentions(ApiV2::TargetFpsChange(target_fps, self.pkg.clone()));
+                extension.trigger_extentions(ApiV2::TargetFpsChange(target_fps, self.pkg.clone()));
             }
 
             self.target_fps = new_target_fps;

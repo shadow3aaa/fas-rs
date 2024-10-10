@@ -44,11 +44,11 @@ impl Looper {
                     self.database = open_database().unwrap();
                 }
                 self.extension
-                    .tigger_extentions(ApiV0::UnloadFas(buffer.pid, pkg.clone()));
+                    .trigger_extentions(ApiV0::UnloadFas(buffer.pid, pkg.clone()));
                 self.extension
-                    .tigger_extentions(ApiV1::UnloadFas(buffer.pid, pkg.clone()));
+                    .trigger_extentions(ApiV1::UnloadFas(buffer.pid, pkg.clone()));
                 self.extension
-                    .tigger_extentions(ApiV2::UnloadFas(buffer.pid, pkg));
+                    .trigger_extentions(ApiV2::UnloadFas(buffer.pid, pkg));
                 self.buffer = None;
             }
         }
@@ -66,9 +66,9 @@ impl Looper {
                 self.state = State::NotWorking;
                 self.cleaner.undo_cleanup();
                 self.controller.init_default(&self.extension);
-                self.extension.tigger_extentions(ApiV0::StopFas);
-                self.extension.tigger_extentions(ApiV1::StopFas);
-                self.extension.tigger_extentions(ApiV2::StopFas);
+                self.extension.trigger_extentions(ApiV0::StopFas);
+                self.extension.trigger_extentions(ApiV1::StopFas);
+                self.extension.trigger_extentions(ApiV2::StopFas);
             }
             State::Waiting => self.state = State::NotWorking,
             State::NotWorking => (),
@@ -80,9 +80,9 @@ impl Looper {
             State::NotWorking => {
                 self.state = State::Waiting;
                 self.delay_timer = Instant::now();
-                self.extension.tigger_extentions(ApiV0::StartFas);
-                self.extension.tigger_extentions(ApiV1::StartFas);
-                self.extension.tigger_extentions(ApiV2::StartFas);
+                self.extension.trigger_extentions(ApiV0::StartFas);
+                self.extension.trigger_extentions(ApiV1::StartFas);
+                self.extension.trigger_extentions(ApiV2::StartFas);
             }
             State::Waiting => {
                 if self.delay_timer.elapsed() > DELAY_TIME {
@@ -122,11 +122,11 @@ impl Looper {
             self.fitness = f64::MIN;
 
             self.extension
-                .tigger_extentions(ApiV0::LoadFas(pid, pkg.clone()));
+                .trigger_extentions(ApiV0::LoadFas(pid, pkg.clone()));
             self.extension
-                .tigger_extentions(ApiV1::LoadFas(pid, pkg.clone()));
+                .trigger_extentions(ApiV1::LoadFas(pid, pkg.clone()));
             self.extension
-                .tigger_extentions(ApiV2::LoadFas(pid, pkg.clone()));
+                .trigger_extentions(ApiV2::LoadFas(pid, pkg.clone()));
 
             let mut buffer = Buffer::new(target_fps, pid, pkg);
             buffer.push_frametime(frametime, &self.extension);

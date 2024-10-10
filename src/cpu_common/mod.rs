@@ -96,9 +96,9 @@ impl Controller {
 
     pub fn init_game(&mut self, extension: &Extension) {
         self.policy_freq = self.max_freq;
-        extension.tigger_extentions(ApiV0::InitCpuFreq);
-        extension.tigger_extentions(ApiV1::InitCpuFreq);
-        extension.tigger_extentions(ApiV2::InitCpuFreq);
+        extension.trigger_extentions(ApiV0::InitCpuFreq);
+        extension.trigger_extentions(ApiV1::InitCpuFreq);
+        extension.trigger_extentions(ApiV2::InitCpuFreq);
 
         for cpu in &self.cpu_infos {
             cpu.write_freq(self.max_freq, &mut self.file_handler)
@@ -108,9 +108,9 @@ impl Controller {
 
     pub fn init_default(&mut self, extension: &Extension) {
         self.policy_freq = self.max_freq;
-        extension.tigger_extentions(ApiV0::ResetCpuFreq);
-        extension.tigger_extentions(ApiV1::ResetCpuFreq);
-        extension.tigger_extentions(ApiV2::ResetCpuFreq);
+        extension.trigger_extentions(ApiV0::ResetCpuFreq);
+        extension.trigger_extentions(ApiV1::ResetCpuFreq);
+        extension.trigger_extentions(ApiV2::ResetCpuFreq);
 
         for cpu in &mut self.cpu_infos {
             cpu.reset_freq(&mut self.file_handler)
