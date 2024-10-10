@@ -131,8 +131,7 @@ impl Controller {
         }
 
         for cpu in &self.cpu_infos {
-            cpu.write_freq(self.policy_freq, &mut self.file_handler)
-                .unwrap_or_else(|e| error!("{e:?}"));
+            let _ = cpu.write_freq(self.policy_freq, &mut self.file_handler);
         }
     }
 }
