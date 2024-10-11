@@ -24,51 +24,55 @@ use crate::{api::v2::ApiV2, framework::config::TargetFps, Extension};
 impl Buffer {
     pub fn calculate_current_fps(&mut self) {
         let avg_time: Duration = self
+            .frametime_state
             .frametimes
             .iter()
             .sum::<Duration>()
-            .saturating_add(self.additional_frametime)
-            .checked_div(self.frametimes.len().try_into().unwrap())
+            .saturating_add(self.frametime_state.additional_frametime)
+            .checked_div(self.frametime_state.frametimes.len().try_into().unwrap())
             .unwrap_or_default();
         #[cfg(debug_assertions)]
         debug!("avg_time: {avg_time:?}");
 
-        self.avg_time = avg_time;
+        self.frametime_state.avg_time = avg_time;
 
         let current_fps = 1.0 / avg_time.as_secs_f64();
 
         #[cfg(debug_assertions)]
         debug!("current_fps: {:.2}", current_fps);
 
-        self.current_fps = current_fps;
+        self.frametime_state.current_fps = current_fps;
 
-        while self.current_fpses.len() >= 5 {
-            self.current_fpses.pop_back();
+        while self.frametime_state.current_fpses.len() >= 5 {
+            self.frametime_state.current_fpses.pop_back();
         }
 
-        self.current_fpses.push_front(current_fps);
+        self.frametime_state.current_fpses.push_front(current_fps);
     }
 
     pub fn calculate_target_fps(&mut self, extension: &Extension) {
         let new_target_fps = self.target_fps();
-        if self.target_fps != new_target_fps {
+        if self.target_fps_state.target_fps != new_target_fps {
             if let Some(target_fps) = new_target_fps {
-                extension.trigger_extentions(ApiV2::TargetFpsChange(target_fps, self.pkg.clone()));
+                extension.trigger_extentions(ApiV2::TargetFpsChange(
+                    target_fps,
+                    self.package_info.pkg.clone(),
+                ));
             }
 
-            self.target_fps = new_target_fps;
+            self.target_fps_state.target_fps = new_target_fps;
             self.unusable();
         }
     }
 
     fn target_fps(&self) -> Option<u32> {
-        let target_fpses = match &self.target_fps_config {
+        let target_fpses = match &self.target_fps_state.target_fps_config {
             TargetFps::Value(t) => vec![*t],
             TargetFps::Array(arr) => arr.clone(),
         };
 
         let mut current_fps: Option<f64> = None;
-        for next_fps in self.current_fpses.iter().copied().take(144) {
+        for next_fps in self.frametime_state.current_fpses.iter().copied().take(144) {
             if let Some(fps) = current_fps {
                 current_fps = Some(fps.max(next_fps));
             } else {

@@ -19,7 +19,7 @@ use log::info;
 
 use super::{
     super::FasData,
-    buffer::BufferState,
+    buffer::BufferWorkingState,
     policy::evolution::{open_database, save_pid_params},
     Buffer, Looper, State,
 };
@@ -33,18 +33,22 @@ const DELAY_TIME: Duration = Duration::from_secs(3);
 impl Looper {
     pub fn retain_topapp(&mut self) {
         if let Some(buffer) = self.fas_state.buffer.as_ref() {
-            if !self.windows_watcher.topapp_pids().contains(&buffer.pid) {
-                let _ = self.analyzer.detach_app(buffer.pid);
-                let pkg = buffer.pkg.clone();
+            if !self
+                .windows_watcher
+                .topapp_pids()
+                .contains(&buffer.package_info.pid)
+            {
+                let _ = self.analyzer.detach_app(buffer.package_info.pid);
+                let pkg = buffer.package_info.pkg.clone();
                 if save_pid_params(&self.database, &pkg, self.evolution_state.pid_params).is_err() {
                     self.database = open_database().unwrap();
                 }
                 self.extension
-                    .trigger_extentions(ApiV0::UnloadFas(buffer.pid, pkg.clone()));
+                    .trigger_extentions(ApiV0::UnloadFas(buffer.package_info.pid, pkg.clone()));
                 self.extension
-                    .trigger_extentions(ApiV1::UnloadFas(buffer.pid, pkg.clone()));
+                    .trigger_extentions(ApiV1::UnloadFas(buffer.package_info.pid, pkg.clone()));
                 self.extension
-                    .trigger_extentions(ApiV2::UnloadFas(buffer.pid, pkg));
+                    .trigger_extentions(ApiV2::UnloadFas(buffer.package_info.pid, pkg));
                 self.fas_state.buffer = None;
             }
         }
@@ -91,7 +95,7 @@ impl Looper {
         }
     }
 
-    pub fn buffer_update(&mut self, data: &FasData) -> Option<BufferState> {
+    pub fn buffer_update(&mut self, data: &FasData) -> Option<BufferWorkingState> {
         if unlikely(
             !self.windows_watcher.topapp_pids().contains(&data.pid) || data.frametime.is_zero(),
         ) {
@@ -103,7 +107,7 @@ impl Looper {
 
         if let Some(buffer) = self.fas_state.buffer.as_mut() {
             buffer.push_frametime(frametime, &self.extension);
-            Some(buffer.state)
+            Some(buffer.buffer_state.working_state)
         } else {
             let Ok(pkg) = get_process_name(data.pid) else {
                 return None;
@@ -126,7 +130,7 @@ impl Looper {
 
             self.fas_state.buffer = Some(buffer);
 
-            Some(BufferState::Unusable)
+            Some(BufferWorkingState::Unusable)
         }
     }
 }

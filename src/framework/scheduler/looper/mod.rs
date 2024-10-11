@@ -42,7 +42,7 @@ use crate::{
     Controller,
 };
 
-use buffer::{Buffer, BufferState};
+use buffer::{Buffer, BufferWorkingState};
 use clean::Cleaner;
 
 #[derive(PartialEq)]
@@ -144,7 +144,11 @@ impl Looper {
             let _ = self.update_analyzer();
             self.retain_topapp();
 
-            let target_fps = self.fas_state.buffer.as_ref().and_then(|b| b.target_fps);
+            let target_fps = self
+                .fas_state
+                .buffer
+                .as_ref()
+                .and_then(|buffer| buffer.target_fps_state.target_fps);
             let fas_data = self.recv_message(target_fps);
 
             if self.windows_watcher.visible_freeform_window() {
@@ -159,8 +163,8 @@ impl Looper {
 
                 if let Some(state) = self.buffer_update(&data) {
                     match state {
-                        BufferState::Usable => self.do_policy(),
-                        BufferState::Unusable => self.disable_fas(),
+                        BufferWorkingState::Usable => self.do_policy(),
+                        BufferWorkingState::Unusable => self.disable_fas(),
                     }
                 }
             } else if let Some(buffer) = self.fas_state.buffer.as_mut() {

@@ -27,14 +27,15 @@ pub fn pid_control(
     mode: Mode,
     pid_params: PidParams,
 ) -> Option<isize> {
-    if unlikely(buffer.frametimes.len() < 60) {
+    if unlikely(buffer.frametime_state.frametimes.len() < 60) {
         return None;
     }
-    let target_fps = buffer.target_fps?;
-    let normalized_last_frame = if buffer.additional_frametime == Duration::ZERO {
-        buffer.frametimes.front().copied()? * target_fps
+
+    let target_fps = buffer.target_fps_state.target_fps?;
+    let normalized_last_frame = if buffer.frametime_state.additional_frametime == Duration::ZERO {
+        buffer.frametime_state.frametimes.front().copied()? * target_fps
     } else {
-        buffer.additional_frametime * target_fps
+        buffer.frametime_state.additional_frametime * target_fps
     };
 
     #[cfg(debug_assertions)]
@@ -50,8 +51,22 @@ pub fn pid_control(
             pid_params,
             frame,
             target,
-            buffer.frametimes.iter().copied().take(30).sum::<Duration>() * target_fps,
-            buffer.frametimes.iter().copied().take(60).sum::<Duration>() * target_fps,
+            buffer
+                .frametime_state
+                .frametimes
+                .iter()
+                .copied()
+                .take(30)
+                .sum::<Duration>()
+                * target_fps,
+            buffer
+                .frametime_state
+                .frametimes
+                .iter()
+                .copied()
+                .take(60)
+                .sum::<Duration>()
+                * target_fps,
         ) * 60
             / target_fps as isize,
     )

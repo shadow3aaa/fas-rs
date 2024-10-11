@@ -76,9 +76,9 @@ pub fn mutate_params(params: PidParams) -> PidParams {
 }
 
 pub fn evaluate_fitness(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<f64> {
-    let target_fps = buffer.target_fps?;
+    let target_fps = buffer.target_fps_state.target_fps?;
 
-    if unlikely(buffer.frametimes.len() < target_fps.try_into().unwrap()) {
+    if unlikely(buffer.frametime_state.frametimes.len() < target_fps.try_into().unwrap()) {
         return None;
     }
 
@@ -87,13 +87,14 @@ pub fn evaluate_fitness(buffer: &Buffer, config: &mut Config, mode: Mode) -> Opt
     let target = Duration::from_secs(1) + margin;
 
     let fitness_frametime = buffer
+        .frametime_state
         .frametimes
         .iter()
         .copied()
         .map(|frametime| frametime * target_fps)
         .map(|frametime| (frametime.as_nanos() as f64 - target.as_nanos() as f64).powi(2))
         .sum::<f64>()
-        / buffer.frametimes.len() as f64
+        / buffer.frametime_state.frametimes.len() as f64
         * -1.0;
 
     Some(fitness_frametime)

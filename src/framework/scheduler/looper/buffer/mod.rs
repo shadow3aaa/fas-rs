@@ -25,79 +25,106 @@ use likely_stable::unlikely;
 use crate::{framework::config::TargetFps, Extension};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum BufferState {
+pub enum BufferWorkingState {
     Unusable,
     Usable,
 }
 
 #[derive(Debug)]
-pub struct Buffer {
+pub struct PackageInfo {
     pub pid: pid_t,
     pub pkg: String,
-    pub target_fps: Option<u32>,
+}
+
+#[derive(Debug)]
+pub struct FrameTimeState {
     pub current_fps: f64,
     pub current_fpses: VecDeque<f64>,
     pub avg_time: Duration,
     pub frametimes: VecDeque<Duration>,
-    pub last_update: Instant,
-    target_fps_config: TargetFps,
-    timer: Instant,
-    pub state: BufferState,
-    state_timer: Instant,
     pub additional_frametime: Duration,
+}
+
+#[derive(Debug)]
+pub struct TargetFpsState {
+    pub target_fps: Option<u32>,
+    target_fps_config: TargetFps,
+}
+
+#[derive(Debug)]
+pub struct BufferState {
+    pub last_update: Instant,
+    pub working_state: BufferWorkingState,
+    calculate_timer: Instant,
+    working_state_timer: Instant,
+}
+
+#[derive(Debug)]
+pub struct Buffer {
+    pub package_info: PackageInfo,
+    pub frametime_state: FrameTimeState,
+    pub target_fps_state: TargetFpsState,
+    pub buffer_state: BufferState,
 }
 
 impl Buffer {
     pub fn new(target_fps_config: TargetFps, pid: pid_t, pkg: String) -> Self {
         Self {
-            pid,
-            pkg,
-            target_fps: None,
-            target_fps_config,
-            current_fps: 0.0,
-            current_fpses: VecDeque::with_capacity(144 * 3),
-            avg_time: Duration::ZERO,
-            frametimes: VecDeque::with_capacity(1440),
-            last_update: Instant::now(),
-            timer: Instant::now(),
-            state: BufferState::Unusable,
-            state_timer: Instant::now(),
-            additional_frametime: Duration::ZERO,
+            package_info: PackageInfo { pid, pkg },
+            target_fps_state: TargetFpsState {
+                target_fps: None,
+                target_fps_config,
+            },
+            frametime_state: FrameTimeState {
+                current_fps: 0.0,
+                current_fpses: VecDeque::with_capacity(144 * 3),
+                avg_time: Duration::ZERO,
+                frametimes: VecDeque::with_capacity(1440),
+                additional_frametime: Duration::ZERO,
+            },
+            buffer_state: BufferState {
+                last_update: Instant::now(),
+                calculate_timer: Instant::now(),
+                working_state: BufferWorkingState::Unusable,
+                working_state_timer: Instant::now(),
+            },
         }
     }
 
     pub fn push_frametime(&mut self, d: Duration, extension: &Extension) {
-        self.additional_frametime = Duration::ZERO;
-        self.last_update = Instant::now();
+        self.frametime_state.additional_frametime = Duration::ZERO;
+        self.buffer_state.last_update = Instant::now();
 
-        while self.frametimes.len() >= self.target_fps.unwrap_or(144) as usize * 5 {
-            self.frametimes.pop_back();
+        while self.frametime_state.frametimes.len()
+            >= self.target_fps_state.target_fps.unwrap_or(144) as usize * 5
+        {
+            self.frametime_state.frametimes.pop_back();
             self.try_usable();
         }
 
-        self.frametimes.push_front(d);
+        self.frametime_state.frametimes.push_front(d);
 
-        if unlikely(self.timer.elapsed() >= Duration::from_secs(1)) {
-            self.timer = Instant::now();
+        if unlikely(self.buffer_state.calculate_timer.elapsed() >= Duration::from_secs(1)) {
+            self.buffer_state.calculate_timer = Instant::now();
             self.calculate_current_fps();
             self.calculate_target_fps(extension);
         }
     }
 
     pub fn try_usable(&mut self) {
-        if self.state == BufferState::Unusable
-            && self.state_timer.elapsed() >= Duration::from_secs(1)
+        if self.buffer_state.working_state == BufferWorkingState::Unusable
+            && self.buffer_state.working_state_timer.elapsed() >= Duration::from_secs(1)
         {
-            self.state = BufferState::Usable;
+            self.buffer_state.working_state = BufferWorkingState::Usable;
         }
     }
 
     pub fn unusable(&mut self) {
-        self.state = BufferState::Unusable;
-        self.state_timer = Instant::now();
+        self.buffer_state.working_state = BufferWorkingState::Unusable;
+        self.buffer_state.working_state_timer = Instant::now();
     }
 
     pub fn additional_frametime(&mut self) {
-        self.additional_frametime = self.last_update.elapsed();
+        self.frametime_state.additional_frametime = self.buffer_state.last_update.elapsed();
     }
 }
