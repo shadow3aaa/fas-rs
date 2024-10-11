@@ -25,7 +25,7 @@ use likely_stable::{likely, unlikely};
 use log::debug;
 use log::info;
 use policy::{
-    evolution::{evaluate_fitness, mutate_params, open_database},
+    evolution::{evaluate_fitness, load_pid_params, mutate_params, open_database},
     pid_controll::pid_control,
     PidParams,
 };
@@ -52,24 +52,56 @@ enum State {
     Working,
 }
 
+struct EvolutionState {
+    pid_params: PidParams,
+    mutated_pid_params: PidParams,
+    mutate_timer: Instant,
+    fitness: f64,
+}
+
+impl EvolutionState {
+    pub fn reset(&mut self, database: &Connection, pkg: &str) {
+        self.pid_params = load_pid_params(database, pkg).unwrap_or_else(|_| PidParams::default());
+        self.mutated_pid_params = self.pid_params;
+        self.fitness = f64::MIN;
+    }
+
+    pub fn try_evolution(&mut self, buffer: &Buffer, config: &mut Config, mode: Mode) {
+        if unlikely(self.mutate_timer.elapsed() > Duration::from_secs(1)) {
+            self.mutate_timer = Instant::now();
+
+            if let Some(fitness) = evaluate_fitness(buffer, config, mode) {
+                if fitness > self.fitness {
+                    self.pid_params = self.mutated_pid_params;
+                }
+
+                self.fitness = fitness;
+            }
+
+            self.mutated_pid_params = mutate_params(self.pid_params);
+        }
+    }
+}
+
+struct FasState {
+    mode: Mode,
+    working_state: State,
+    janked: bool,
+    delay_timer: Instant,
+    buffer: Option<Buffer>,
+}
+
 pub struct Looper {
     analyzer: Analyzer,
     config: Config,
     node: Node,
     extension: Extension,
-    mode: Mode,
     controller: Controller,
     windows_watcher: TimedWatcher,
     cleaner: Cleaner,
-    buffer: Option<Buffer>,
-    state: State,
-    delay_timer: Instant,
-    janked: bool,
     database: Connection,
-    pid_params: PidParams,
-    mutated_pid_params: PidParams,
-    mutate_timer: Instant,
-    fitness: f64,
+    fas_state: FasState,
+    evolution_state: EvolutionState,
 }
 
 impl Looper {
@@ -85,19 +117,23 @@ impl Looper {
             config,
             node,
             extension,
-            mode: Mode::Balance,
             controller,
             windows_watcher: TimedWatcher::new(),
             cleaner: Cleaner::new(),
-            buffer: None,
-            state: State::NotWorking,
-            delay_timer: Instant::now(),
-            janked: false,
             database: open_database().unwrap(),
-            pid_params: PidParams::default(),
-            mutated_pid_params: PidParams::default(),
-            mutate_timer: Instant::now(),
-            fitness: f64::MIN,
+            fas_state: FasState {
+                mode: Mode::Balance,
+                buffer: None,
+                working_state: State::NotWorking,
+                delay_timer: Instant::now(),
+                janked: false,
+            },
+            evolution_state: EvolutionState {
+                pid_params: PidParams::default(),
+                mutated_pid_params: PidParams::default(),
+                mutate_timer: Instant::now(),
+                fitness: f64::MIN,
+            },
         }
     }
 
@@ -108,7 +144,7 @@ impl Looper {
             let _ = self.update_analyzer();
             self.retain_topapp();
 
-            let target_fps = self.buffer.as_ref().and_then(|b| b.target_fps);
+            let target_fps = self.fas_state.buffer.as_ref().and_then(|b| b.target_fps);
             let fas_data = self.recv_message(target_fps);
 
             if self.windows_watcher.visible_freeform_window() {
@@ -117,9 +153,9 @@ impl Looper {
             }
 
             if let Some(data) = fas_data {
-                self.janked = false;
+                self.fas_state.janked = false;
                 #[cfg(debug_assertions)]
-                debug!("janked: {}", self.janked);
+                debug!("janked: {}", self.fas_state.janked);
 
                 if let Some(state) = self.buffer_update(&data) {
                     match state {
@@ -127,10 +163,10 @@ impl Looper {
                         BufferState::Unusable => self.disable_fas(),
                     }
                 }
-            } else if let Some(buffer) = self.buffer.as_mut() {
-                self.janked = true;
+            } else if let Some(buffer) = self.fas_state.buffer.as_mut() {
+                self.fas_state.janked = true;
                 #[cfg(debug_assertions)]
-                debug!("janked: {}", self.janked);
+                debug!("janked: {}", self.fas_state.janked);
                 buffer.additional_frametime();
                 self.do_policy();
             }
@@ -139,15 +175,15 @@ impl Looper {
 
     fn switch_mode(&mut self) {
         if let Ok(new_mode) = self.node.get_mode() {
-            if likely(self.mode != new_mode) {
+            if likely(self.fas_state.mode != new_mode) {
                 info!(
                     "Switch mode: {} -> {}",
-                    self.mode.to_string(),
+                    self.fas_state.mode.to_string(),
                     new_mode.to_string()
                 );
-                self.mode = new_mode;
+                self.fas_state.mode = new_mode;
 
-                if self.state == State::Working {
+                if self.fas_state.working_state == State::Working {
                     self.controller.init_game(&self.extension);
                 }
             }
@@ -157,9 +193,9 @@ impl Looper {
     fn recv_message(&mut self, target_fps: Option<u32>) -> Option<FasData> {
         let target_frametime = target_fps.map(|fps| Duration::from_secs(1) / fps);
 
-        let time = if unlikely(self.state != State::Working) {
+        let time = if unlikely(self.fas_state.working_state != State::Working) {
             Duration::from_millis(100)
-        } else if unlikely(self.janked) {
+        } else if unlikely(self.fas_state.janked) {
             target_frametime.map_or(Duration::from_millis(100), |time| time / 4)
         } else {
             target_frametime.map_or(Duration::from_millis(100), |time| time * 2)
@@ -184,34 +220,24 @@ impl Looper {
     }
 
     fn do_policy(&mut self) {
-        if unlikely(self.state != State::Working) {
+        if unlikely(self.fas_state.working_state != State::Working) {
             #[cfg(debug_assertions)]
             debug!("Not running policy!");
             return;
         }
 
-        if unlikely(self.mutate_timer.elapsed() > Duration::from_secs(1)) {
-            self.mutate_timer = Instant::now();
+        let control = if let Some(buffer) = &self.fas_state.buffer {
+            self.evolution_state
+                .try_evolution(buffer, &mut self.config, self.fas_state.mode);
 
-            if let Some(fitness) = self
-                .buffer
-                .as_ref()
-                .and_then(|buffer| evaluate_fitness(buffer, &mut self.config, self.mode))
-            {
-                if fitness > self.fitness {
-                    self.pid_params = self.mutated_pid_params;
-                }
-
-                self.fitness = fitness;
-            }
-
-            self.mutated_pid_params = mutate_params(self.pid_params);
-        }
-
-        let Some(control) = self.buffer.as_ref().and_then(|buffer| {
-            pid_control(buffer, &mut self.config, self.mode, self.mutated_pid_params)
-        }) else {
-            self.disable_fas();
+            pid_control(
+                buffer,
+                &mut self.config,
+                self.fas_state.mode,
+                self.evolution_state.mutated_pid_params,
+            )
+            .unwrap_or_default()
+        } else {
             return;
         };
 
