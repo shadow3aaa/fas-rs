@@ -66,6 +66,9 @@ impl Looper {
                 self.fas_state.working_state = State::NotWorking;
                 self.cleaner.undo_cleanup();
                 self.controller.init_default(&self.extension);
+                if let Some(buffer) = &self.fas_state.buffer {
+                    let _ = self.analyzer.detach_app(buffer.package_info.pid);
+                }
                 self.extension.trigger_extentions(ApiV0::StopFas);
                 self.extension.trigger_extentions(ApiV1::StopFas);
                 self.extension.trigger_extentions(ApiV2::StopFas);

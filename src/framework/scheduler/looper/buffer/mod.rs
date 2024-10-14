@@ -103,7 +103,10 @@ impl Buffer {
         }
 
         self.frametime_state.frametimes.push_front(d);
+        self.try_calculate(extension);
+    }
 
+    fn try_calculate(&mut self, extension: &Extension) {
         if unlikely(self.buffer_state.calculate_timer.elapsed() >= Duration::from_secs(1)) {
             self.buffer_state.calculate_timer = Instant::now();
             self.calculate_current_fps();
@@ -124,7 +127,8 @@ impl Buffer {
         self.buffer_state.working_state_timer = Instant::now();
     }
 
-    pub fn additional_frametime(&mut self) {
+    pub fn additional_frametime(&mut self, extension: &Extension) {
         self.frametime_state.additional_frametime = self.buffer_state.last_update.elapsed();
+        self.try_calculate(extension);
     }
 }

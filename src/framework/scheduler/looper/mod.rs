@@ -171,7 +171,7 @@ impl Looper {
                 self.fas_state.janked = true;
                 #[cfg(debug_assertions)]
                 debug!("janked: {}", self.fas_state.janked);
-                buffer.additional_frametime();
+                buffer.additional_frametime(&self.extension);
                 self.do_policy();
             }
         }
