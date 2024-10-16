@@ -48,5 +48,9 @@ if [ -f $MERGE_FLAG ]; then
 	mv $DIR/.update_games.toml $DIR/games.toml
 fi
 
+while [ "$(cat /sys/devices/system/cpu/cpufreq/policy0/scaling_available_frequencies)" = "" ]; do
+	sleep 1
+done
+
 killall fas-rs
 nohup $MODDIR/fas-rs run $MODDIR/games.toml >$LOG 2>&1 &
