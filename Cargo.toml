@@ -29,7 +29,7 @@ log = "0.4.22"
 anyhow = { version  = "1.0.89", features = ["backtrace"] }
 thiserror = "1.0.63"
 inotify = { version = "0.11.0", default-features = false }
-libc = "0.2.160"
+libc = "0.2.161"
 flexi_logger = "0.29.3"
 toml = "0.8.19"
 serde = { version = "1.0.210", features = ["derive"] }
