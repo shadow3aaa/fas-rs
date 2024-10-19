@@ -97,6 +97,15 @@ fn load_extensions() -> Result<ExtensionMap> {
             })?,
         )?;
 
+        // Add in api v3
+        lua.globals().set(
+            "set_ignore_policy",
+            lua.create_function(|_, (policy, val): (i32, bool)| {
+                api::set_ignore_policy(policy, val)?;
+                Ok(())
+            })?,
+        )?;
+
         match lua.load(&file).exec() {
             Ok(()) => {
                 info!("Extension loaded successfully: {path:?}");

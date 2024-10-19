@@ -19,7 +19,11 @@ use likely_stable::unlikely;
 use log::debug;
 
 use super::Buffer;
-use crate::{api::v2::ApiV2, framework::config::TargetFps, Extension};
+use crate::{
+    api::{v2::ApiV2, v3::ApiV3},
+    framework::config::TargetFps,
+    Extension,
+};
 
 impl Buffer {
     pub fn calculate_current_fps(&mut self) {
@@ -55,6 +59,10 @@ impl Buffer {
         if self.target_fps_state.target_fps != new_target_fps {
             if let Some(target_fps) = new_target_fps {
                 extension.trigger_extentions(ApiV2::TargetFpsChange(
+                    target_fps,
+                    self.package_info.pkg.clone(),
+                ));
+                extension.trigger_extentions(ApiV3::TargetFpsChange(
                     target_fps,
                     self.package_info.pkg.clone(),
                 ));

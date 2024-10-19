@@ -24,7 +24,7 @@ use super::{
     Buffer, Looper, State,
 };
 use crate::{
-    api::{v1::ApiV1, v2::ApiV2},
+    api::{v1::ApiV1, v2::ApiV2, v3::ApiV3},
     framework::{api::ApiV0, utils::get_process_name},
 };
 
@@ -48,7 +48,9 @@ impl Looper {
                 self.extension
                     .trigger_extentions(ApiV1::UnloadFas(buffer.package_info.pid, pkg.clone()));
                 self.extension
-                    .trigger_extentions(ApiV2::UnloadFas(buffer.package_info.pid, pkg));
+                    .trigger_extentions(ApiV2::UnloadFas(buffer.package_info.pid, pkg.clone()));
+                self.extension
+                    .trigger_extentions(ApiV3::UnloadFas(buffer.package_info.pid, pkg));
                 self.fas_state.buffer = None;
             }
         }
@@ -72,6 +74,7 @@ impl Looper {
                 self.extension.trigger_extentions(ApiV0::StopFas);
                 self.extension.trigger_extentions(ApiV1::StopFas);
                 self.extension.trigger_extentions(ApiV2::StopFas);
+                self.extension.trigger_extentions(ApiV3::StopFas);
             }
             State::Waiting => self.fas_state.working_state = State::NotWorking,
             State::NotWorking => (),
@@ -86,6 +89,7 @@ impl Looper {
                 self.extension.trigger_extentions(ApiV0::StartFas);
                 self.extension.trigger_extentions(ApiV1::StartFas);
                 self.extension.trigger_extentions(ApiV2::StartFas);
+                self.extension.trigger_extentions(ApiV3::StartFas);
             }
             State::Waiting => {
                 if self.fas_state.delay_timer.elapsed() > DELAY_TIME {
@@ -127,6 +131,8 @@ impl Looper {
                 .trigger_extentions(ApiV1::LoadFas(pid, pkg.clone()));
             self.extension
                 .trigger_extentions(ApiV2::LoadFas(pid, pkg.clone()));
+            self.extension
+                .trigger_extentions(ApiV3::LoadFas(pid, pkg.clone()));
 
             let mut buffer = Buffer::new(target_fps, pid, pkg);
             buffer.push_frametime(frametime, &self.extension);

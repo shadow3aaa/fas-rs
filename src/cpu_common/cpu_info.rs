@@ -20,7 +20,7 @@ use std::{
 
 use anyhow::Result;
 
-use super::OFFSET_MAP;
+use super::{IGNORE_MAP, OFFSET_MAP};
 use crate::file_handler::FileHandler;
 
 #[derive(Debug)]
@@ -73,7 +73,14 @@ impl Info {
 
         let freq = freq.to_string();
 
-        if self.policy != 0 {
+        if self.policy != 0
+            && !IGNORE_MAP
+                .get()
+                .unwrap()
+                .get(&self.policy)
+                .unwrap()
+                .load(Ordering::Acquire)
+        {
             file_handler.write_with_workround(max_freq_path, &freq)?;
             file_handler.write_with_workround(min_freq_path, &freq)?;
         }

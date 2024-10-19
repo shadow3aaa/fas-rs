@@ -17,7 +17,10 @@ mod cpu_info;
 use std::{
     collections::HashMap,
     fs,
-    sync::{atomic::AtomicIsize, OnceLock},
+    sync::{
+        atomic::{AtomicBool, AtomicIsize},
+        OnceLock,
+    },
     thread,
     time::Duration,
 };
@@ -29,12 +32,13 @@ use log::debug;
 use log::{error, warn};
 
 use crate::{
-    api::{v1::ApiV1, v2::ApiV2, ApiV0},
+    api::{v1::ApiV1, v2::ApiV2, v3::ApiV3, ApiV0},
     file_handler::FileHandler,
     Extension,
 };
 
 pub static OFFSET_MAP: OnceLock<HashMap<i32, AtomicIsize>> = OnceLock::new();
+pub static IGNORE_MAP: OnceLock<HashMap<i32, AtomicBool>> = OnceLock::new();
 
 #[derive(Debug)]
 pub struct Controller {
@@ -80,6 +84,12 @@ impl Controller {
                 .map(|cpu| (cpu.policy, AtomicIsize::new(0)))
                 .collect()
         });
+        IGNORE_MAP.get_or_init(|| {
+            cpu_infos
+                .iter()
+                .map(|cpu| (cpu.policy, AtomicBool::new(false)))
+                .collect()
+        });
 
         #[cfg(debug_assertions)]
         debug!("cpu infos: {cpu_infos:?}");
@@ -104,6 +114,7 @@ impl Controller {
         extension.trigger_extentions(ApiV0::InitCpuFreq);
         extension.trigger_extentions(ApiV1::InitCpuFreq);
         extension.trigger_extentions(ApiV2::InitCpuFreq);
+        extension.trigger_extentions(ApiV3::InitCpuFreq);
 
         for cpu in &self.cpu_infos {
             cpu.write_freq(self.max_freq, &mut self.file_handler)
@@ -116,6 +127,7 @@ impl Controller {
         extension.trigger_extentions(ApiV0::ResetCpuFreq);
         extension.trigger_extentions(ApiV1::ResetCpuFreq);
         extension.trigger_extentions(ApiV2::ResetCpuFreq);
+        extension.trigger_extentions(ApiV3::ResetCpuFreq);
 
         for cpu in &mut self.cpu_infos {
             cpu.reset_freq(&mut self.file_handler)
