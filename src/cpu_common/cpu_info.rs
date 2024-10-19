@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{fs, path::PathBuf, sync::atomic::Ordering};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    sync::atomic::Ordering,
+};
 
 use anyhow::Result;
 
@@ -28,7 +32,8 @@ pub struct Info {
 }
 
 impl Info {
-    pub fn new(path: PathBuf) -> Result<Self> {
+    pub fn new(path: impl AsRef<Path>) -> Result<Self> {
+        let path = path.as_ref();
         let policy = path.file_name().unwrap().to_str().unwrap()[6..].parse()?;
 
         let cpus: Vec<i32> = fs::read_to_string(path.join("affected_cpus"))?
@@ -46,7 +51,7 @@ impl Info {
         Ok(Self {
             policy,
             cpus,
-            path,
+            path: path.to_path_buf(),
             freqs,
         })
     }

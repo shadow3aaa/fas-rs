@@ -18,13 +18,15 @@ use std::{
     collections::HashMap,
     fs,
     sync::{atomic::AtomicIsize, OnceLock},
+    thread,
+    time::Duration,
 };
 
 use anyhow::Result;
 use cpu_info::Info;
 #[cfg(debug_assertions)]
 use log::debug;
-use log::error;
+use log::{error, warn};
 
 use crate::{
     api::{v1::ApiV1, v2::ApiV2, ApiV0},
@@ -37,7 +39,6 @@ pub static OFFSET_MAP: OnceLock<HashMap<i32, AtomicIsize>> = OnceLock::new();
 #[derive(Debug)]
 pub struct Controller {
     max_freq: isize,
-    min_freq: isize,
     policy_freq: isize,
     cpu_infos: Vec<Info>,
     file_handler: FileHandler,
@@ -56,7 +57,19 @@ impl Controller {
                         .unwrap()
                         .starts_with("policy")
             })
-            .map(|path| Info::new(path).unwrap())
+            .map(|path| loop {
+                match Info::new(&path) {
+                    Ok(info) => {
+                        return info;
+                    }
+                    Err(e) => {
+                        warn!("Failed to read cpu info from: {path:?}, reason: {e:#?}");
+                        warn!("Retrying...");
+                        thread::sleep(Duration::from_secs(1));
+                        continue;
+                    }
+                }
+            })
             .collect();
 
         cpu_infos.sort_by_key(|cpu| cpu.policy);
@@ -78,16 +91,8 @@ impl Controller {
             .copied()
             .unwrap();
 
-        let min_freq = cpu_infos
-            .iter()
-            .flat_map(|info| info.freqs.iter())
-            .min()
-            .copied()
-            .unwrap();
-
         Ok(Self {
             max_freq,
-            min_freq,
             policy_freq: max_freq,
             cpu_infos,
             file_handler: FileHandler::new(),
