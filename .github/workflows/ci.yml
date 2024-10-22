@@ -52,6 +52,13 @@ jobs:
 
           python3 ./make.py build --release --nightly
           python3 ./make.py build --debug --nightly
+      - name: Upload to channel
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: test
+          document: "output/fas-rs(release).zip"
       - name: Prepare artifacts
         run: |
           mkdir -p output/artifact/debug
