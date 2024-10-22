@@ -103,7 +103,7 @@ jobs:
           compression-level: 9
           path: output/artifact/debug
   
-  push_to_debug_group:
+  push_to_ci_group:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     name: Push to CI Group
@@ -127,13 +127,14 @@ jobs:
           GROUP_DEBUG_ID: ${{ secrets.TELEGRAM_TO }}
           BOT_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           THREAD_ID: ${{ secrets.THREAD_ID }}
-          COMMIT_MESSAGE: |
+          COMMIT_MESSAGE: |+
             New push to GitHub
-            by `${{ github.triggering_actor }}`
+            ```
             ${{ github.event.head_commit.message }}
+            ```by `${{ github.event.head_commit.author.name }}`
+            See commit detail [here](${{ github.event.head_commit.url }})
         run: |
-          export COMMIT_MESSAGE_FIXED=$(echo $COMMIT_MESSAGE | awk '{gsub(/\\/, "\\\\"); gsub(/\*/, "\\*"); gsub(/_/, "\\_"); gsub(/`/, "\\`"); gsub(/\[/, "\\["); gsub(/\]/, "\\]"); gsub(/\(/, "\\("); gsub(/\)/, "\\)"); gsub(/~/, "\\~"); gsub(/>/, "\\>"); gsub(/#/, "\\#"); gsub(/\+/, "\\+"); gsub(/-/, "\\-"); gsub(/=/, "\\="); gsub(/\./, "\\."); gsub(/!/, "\\!"); print}')
-          ESCAPED=$(python3 -c 'import json,os,urllib.parse; print(urllib.parse.quote(json.dumps(os.environ["COMMIT_MESSAGE_FIXED"])))')
+          ESCAPED=$(python3 -c 'import json,os,urllib.parse; print(urllib.parse.quote(json.dumps(os.environ["COMMIT_MESSAGE"])))')
           cd ${{ github.workspace }}
           echo $COMMIT_MESSAGE_FIXED
           curl -v "https://api.telegram.org/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${GROUP_DEBUG_ID}&message_thread_id=${THREAD_ID}&media=%5B%7B%22type%22:%22document%22,%20%22media%22:%22attach://debug_zip%22,%22parse_mode%22:%22MarkdownV2%22,%22caption%22:\"\"%7D,%7B%22type%22:%22document%22,%20%22media%22:%22attach://release_zip%22,%22parse_mode%22:%22MarkdownV2%22,%22caption%22:${ESCAPED}%7D%5D" -F debug_zip="@artifacts/fas-rs(debug).zip" -F release_zip="@artifacts/fas-rs(release).zip"
