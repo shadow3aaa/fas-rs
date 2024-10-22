@@ -133,7 +133,7 @@ jobs:
 
             ${{ github.event.head_commit.message }}
         run: |
-          COMMIT_MESSAGE_FIXED=$(echo $COMMIT_MESSAGE | awk '{gsub(/\\/, "\\\\"); gsub(/\*/, "\\*"); gsub(/_/, "\\_"); gsub(/`/, "\\`"); gsub(/\[/, "\\["); gsub(/\]/, "\\]"); gsub(/\(/, "\\("); gsub(/\)/, "\\)"); gsub(/~/, "\\~"); gsub(/>/, "\\>"); gsub(/#/, "\\#"); gsub(/\+/, "\\+"); gsub(/-/, "\\-"); gsub(/=/, "\\="); gsub(/\./, "\\."); gsub(/!/, "\\!"); print}')
+          export COMMIT_MESSAGE_FIXED=$(echo $COMMIT_MESSAGE | awk '{gsub(/\\/, "\\\\"); gsub(/\*/, "\\*"); gsub(/_/, "\\_"); gsub(/`/, "\\`"); gsub(/\[/, "\\["); gsub(/\]/, "\\]"); gsub(/\(/, "\\("); gsub(/\)/, "\\)"); gsub(/~/, "\\~"); gsub(/>/, "\\>"); gsub(/#/, "\\#"); gsub(/\+/, "\\+"); gsub(/-/, "\\-"); gsub(/=/, "\\="); gsub(/\./, "\\."); gsub(/!/, "\\!"); print}')
           ESCAPED=$(python3 -c 'import json,os,urllib.parse; print(urllib.parse.quote(json.dumps(os.environ["COMMIT_MESSAGE_FIXED"])))')
           cd ${{ github.workspace }}
           echo $COMMIT_MESSAGE_FIXED
