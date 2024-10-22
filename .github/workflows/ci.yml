@@ -43,8 +43,8 @@ jobs:
       - name: Other deps
         run: |
           sudo apt update
-          sudo apt install gcc-multilib git-lfs
-          git lfs pull
+          sudo apt upgrade
+          sudo apt install gcc-multilib
       - name: Build
         run: |
           export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
