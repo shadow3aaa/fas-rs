@@ -120,6 +120,7 @@ jobs:
         env:
           GROUP_DEBUG_ID: ${{ secrets.TELEGRAM_TO }}
           BOT_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          THREAD_ID: ${{ secrets.THREAD_ID }}
           COMMIT_MESSAGE: |+
             New push to GitHub
             by `${{ github.triggering_actor }}`
