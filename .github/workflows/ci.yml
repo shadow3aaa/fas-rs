@@ -51,13 +51,6 @@ jobs:
           export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
 
           python3 ./make.py build --release --nightly
-      - name: Upload to channel
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_TO }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          message: ${{ github.event.head_commit.message }}
-          document: "output/fas-rs(release).zip"
       - name: Prepare artifacts
         run: |
           mkdir -p output/artifact/release
@@ -109,3 +102,30 @@ jobs:
           name: fas-rs(debug)
           compression-level: 9
           path: output/artifact/debug
+  
+  push_to_debug_group:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    name: Push to CI Group
+    needs:
+      - debug-build
+      - release-build
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Post to Debug Group
+        shell: bash
+        env:
+          GROUP_DEBUG_ID: ${{ secrets.TELEGRAM_TO }}
+          BOT_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          COMMIT_MESSAGE: |+
+            New push to GitHub
+            by `${{ github.triggering_actor }}`
+
+            ${{ github.event.head_commit.message }}
+        run: |
+          ESCAPED=$(python3 -c 'import json,os,urllib.parse; print(urllib.parse.quote(json.dumps(os.environ["COMMIT_MESSAGE"])))')
+          cd ${{ github.workspace }}
+          curl -v "https://api.telegram.org/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${GROUP_DEBUG_ID}&message_thread_id=${THREAD_ID}&media=%5B%7B%22type%22:%22document%22,%20%22media%22:%22attach://debug_zip%22,%22parse_mode%22:%22MarkdownV2%22,%22caption%22:${ESCAPED}%7D,%7B%22type%22:%22document%22,%20%22media%22:%22attach://release_zip%22,%22parse_mode%22:%22MarkdownV2%22,%22caption%22:${ESCAPED}%7D%5D" -F debug_zip="@artifacts/fas-rs(debug).zip" -F release_zip="@artifacts/fas-rs(release).zip""
