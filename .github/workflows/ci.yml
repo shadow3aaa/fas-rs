@@ -57,7 +57,7 @@ jobs:
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          message: test
+          message: ${{ github.event.head_commit.message }}
           document: "output/fas-rs(release).zip"
       - name: Prepare artifacts
         run: |
