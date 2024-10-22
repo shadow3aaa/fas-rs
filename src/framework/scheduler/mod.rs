@@ -23,7 +23,7 @@ use super::{
     node::Node,
     Extension,
 };
-use crate::Controller;
+use crate::{cpu_temp_watcher::CpuTempWatcher, Controller};
 
 use frame_analyzer::Analyzer;
 use looper::Looper;
@@ -72,6 +72,15 @@ impl Scheduler {
 
         let node = Node::init()?;
         let analyzer = Analyzer::new()?;
-        Looper::new(analyzer, config, node, extension, controller).enter_loop()
+        let cpu_temp_watcher = CpuTempWatcher::new()?;
+        Looper::new(
+            analyzer,
+            cpu_temp_watcher,
+            config,
+            node,
+            extension,
+            controller,
+        )
+        .enter_loop()
     }
 }

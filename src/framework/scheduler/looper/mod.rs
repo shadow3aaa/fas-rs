@@ -25,7 +25,7 @@ use likely_stable::{likely, unlikely};
 use log::debug;
 use log::info;
 use policy::{
-    evolution::{evaluate_fitness, load_pid_params, mutate_params, open_database},
+    evolution::{evaluate_fitness, load_pid_params, mutate_params, open_database, Fitness},
     pid_controll::pid_control,
     PidParams,
 };
@@ -33,6 +33,7 @@ use rusqlite::Connection;
 
 use super::{topapp::TimedWatcher, FasData};
 use crate::{
+    cpu_temp_watcher::CpuTempWatcher,
     framework::{
         config::Config,
         error::Result,
@@ -56,21 +57,27 @@ struct EvolutionState {
     pid_params: PidParams,
     mutated_pid_params: PidParams,
     mutate_timer: Instant,
-    fitness: f64,
+    fitness: Fitness,
 }
 
 impl EvolutionState {
     pub fn reset(&mut self, database: &Connection, pkg: &str) {
         self.pid_params = load_pid_params(database, pkg).unwrap_or_else(|_| PidParams::default());
         self.mutated_pid_params = self.pid_params;
-        self.fitness = f64::MIN;
+        self.fitness = Fitness::MIN;
     }
 
-    pub fn try_evolution(&mut self, buffer: &Buffer, config: &mut Config, mode: Mode) {
+    pub fn try_evolution(
+        &mut self,
+        buffer: &Buffer,
+        cpu_temp_watcher: &mut CpuTempWatcher,
+        config: &mut Config,
+        mode: Mode,
+    ) {
         if unlikely(self.mutate_timer.elapsed() > Duration::from_secs(1)) {
             self.mutate_timer = Instant::now();
 
-            if let Some(fitness) = evaluate_fitness(buffer, config, mode) {
+            if let Some(fitness) = evaluate_fitness(buffer, cpu_temp_watcher, config, mode) {
                 if fitness > self.fitness {
                     self.pid_params = self.mutated_pid_params;
                 }
@@ -93,6 +100,7 @@ struct FasState {
 
 pub struct Looper {
     analyzer: Analyzer,
+    cpu_temp_watcher: CpuTempWatcher,
     config: Config,
     node: Node,
     extension: Extension,
@@ -107,6 +115,7 @@ pub struct Looper {
 impl Looper {
     pub fn new(
         analyzer: Analyzer,
+        cpu_temp_watcher: CpuTempWatcher,
         config: Config,
         node: Node,
         extension: Extension,
@@ -114,6 +123,7 @@ impl Looper {
     ) -> Self {
         Self {
             analyzer,
+            cpu_temp_watcher,
             config,
             node,
             extension,
@@ -132,7 +142,7 @@ impl Looper {
                 pid_params: PidParams::default(),
                 mutated_pid_params: PidParams::default(),
                 mutate_timer: Instant::now(),
-                fitness: f64::MIN,
+                fitness: Fitness::MIN,
             },
         }
     }
@@ -231,8 +241,12 @@ impl Looper {
         }
 
         let control = if let Some(buffer) = &self.fas_state.buffer {
-            self.evolution_state
-                .try_evolution(buffer, &mut self.config, self.fas_state.mode);
+            self.evolution_state.try_evolution(
+                buffer,
+                &mut self.cpu_temp_watcher,
+                &mut self.config,
+                self.fas_state.mode,
+            );
 
             pid_control(
                 buffer,

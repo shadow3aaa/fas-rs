@@ -23,6 +23,7 @@
 )]
 
 mod cpu_common;
+mod cpu_temp_watcher;
 mod file_handler;
 mod framework;
 mod misc;

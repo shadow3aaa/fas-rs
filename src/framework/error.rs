@@ -22,6 +22,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(ThisError, Debug)]
 pub enum Error {
     #[error(transparent)]
+    Anyhow(#[from] anyhow::Error),
+    #[error(transparent)]
     FrameAnalyzer(#[from] AnalyzerError),
     #[error("Got an error when parsing config")]
     ParseConfig,

@@ -12,18 +12,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::time::Duration;
+use std::{cmp, time::Duration};
 
 use anyhow::Result;
 use likely_stable::unlikely;
 use rand::Rng;
 use rusqlite::{params, Connection};
 
-use crate::{framework::scheduler::looper::buffer::Buffer, Config, Mode};
+use crate::{
+    cpu_temp_watcher::CpuTempWatcher, framework::scheduler::looper::buffer::Buffer, Config, Mode,
+};
 
 use super::PidParams;
 
 pub const DATABASE_PATH: &str = "/sdcard/Android/fas-rs/database.db";
+
+#[derive(Debug, PartialEq)]
+pub struct Fitness {
+    fitness_frametime: f64,
+    temp: u64,
+}
+
+impl PartialOrd for Fitness {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        if (other.fitness_frametime - self.fitness_frametime).abs() < 1_000_000_000_000_000.0 {
+            self.temp.partial_cmp(&other.temp)
+        } else {
+            self.fitness_frametime.partial_cmp(&other.fitness_frametime)
+        }
+    }
+}
+
+impl Fitness {
+    pub const MIN: Self = Self {
+        fitness_frametime: f64::MIN,
+        temp: u64::MIN,
+    };
+}
 
 pub fn open_database() -> Result<Connection> {
     let conn = Connection::open(DATABASE_PATH)?;
@@ -75,7 +100,12 @@ pub fn mutate_params(params: PidParams) -> PidParams {
     }
 }
 
-pub fn evaluate_fitness(buffer: &Buffer, config: &mut Config, mode: Mode) -> Option<f64> {
+pub fn evaluate_fitness(
+    buffer: &Buffer,
+    cpu_temp_watcher: &mut CpuTempWatcher,
+    config: &mut Config,
+    mode: Mode,
+) -> Option<Fitness> {
     let target_fps = buffer.target_fps_state.target_fps?;
 
     if unlikely(buffer.frametime_state.frametimes.len() < target_fps.try_into().unwrap()) {
@@ -96,6 +126,10 @@ pub fn evaluate_fitness(buffer: &Buffer, config: &mut Config, mode: Mode) -> Opt
         .sum::<f64>()
         / buffer.frametime_state.frametimes.len() as f64
         * -1.0;
+    let temp = cpu_temp_watcher.temp();
 
-    Some(fitness_frametime)
+    Some(Fitness {
+        fitness_frametime,
+        temp,
+    })
 }
