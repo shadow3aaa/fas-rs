@@ -36,7 +36,7 @@ pub struct Fitness {
 impl PartialOrd for Fitness {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
         if (other.fitness_frametime - self.fitness_frametime).abs() < 1_000_000_000_000_000.0 {
-            self.temp.partial_cmp(&other.temp)
+            other.temp.partial_cmp(&self.temp)
         } else {
             self.fitness_frametime.partial_cmp(&other.fitness_frametime)
         }
