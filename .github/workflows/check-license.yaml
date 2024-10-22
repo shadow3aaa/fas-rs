@@ -20,6 +20,7 @@ env:
   CARGO_TERM_COLOR: always
 jobs:
   build:
+    if: github.actor == 'shadow3aaa'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
