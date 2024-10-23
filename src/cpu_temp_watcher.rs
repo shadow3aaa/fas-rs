@@ -16,15 +16,12 @@ use std::{fs, path::PathBuf};
 
 use anyhow::Result;
 
-use crate::file_handler::FileHandler;
-
 pub struct CpuTempWatcher {
     nodes: Vec<PathBuf>,
 }
 
 impl CpuTempWatcher {
     pub fn new() -> Result<Self> {
-        let file_handler = FileHandler::new();
         let mut nodes = Vec::new();
         for device in fs::read_dir("/sys/devices/virtual/thermal")? {
             let device = device?;
