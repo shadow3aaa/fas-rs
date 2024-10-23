@@ -5,6 +5,7 @@
 [![CI Build][ci-badge]][ci-url]
 [![Release][release-badge]][release-url]
 [![Download][download-badge]][download-url]
+[![Telegram][telegram-badge]][telegram-url]
 
 [readme-cn-badge]: https://img.shields.io/badge/README-简体中文-blue.svg?style=for-the-badge&logo=readme
 [readme-cn-url]: README.md
@@ -16,6 +17,8 @@
 [release-url]: https://github.com/shadow3aaa/fas-rs/releases/latest
 [download-badge]: https://img.shields.io/github/downloads/shadow3aaa/fas-rs/total?style=for-the-badge&logo=download
 [download-url]: https://github.com/shadow3aaa/fas-rs/releases/latest
+[telegram-badge]: https://img.shields.io/badge/Group-blue?style=for-the-badge&logo=telegram&label=Telegram
+[telegram-url]: https://t.me/fas_rs_official
 
 ## **Introduction**
 

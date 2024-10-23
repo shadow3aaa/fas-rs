@@ -5,6 +5,7 @@
 [![CI Build][ci-badge]][ci-url]
 [![Release][release-badge]][release-url]
 [![Download][download-badge]][download-url]
+[![Telegram][telegram-badge]][telegram-url]
 
 [readme-en-badge]: https://img.shields.io/badge/README-English-blue.svg?style=for-the-badge&logo=readme
 [readme-en-url]: README_EN.md
@@ -14,8 +15,10 @@
 [ci-url]: https://github.com/shadow3aaa/fas-rs/actions/workflows/ci.yml
 [release-badge]: https://img.shields.io/github/v/release/shadow3aaa/fas-rs?style=for-the-badge&logo=rust
 [release-url]: https://github.com/shadow3aaa/fas-rs/releases/latest
-[download-badge]: https://img.shields.io/github/downloads/shadow3aaa/fas-rs/total?style=for-the-badge&logo=download
+[download-badge]: https://img.shields.io/github/downloads/shadow3aaa/fas-rs/total?style=for-the-badge
 [download-url]: https://github.com/shadow3aaa/fas-rs/releases/latest
+[telegram-badge]: https://img.shields.io/badge/Group-blue?style=for-the-badge&logo=telegram&label=Telegram
+[telegram-url]: https://t.me/fas_rs_official
 
 ## **简介**
 
