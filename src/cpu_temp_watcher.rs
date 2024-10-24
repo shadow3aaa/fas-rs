@@ -40,7 +40,7 @@ impl CpuTempWatcher {
         Ok(Self { nodes })
     }
 
-    pub fn temp(&mut self) -> u64 {
+    pub fn temp(&self) -> u64 {
         self.nodes
             .iter()
             .filter_map(|path| fs::read_to_string(path).ok())
