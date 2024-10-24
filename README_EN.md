@@ -79,23 +79,25 @@ scene_game_list = true
 "com.miHoYo.Yuanshen" = [30, 60]
 "com.miHoYo.enterprise.NGHSoD" = [30, 60, 90]
 "com.miHoYo.hkrpg" = [30, 60]
-"com.mojang.minecraftpe" = [60, 120]
+"com.kurogame.mingchao" = [24, 30, 45, 60]
+"com.pwrd.hotta.laohu" = [25, 30, 45, 60, 90]
+"com.mojang.minecraftpe" = [60, 90, 120]
 "com.netease.party" = [30, 60]
 "com.shangyoo.neon" = 60
 "com.tencent.tmgp.pubgmhd" = [60, 90, 120]
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
 [powersave]
-margin = 4
-
-[balance]
 margin = 3
 
-[performance]
+[balance]
 margin = 2
 
-[fast]
+[performance]
 margin = 1
+
+[fast]
+margin = 0
 ```
 
 ## **Configuration merge**
