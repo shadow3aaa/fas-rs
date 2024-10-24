@@ -64,7 +64,7 @@ pub struct Buffer {
     pub package_info: PackageInfo,
     pub frametime_state: FrameTimeState,
     pub target_fps_state: TargetFpsState,
-    pub buffer_state: BufferState,
+    pub state: BufferState,
 }
 
 impl Buffer {
@@ -82,7 +82,7 @@ impl Buffer {
                 frametimes: VecDeque::with_capacity(1440),
                 additional_frametime: Duration::ZERO,
             },
-            buffer_state: BufferState {
+            state: BufferState {
                 last_update: Instant::now(),
                 calculate_timer: Instant::now(),
                 working_state: BufferWorkingState::Unusable,
@@ -93,7 +93,7 @@ impl Buffer {
 
     pub fn push_frametime(&mut self, d: Duration, extension: &Extension) {
         self.frametime_state.additional_frametime = Duration::ZERO;
-        self.buffer_state.last_update = Instant::now();
+        self.state.last_update = Instant::now();
 
         while self.frametime_state.frametimes.len()
             >= self.target_fps_state.target_fps.unwrap_or(144) as usize * 5
@@ -107,28 +107,28 @@ impl Buffer {
     }
 
     fn try_calculate(&mut self, extension: &Extension) {
-        if unlikely(self.buffer_state.calculate_timer.elapsed() >= Duration::from_secs(1)) {
-            self.buffer_state.calculate_timer = Instant::now();
+        if unlikely(self.state.calculate_timer.elapsed() >= Duration::from_secs(1)) {
+            self.state.calculate_timer = Instant::now();
             self.calculate_current_fps();
             self.calculate_target_fps(extension);
         }
     }
 
     pub fn try_usable(&mut self) {
-        if self.buffer_state.working_state == BufferWorkingState::Unusable
-            && self.buffer_state.working_state_timer.elapsed() >= Duration::from_secs(1)
+        if self.state.working_state == BufferWorkingState::Unusable
+            && self.state.working_state_timer.elapsed() >= Duration::from_secs(1)
         {
-            self.buffer_state.working_state = BufferWorkingState::Usable;
+            self.state.working_state = BufferWorkingState::Usable;
         }
     }
 
     pub fn unusable(&mut self) {
-        self.buffer_state.working_state = BufferWorkingState::Unusable;
-        self.buffer_state.working_state_timer = Instant::now();
+        self.state.working_state = BufferWorkingState::Unusable;
+        self.state.working_state_timer = Instant::now();
     }
 
     pub fn additional_frametime(&mut self, extension: &Extension) {
-        self.frametime_state.additional_frametime = self.buffer_state.last_update.elapsed();
+        self.frametime_state.additional_frametime = self.state.last_update.elapsed();
         self.try_calculate(extension);
     }
 }

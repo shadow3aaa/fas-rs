@@ -70,7 +70,7 @@ impl EvolutionState {
     pub fn try_evolution(
         &mut self,
         buffer: &Buffer,
-        cpu_temp_watcher: &mut CpuTempWatcher,
+        cpu_temp_watcher: &CpuTempWatcher,
         config: &mut Config,
         mode: Mode,
     ) {
@@ -243,7 +243,7 @@ impl Looper {
         let control = if let Some(buffer) = &self.fas_state.buffer {
             self.evolution_state.try_evolution(
                 buffer,
-                &mut self.cpu_temp_watcher,
+                &self.cpu_temp_watcher,
                 &mut self.config,
                 self.fas_state.mode,
             );

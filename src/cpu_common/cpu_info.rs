@@ -26,7 +26,6 @@ use crate::file_handler::FileHandler;
 #[derive(Debug)]
 pub struct Info {
     pub policy: i32,
-    pub cpus: Vec<i32>,
     path: PathBuf,
     pub freqs: Vec<isize>,
 }
@@ -35,11 +34,6 @@ impl Info {
     pub fn new(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
         let policy = path.file_name().unwrap().to_str().unwrap()[6..].parse()?;
-
-        let cpus: Vec<i32> = fs::read_to_string(path.join("affected_cpus"))?
-            .split_whitespace()
-            .map(|c| c.parse::<i32>().unwrap())
-            .collect();
 
         let mut freqs: Vec<_> = fs::read_to_string(path.join("scaling_available_frequencies"))?
             .split_whitespace()
@@ -50,7 +44,6 @@ impl Info {
 
         Ok(Self {
             policy,
-            cpus,
             path: path.to_path_buf(),
             freqs,
         })

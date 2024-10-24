@@ -114,7 +114,7 @@ impl Looper {
 
         if let Some(buffer) = self.fas_state.buffer.as_mut() {
             buffer.push_frametime(frametime, &self.extension);
-            Some(buffer.buffer_state.working_state)
+            Some(buffer.state.working_state)
         } else {
             let Ok(pkg) = get_process_name(data.pid) else {
                 return None;

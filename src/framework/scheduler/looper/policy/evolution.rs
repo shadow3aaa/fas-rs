@@ -102,7 +102,7 @@ pub fn mutate_params(params: PidParams) -> PidParams {
 
 pub fn evaluate_fitness(
     buffer: &Buffer,
-    cpu_temp_watcher: &mut CpuTempWatcher,
+    cpu_temp_watcher: &CpuTempWatcher,
     config: &mut Config,
     mode: Mode,
 ) -> Option<Fitness> {
