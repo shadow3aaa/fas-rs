@@ -31,12 +31,13 @@ pub fn pid_control(
         return None;
     }
 
-    let target_fps = buffer.target_fps_state.target_fps?;
+    let target_fps = f64::from(buffer.target_fps_state.target_fps?) - 0.5;
     let normalized_last_frame = if buffer.frametime_state.additional_frametime == Duration::ZERO {
-        buffer.frametime_state.frametimes.front().copied()? * target_fps
+        buffer.frametime_state.frametimes.front().copied()?
     } else {
-        buffer.frametime_state.additional_frametime * target_fps
-    };
+        buffer.frametime_state.additional_frametime
+    }
+    .mul_f64(target_fps);
 
     #[cfg(debug_assertions)]
     debug!("normalized_last_frame: {normalized_last_frame:?}");
@@ -58,7 +59,7 @@ pub fn pid_control(
                 .copied()
                 .take(30)
                 .sum::<Duration>()
-                * target_fps,
+                .mul_f64(target_fps),
             buffer
                 .frametime_state
                 .frametimes
@@ -66,7 +67,7 @@ pub fn pid_control(
                 .copied()
                 .take(60)
                 .sum::<Duration>()
-                * target_fps,
+                .mul_f64(target_fps),
         ) * 60
             / target_fps as isize,
     )
