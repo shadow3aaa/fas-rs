@@ -65,7 +65,7 @@
     - Currently, `fas-rs` does not have an official switching mode manager, but is connected to the configuration interface of [`scene`](http://vtools.omarea.com). If you don’t use scene, the configuration of `balance` will be used by default.
     - If you have some understanding of programming on Linux, you can switch to the corresponding mode by writing any one of the 4 modes to the `/dev/fas_rs/mode` node, and at the same time, reading it can also know the current `fas-rs` mode
   - **Parameter Description:**
-    - margin(ms): Allowed frame drop margin. The smaller the value, the higher the frame rate, the larger the value, the more power is saved (0 < margin < 1000)
+    - margin(ms): Allowed frame drop margin. The smaller the value, the higher the frame rate, the larger the value, the more power is saved (0 <= margin < 1000)
 
 ### **`games.toml` configuration standard example:**
 
