@@ -16,13 +16,13 @@ scene_game_list = true
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
 [powersave]
-margin = 4
-
-[balance]
 margin = 3
 
-[performance]
+[balance]
 margin = 2
 
-[fast]
+[performance]
 margin = 1
+
+[fast]
+margin = 0
