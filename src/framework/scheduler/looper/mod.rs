@@ -182,7 +182,15 @@ impl Looper {
                 #[cfg(debug_assertions)]
                 debug!("janked: {}", self.fas_state.janked);
                 buffer.additional_frametime(&self.extension);
-                self.do_policy();
+
+                match buffer.state.working_state {
+                    BufferWorkingState::Unusable => {
+                        self.disable_fas();
+                    }
+                    BufferWorkingState::Usable => {
+                        self.do_policy();
+                    }
+                }
             }
         }
     }
