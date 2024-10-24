@@ -56,7 +56,7 @@ impl Buffer {
 
     pub fn calculate_target_fps(&mut self, extension: &Extension) {
         let new_target_fps = self.target_fps();
-        if self.target_fps_state.target_fps != new_target_fps {
+        if self.target_fps_state.target_fps != new_target_fps || new_target_fps.is_none() {
             if let Some(target_fps) = new_target_fps {
                 extension.trigger_extentions(ApiV2::TargetFpsChange(
                     target_fps,
