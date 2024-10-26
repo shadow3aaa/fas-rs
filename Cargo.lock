@@ -348,7 +348,7 @@ checksum = "7360491ce676a36bf9bb3c56c1aa791658183a54d2744120f27285738d90465a"
 
 [[package]]
 name = "fas-rs"
-version = "3.6.0"
+version = "3.7.0"
 dependencies = [
  "anyhow",
  "dumpsys-rs",
