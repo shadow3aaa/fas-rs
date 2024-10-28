@@ -34,7 +34,7 @@ flexi_logger = "0.29.4"
 toml = "0.8.19"
 serde = { version = "1.0.213", features = ["derive"] }
 sys-mount = { version = "3.0.1", default-features = false }
-quick-xml = { version = "0.36.2", features = ["serialize"] }
+quick-xml = { version = "0.37.0", features = ["serialize"] }
 mlua = { version = "0.9.9", features = ["luajit", "vendored"] }
 frame-analyzer = "0.3.3"
 dumpsys-rs = { git = "https://github.com/shadow3aaa/dumpsys-rs" }
