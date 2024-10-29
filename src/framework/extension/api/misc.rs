@@ -22,7 +22,7 @@ pub fn get_api_version(lua: &Lua) -> u8 {
     lua.globals().get("API_VERSION").unwrap_or(0)
 }
 
-pub fn do_callback<P: AsRef<Path>, S: AsRef<str>, A: for<'lua> IntoLuaMulti<'lua>>(
+pub fn do_callback<P: AsRef<Path>, S: AsRef<str>, A: IntoLuaMulti>(
     extension: P,
     lua: &Lua,
     function: S,
@@ -31,7 +31,7 @@ pub fn do_callback<P: AsRef<Path>, S: AsRef<str>, A: for<'lua> IntoLuaMulti<'lua
     let function = function.as_ref();
     let extension = extension.as_ref();
 
-    if let Ok(func) = lua.globals().get::<_, Function>(function) {
+    if let Ok(func) = lua.globals().get::<Function>(function) {
         func.call(args).unwrap_or_else_likely(|e| {
             error!("Got an error when executing extension '{extension:?}', reason: {e:#?}");
         });
