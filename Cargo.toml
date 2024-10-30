@@ -30,7 +30,7 @@ anyhow = { version  = "1.0.91", features = ["backtrace"] }
 thiserror = "1.0.65"
 inotify = { version = "0.11.0", default-features = false }
 libc = "0.2.161"
-flexi_logger = "0.29.4"
+flexi_logger = "0.29.5"
 toml = "0.8.19"
 serde = { version = "1.0.214", features = ["derive"] }
 sys-mount = { version = "3.0.1", default-features = false }
