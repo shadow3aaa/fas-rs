@@ -47,30 +47,27 @@ pub fn pid_control(
     let margin = Duration::from_millis(margin);
     let target = Duration::from_secs(1) + margin;
 
-    Some(
-        pid_control_inner(
-            pid_params,
-            frame,
-            target,
-            buffer
-                .frametime_state
-                .frametimes
-                .iter()
-                .copied()
-                .take(30)
-                .sum::<Duration>()
-                .mul_f64(target_fps),
-            buffer
-                .frametime_state
-                .frametimes
-                .iter()
-                .copied()
-                .take(60)
-                .sum::<Duration>()
-                .mul_f64(target_fps),
-        ) * 60
-            / target_fps as isize,
-    )
+    Some(pid_control_inner(
+        pid_params,
+        frame,
+        target,
+        buffer
+            .frametime_state
+            .frametimes
+            .iter()
+            .copied()
+            .take(30)
+            .sum::<Duration>()
+            .mul_f64(target_fps),
+        buffer
+            .frametime_state
+            .frametimes
+            .iter()
+            .copied()
+            .take(60)
+            .sum::<Duration>()
+            .mul_f64(target_fps),
+    ))
 }
 
 fn pid_control_inner(
