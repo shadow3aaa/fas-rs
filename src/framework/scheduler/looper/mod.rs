@@ -74,7 +74,7 @@ impl EvolutionState {
         config: &mut Config,
         mode: Mode,
     ) {
-        if unlikely(self.mutate_timer.elapsed() > Duration::from_secs(1)) {
+        if unlikely(self.mutate_timer.elapsed() > Duration::from_millis(100)) {
             self.mutate_timer = Instant::now();
 
             if let Some(fitness) = evaluate_fitness(buffer, cpu_temp_watcher, config, mode) {
