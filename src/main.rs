@@ -107,6 +107,6 @@ fn log_format(
     now: &mut DeferredNow,
     record: &Record<'_>,
 ) -> Result<(), io::Error> {
-    let time = now.format("%Y-%m-%d %H:%M");
+    let time = now.format("%Y-%m-%d %H:%M:%S");
     write!(write, "[{time}] {}: {}", record.level(), record.args())
 }
