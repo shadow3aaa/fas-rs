@@ -140,7 +140,7 @@ def task(args):
             cargo.arg("-Z build-std")
 
     if release:
-        cargo.arg("--release")
+        cargo.arg("--release -Z trim-paths")
     if verbose:
         cargo.arg("--verbose")
 
