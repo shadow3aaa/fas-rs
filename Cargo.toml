@@ -27,7 +27,7 @@ likely_stable = "0.1.2"
 parking_lot = "0.12.3"
 log = "0.4.22"
 anyhow = { version  = "1.0.91", features = ["backtrace"] }
-thiserror = "1.0.66"
+thiserror = "1.0.67"
 inotify = { version = "0.11.0", default-features = false }
 libc = "0.2.161"
 flexi_logger = "0.29.5"
