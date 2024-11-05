@@ -101,6 +101,7 @@ struct FasState {
 struct AnalyzerState {
     analyzer: Analyzer,
     restart_counter: u8,
+    restart_timer: Instant,
 }
 
 pub struct Looper {
@@ -130,6 +131,7 @@ impl Looper {
             analyzer_state: AnalyzerState {
                 analyzer,
                 restart_counter: 0,
+                restart_timer: Instant::now(),
             },
             cpu_temp_watcher,
             config,
@@ -253,9 +255,12 @@ impl Looper {
 
     fn restart_analyzer(&mut self) {
         if self.analyzer_state.restart_counter == 1 {
-            self.analyzer_state.restart_counter = 0;
-            self.analyzer_state.analyzer.detach_apps();
-            let _ = self.update_analyzer();
+            if self.analyzer_state.restart_timer.elapsed() >= Duration::from_secs(1) {
+                self.analyzer_state.restart_timer = Instant::now();
+                self.analyzer_state.restart_counter = 0;
+                self.analyzer_state.analyzer.detach_apps();
+                let _ = self.update_analyzer();
+            }
         } else {
             self.analyzer_state.restart_counter += 1;
         }
