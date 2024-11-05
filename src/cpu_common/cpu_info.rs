@@ -64,7 +64,12 @@ impl Info {
         let max_freq_path = self.max_freq_path();
         let min_freq_path = self.min_freq_path();
 
-        let freq = freq.to_string();
+        let freq = freq
+            .clamp(
+                self.freqs.first().copied().unwrap(),
+                self.freqs.last().copied().unwrap(),
+            )
+            .to_string();
 
         if !IGNORE_MAP
             .get()
