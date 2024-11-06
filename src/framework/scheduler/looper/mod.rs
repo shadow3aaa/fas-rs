@@ -93,7 +93,6 @@ impl EvolutionState {
 struct FasState {
     mode: Mode,
     working_state: State,
-    janked: bool,
     delay_timer: Instant,
     buffer: Option<Buffer>,
 }
@@ -146,7 +145,6 @@ impl Looper {
                 buffer: None,
                 working_state: State::NotWorking,
                 delay_timer: Instant::now(),
-                janked: false,
             },
             evolution_state: EvolutionState {
                 pid_params: PidParams::default(),
@@ -164,12 +162,7 @@ impl Looper {
             let _ = self.update_analyzer();
             self.retain_topapp();
 
-            let target_fps = self
-                .fas_state
-                .buffer
-                .as_ref()
-                .and_then(|buffer| buffer.target_fps_state.target_fps);
-            let fas_data = self.recv_message(target_fps);
+            let fas_data = self.recv_message();
 
             if self.windows_watcher.visible_freeform_window() {
                 self.disable_fas();
@@ -177,10 +170,6 @@ impl Looper {
             }
 
             if let Some(data) = fas_data {
-                self.fas_state.janked = false;
-                #[cfg(debug_assertions)]
-                debug!("janked: {}", self.fas_state.janked);
-
                 if let Some(state) = self.buffer_update(&data) {
                     match state {
                         BufferWorkingState::Usable => self.do_policy(),
@@ -188,9 +177,8 @@ impl Looper {
                     }
                 }
             } else if let Some(buffer) = self.fas_state.buffer.as_mut() {
-                self.fas_state.janked = true;
                 #[cfg(debug_assertions)]
-                debug!("janked: {}", self.fas_state.janked);
+                debug!("janked !");
                 buffer.additional_frametime(&self.extension);
 
                 match buffer.state.working_state {
@@ -223,20 +211,10 @@ impl Looper {
         }
     }
 
-    fn recv_message(&mut self, target_fps: Option<u32>) -> Option<FasData> {
-        let target_frametime = target_fps.map(|fps| Duration::from_secs(1) / fps);
-
-        let time = if unlikely(self.fas_state.working_state != State::Working) {
-            Duration::from_millis(100)
-        } else if unlikely(self.fas_state.janked) {
-            target_frametime.map_or(Duration::from_millis(100), |time| time / 4)
-        } else {
-            target_frametime.map_or(Duration::from_millis(100), |time| time * 2)
-        };
-
+    fn recv_message(&mut self) -> Option<FasData> {
         self.analyzer_state
             .analyzer
-            .recv_timeout(time)
+            .recv_timeout(Duration::from_millis(100))
             .map(|(pid, frametime)| FasData { pid, frametime })
     }
 
