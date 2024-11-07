@@ -47,7 +47,7 @@
   - **scene_game_list**
 
     - 类型: `bool`
-    - `true`: 使用 scene 游戏列表
+    - `true`: 使用 scene 游戏列表 \*
     - `false`: 不使用 scene 游戏列表
 
   - `*`: 默认配置

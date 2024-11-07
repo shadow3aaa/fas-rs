@@ -47,7 +47,7 @@
   - **scene_game_list**
 
     - Type: `bool`
-    - `true`: Use scene game list
+    - `true`: Use scene game list \*
     - `false`: Not using scene game list
 
   - `*`: default configuration
