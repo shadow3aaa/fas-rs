@@ -24,16 +24,10 @@ use likely_stable::{likely, unlikely};
 #[cfg(debug_assertions)]
 use log::debug;
 use log::info;
-use policy::{
-    controll::calculate_control,
-    evolution::{evaluate_fitness, load_control_params, mutate_params, open_database, Fitness},
-    ControllerParams,
-};
-use rusqlite::Connection;
+use policy::{controll::calculate_control, ControllerParams};
 
 use super::{topapp::TimedWatcher, FasData};
 use crate::{
-    cpu_temp_watcher::CpuTempWatcher,
     framework::{
         config::Config,
         error::Result,
@@ -46,49 +40,13 @@ use crate::{
 use buffer::{Buffer, BufferWorkingState};
 use clean::Cleaner;
 
+const CONTROLLER_PARAMS: ControllerParams = ControllerParams { kp: 0.0006 };
+
 #[derive(PartialEq)]
 enum State {
     NotWorking,
     Waiting,
     Working,
-}
-
-struct EvolutionState {
-    controller_params: ControllerParams,
-    mutated_controller_params: ControllerParams,
-    mutate_timer: Instant,
-    fitness: Fitness,
-}
-
-impl EvolutionState {
-    pub fn reset(&mut self, database: &Connection, pkg: &str) {
-        self.controller_params =
-            load_control_params(database, pkg).unwrap_or_else(|_| ControllerParams::default());
-        self.mutated_controller_params = self.controller_params;
-        self.fitness = Fitness::MIN;
-    }
-
-    pub fn try_evolution(
-        &mut self,
-        buffer: &Buffer,
-        cpu_temp_watcher: &CpuTempWatcher,
-        config: &mut Config,
-        mode: Mode,
-    ) {
-        if unlikely(self.mutate_timer.elapsed() > Duration::from_millis(100)) {
-            self.mutate_timer = Instant::now();
-
-            if let Some(fitness) = evaluate_fitness(buffer, cpu_temp_watcher, config, mode) {
-                if fitness > self.fitness {
-                    self.controller_params = self.mutated_controller_params;
-                }
-
-                self.fitness = fitness;
-            }
-
-            self.mutated_controller_params = mutate_params(self.controller_params);
-        }
-    }
 }
 
 struct FasState {
@@ -106,22 +64,18 @@ struct AnalyzerState {
 
 pub struct Looper {
     analyzer_state: AnalyzerState,
-    cpu_temp_watcher: CpuTempWatcher,
     config: Config,
     node: Node,
     extension: Extension,
     controller: Controller,
     windows_watcher: TimedWatcher,
     cleaner: Cleaner,
-    database: Connection,
     fas_state: FasState,
-    evolution_state: EvolutionState,
 }
 
 impl Looper {
     pub fn new(
         analyzer: Analyzer,
-        cpu_temp_watcher: CpuTempWatcher,
         config: Config,
         node: Node,
         extension: Extension,
@@ -133,25 +87,17 @@ impl Looper {
                 restart_counter: 0,
                 restart_timer: Instant::now(),
             },
-            cpu_temp_watcher,
             config,
             node,
             extension,
             controller,
             windows_watcher: TimedWatcher::new(),
             cleaner: Cleaner::new(),
-            database: open_database().unwrap(),
             fas_state: FasState {
                 mode: Mode::Balance,
                 buffer: None,
                 working_state: State::NotWorking,
                 delay_timer: Instant::now(),
-            },
-            evolution_state: EvolutionState {
-                controller_params: ControllerParams::default(),
-                mutated_controller_params: ControllerParams::default(),
-                mutate_timer: Instant::now(),
-                fitness: Fitness::MIN,
             },
         }
     }
@@ -253,18 +199,11 @@ impl Looper {
         }
 
         let control = if let Some(buffer) = &self.fas_state.buffer {
-            self.evolution_state.try_evolution(
-                buffer,
-                &self.cpu_temp_watcher,
-                &mut self.config,
-                self.fas_state.mode,
-            );
-
             calculate_control(
                 buffer,
                 &mut self.config,
                 self.fas_state.mode,
-                self.evolution_state.mutated_controller_params,
+                CONTROLLER_PARAMS,
             )
             .unwrap_or_default()
         } else {

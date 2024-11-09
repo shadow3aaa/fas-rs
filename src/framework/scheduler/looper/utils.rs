@@ -17,12 +17,7 @@ use std::time::{Duration, Instant};
 use likely_stable::unlikely;
 use log::info;
 
-use super::{
-    super::FasData,
-    buffer::BufferWorkingState,
-    policy::evolution::{open_database, save_control_params},
-    Buffer, Looper, State,
-};
+use super::{super::FasData, buffer::BufferWorkingState, Buffer, Looper, State};
 use crate::{
     api::{v1::ApiV1, v2::ApiV2, v3::ApiV3},
     framework::{api::ApiV0, utils::get_process_name},
@@ -43,11 +38,6 @@ impl Looper {
                     .analyzer
                     .detach_app(buffer.package_info.pid);
                 let pkg = buffer.package_info.pkg.clone();
-                if save_control_params(&self.database, &pkg, self.evolution_state.controller_params)
-                    .is_err()
-                {
-                    self.database = open_database().unwrap();
-                }
                 self.extension
                     .trigger_extentions(ApiV0::UnloadFas(buffer.package_info.pid, pkg.clone()));
                 self.extension
@@ -124,8 +114,6 @@ impl Looper {
             let target_fps = self.config.target_fps(&pkg)?;
 
             info!("New fas buffer on: [{pkg}]");
-
-            self.evolution_state.reset(&self.database, &pkg);
 
             self.extension
                 .trigger_extentions(ApiV0::LoadFas(pid, pkg.clone()));

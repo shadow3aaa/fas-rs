@@ -55,8 +55,8 @@ fn calculate_control_inner(
     current_frametime: Duration,
     target_frametime: Duration,
 ) -> isize {
-    let error_p =
-        (current_frametime.as_nanos() as f64 - target_frametime.as_nanos() as f64) * controller_params.kp;
+    let error_p = (current_frametime.as_nanos() as f64 - target_frametime.as_nanos() as f64)
+        * controller_params.kp;
 
     #[cfg(debug_assertions)]
     debug!("error_p {error_p}");
