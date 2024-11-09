@@ -18,28 +18,12 @@ DIR=/sdcard/Android/fas-rs
 MERGE_FLAG=$DIR/.need_merge
 LOG=$DIR/fas_log.txt
 
-# $1:value $2:path
-lock_val() {
-	umount $2
-	chmod +w $2
-
-	echo "$1" | tee /dev/fas_rs_mask $2
-	/bin/find $2 -exec mount /dev/fas_rs_mask {} \;
-	rm /dev/fas_rs_mask
-}
-
 sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
 
 resetprop fas-rs-installed true
 
 until [ -d $DIR ]; do
 	sleep 1
-done
-
-stop vendor.oplus.ormsHalService-aidl-default
-
-for i in $(seq 0 2); do
-	lock_val "$i 20000" /proc/shell-temp
 done
 
 if [ -f $MERGE_FLAG ]; then
