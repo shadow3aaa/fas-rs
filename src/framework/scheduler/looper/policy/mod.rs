@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod controll;
 pub mod evolution;
-pub mod pid_controll;
 
 #[derive(Debug, Copy, Clone)]
 pub struct PidParams {

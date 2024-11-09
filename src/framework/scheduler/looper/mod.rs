@@ -25,8 +25,8 @@ use likely_stable::{likely, unlikely};
 use log::debug;
 use log::info;
 use policy::{
+    controll::pid_control,
     evolution::{evaluate_fitness, load_pid_params, mutate_params, open_database, Fitness},
-    pid_controll::pid_control,
     PidParams,
 };
 use rusqlite::Connection;

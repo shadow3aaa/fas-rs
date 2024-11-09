@@ -93,5 +93,5 @@ fn pid_control_inner(
         debug!("error_d {error_d}");
     }
 
-    (error_p + error_i + error_d) as isize
+    (error_p/* + error_i + error_d */) as isize
 }
