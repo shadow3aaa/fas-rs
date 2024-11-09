@@ -63,7 +63,7 @@ pub fn open_database() -> Result<Connection> {
 }
 
 pub fn load_control_params(conn: &Connection, package_name: &str) -> Result<ControllerParams> {
-    let mut stmt = conn.prepare("SELECT kp, ki, kd FROM control_params WHERE id = ?1")?;
+    let mut stmt = conn.prepare("SELECT kp FROM control_params WHERE id = ?1")?;
 
     let params = stmt.query_row(params![package_name], |row| {
         Ok(ControllerParams { kp: row.get(0)? })
@@ -78,12 +78,10 @@ pub fn save_control_params(
     control_params: ControllerParams,
 ) -> Result<()> {
     conn.execute(
-        "INSERT INTO control_params (id, kp, ki, kd) 
-        VALUES (?1, ?2, ?3, ?4)
+        "INSERT INTO control_params (id, kp) 
+        VALUES (?1, ?2)
         ON CONFLICT(id) DO UPDATE SET 
-            kp = excluded.kp, 
-            ki = excluded.ki, 
-            kd = excluded.kd",
+            kp = excluded.kp",
         params![package_name, control_params.kp],
     )?;
     Ok(())
