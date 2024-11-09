@@ -21,5 +21,6 @@ DIR=/sdcard/Android/fas-rs
 	done
 
 	rm -rf $DIR
-	rm -f /data/powercfg*
+	rm -f /data/powercfg.json
+	rm -f /data/powercfg.sh
 } & # do not block boot
