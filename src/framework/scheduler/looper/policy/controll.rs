@@ -26,12 +26,13 @@ pub fn calculate_control(
     config: &mut Config,
     mode: Mode,
     controller_params: ControllerParams,
+    target_fps_offset: f64,
 ) -> Option<isize> {
     if unlikely(buffer.frametime_state.frametimes.len() < 60) {
         return None;
     }
 
-    let target_fps = f64::from(buffer.target_fps_state.target_fps?) - 0.5;
+    let target_fps = f64::from(buffer.target_fps_state.target_fps?) + target_fps_offset;
     let normalized_last_frame = if buffer.frametime_state.additional_frametime == Duration::ZERO {
         buffer.frametime_state.frametimes.front().copied()?
     } else {

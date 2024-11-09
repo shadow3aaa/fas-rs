@@ -15,6 +15,7 @@
 mod buffer;
 mod clean;
 mod policy;
+mod thermal;
 mod utils;
 
 use std::time::{Duration, Instant};
@@ -25,6 +26,7 @@ use likely_stable::{likely, unlikely};
 use log::debug;
 use log::info;
 use policy::{controll::calculate_control, ControllerParams};
+use thermal::Thermal;
 
 use super::{topapp::TimedWatcher, FasData};
 use crate::{
@@ -68,6 +70,7 @@ pub struct Looper {
     node: Node,
     extension: Extension,
     controller: Controller,
+    therminal: Thermal,
     windows_watcher: TimedWatcher,
     cleaner: Cleaner,
     fas_state: FasState,
@@ -91,6 +94,7 @@ impl Looper {
             node,
             extension,
             controller,
+            therminal: Thermal::new().unwrap(),
             windows_watcher: TimedWatcher::new(),
             cleaner: Cleaner::new(),
             fas_state: FasState {
@@ -199,11 +203,15 @@ impl Looper {
         }
 
         let control = if let Some(buffer) = &self.fas_state.buffer {
+            let target_fps_offset = self
+                .therminal
+                .target_fps_offset(&mut self.config, self.fas_state.mode);
             calculate_control(
                 buffer,
                 &mut self.config,
                 self.fas_state.mode,
                 CONTROLLER_PARAMS,
+                target_fps_offset,
             )
             .unwrap_or_default()
         } else {

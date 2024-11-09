@@ -43,6 +43,7 @@ pub struct Config {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct ModeConfig {
     pub margin: u64,
+    pub temp_thresh: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
