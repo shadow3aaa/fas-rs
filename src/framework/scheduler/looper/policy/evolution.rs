@@ -23,7 +23,7 @@ use crate::{
     cpu_temp_watcher::CpuTempWatcher, framework::scheduler::looper::buffer::Buffer, Config, Mode,
 };
 
-use super::PidParams;
+use super::ControllerParams;
 
 pub const DATABASE_PATH: &str = "/sdcard/Android/fas-rs/database.db";
 
@@ -53,50 +53,46 @@ impl Fitness {
 pub fn open_database() -> Result<Connection> {
     let conn = Connection::open(DATABASE_PATH)?;
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS pid_params (
+        "CREATE TABLE IF NOT EXISTS control_params (
             id TEXT PRIMARY KEY,
-            kp REAL NOT NULL,
-            ki REAL NOT NULL,
-            kd REAL NOT NULL
+            kp REAL NOT NULL
         )",
         [],
     )?;
     Ok(conn)
 }
 
-pub fn load_pid_params(conn: &Connection, package_name: &str) -> Result<PidParams> {
-    let mut stmt = conn.prepare("SELECT kp, ki, kd FROM pid_params WHERE id = ?1")?;
+pub fn load_control_params(conn: &Connection, package_name: &str) -> Result<ControllerParams> {
+    let mut stmt = conn.prepare("SELECT kp, ki, kd FROM control_params WHERE id = ?1")?;
 
     let params = stmt.query_row(params![package_name], |row| {
-        Ok(PidParams {
-            kp: row.get(0)?,
-            ki: row.get(1)?,
-            kd: row.get(2)?,
-        })
+        Ok(ControllerParams { kp: row.get(0)? })
     })?;
 
     Ok(params)
 }
 
-pub fn save_pid_params(conn: &Connection, package_name: &str, pid_params: PidParams) -> Result<()> {
+pub fn save_control_params(
+    conn: &Connection,
+    package_name: &str,
+    control_params: ControllerParams,
+) -> Result<()> {
     conn.execute(
-        "INSERT INTO pid_params (id, kp, ki, kd) 
+        "INSERT INTO control_params (id, kp, ki, kd) 
         VALUES (?1, ?2, ?3, ?4)
         ON CONFLICT(id) DO UPDATE SET 
             kp = excluded.kp, 
             ki = excluded.ki, 
             kd = excluded.kd",
-        params![package_name, pid_params.kp, pid_params.ki, pid_params.kd,],
+        params![package_name, control_params.kp],
     )?;
     Ok(())
 }
 
-pub fn mutate_params(params: PidParams) -> PidParams {
+pub fn mutate_params(params: ControllerParams) -> ControllerParams {
     let mut rng = rand::thread_rng();
-    PidParams {
+    ControllerParams {
         kp: (params.kp + rng.gen_range(-0.000_1..0.000_1)).clamp(0.000_1, 0.000_8),
-        ki: (params.ki + rng.gen_range(-0.000_01..0.000_01)).clamp(0.000_015, 0.000_08),
-        kd: (params.kd + rng.gen_range(-0.000_001..0.000_001)).clamp(0.000_025, 0.000_035),
     }
 }
 

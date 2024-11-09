@@ -18,14 +18,14 @@ use likely_stable::unlikely;
 #[cfg(debug_assertions)]
 use log::debug;
 
-use super::{super::buffer::Buffer, PidParams};
+use super::{super::buffer::Buffer, ControllerParams};
 use crate::framework::prelude::*;
 
-pub fn pid_control(
+pub fn calculate_control(
     buffer: &Buffer,
     config: &mut Config,
     mode: Mode,
-    pid_params: PidParams,
+    controller_params: ControllerParams,
 ) -> Option<isize> {
     if unlikely(buffer.frametime_state.frametimes.len() < 60) {
         return None;
@@ -47,51 +47,19 @@ pub fn pid_control(
     let margin = Duration::from_millis(margin);
     let target = Duration::from_secs(1) + margin;
 
-    Some(pid_control_inner(
-        pid_params,
-        frame,
-        target,
-        buffer
-            .frametime_state
-            .frametimes
-            .iter()
-            .copied()
-            .take(30)
-            .sum::<Duration>()
-            .mul_f64(target_fps),
-        buffer
-            .frametime_state
-            .frametimes
-            .iter()
-            .copied()
-            .take(60)
-            .sum::<Duration>()
-            .mul_f64(target_fps),
-    ))
+    Some(calculate_control_inner(controller_params, frame, target))
 }
 
-fn pid_control_inner(
-    pid_params: PidParams,
+fn calculate_control_inner(
+    controller_params: ControllerParams,
     current_frametime: Duration,
     target_frametime: Duration,
-    last_30_frametimes_sum: Duration,
-    last_60_frametimes_sum: Duration,
 ) -> isize {
     let error_p =
-        (current_frametime.as_nanos() as f64 - target_frametime.as_nanos() as f64) * pid_params.kp;
-    let error_i = (target_frametime.as_nanos() as f64)
-        .mul_add(-30.0, last_30_frametimes_sum.as_nanos() as f64)
-        * pid_params.ki;
-    let error_d = (last_30_frametimes_sum.as_nanos() as f64)
-        .mul_add(2.0, -(last_60_frametimes_sum.as_nanos() as f64))
-        * pid_params.kd;
+        (current_frametime.as_nanos() as f64 - target_frametime.as_nanos() as f64) * controller_params.kp;
 
     #[cfg(debug_assertions)]
-    {
-        debug!("error_p {error_p}");
-        debug!("error_i {error_i}");
-        debug!("error_d {error_d}");
-    }
+    debug!("error_p {error_p}");
 
-    (error_p/* + error_i + error_d */) as isize
+    error_p as isize
 }

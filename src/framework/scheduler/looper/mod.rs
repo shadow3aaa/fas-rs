@@ -25,9 +25,9 @@ use likely_stable::{likely, unlikely};
 use log::debug;
 use log::info;
 use policy::{
-    controll::pid_control,
-    evolution::{evaluate_fitness, load_pid_params, mutate_params, open_database, Fitness},
-    PidParams,
+    controll::calculate_control,
+    evolution::{evaluate_fitness, load_control_params, mutate_params, open_database, Fitness},
+    ControllerParams,
 };
 use rusqlite::Connection;
 
@@ -54,16 +54,17 @@ enum State {
 }
 
 struct EvolutionState {
-    pid_params: PidParams,
-    mutated_pid_params: PidParams,
+    controller_params: ControllerParams,
+    mutated_controller_params: ControllerParams,
     mutate_timer: Instant,
     fitness: Fitness,
 }
 
 impl EvolutionState {
     pub fn reset(&mut self, database: &Connection, pkg: &str) {
-        self.pid_params = load_pid_params(database, pkg).unwrap_or_else(|_| PidParams::default());
-        self.mutated_pid_params = self.pid_params;
+        self.controller_params =
+            load_control_params(database, pkg).unwrap_or_else(|_| ControllerParams::default());
+        self.mutated_controller_params = self.controller_params;
         self.fitness = Fitness::MIN;
     }
 
@@ -79,13 +80,13 @@ impl EvolutionState {
 
             if let Some(fitness) = evaluate_fitness(buffer, cpu_temp_watcher, config, mode) {
                 if fitness > self.fitness {
-                    self.pid_params = self.mutated_pid_params;
+                    self.controller_params = self.mutated_controller_params;
                 }
 
                 self.fitness = fitness;
             }
 
-            self.mutated_pid_params = mutate_params(self.pid_params);
+            self.mutated_controller_params = mutate_params(self.controller_params);
         }
     }
 }
@@ -147,8 +148,8 @@ impl Looper {
                 delay_timer: Instant::now(),
             },
             evolution_state: EvolutionState {
-                pid_params: PidParams::default(),
-                mutated_pid_params: PidParams::default(),
+                controller_params: ControllerParams::default(),
+                mutated_controller_params: ControllerParams::default(),
                 mutate_timer: Instant::now(),
                 fitness: Fitness::MIN,
             },
@@ -259,11 +260,11 @@ impl Looper {
                 self.fas_state.mode,
             );
 
-            pid_control(
+            calculate_control(
                 buffer,
                 &mut self.config,
                 self.fas_state.mode,
-                self.evolution_state.mutated_pid_params,
+                self.evolution_state.mutated_controller_params,
             )
             .unwrap_or_default()
         } else {

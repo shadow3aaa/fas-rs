@@ -16,18 +16,12 @@ pub mod controll;
 pub mod evolution;
 
 #[derive(Debug, Copy, Clone)]
-pub struct PidParams {
+pub struct ControllerParams {
     pub kp: f64,
-    pub ki: f64,
-    pub kd: f64,
 }
 
-impl Default for PidParams {
+impl Default for ControllerParams {
     fn default() -> Self {
-        Self {
-            kp: 0.000_3,
-            ki: 0.000_03,
-            kd: 0.000_003,
-        }
+        Self { kp: 0.000_3 }
     }
 }

@@ -20,7 +20,7 @@ use log::info;
 use super::{
     super::FasData,
     buffer::BufferWorkingState,
-    policy::evolution::{open_database, save_pid_params},
+    policy::evolution::{open_database, save_control_params},
     Buffer, Looper, State,
 };
 use crate::{
@@ -43,7 +43,9 @@ impl Looper {
                     .analyzer
                     .detach_app(buffer.package_info.pid);
                 let pkg = buffer.package_info.pkg.clone();
-                if save_pid_params(&self.database, &pkg, self.evolution_state.pid_params).is_err() {
+                if save_control_params(&self.database, &pkg, self.evolution_state.controller_params)
+                    .is_err()
+                {
                     self.database = open_database().unwrap();
                 }
                 self.extension
