@@ -1,11 +1,13 @@
 # **fas-rs**
 
-[![English][readme-cn-badge]][readme-cn-url]
+[![简体中文][readme-cn-badge]][readme-cn-url]
 [![Stars][stars-badge]][stars-url]
 [![CI Build][ci-badge]][ci-url]
 [![Release][release-badge]][release-url]
 [![Download][download-badge]][download-url]
 [![Telegram][telegram-badge]][telegram-url]
+
+> **⚠ Warning**: This document is gpt-translated and may contain inaccuracies or errors.
 
 [readme-cn-badge]: https://img.shields.io/badge/README-简体中文-blue.svg?style=for-the-badge&logo=readme
 [readme-cn-url]: README.md
@@ -61,12 +63,24 @@
 
 - ### **`powersave` / `balance` / `performance` / `fast` Description:**
 
-  - **mode:**
-    - Currently, `fas-rs` does not have an official switching mode manager, but is connected to the configuration interface of [`scene`](http://vtools.omarea.com). If you don’t use scene, the configuration of `balance` will be used by default.
-    - If you have some understanding of programming on Linux, you can switch to the corresponding mode by writing any one of the 4 modes to the `/dev/fas_rs/mode` node, and at the same time, reading it can also know the current `fas-rs` mode
-  - **Parameter Description:**
-    - margin(ms): Allowed frame drop margin. The smaller the value, the higher the frame rate, the larger the value, the more power is saved (0 <= margin < 1000)
-    - temp_thresh (0.001℃): trigger temperature of fas-based thermal control
+  - #### **Mode Switching:**
+
+    - Currently, `fas-rs` lacks an official mode-switching manager, instead integrating the [`scene`](http://vtools.omarea.com) configuration interface. If you do not use scene, the default configuration is `balance`.
+    - If you have some Linux programming knowledge, you can write any of the 4 modes to the `/dev/fas_rs/mode` node to switch modes, and reading it will show the current `fas-rs` mode.
+
+  - #### **Mode Parameter Description:**
+
+    - **margin:**
+
+      - Type: `integer`
+      - Unit: `milliseconds`
+      - Allowed frame drop margin; smaller values increase frame rate, larger values save power (0 <= margin < 1000)
+
+    - **temp_thresh:**
+
+      - Type: `integer` or `"disabled"`
+      - `integer`: Sets the core temperature at which `fas-rs` triggers thermal control (unit: 0.001°C)
+      - `"disabled"`: Disables built-in thermal control in `fas-rs`
 
 ### **`games.toml` configuration standard example:**
 
@@ -90,15 +104,19 @@ scene_game_list = true
 
 [powersave]
 margin = 3
+temp_thresh = 60000
 
 [balance]
 margin = 2
+temp_thresh = 75000
 
 [performance]
 margin = 1
+temp_thresh = 90000
 
 [fast]
 margin = 0
+temp_thresh = 95000
 ```
 
 ## **Configuration merge**

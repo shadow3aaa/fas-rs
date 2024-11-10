@@ -61,12 +61,24 @@
 
 - ### **模式(`powersave` / `balance` / `performance` / `fast`)说明:**
 
-  - **mode:**
+  - #### **模式切换:**
+
     - 目前`fas-rs`还没有官方的切换模式的管理器，而是接入了[`scene`](http://vtools.omarea.com)的配置接口，如果你不用 scene 则默认使用`balance`的配置
     - 如果你有在 linux 上编程的一些了解，向`/dev/fas_rs/mode`节点写入 4 模式中的任意一个即可切换到对应模式，同时读取它也可以知道现在`fas-rs`所处的模式
-  - **模式参数说明:**
-    - margin(ms): 允许的掉帧余量，越小帧率越高，越大越省电(0 <= margin < 1000)
-    - temp_thresh(0.001℃): fas触发温控核心温度
+
+  - #### **模式参数说明:**
+
+    - **margin:**
+
+      - 类型: `整数`
+      - 单位: `milliseconds`
+      - 允许的掉帧余量，越小帧率越高，越大越省电(0 <= margin < 1000)
+
+    - **temp_thresh:**
+
+      - 类型: `整数`或者`"disabled"`
+      - `整数`: 让`fas-rs`触发温控的核心温度(单位0.001℃)
+      - `"disabled"`: 关闭`fas-rs`内置温控
 
 ### **`games.toml`配置标准例:**
 
@@ -90,15 +102,19 @@ scene_game_list = true
 
 [powersave]
 margin = 3
+temp_thresh = 60000
 
 [balance]
 margin = 2
+temp_thresh = 75000
 
 [performance]
 margin = 1
+temp_thresh = 90000
 
 [fast]
 margin = 0
+temp_thresh = 95000
 ```
 
 ## **配置合并**

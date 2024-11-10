@@ -16,7 +16,7 @@ use std::{fs, path::PathBuf};
 
 use anyhow::Result;
 
-use crate::{Config, Mode};
+use crate::{framework::config::TemperatureThreshold, Config, Mode};
 
 pub struct Thermal {
     target_fps_offset: f64,
@@ -49,8 +49,14 @@ impl Thermal {
     }
 
     pub fn target_fps_offset(&mut self, config: &mut Config, mode: Mode) -> f64 {
+        let target = match config.mode_config(mode).temp_thresh {
+            TemperatureThreshold::Disabled => {
+                return 0.0;
+            }
+            TemperatureThreshold::Temp(t) => t,
+        };
+
         self.temperature_update();
-        let target = config.mode_config(mode).temp_thresh;
         if self.temperature > target {
             self.target_fps_offset -= 0.1;
         } else {
