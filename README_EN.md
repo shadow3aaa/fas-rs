@@ -76,7 +76,7 @@
       - Unit: `milliseconds`
       - Allowed frame drop margin; smaller values increase frame rate, larger values save power (0 <= margin < 1000)
 
-    - **temp_thresh:**
+    - **core_temp_thresh:**
 
       - Type: `integer` or `"disabled"`
       - `integer`: Sets the core temperature at which `fas-rs` triggers thermal control (unit: 0.001°C)
@@ -104,19 +104,19 @@ scene_game_list = true
 
 [powersave]
 margin = 3
-temp_thresh = 60000
+core_temp_thresh = 60000
 
 [balance]
 margin = 2
-temp_thresh = 75000
+core_temp_thresh = 75000
 
 [performance]
 margin = 1
-temp_thresh = 90000
+core_temp_thresh = 90000
 
 [fast]
 margin = 0
-temp_thresh = 95000
+core_temp_thresh = 95000
 ```
 
 ## **Configuration merge**

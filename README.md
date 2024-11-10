@@ -74,7 +74,7 @@
       - 单位: `milliseconds`
       - 允许的掉帧余量，越小帧率越高，越大越省电(0 <= margin < 1000)
 
-    - **temp_thresh:**
+    - **core_temp_thresh:**
 
       - 类型: `整数`或者`"disabled"`
       - `整数`: 让`fas-rs`触发温控的核心温度(单位0.001℃)
@@ -102,19 +102,19 @@ scene_game_list = true
 
 [powersave]
 margin = 3
-temp_thresh = 60000
+core_temp_thresh = 60000
 
 [balance]
 margin = 2
-temp_thresh = 75000
+core_temp_thresh = 75000
 
 [performance]
 margin = 1
-temp_thresh = 90000
+core_temp_thresh = 90000
 
 [fast]
 margin = 0
-temp_thresh = 95000
+core_temp_thresh = 95000
 ```
 
 ## **配置合并**
