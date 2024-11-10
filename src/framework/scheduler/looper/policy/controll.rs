@@ -32,7 +32,8 @@ pub fn calculate_control(
         return None;
     }
 
-    let target_fps = f64::from(buffer.target_fps_state.target_fps?) + target_fps_offset;
+    let target_fps = f64::from(buffer.target_fps_state.target_fps?);
+    let target_fps = (target_fps + target_fps_offset).clamp(0.0, target_fps);
     let normalized_last_frame = if buffer.frametime_state.additional_frametime == Duration::ZERO {
         buffer.frametime_state.frametimes.front().copied()?
     } else {

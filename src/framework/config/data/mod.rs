@@ -43,7 +43,7 @@ pub struct Config {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct ModeConfig {
     pub margin: u64,
-    pub temp_thresh: TemperatureThreshold,
+    pub core_temp_thresh: TemperatureThreshold,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
