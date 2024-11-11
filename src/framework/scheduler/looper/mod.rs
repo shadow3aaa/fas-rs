@@ -121,6 +121,8 @@ impl Looper {
             }
 
             if let Some(data) = fas_data {
+                #[cfg(debug_assertions)]
+                debug!("original frametime: {:?}", data.frametime);
                 if let Some(state) = self.buffer_update(&data) {
                     match state {
                         BufferWorkingState::Usable => self.do_policy(),
