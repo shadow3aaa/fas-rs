@@ -32,7 +32,7 @@ inotify = { version = "0.11.0", default-features = false }
 libc = "0.2.162"
 flexi_logger = "0.29.6"
 toml = "0.8.19"
-serde = { version = "1.0.214", features = ["derive"] }
+serde = { version = "1.0.215", features = ["derive"] }
 sys-mount = { version = "3.0.1", default-features = false }
 quick-xml = { version = "0.37.0", features = ["serialize"] }
 mlua = { version = "0.10.0", features = ["luajit", "vendored", "error-send"] }
@@ -45,7 +45,7 @@ rand = "0.8.5"
 [build-dependencies]
 anyhow = "1.0.93"
 toml = "0.8.19"
-serde = { version = "1.0.214", features = ["derive"] }
+serde = { version = "1.0.215", features = ["derive"] }
 serde_json = "1.0.132"
 
 [profile.dev]
