@@ -26,7 +26,7 @@ use log::debug;
 use log::info;
 use policy::{controll::calculate_control, ControllerParams};
 
-use super::{thermal::Thermal, topapp::TimedWatcher, FasData};
+use super::{thermal::Thermal, topapp::TopAppsWatcher, FasData};
 use crate::{
     framework::{
         config::Config,
@@ -73,7 +73,7 @@ pub struct Looper {
     node: Node,
     extension: Extension,
     therminal: Thermal,
-    windows_watcher: TimedWatcher,
+    windows_watcher: TopAppsWatcher,
     cleaner: Cleaner,
     fas_state: FasState,
     controller_state: ControllerState,
@@ -97,7 +97,7 @@ impl Looper {
             node,
             extension,
             therminal: Thermal::new().unwrap(),
-            windows_watcher: TimedWatcher::new(),
+            windows_watcher: TopAppsWatcher::new(),
             cleaner: Cleaner::new(),
             fas_state: FasState {
                 mode: Mode::Balance,

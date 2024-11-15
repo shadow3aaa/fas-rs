@@ -45,13 +45,13 @@ impl WindowsInfo {
     }
 }
 
-pub struct TimedWatcher {
+pub struct TopAppsWatcher {
     windows_dumper: Dumpsys,
     cache: WindowsInfo,
     last_refresh: Instant,
 }
 
-impl TimedWatcher {
+impl TopAppsWatcher {
     pub fn new() -> Self {
         Self {
             windows_dumper: Dumpsys::new("window").unwrap(),
