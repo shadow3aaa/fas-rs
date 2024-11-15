@@ -27,7 +27,9 @@ struct WindowsInfo {
 impl WindowsInfo {
     pub fn new(dump: &str) -> Self {
         let pids = Self::parse_top_app(dump);
-        let visible_freeform_window = dump.contains("freeform");
+        let visible_freeform_window = dump.contains("freeform")
+            || dump.contains("FlexibleTaskCaptionView")
+            || dump.contains("FlexibleTaskIndicatorView");
 
         Self {
             visible_freeform_window,
