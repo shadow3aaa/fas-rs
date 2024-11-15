@@ -47,7 +47,7 @@ impl Buffer {
 
         self.frametime_state.current_fps = current_fps;
 
-        while self.frametime_state.current_fpses.len() >= 5 {
+        if self.frametime_state.current_fpses.len() == 30 {
             self.frametime_state.current_fpses.pop_back();
         }
 
@@ -57,6 +57,8 @@ impl Buffer {
     pub fn calculate_target_fps(&mut self, extension: &Extension) {
         let new_target_fps = self.target_fps();
         if self.target_fps_state.target_fps != new_target_fps || new_target_fps.is_none() {
+            self.frametime_state.current_fpses.clear();
+            self.frametime_state.frametimes.clear();
             if let Some(target_fps) = new_target_fps {
                 extension.trigger_extentions(ApiV2::TargetFpsChange(
                     target_fps,
@@ -80,7 +82,7 @@ impl Buffer {
         };
 
         let mut current_fps: Option<f64> = None;
-        for next_fps in self.frametime_state.current_fpses.iter().copied().take(144) {
+        for next_fps in self.frametime_state.current_fpses.iter().copied().take(5) {
             if let Some(fps) = current_fps {
                 current_fps = Some(fps.max(next_fps));
             } else {

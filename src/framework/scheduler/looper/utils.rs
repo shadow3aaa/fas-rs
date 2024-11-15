@@ -62,7 +62,9 @@ impl Looper {
             State::Working => {
                 self.fas_state.working_state = State::NotWorking;
                 self.cleaner.undo_cleanup();
-                self.controller.init_default(&self.extension);
+                self.controller_state
+                    .controller
+                    .init_default(&self.extension);
                 self.extension.trigger_extentions(ApiV0::StopFas);
                 self.extension.trigger_extentions(ApiV1::StopFas);
                 self.extension.trigger_extentions(ApiV2::StopFas);
@@ -87,7 +89,8 @@ impl Looper {
                 if self.fas_state.delay_timer.elapsed() > DELAY_TIME {
                     self.fas_state.working_state = State::Working;
                     self.cleaner.cleanup();
-                    self.controller.init_game(&self.extension);
+                    self.controller_state.target_fps_offset = 0.0;
+                    self.controller_state.controller.init_game(&self.extension);
                 }
             }
             State::Working => (),
