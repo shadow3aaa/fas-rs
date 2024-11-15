@@ -15,7 +15,6 @@
 mod buffer;
 mod clean;
 mod policy;
-mod thermal;
 mod utils;
 
 use std::time::{Duration, Instant};
@@ -26,9 +25,8 @@ use likely_stable::{likely, unlikely};
 use log::debug;
 use log::info;
 use policy::{controll::calculate_control, ControllerParams};
-use thermal::Thermal;
 
-use super::{topapp::TimedWatcher, FasData};
+use super::{thermal::Thermal, topapp::TimedWatcher, FasData};
 use crate::{
     framework::{
         config::Config,

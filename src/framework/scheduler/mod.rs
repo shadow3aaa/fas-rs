@@ -13,6 +13,7 @@
 // limitations under the License.
 
 mod looper;
+mod thermal;
 mod topapp;
 
 use std::time::Duration;
