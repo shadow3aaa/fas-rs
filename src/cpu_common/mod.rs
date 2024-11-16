@@ -17,6 +17,7 @@ mod cpu_info;
 use std::{
     collections::HashMap,
     fs,
+    path::Path,
     sync::{
         atomic::{AtomicBool, AtomicIsize},
         OnceLock,
@@ -32,7 +33,7 @@ use log::debug;
 use log::{error, warn};
 
 use crate::{
-    api::{v1::ApiV1, v2::ApiV2, v3::ApiV3, ApiV0},
+    api::{trigger_init_cpu_freq, trigger_reset_cpu_freq},
     file_handler::FileHandler,
     Extension,
 };
@@ -50,32 +51,7 @@ pub struct Controller {
 
 impl Controller {
     pub fn new() -> Result<Self> {
-        let mut cpu_infos: Vec<_> = fs::read_dir("/sys/devices/system/cpu/cpufreq")?
-            .map(|entry| entry.unwrap().path())
-            .filter(|path| {
-                path.is_dir()
-                    && path
-                        .file_name()
-                        .unwrap()
-                        .to_str()
-                        .unwrap()
-                        .starts_with("policy")
-            })
-            .map(|path| loop {
-                match Info::new(&path) {
-                    Ok(info) => {
-                        return info;
-                    }
-                    Err(e) => {
-                        warn!("Failed to read cpu info from: {path:?}, reason: {e:#?}");
-                        warn!("Retrying...");
-                        thread::sleep(Duration::from_secs(1));
-                        continue;
-                    }
-                }
-            })
-            .collect();
-
+        let mut cpu_infos = Self::load_cpu_infos()?;
         cpu_infos.sort_by_key(|cpu| cpu.policy);
 
         OFFSET_MAP.get_or_init(|| {
@@ -92,14 +68,14 @@ impl Controller {
         });
 
         #[cfg(debug_assertions)]
-        debug!("cpu infos: {cpu_infos:?}");
+        debug!("cpu infos: {:?}", cpu_infos);
 
         let max_freq = cpu_infos
             .iter()
             .flat_map(|info| info.freqs.iter())
             .max()
             .copied()
-            .unwrap();
+            .unwrap_or(0);
 
         Ok(Self {
             max_freq,
@@ -109,30 +85,59 @@ impl Controller {
         })
     }
 
+    fn load_cpu_infos() -> Result<Vec<Info>> {
+        let mut cpu_infos = Vec::new();
+
+        for entry in fs::read_dir("/sys/devices/system/cpu/cpufreq")? {
+            let path = match entry {
+                Ok(entry) => entry.path(),
+                Err(e) => {
+                    warn!("Failed to read entry: {:?}", e);
+                    continue;
+                }
+            };
+
+            if !path.is_dir() {
+                continue;
+            }
+
+            let Some(filename) = path.file_name().and_then(|s| s.to_str()) else {
+                continue;
+            };
+
+            if !filename.starts_with("policy") {
+                continue;
+            }
+
+            cpu_infos.push(Self::retry_load_info(&path));
+        }
+
+        Ok(cpu_infos)
+    }
+
+    fn retry_load_info(path: &Path) -> Info {
+        loop {
+            match Info::new(path) {
+                Ok(info) => return info,
+                Err(e) => {
+                    warn!("Failed to read cpu info from: {:?}, reason: {:?}", path, e);
+                    warn!("Retrying...");
+                    thread::sleep(Duration::from_secs(1));
+                }
+            }
+        }
+    }
+
     pub fn init_game(&mut self, extension: &Extension) {
         self.policy_freq = self.max_freq;
-        extension.trigger_extentions(ApiV0::InitCpuFreq);
-        extension.trigger_extentions(ApiV1::InitCpuFreq);
-        extension.trigger_extentions(ApiV2::InitCpuFreq);
-        extension.trigger_extentions(ApiV3::InitCpuFreq);
-
-        for cpu in &self.cpu_infos {
-            cpu.write_freq(self.max_freq, &mut self.file_handler)
-                .unwrap_or_else(|e| error!("{e:?}"));
-        }
+        trigger_init_cpu_freq(extension);
+        self.set_all_cpu_freq(self.max_freq);
     }
 
     pub fn init_default(&mut self, extension: &Extension) {
         self.policy_freq = self.max_freq;
-        extension.trigger_extentions(ApiV0::ResetCpuFreq);
-        extension.trigger_extentions(ApiV1::ResetCpuFreq);
-        extension.trigger_extentions(ApiV2::ResetCpuFreq);
-        extension.trigger_extentions(ApiV3::ResetCpuFreq);
-
-        for cpu in &mut self.cpu_infos {
-            cpu.reset_freq(&mut self.file_handler)
-                .unwrap_or_else(|e| error!("{e:?}"));
-        }
+        trigger_reset_cpu_freq(extension);
+        self.reset_all_cpu_freq();
     }
 
     pub fn fas_update_freq(&mut self, control: isize) {
@@ -147,8 +152,22 @@ impl Controller {
             debug!("policy freq: {}", self.policy_freq);
         }
 
+        self.set_all_cpu_freq(self.policy_freq);
+    }
+
+    fn set_all_cpu_freq(&mut self, freq: isize) {
         for cpu in &self.cpu_infos {
-            let _ = cpu.write_freq(self.policy_freq, &mut self.file_handler);
+            if let Err(e) = cpu.write_freq(freq, &mut self.file_handler) {
+                error!("{:?}", e);
+            }
+        }
+    }
+
+    fn reset_all_cpu_freq(&mut self) {
+        for cpu in &self.cpu_infos {
+            if let Err(e) = cpu.reset_freq(&mut self.file_handler) {
+                error!("{:?}", e);
+            }
         }
     }
 }

@@ -45,10 +45,31 @@ pub struct FrameTimeState {
     pub additional_frametime: Duration,
 }
 
+impl FrameTimeState {
+    fn new() -> Self {
+        Self {
+            current_fps: 0.0,
+            current_fpses: VecDeque::with_capacity(144 * 3),
+            avg_time: Duration::ZERO,
+            frametimes: VecDeque::with_capacity(1440),
+            additional_frametime: Duration::ZERO,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct TargetFpsState {
     pub target_fps: Option<u32>,
     target_fps_config: TargetFps,
+}
+
+impl TargetFpsState {
+    const fn new(target_fps_config: TargetFps) -> Self {
+        Self {
+            target_fps: None,
+            target_fps_config,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -57,6 +78,18 @@ pub struct BufferState {
     pub working_state: BufferWorkingState,
     calculate_timer: Instant,
     working_state_timer: Instant,
+}
+
+impl BufferState {
+    fn new() -> Self {
+        let now = Instant::now();
+        Self {
+            last_update: now,
+            working_state: BufferWorkingState::Unusable,
+            calculate_timer: now,
+            working_state_timer: now,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -71,23 +104,9 @@ impl Buffer {
     pub fn new(target_fps_config: TargetFps, pid: pid_t, pkg: String) -> Self {
         Self {
             package_info: PackageInfo { pid, pkg },
-            target_fps_state: TargetFpsState {
-                target_fps: None,
-                target_fps_config,
-            },
-            frametime_state: FrameTimeState {
-                current_fps: 0.0,
-                current_fpses: VecDeque::with_capacity(144 * 3),
-                avg_time: Duration::ZERO,
-                frametimes: VecDeque::with_capacity(1440),
-                additional_frametime: Duration::ZERO,
-            },
-            state: BufferState {
-                last_update: Instant::now(),
-                calculate_timer: Instant::now(),
-                working_state: BufferWorkingState::Unusable,
-                working_state_timer: Instant::now(),
-            },
+            frametime_state: FrameTimeState::new(),
+            target_fps_state: TargetFpsState::new(target_fps_config),
+            state: BufferState::new(),
         }
     }
 

@@ -15,7 +15,6 @@
 mod buffer;
 mod clean;
 mod policy;
-mod utils;
 
 use std::time::{Duration, Instant};
 
@@ -28,10 +27,12 @@ use policy::{controll::calculate_control, ControllerParams};
 
 use super::{thermal::Thermal, topapp::TopAppsWatcher, FasData};
 use crate::{
+    api::{trigger_load_fas, trigger_start_fas, trigger_stop_fas, trigger_unload_fas},
     framework::{
         config::Config,
         error::Result,
         node::{Mode, Node},
+        pid_utils::get_process_name,
         Extension,
     },
     Controller,
@@ -39,6 +40,8 @@ use crate::{
 
 use buffer::{Buffer, BufferWorkingState};
 use clean::Cleaner;
+
+const DELAY_TIME: Duration = Duration::from_secs(3);
 
 #[derive(PartialEq)]
 enum State {
@@ -117,18 +120,15 @@ impl Looper {
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
             self.switch_mode();
-
-            let _ = self.update_analyzer();
+            self.update_analyzer()?;
             self.retain_topapp();
-
-            let fas_data = self.recv_message();
 
             if self.windows_watcher.visible_freeform_window() {
                 self.disable_fas();
                 continue;
             }
 
-            if let Some(data) = fas_data {
+            if let Some(data) = self.recv_message() {
                 #[cfg(debug_assertions)]
                 debug!("original frametime: {:?}", data.frametime);
                 if let Some(state) = self.buffer_update(&data) {
@@ -147,9 +147,7 @@ impl Looper {
                         self.restart_analyzer();
                         self.disable_fas();
                     }
-                    BufferWorkingState::Usable => {
-                        self.do_policy();
-                    }
+                    BufferWorkingState::Usable => self.do_policy(),
                 }
             }
         }
@@ -180,15 +178,12 @@ impl Looper {
     }
 
     fn update_analyzer(&mut self) -> Result<()> {
-        use crate::framework::utils::get_process_name;
-
         for pid in self.windows_watcher.topapp_pids().iter().copied() {
             let pkg = get_process_name(pid)?;
             if self.config.need_fas(&pkg) {
                 self.analyzer_state.analyzer.attach_app(pid)?;
             }
         }
-
         Ok(())
     }
 
@@ -232,5 +227,95 @@ impl Looper {
         debug!("control: {control}khz");
 
         self.controller_state.controller.fas_update_freq(control);
+    }
+
+    pub fn retain_topapp(&mut self) {
+        if let Some(buffer) = self.fas_state.buffer.as_ref() {
+            if !self
+                .windows_watcher
+                .topapp_pids()
+                .contains(&buffer.package_info.pid)
+            {
+                let _ = self
+                    .analyzer_state
+                    .analyzer
+                    .detach_app(buffer.package_info.pid);
+                let pkg = buffer.package_info.pkg.clone();
+                trigger_unload_fas(&self.extension, buffer.package_info.pid, pkg);
+                self.fas_state.buffer = None;
+            }
+        }
+
+        if self.fas_state.buffer.is_none() {
+            self.disable_fas();
+        } else {
+            self.enable_fas();
+        }
+    }
+
+    pub fn disable_fas(&mut self) {
+        match self.fas_state.working_state {
+            State::Working => {
+                self.fas_state.working_state = State::NotWorking;
+                self.cleaner.undo_cleanup();
+                self.controller_state
+                    .controller
+                    .init_default(&self.extension);
+                trigger_stop_fas(&self.extension);
+            }
+            State::Waiting => self.fas_state.working_state = State::NotWorking,
+            State::NotWorking => (),
+        }
+    }
+
+    pub fn enable_fas(&mut self) {
+        match self.fas_state.working_state {
+            State::NotWorking => {
+                self.fas_state.working_state = State::Waiting;
+                self.fas_state.delay_timer = Instant::now();
+                trigger_start_fas(&self.extension);
+            }
+            State::Waiting => {
+                if self.fas_state.delay_timer.elapsed() > DELAY_TIME {
+                    self.fas_state.working_state = State::Working;
+                    self.cleaner.cleanup();
+                    self.controller_state.target_fps_offset = 0.0;
+                    self.controller_state.controller.init_game(&self.extension);
+                }
+            }
+            State::Working => (),
+        }
+    }
+
+    pub fn buffer_update(&mut self, data: &FasData) -> Option<BufferWorkingState> {
+        if unlikely(
+            !self.windows_watcher.topapp_pids().contains(&data.pid) || data.frametime.is_zero(),
+        ) {
+            return None;
+        }
+
+        let pid = data.pid;
+        let frametime = data.frametime;
+
+        if let Some(buffer) = self.fas_state.buffer.as_mut() {
+            buffer.push_frametime(frametime, &self.extension);
+            Some(buffer.state.working_state)
+        } else {
+            let Ok(pkg) = get_process_name(data.pid) else {
+                return None;
+            };
+            let target_fps = self.config.target_fps(&pkg)?;
+
+            info!("New fas buffer on: [{pkg}]");
+
+            trigger_load_fas(&self.extension, pid, pkg.clone());
+
+            let mut buffer = Buffer::new(target_fps, pid, pkg);
+            buffer.push_frametime(frametime, &self.extension);
+
+            self.fas_state.buffer = Some(buffer);
+
+            Some(BufferWorkingState::Unusable)
+        }
     }
 }

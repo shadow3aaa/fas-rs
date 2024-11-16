@@ -18,43 +18,51 @@ use libc::{mount, umount, umount2, MS_BIND, MS_REC};
 
 use crate::framework::error::Result;
 
-fn lock_value<P: AsRef<Path>, S: AsRef<str>>(p: P, v: S) -> Result<()> {
-    let value = v.as_ref();
-    let path = p.as_ref();
+fn lock_value<P: AsRef<Path>, S: AsRef<str>>(path: P, value: S) -> Result<()> {
+    let value = value.as_ref();
+    let path = path.as_ref();
 
-    let path = format!("{}", path.display());
+    let path_str = path.display().to_string();
     let mount_path = format!("/cache/mount_mask_{value}");
 
-    unmount(&path);
+    unmount(&path_str)?;
 
-    fs::write(&path, value)?;
+    fs::write(&path_str, value)?;
     fs::write(&mount_path, value)?;
 
-    mount_bind(&mount_path, &path);
+    mount_bind(&mount_path, &path_str)?;
 
     Ok(())
 }
 
-fn mount_bind(src_path: &str, dest_path: &str) {
-    let src_path = CString::new(src_path).unwrap();
-    let dest_path = CString::new(dest_path).unwrap();
+fn mount_bind(src_path: &str, dest_path: &str) -> Result<()> {
+    let src_path = CString::new(src_path)?;
+    let dest_path = CString::new(dest_path)?;
 
     unsafe {
         umount2(dest_path.as_ptr(), libc::MNT_DETACH);
 
-        mount(
+        if mount(
             src_path.as_ptr().cast(),
             dest_path.as_ptr().cast(),
             ptr::null(),
             MS_BIND | MS_REC,
             ptr::null(),
-        );
+        ) != 0
+        {
+            return Err(std::io::Error::last_os_error().into());
+        }
     }
+
+    Ok(())
 }
 
-fn unmount(file_system: &str) {
-    let path = CString::new(file_system).unwrap();
-    let _ = unsafe { umount(path.as_ptr()) };
+fn unmount(file_system: &str) -> Result<()> {
+    let path = CString::new(file_system)?;
+    if unsafe { umount(path.as_ptr()) } != 0 {
+        return Err(std::io::Error::last_os_error().into());
+    }
+    Ok(())
 }
 
 macro_rules! lock_values {
@@ -75,9 +83,9 @@ pub struct Cleaner {
 
 impl Cleaner {
     pub fn new() -> Self {
-        let map = HashMap::new();
-
-        Self { map }
+        Self {
+            map: HashMap::new(),
+        }
     }
 
     pub fn cleanup(&mut self) {
@@ -105,7 +113,7 @@ impl Cleaner {
 
     pub fn undo_cleanup(&self) {
         for (path, value) in &self.map {
-            unmount(path);
+            let _ = unmount(path);
             let _ = fs::write(path, value);
         }
     }

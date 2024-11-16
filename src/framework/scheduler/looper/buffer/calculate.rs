@@ -19,60 +19,63 @@ use likely_stable::unlikely;
 use log::debug;
 
 use super::Buffer;
-use crate::{
-    api::{v2::ApiV2, v3::ApiV3},
-    framework::config::TargetFps,
-    Extension,
-};
+use crate::{api::trigger_target_fps_change, framework::config::TargetFps, Extension};
 
 impl Buffer {
     pub fn calculate_current_fps(&mut self) {
-        let avg_time: Duration = self
-            .frametime_state
-            .frametimes
-            .iter()
-            .sum::<Duration>()
-            .saturating_add(self.frametime_state.additional_frametime)
-            .checked_div(self.frametime_state.frametimes.len().try_into().unwrap())
-            .unwrap_or_default();
+        let avg_time = self.calculate_average_frametime();
         #[cfg(debug_assertions)]
         debug!("avg_time: {avg_time:?}");
 
         self.frametime_state.avg_time = avg_time;
 
         let current_fps = 1.0 / avg_time.as_secs_f64();
-
         #[cfg(debug_assertions)]
         debug!("current_fps: {:.2}", current_fps);
 
         self.frametime_state.current_fps = current_fps;
+        self.update_fps_history(current_fps);
+    }
 
+    fn calculate_average_frametime(&self) -> Duration {
+        let total_time: Duration = self
+            .frametime_state
+            .frametimes
+            .iter()
+            .sum::<Duration>()
+            .saturating_add(self.frametime_state.additional_frametime);
+
+        total_time
+            .checked_div(self.frametime_state.frametimes.len().try_into().unwrap())
+            .unwrap_or_default()
+    }
+
+    fn update_fps_history(&mut self, current_fps: f64) {
         if self.frametime_state.current_fpses.len() == 30 {
             self.frametime_state.current_fpses.pop_back();
         }
-
         self.frametime_state.current_fpses.push_front(current_fps);
     }
 
     pub fn calculate_target_fps(&mut self, extension: &Extension) {
         let new_target_fps = self.target_fps();
         if self.target_fps_state.target_fps != new_target_fps || new_target_fps.is_none() {
-            self.frametime_state.current_fpses.clear();
-            self.frametime_state.frametimes.clear();
+            self.reset_frametime_state();
             if let Some(target_fps) = new_target_fps {
-                extension.trigger_extentions(ApiV2::TargetFpsChange(
-                    target_fps,
-                    self.package_info.pkg.clone(),
-                ));
-                extension.trigger_extentions(ApiV3::TargetFpsChange(
-                    target_fps,
-                    self.package_info.pkg.clone(),
-                ));
+                self.trigger_target_fps_change(extension, target_fps);
             }
-
             self.target_fps_state.target_fps = new_target_fps;
             self.unusable();
         }
+    }
+
+    fn reset_frametime_state(&mut self) {
+        self.frametime_state.current_fpses.clear();
+        self.frametime_state.frametimes.clear();
+    }
+
+    fn trigger_target_fps_change(&self, extension: &Extension, target_fps: u32) {
+        trigger_target_fps_change(extension, target_fps, self.package_info.pkg.clone());
     }
 
     fn target_fps(&self) -> Option<u32> {
@@ -81,33 +84,32 @@ impl Buffer {
             TargetFps::Array(arr) => arr.clone(),
         };
 
-        let mut current_fps: Option<f64> = None;
-        for next_fps in self.frametime_state.current_fpses.iter().copied().take(5) {
-            if let Some(fps) = current_fps {
-                current_fps = Some(fps.max(next_fps));
-            } else {
-                current_fps = Some(next_fps);
-            }
-        }
-
-        let current_fps = current_fps?;
+        let current_fps = self.calculate_max_fps_over_samples(5)?;
 
         if unlikely(current_fps < (target_fpses[0].saturating_sub(10).max(10)).into()) {
             return None;
         }
 
-        for target_fps in target_fpses.iter().copied() {
+        for &target_fps in &target_fpses {
             if current_fps <= f64::from(target_fps) + 3.0 {
                 #[cfg(debug_assertions)]
                 debug!(
                     "Matched target_fps: current: {:.2} target_fps: {target_fps}",
                     current_fps
                 );
-
                 return Some(target_fps);
             }
         }
 
         target_fpses.last().copied()
+    }
+
+    fn calculate_max_fps_over_samples(&self, samples: usize) -> Option<f64> {
+        self.frametime_state
+            .current_fpses
+            .iter()
+            .copied()
+            .take(samples)
+            .reduce(f64::max)
     }
 }

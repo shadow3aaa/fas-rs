@@ -61,7 +61,6 @@ impl Thermal {
             self.target_fps_offset += 0.1;
         }
 
-        // self.target_fps_offset = self.target_fps_offset.clamp(-5.0, 0.0);
         self.target_fps_offset
     }
 

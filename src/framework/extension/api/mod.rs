@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod helper_funs;
 pub mod misc;
 pub mod v0;
 pub mod v1;
 pub mod v2;
 pub mod v3;
 
-use std::sync::atomic::Ordering;
-
-use crate::cpu_common::{IGNORE_MAP, OFFSET_MAP};
-
-use super::core::ExtensionMap;
+use super::{core::ExtensionMap, Extension};
 pub use v0::ApiV0;
+use v1::ApiV1;
+use v2::ApiV2;
+use v3::ApiV3;
 
 pub trait Api: Send {
     fn handle_api(&self, ext: &ExtensionMap);
@@ -36,22 +36,49 @@ pub trait Api: Send {
     }
 }
 
-pub fn set_policy_freq_offset(policy: i32, offset: isize) -> mlua::Result<()> {
-    OFFSET_MAP
-        .get()
-        .unwrap()
-        .get(&policy)
-        .ok_or_else(|| mlua::Error::runtime("Policy Not Found!"))?
-        .store(offset, Ordering::Release);
-    Ok(())
+pub fn trigger_init_cpu_freq(extension: &Extension) {
+    extension.trigger_extentions(ApiV0::InitCpuFreq);
+    extension.trigger_extentions(ApiV1::InitCpuFreq);
+    extension.trigger_extentions(ApiV2::InitCpuFreq);
+    extension.trigger_extentions(ApiV3::InitCpuFreq);
 }
 
-pub fn set_ignore_policy(policy: i32, val: bool) -> mlua::Result<()> {
-    IGNORE_MAP
-        .get()
-        .unwrap()
-        .get(&policy)
-        .ok_or_else(|| mlua::Error::runtime("Policy Not Found!"))?
-        .store(val, Ordering::Release);
-    Ok(())
+pub fn trigger_reset_cpu_freq(extension: &Extension) {
+    extension.trigger_extentions(ApiV0::ResetCpuFreq);
+    extension.trigger_extentions(ApiV1::ResetCpuFreq);
+    extension.trigger_extentions(ApiV2::ResetCpuFreq);
+    extension.trigger_extentions(ApiV3::ResetCpuFreq);
+}
+
+pub fn trigger_load_fas(extension: &Extension, pid: i32, pkg: String) {
+    extension.trigger_extentions(ApiV0::LoadFas(pid, pkg.clone()));
+    extension.trigger_extentions(ApiV1::LoadFas(pid, pkg.clone()));
+    extension.trigger_extentions(ApiV2::LoadFas(pid, pkg.clone()));
+    extension.trigger_extentions(ApiV3::LoadFas(pid, pkg));
+}
+
+pub fn trigger_unload_fas(extension: &Extension, pid: i32, pkg: String) {
+    extension.trigger_extentions(ApiV0::UnloadFas(pid, pkg.clone()));
+    extension.trigger_extentions(ApiV1::UnloadFas(pid, pkg.clone()));
+    extension.trigger_extentions(ApiV2::UnloadFas(pid, pkg.clone()));
+    extension.trigger_extentions(ApiV3::UnloadFas(pid, pkg));
+}
+
+pub fn trigger_start_fas(extension: &Extension) {
+    extension.trigger_extentions(ApiV0::StartFas);
+    extension.trigger_extentions(ApiV1::StartFas);
+    extension.trigger_extentions(ApiV2::StartFas);
+    extension.trigger_extentions(ApiV3::StartFas);
+}
+
+pub fn trigger_stop_fas(extension: &Extension) {
+    extension.trigger_extentions(ApiV0::StopFas);
+    extension.trigger_extentions(ApiV1::StopFas);
+    extension.trigger_extentions(ApiV2::StopFas);
+    extension.trigger_extentions(ApiV3::StopFas);
+}
+
+pub fn trigger_target_fps_change(extension: &Extension, target_fps: u32, pkg: String) {
+    extension.trigger_extentions(ApiV2::TargetFpsChange(target_fps, pkg.clone()));
+    extension.trigger_extentions(ApiV3::TargetFpsChange(target_fps, pkg));
 }

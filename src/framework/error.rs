@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::io;
+use std::{ffi::NulError, io};
 
 use frame_analyzer::AnalyzerError;
 use thiserror::Error as ThisError;
@@ -45,6 +45,11 @@ pub enum Error {
     Lua {
         #[from]
         source: mlua::Error,
+    },
+    #[error("Nul error: {source:?}")]
+    Null {
+        #[from]
+        source: NulError,
     },
     #[error("Got an error: {0}")]
     #[allow(dead_code)]

@@ -19,7 +19,7 @@ use log::{debug, error, info};
 use mlua::Lua;
 
 use super::{
-    api::{self, Api},
+    api::{helper_funs, Api},
     EXTENSIONS_PATH,
 };
 use crate::framework::error::Result;
@@ -92,7 +92,7 @@ fn load_extensions() -> Result<ExtensionMap> {
         lua.globals().set(
             "set_policy_freq_offset",
             lua.create_function(|_, (policy, offset): (i32, isize)| {
-                api::set_policy_freq_offset(policy, offset)?;
+                helper_funs::set_policy_freq_offset(policy, offset)?;
                 Ok(())
             })?,
         )?;
@@ -101,7 +101,7 @@ fn load_extensions() -> Result<ExtensionMap> {
         lua.globals().set(
             "set_ignore_policy",
             lua.create_function(|_, (policy, val): (i32, bool)| {
-                api::set_ignore_policy(policy, val)?;
+                helper_funs::set_ignore_policy(policy, val)?;
                 Ok(())
             })?,
         )?;

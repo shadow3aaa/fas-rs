@@ -35,27 +35,15 @@ pub fn calculate_control(
         return None;
     }
 
-    let target_fps = f64::from(buffer.target_fps_state.target_fps?);
-    let target_fps = (target_fps + target_fps_offset_thermal).clamp(0.0, target_fps);
-    let normalized_last_frame = if buffer.frametime_state.additional_frametime == Duration::ZERO {
-        buffer.frametime_state.frametimes.front().copied()?
-    } else {
-        buffer.frametime_state.additional_frametime
-    }
-    .mul_f64(target_fps);
-
+    let target_fps = (f64::from(buffer.target_fps_state.target_fps?) + target_fps_offset_thermal)
+        .clamp(0.0, f64::from(buffer.target_fps_state.target_fps?));
+    let normalized_last_frame = get_normalized_last_frame(buffer, target_fps)?;
     let adjusted_target_fps = adjust_target_fps(
         &buffer.frametime_state.current_fpses,
         target_fps,
         controller_state,
     );
-
-    let adjusted_last_frame = if buffer.frametime_state.additional_frametime == Duration::ZERO {
-        buffer.frametime_state.frametimes.front().copied()?
-    } else {
-        buffer.frametime_state.additional_frametime
-    }
-    .mul_f64(adjusted_target_fps);
+    let adjusted_last_frame = get_adjusted_last_frame(buffer, adjusted_target_fps)?;
 
     #[cfg(debug_assertions)]
     {
@@ -63,8 +51,7 @@ pub fn calculate_control(
         debug!("adjusted_last_frame: {adjusted_last_frame:?}");
     }
 
-    let margin = config.mode_config(mode).margin;
-    let margin = Duration::from_millis(margin);
+    let margin = Duration::from_millis(config.mode_config(mode).margin);
     let target_frametime = Duration::from_secs(1) + margin;
 
     Some(calculate_control_inner(
@@ -74,6 +61,28 @@ pub fn calculate_control(
         adjusted_last_frame,
         target_frametime,
     ))
+}
+
+fn get_normalized_last_frame(buffer: &Buffer, target_fps: f64) -> Option<Duration> {
+    Some(
+        if buffer.frametime_state.additional_frametime == Duration::ZERO {
+            buffer.frametime_state.frametimes.front().copied()?
+        } else {
+            buffer.frametime_state.additional_frametime
+        }
+        .mul_f64(target_fps),
+    )
+}
+
+fn get_adjusted_last_frame(buffer: &Buffer, adjusted_target_fps: f64) -> Option<Duration> {
+    Some(
+        if buffer.frametime_state.additional_frametime == Duration::ZERO {
+            buffer.frametime_state.frametimes.front().copied()?
+        } else {
+            buffer.frametime_state.additional_frametime
+        }
+        .mul_f64(adjusted_target_fps),
+    )
 }
 
 fn adjust_target_fps(
