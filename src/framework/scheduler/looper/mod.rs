@@ -120,7 +120,7 @@ impl Looper {
     pub fn enter_loop(&mut self) -> Result<()> {
         loop {
             self.switch_mode();
-            self.update_analyzer()?;
+            let _ = self.update_analyzer();
             self.retain_topapp();
 
             if self.windows_watcher.visible_freeform_window() {
