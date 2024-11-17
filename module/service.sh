@@ -33,4 +33,4 @@ if [ -f $MERGE_FLAG ]; then
 fi
 
 killall fas-rs
-nohup $MODDIR/fas-rs run $MODDIR/games.toml >$LOG 2>&1 &
+RUST_BACKTRACE=1 nohup $MODDIR/fas-rs run $MODDIR/games.toml >$LOG 2>&1 &
