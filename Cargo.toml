@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+cargo-features = ["trim-paths"]
+
 [package]
 name = "fas-rs"
 version = "3.8.0"
@@ -50,6 +52,7 @@ serde_json = "1.0.132"
 overflow-checks = false
 opt-level = 3
 strip = true
+trim-paths = true
 
 [profile.release]
 overflow-checks = false
@@ -57,3 +60,4 @@ codegen-units = 1
 lto = "fat"
 opt-level = 3
 strip = true
+trim-paths = true
