@@ -18,6 +18,7 @@ import shutil
 from pathlib import Path
 from maketools.toolchains import Buildtools
 from maketools.misc import eprint
+import zipfile
 
 build_help_text = """\
 python3 ./make.py build:
@@ -170,5 +171,12 @@ def task(args):
         output = Path("output").joinpath("fas-rs(release)")
     else:
         output = Path("output").joinpath("fas-rs(debug)")
-    shutil.make_archive(output, "zip", temp_dir)
+    with zipfile.ZipFile(
+        f"{output}.zip", "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9
+    ) as zipf:
+        for root, _, files in os.walk(temp_dir):
+            for file in files:
+                filepath = os.path.join(root, file)
+                arcname = os.path.relpath(filepath, temp_dir)
+                zipf.write(filepath, arcname)
     print("fas-rs build successfully: {}.zip".format(output))
