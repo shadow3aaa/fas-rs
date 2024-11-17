@@ -16,6 +16,7 @@ use std::{fs, io::Write};
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use vergen::{BuildBuilder, CargoBuilder, Emitter, RustcBuilder, SysinfoBuilder};
 
 #[derive(Deserialize)]
 struct Package {
@@ -43,6 +44,8 @@ fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=Cargo.lock");
     println!("cargo:rerun-if-changed=Cargo.toml");
     println!("cargo:rerun-if-changed=update");
+
+    vergen()?;
 
     let toml = fs::read_to_string("Cargo.toml")?;
     let data: CargoConfig = toml::from_str(&toml)?;
@@ -111,4 +114,18 @@ fn update_json(data: &CargoConfig) -> Result<()> {
     fs::write("update/update_en.json", en)?;
 
     Ok(())
+}
+
+fn vergen() -> Result<()> {
+    let build = BuildBuilder::all_build()?;
+    let cargo = CargoBuilder::all_cargo()?;
+    let rustc = RustcBuilder::all_rustc()?;
+    let si = SysinfoBuilder::all_sysinfo()?;
+
+    Emitter::default()
+        .add_instructions(&build)?
+        .add_instructions(&cargo)?
+        .add_instructions(&rustc)?
+        .add_instructions(&si)?
+        .emit()
 }

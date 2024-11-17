@@ -19,6 +19,7 @@ from pathlib import Path
 from maketools.toolchains import Buildtools
 from maketools.misc import eprint
 import zipfile
+from datetime import datetime
 
 build_help_text = """\
 python3 ./make.py build:
@@ -167,10 +168,10 @@ def task(args):
     shutil.copy2(bin, bin_module)
     tools.strip(bin_module)
 
-    if release:
-        output = Path("output").joinpath("fas-rs(release)")
-    else:
-        output = Path("output").joinpath("fas-rs(debug)")
+    build_time = datetime.now().strftime("%Y-%m-%d-%H.%M.%S")
+    build_type = "release" if release else "debug"
+    output = Path("output") / f"fas-rs_{build_type}_{build_time}"
+
     with zipfile.ZipFile(
         f"{output}.zip", "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9
     ) as zipf:
