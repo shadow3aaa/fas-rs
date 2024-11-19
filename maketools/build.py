@@ -168,7 +168,7 @@ def task(args):
     shutil.copy2(bin, bin_module)
     tools.strip(bin_module)
 
-    build_time = datetime.now().strftime("%Y-%m-%d-%H.%M.%S")
+    build_time = datetime.now().strftime("%Y-%m-%d-%Hh%Mm%Ss")
     build_type = "release" if release else "debug"
     output = Path("output") / f"fas-rs_{build_type}_{build_time}"
 
