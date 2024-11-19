@@ -104,15 +104,15 @@ scene_game_list = true
 
 [powersave]
 margin = 3
-core_temp_thresh = 60000
+core_temp_thresh = 80000
 
 [balance]
 margin = 2
-core_temp_thresh = 75000
+core_temp_thresh = 90000
 
 [performance]
 margin = 1
-core_temp_thresh = 90000
+core_temp_thresh = 95000
 
 [fast]
 margin = 0
