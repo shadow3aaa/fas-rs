@@ -1,3 +1,8 @@
+# v3.9.1 (2024-11-20)
+
+* fix: 打包时文档缺失 ([622e304](https://github.com/shadow3aaa/fas-rs/commit/622e304))
+* fix: 检测到小窗时高负载 ([41e9387](https://github.com/shadow3aaa/fas-rs/commit/41e9387))
+
 # v3.9.0 (2024-11-19)
 
 * build: 优化压缩大小 ([c670eea](https://github.com/shadow3aaa/fas-rs/commit/c670eea))

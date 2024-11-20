@@ -1,3 +1,8 @@
+# v3.9.1 (2024-11-20)
+
+* fix: Missing documentation during packaging ([622e304](https://github.com/shadow3aaa/fas-rs/commit/622e304))
+* fix: High cpu load when small window is detected ([41e9387](https://github.com/shadow3aaa/fas-rs/commit/41e9387))
+
 # v3.9.0 (2024-11-19)
 
 * build: Optimize compression size ([c670eea](https://github.com/shadow3aaa/fas-rs/commit/c670eea))
