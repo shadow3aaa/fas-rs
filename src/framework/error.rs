@@ -41,12 +41,12 @@ pub enum Error {
     SchedulerMissing(&'static str),
     #[error(transparent)]
     Io(#[from] io::Error),
-    #[error("Lua extension error: {source:?}")]
+    #[error(transparent)]
     Lua {
         #[from]
         source: mlua::Error,
     },
-    #[error("Nul error: {source:?}")]
+    #[error(transparent)]
     Null {
         #[from]
         source: NulError,
