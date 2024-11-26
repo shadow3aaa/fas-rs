@@ -21,6 +21,6 @@ pub struct ControllerParams {
 
 impl Default for ControllerParams {
     fn default() -> Self {
-        Self { kp: 0.000_6 }
+        Self { kp: 0.000_3 }
     }
 }
