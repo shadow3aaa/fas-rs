@@ -45,7 +45,6 @@ pub static IGNORE_MAP: OnceLock<HashMap<i32, AtomicBool>> = OnceLock::new();
 #[derive(Debug)]
 pub struct Controller {
     max_freq: isize,
-    policy_freq: isize,
     cpu_infos: Vec<Info>,
     file_handler: FileHandler,
 }
@@ -80,7 +79,6 @@ impl Controller {
 
         Ok(Self {
             max_freq,
-            policy_freq: max_freq,
             cpu_infos,
             file_handler: FileHandler::new(),
         })
@@ -130,34 +128,40 @@ impl Controller {
     }
 
     pub fn init_game(&mut self, extension: &Extension) {
-        self.policy_freq = self.max_freq;
         trigger_init_cpu_freq(extension);
         self.set_all_cpu_freq(self.max_freq);
     }
 
     pub fn init_default(&mut self, extension: &Extension) {
-        self.policy_freq = self.max_freq;
         trigger_reset_cpu_freq(extension);
         self.reset_all_cpu_freq();
     }
 
     pub fn fas_update_freq(&mut self, control: isize) {
-        self.policy_freq = self
-            .policy_freq
-            .saturating_add(control)
-            .clamp(0, self.max_freq);
-
         #[cfg(debug_assertions)]
-        {
-            debug!("change freq: {}", control);
-            debug!("policy freq: {}", self.policy_freq);
-        }
+        debug!("change freq: {}", control);
 
-        self.set_all_cpu_freq(self.policy_freq);
+        for cpu in &mut self.cpu_infos {
+            let cpu_usage = cpu
+                .cpu_usage()
+                .max_by(|a, b| a.partial_cmp(b).unwrap_or(cmp::Ordering::Equal))
+                .unwrap_or_default();
+            let usage_tracking_sugg_freq = (cpu.cur_freq as f32 * cpu_usage / 100.0 / 0.5) as isize; // target_usage: 50%
+            let policy_freq = cpu
+                .cur_freq
+                .min(usage_tracking_sugg_freq)
+                .saturating_add(control)
+                .clamp(0, self.max_freq);
+            #[cfg(debug_assertions)]
+            debug!("policy{} freq: {}", cpu.policy, policy_freq);
+            if let Err(e) = cpu.write_freq(policy_freq, &mut self.file_handler) {
+                error!("{:?}", e);
+            }
+        }
     }
 
     fn set_all_cpu_freq(&mut self, freq: isize) {
-        for cpu in &self.cpu_infos {
+        for cpu in &mut self.cpu_infos {
             if let Err(e) = cpu.write_freq(freq, &mut self.file_handler) {
                 error!("{:?}", e);
             }

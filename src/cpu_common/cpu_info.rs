@@ -28,8 +28,10 @@ use crate::file_handler::FileHandler;
 pub struct Info {
     pub policy: i32,
     path: PathBuf,
+    pub cur_freq: isize,
     pub freqs: Vec<isize>,
     sys: System,
+    cpus: Vec<i32>,
 }
 
 impl Info {
@@ -43,6 +45,17 @@ impl Info {
         let policy = policy_str
             .parse::<i32>()
             .context("Failed to parse policy")?;
+
+        let cpus = fs::read_to_string(path.join("affected_cpus"))
+            .context("Failed to read affected_cpus")
+            .unwrap()
+            .split_whitespace()
+            .map(|c| {
+                c.parse::<i32>()
+                    .context("Failed to parse affected_cpus")
+                    .unwrap()
+            })
+            .collect();
 
         let freqs_content = fs::read_to_string(path.join("scaling_available_frequencies"))
             .context("Failed to read frequencies")?;
@@ -59,12 +72,14 @@ impl Info {
         Ok(Self {
             policy,
             path,
+            cur_freq: *freqs.last().context("No frequencies available")?,
             freqs,
             sys,
+            cpus,
         })
     }
 
-    pub fn write_freq(&self, freq: isize, file_handler: &mut FileHandler) -> Result<()> {
+    pub fn write_freq(&mut self, freq: isize, file_handler: &mut FileHandler) -> Result<()> {
         let offset = OFFSET_MAP
             .get()
             .context("OFFSET_MAP not initialized")?
@@ -75,10 +90,9 @@ impl Info {
         let min_freq = *self.freqs.first().context("No frequencies available")?;
         let max_freq = *self.freqs.last().context("No frequencies available")?;
 
-        let adjusted_freq = freq
-            .saturating_add(offset)
-            .clamp(min_freq, max_freq)
-            .to_string();
+        let adjusted_freq = freq.saturating_add(offset).clamp(min_freq, max_freq);
+        self.cur_freq = adjusted_freq;
+        let adjusted_freq = adjusted_freq.to_string();
 
         if !IGNORE_MAP
             .get()
@@ -119,7 +133,13 @@ impl Info {
     }
 
     pub fn cpu_usage(&self) -> impl Iterator<Item = f32> + '_ {
-        self.sys.cpus().iter().map(Cpu::cpu_usage)
+        self.sys
+            .cpus()
+            .iter()
+            .enumerate()
+            .filter(|(id, _)| self.cpus.contains(&(*id as i32)))
+            .map(|(_, cpu)| cpu)
+            .map(Cpu::cpu_usage)
     }
 
     pub fn refresh_cpu_usage(&mut self) {
