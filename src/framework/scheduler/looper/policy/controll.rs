@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{
-    collections::VecDeque,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 use likely_stable::unlikely;
 #[cfg(debug_assertions)]
@@ -38,11 +35,7 @@ pub fn calculate_control(
     let target_fps = (f64::from(buffer.target_fps_state.target_fps?) + target_fps_offset_thermal)
         .clamp(0.0, f64::from(buffer.target_fps_state.target_fps?));
     let normalized_last_frame = get_normalized_last_frame(buffer, target_fps)?;
-    let adjusted_target_fps = adjust_target_fps(
-        &buffer.frametime_state.current_fpses,
-        target_fps,
-        controller_state,
-    );
+    let adjusted_target_fps = adjust_target_fps(target_fps, controller_state);
     let adjusted_last_frame = get_adjusted_last_frame(buffer, adjusted_target_fps)?;
 
     #[cfg(debug_assertions)]
@@ -85,35 +78,18 @@ fn get_adjusted_last_frame(buffer: &Buffer, adjusted_target_fps: f64) -> Option<
     )
 }
 
-fn adjust_target_fps(
-    fpses: &VecDeque<f64>,
-    target_fps: f64,
-    controller_state: &mut ControllerState,
-) -> f64 {
-    if controller_state.adjust_timer.elapsed() >= Duration::from_millis(100) {
-        controller_state.adjust_timer = Instant::now();
-        let fpses: Vec<_> = fpses
-            .iter()
-            .copied()
-            .filter(|fps| *fps >= target_fps - 3.0)
-            .collect();
-
-        if !fpses.is_empty() {
-            let avg = fpses.iter().sum::<f64>() / fpses.len() as f64;
-            let variance =
-                fpses.iter().map(|fps| (avg - fps).powi(2)).sum::<f64>() / fpses.len() as f64;
-
-            if variance > 0.02 {
-                controller_state.target_fps_offset += 0.1;
-            } else {
-                controller_state.target_fps_offset -= 0.1;
-            }
-
-            controller_state.target_fps_offset =
-                controller_state.target_fps_offset.clamp(-3.0, 0.0);
+fn adjust_target_fps(target_fps: f64, controller_state: &mut ControllerState) -> f64 {
+    if controller_state.usage_sample_timer.elapsed() >= Duration::from_secs(1) {
+        controller_state.usage_sample_timer = Instant::now();
+        let usage = controller_state.controller.usage_max();
+        if usage <= 40.0 {
+            controller_state.target_fps_offset -= 0.1;
+        } else if usage >= 50.0 {
+            controller_state.target_fps_offset += 0.1;
         }
     }
 
+    controller_state.target_fps_offset = controller_state.target_fps_offset.clamp(-5.0, 0.0);
     target_fps + controller_state.target_fps_offset
 }
 

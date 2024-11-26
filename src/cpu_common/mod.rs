@@ -15,6 +15,7 @@
 mod cpu_info;
 
 use std::{
+    cmp,
     collections::HashMap,
     fs,
     path::Path,
@@ -169,5 +170,23 @@ impl Controller {
                 error!("{:?}", e);
             }
         }
+    }
+
+    pub fn refresh_cpu_usage(&mut self) {
+        for cpu in &mut self.cpu_infos {
+            cpu.refresh_cpu_usage();
+        }
+    }
+
+    pub fn usage_max(&mut self) -> f32 {
+        self.cpu_infos
+            .iter_mut()
+            .map(|cpu| {
+                cpu.cpu_usage()
+                    .max_by(|a, b| a.partial_cmp(b).unwrap_or(cmp::Ordering::Equal))
+                    .unwrap_or_default()
+            })
+            .max_by(|a, b| a.partial_cmp(b).unwrap_or(cmp::Ordering::Equal))
+            .unwrap_or_default()
     }
 }

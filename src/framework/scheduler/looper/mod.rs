@@ -67,7 +67,7 @@ struct ControllerState {
     controller: Controller,
     params: ControllerParams,
     target_fps_offset: f64,
-    adjust_timer: Instant,
+    usage_sample_timer: Instant,
 }
 
 pub struct Looper {
@@ -112,7 +112,7 @@ impl Looper {
                 controller,
                 params: ControllerParams::default(),
                 target_fps_offset: 0.0,
-                adjust_timer: Instant::now(),
+                usage_sample_timer: Instant::now(),
             },
         }
     }
@@ -206,6 +206,7 @@ impl Looper {
             return;
         }
 
+        self.controller_state.controller.refresh_cpu_usage();
         let control = if let Some(buffer) = &self.fas_state.buffer {
             let target_fps_offset = self
                 .therminal

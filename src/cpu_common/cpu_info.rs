@@ -19,6 +19,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use sysinfo::{Cpu, CpuRefreshKind, RefreshKind, System};
 
 use super::{IGNORE_MAP, OFFSET_MAP};
 use crate::file_handler::FileHandler;
@@ -28,6 +29,7 @@ pub struct Info {
     pub policy: i32,
     path: PathBuf,
     pub freqs: Vec<isize>,
+    sys: System,
 }
 
 impl Info {
@@ -50,10 +52,15 @@ impl Info {
             .collect::<Result<_>>()?;
         freqs.sort_unstable();
 
+        let sys = System::new_with_specifics(
+            RefreshKind::new().with_cpu(CpuRefreshKind::new().with_cpu_usage()),
+        );
+
         Ok(Self {
             policy,
             path,
             freqs,
+            sys,
         })
     }
 
@@ -109,5 +116,13 @@ impl Info {
 
     fn min_freq_path(&self) -> PathBuf {
         self.path.join("scaling_min_freq")
+    }
+
+    pub fn cpu_usage(&self) -> impl Iterator<Item = f32> + '_ {
+        self.sys.cpus().iter().map(Cpu::cpu_usage)
+    }
+
+    pub fn refresh_cpu_usage(&mut self) {
+        self.sys.refresh_cpu_usage();
     }
 }
