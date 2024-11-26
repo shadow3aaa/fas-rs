@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cargo-features = ["trim-paths"]
-
 [package]
 name = "fas-rs"
 version = "3.9.1"
@@ -54,7 +52,6 @@ vergen = { version = "9.0.0", features = ["build", "cargo", "rustc", "si"] }
 overflow-checks = false
 opt-level = 3
 strip = true
-trim-paths = true
 
 [profile.release]
 debug = true
@@ -63,4 +60,3 @@ codegen-units = 1
 lto = "fat"
 opt-level = 3
 strip = true
-trim-paths = true
