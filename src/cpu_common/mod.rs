@@ -139,8 +139,8 @@ impl Controller {
             let usage_tracking_sugg_freq = (cpu.cur_freq as f32 * cpu_usage / 100.0 / 0.5) as isize; // target_usage: 50%
             let policy_freq = cpu
                 .cur_freq
-                .min(usage_tracking_sugg_freq)
                 .saturating_add(control)
+                .min(usage_tracking_sugg_freq)
                 .clamp(0, self.max_freq);
             #[cfg(debug_assertions)]
             debug!("policy{} freq: {}", cpu.policy, policy_freq);
