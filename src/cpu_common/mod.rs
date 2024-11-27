@@ -31,7 +31,7 @@ use anyhow::Result;
 use cpu_info::Info;
 #[cfg(debug_assertions)]
 use log::debug;
-use log::{error, warn};
+use log::warn;
 
 use crate::{
     api::{trigger_init_cpu_freq, trigger_reset_cpu_freq},
@@ -154,25 +154,19 @@ impl Controller {
                 .clamp(0, self.max_freq);
             #[cfg(debug_assertions)]
             debug!("policy{} freq: {}", cpu.policy, policy_freq);
-            if let Err(e) = cpu.write_freq(policy_freq, &mut self.file_handler) {
-                error!("{:?}", e);
-            }
+            let _ = cpu.write_freq(policy_freq, &mut self.file_handler);
         }
     }
 
     fn set_all_cpu_freq(&mut self, freq: isize) {
         for cpu in &mut self.cpu_infos {
-            if let Err(e) = cpu.write_freq(freq, &mut self.file_handler) {
-                error!("{:?}", e);
-            }
+            let _ = cpu.write_freq(freq, &mut self.file_handler);
         }
     }
 
     fn reset_all_cpu_freq(&mut self) {
         for cpu in &self.cpu_infos {
-            if let Err(e) = cpu.reset_freq(&mut self.file_handler) {
-                error!("{:?}", e);
-            }
+            let _ = cpu.reset_freq(&mut self.file_handler);
         }
     }
 
