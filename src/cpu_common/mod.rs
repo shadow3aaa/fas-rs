@@ -19,10 +19,7 @@ use std::{
     collections::HashMap,
     fs,
     path::Path,
-    sync::{
-        atomic::{AtomicBool, AtomicIsize},
-        OnceLock,
-    },
+    sync::{atomic::AtomicBool, OnceLock},
     thread,
     time::Duration,
 };
@@ -39,7 +36,6 @@ use crate::{
     Extension,
 };
 
-pub static OFFSET_MAP: OnceLock<HashMap<i32, AtomicIsize>> = OnceLock::new();
 pub static IGNORE_MAP: OnceLock<HashMap<i32, AtomicBool>> = OnceLock::new();
 
 #[derive(Debug)]
@@ -54,12 +50,6 @@ impl Controller {
         let mut cpu_infos = Self::load_cpu_infos()?;
         cpu_infos.sort_by_key(|cpu| cpu.policy);
 
-        OFFSET_MAP.get_or_init(|| {
-            cpu_infos
-                .iter()
-                .map(|cpu| (cpu.policy, AtomicIsize::new(0)))
-                .collect()
-        });
         IGNORE_MAP.get_or_init(|| {
             cpu_infos
                 .iter()
