@@ -1,3 +1,8 @@
+# v4.0.1 (2024-11-27)
+
+* fix: 先进行fas再比较 ([346a422](https://github.com/shadow3aaa/fas-rs/commit/346a422))
+* fix: 废弃OFFSET_MAP以修复offset和新策略不兼容的问题 ([ffaca27](https://github.com/shadow3aaa/fas-rs/commit/ffaca27))
+
 # v4.0.0 (2024-11-27)
 
 * refactor: 使用透明错误消息 ([9cc0b2a](https://github.com/shadow3aaa/fas-rs/commit/9cc0b2a))

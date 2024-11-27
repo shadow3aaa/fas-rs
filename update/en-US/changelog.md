@@ -1,3 +1,8 @@
+# v4.0.1 (2024-11-27)
+
+* fix: Perform fas before comparison ([346a422](https://github.com/shadow3aaa/fas-rs/commit/346a422))
+* fix: Deprecated OFFSET_MAP to fix incompatibility issues between offset and new strategy ([ffaca27](https://github.com/shadow3aaa/fas-rs/commit/ffaca27))
+
 # v4.0.0 (2024-11-27)
 
 * refactor: Use transparent error messages ([9cc0b2a](https://github.com/shadow3aaa/fas-rs/commit/9cc0b2a))
