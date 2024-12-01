@@ -21,7 +21,7 @@ use std::{
 use anyhow::{Context, Result};
 use sysinfo::{Cpu, CpuRefreshKind, RefreshKind, System};
 
-use super::{IGNORE_MAP, OFFSET_MAP};
+use super::IGNORE_MAP;
 use crate::file_handler::FileHandler;
 
 #[derive(Debug)]
@@ -80,17 +80,10 @@ impl Info {
     }
 
     pub fn write_freq(&mut self, freq: isize, file_handler: &mut FileHandler) -> Result<()> {
-        let offset = OFFSET_MAP
-            .get()
-            .context("OFFSET_MAP not initialized")?
-            .get(&self.policy)
-            .context("Policy offset not found")?
-            .load(Ordering::Acquire);
-
         let min_freq = *self.freqs.first().context("No frequencies available")?;
         let max_freq = *self.freqs.last().context("No frequencies available")?;
 
-        let adjusted_freq = freq.saturating_add(offset).clamp(min_freq, max_freq);
+        let adjusted_freq = freq.clamp(min_freq, max_freq);
         self.cur_freq = adjusted_freq;
         let adjusted_freq = adjusted_freq.to_string();
 

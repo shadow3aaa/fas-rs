@@ -20,14 +20,14 @@ use std::{
     fs,
     path::Path,
     sync::{
-        atomic::{AtomicBool, AtomicIsize},
+        atomic::{AtomicBool, AtomicIsize, Ordering},
         OnceLock,
     },
     thread,
     time::Duration,
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use cpu_info::Info;
 #[cfg(debug_assertions)]
 use log::debug;
@@ -180,6 +180,16 @@ impl Controller {
         for cpu in self.cpu_infos.iter_mut().rev().skip(1) {
             let freq = fas_freqs.get(&cpu.policy).copied().unwrap();
             let freq = freq.max(fas_freq_max * 80 / 100);
+
+            let offset = OFFSET_MAP
+                .get()
+                .context("OFFSET_MAP not initialized")
+                .unwrap()
+                .get(&cpu.policy)
+                .context("Policy offset not found")
+                .unwrap()
+                .load(Ordering::Acquire);
+            let freq = freq.min(fas_freq_max.saturating_add(offset));
 
             #[cfg(debug_assertions)]
             debug!("policy{} freq: {}", cpu.policy, freq);
