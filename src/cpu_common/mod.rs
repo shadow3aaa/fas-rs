@@ -131,20 +131,50 @@ impl Controller {
         #[cfg(debug_assertions)]
         debug!("change freq: {}", control);
 
-        for cpu in &mut self.cpu_infos {
-            let cpu_usage = cpu
-                .cpu_usage()
-                .max_by(|a, b| a.partial_cmp(b).unwrap_or(cmp::Ordering::Equal))
-                .unwrap_or_default();
-            let usage_tracking_sugg_freq = (cpu.cur_freq as f32 * cpu_usage / 100.0 / 0.5) as isize; // target_usage: 50%
-            let policy_freq = cpu
-                .cur_freq
-                .saturating_add(control)
-                .min(usage_tracking_sugg_freq)
-                .clamp(0, self.max_freq);
+        let fas_freqs: HashMap<_, _> = self
+            .cpu_infos
+            .iter_mut()
+            .map(|cpu| {
+                let cpu_usage = cpu
+                    .cpu_usage()
+                    .max_by(|a, b| a.partial_cmp(b).unwrap_or(cmp::Ordering::Equal))
+                    .unwrap_or_default();
+                let usage_tracking_sugg_freq =
+                    (cpu.cur_freq as f32 * cpu_usage / 100.0 / 0.5) as isize; // target_usage: 50%
+                (
+                    cpu.policy,
+                    cpu.cur_freq
+                        .saturating_add(control)
+                        .min(usage_tracking_sugg_freq)
+                        .clamp(0, self.max_freq),
+                )
+            })
+            .collect();
+
+        let fas_freq_max = fas_freqs.values().max().copied().unwrap();
+
+        #[cfg(debug_assertions)]
+        debug!(
+            "policy{} freq: {}",
+            self.cpu_infos.last().unwrap().policy,
+            fas_freq_max
+        );
+
+        let _ = self
+            .cpu_infos
+            .last_mut()
+            .unwrap()
+            .write_freq(fas_freq_max, &mut self.file_handler);
+
+        // skip P cores
+        for cpu in self.cpu_infos.iter_mut().rev().skip(1) {
+            let freq = fas_freqs.get(&cpu.policy).copied().unwrap();
+            let freq = freq.max(fas_freq_max * 80 / 100);
+
             #[cfg(debug_assertions)]
-            debug!("policy{} freq: {}", cpu.policy, policy_freq);
-            let _ = cpu.write_freq(policy_freq, &mut self.file_handler);
+            debug!("policy{} freq: {}", cpu.policy, freq);
+
+            let _ = cpu.write_freq(freq, &mut self.file_handler);
         }
     }
 
