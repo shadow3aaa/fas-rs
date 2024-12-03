@@ -37,7 +37,7 @@ If you then still feel the need to ask a question and need clarification, we rec
 
 > ### Legal Notice <!-- omit in toc -->
 >
-> When contributing to this project, you must agree that you have authored 100% of the content, that you have the necessary rights to the content and that the content you contribute may be provided under the project license(currently, Apache 2.0 + GPL v3).
+> When contributing to this project, you must agree that you have authored 100% of the content, that you have the necessary rights to the content and that the content you contribute may be provided under the project license(GPL-3.0).
 
 ### Reporting Bugs
 
