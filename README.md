@@ -142,15 +142,17 @@ core_temp_thresh = 95000
 ## **编译**
 
 ```bash
-# Ubuntu(NDK is required)
+# Ubuntu (NDK is required)
 apt install gcc-multilib git-lfs clang python3
 
-# ruff(python lints & format)
+# ruff (Python lints & format)
 pip install ruff
 
-# Rust
+# Rust (Nightly version is required)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup default nightly
 rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+rustup component add rust-src
 
 # Cargo-ndk
 cargo install cargo-ndk
@@ -161,6 +163,8 @@ cd fas-rs
 
 # Compile
 python3 ./make.py build --release
+# Use the `--nightly` option when building(Some nightly flags will be added to produce smaller artifacts)
+python3 ./make.py build --release --nightly
 ```
 
 ## **捐赠**
