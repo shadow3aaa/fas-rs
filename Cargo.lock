@@ -446,7 +446,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sys-mount",
- "sysinfo",
+ "sysinfo 0.33.0",
  "thiserror 2.0.4",
  "toml",
  "vergen",
@@ -1194,6 +1194,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sysinfo"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "948512566b1895f93b1592c7574baeb2de842f224f2aab158799ecadb8ebbb46"
+dependencies = [
+ "core-foundation-sys",
+ "libc",
+ "memchr",
+ "ntapi",
+ "rayon",
+ "windows",
+]
+
+[[package]]
 name = "thiserror"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1355,7 +1369,7 @@ dependencies = [
  "regex",
  "rustc_version 0.4.1",
  "rustversion",
- "sysinfo",
+ "sysinfo 0.32.1",
  "time",
  "vergen-lib",
 ]
