@@ -1,4 +1,10 @@
+<div align="center">
+
+<img src="assets/icon.svg" width="160" height="160" style="display: block; margin: 0 auto;" alt="SVG Image">
+
 # **fas-rs**
+
+### Frame aware scheduling for android
 
 [![English][readme-en-badge]][readme-en-url]
 [![Stars][stars-badge]][stars-url]
@@ -6,6 +12,8 @@
 [![Release][release-badge]][release-url]
 [![Download][download-badge]][download-url]
 [![Telegram][telegram-badge]][telegram-url]
+
+</div>
 
 [readme-en-badge]: https://img.shields.io/badge/README-English-blue.svg?style=for-the-badge&logo=readme
 [readme-en-url]: README_EN.md

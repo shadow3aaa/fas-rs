@@ -1,4 +1,10 @@
+<div align="center">
+
+<img src="assets/icon.svg" width="160" height="160" style="display: block; margin: 0 auto;" alt="SVG Image">
+
 # **fas-rs**
+
+### Frame aware scheduling for android
 
 [![简体中文][readme-cn-badge]][readme-cn-url]
 [![Stars][stars-badge]][stars-url]
@@ -6,6 +12,8 @@
 [![Release][release-badge]][release-url]
 [![Download][download-badge]][download-url]
 [![Telegram][telegram-badge]][telegram-url]
+
+</div>
 
 > **⚠ Warning**: This document is gpt-translated and may contain inaccuracies or errors.
 
