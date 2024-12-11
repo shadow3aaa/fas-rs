@@ -35,7 +35,7 @@ inotify = { version = "0.11.0", default-features = false }
 libc = "0.2.168"
 flexi_logger = "0.29.7"
 toml = "0.8.19"
-serde = { version = "1.0.215", features = ["derive"] }
+serde = { version = "1.0.216", features = ["derive"] }
 sys-mount = { version = "3.0.1", default-features = false }
 quick-xml = { version = "0.37.0", features = ["serialize"] }
 mlua = { version = "0.10.2", features = ["luajit", "vendored", "error-send"] }
@@ -47,7 +47,7 @@ sysinfo = "0.33.0"
 [build-dependencies]
 anyhow = "1.0.94"
 toml = "0.8.19"
-serde = { version = "1.0.215", features = ["derive"] }
+serde = { version = "1.0.216", features = ["derive"] }
 serde_json = "1.0.132"
 vergen = { version = "9.0.0", features = ["build", "cargo", "rustc", "si"] }
 
