@@ -30,7 +30,7 @@ likely_stable = "0.1.3"
 parking_lot = "0.12.3"
 log = "0.4.22"
 anyhow = { version = "1.0.94" }
-thiserror = "2.0.6"
+thiserror = "2.0.7"
 inotify = { version = "0.11.0", default-features = false }
 libc = "0.2.168"
 flexi_logger = "0.29.7"
