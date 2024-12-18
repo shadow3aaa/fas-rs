@@ -39,7 +39,7 @@ impl Extension {
         let (sx, rx) = mpsc::sync_channel(16);
 
         thread::Builder::new()
-            .name("ExtensionThead".into())
+            .name("ExtensionThread".into())
             .spawn(move || core::thread(&rx))?;
 
         Ok(Self { sx })
