@@ -29,8 +29,8 @@ repository = "https://github.com/shadow3aaa/fas-rs"
 likely_stable = "0.1.3"
 parking_lot = "0.12.3"
 log = "0.4.22"
+thiserror = "2.0.9"
 anyhow = { version = "1.0.95" }
-thiserror = "2.0.8"
 inotify = { version = "0.11.0", default-features = false }
 flexi_logger = "0.29.8"
 libc = "0.2.169"
