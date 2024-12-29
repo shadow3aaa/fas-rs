@@ -164,7 +164,7 @@ impl Controller {
             })
             .collect();
 
-        for cpu in self.cpu_infos.iter_mut().rev() {
+        for cpu in self.cpu_infos.iter_mut() {
             let freq = fas_freqs.get(&cpu.policy).copied().unwrap();
             let freq = match *EXTRA_POLICY_MAP
                 .get()
@@ -182,7 +182,7 @@ impl Controller {
                 ExtraPolicy::RelRangeBound(ref rel_bound) => {
                     let rel_to_freq = fas_freqs.get(&rel_bound.rel_to).copied().unwrap();
                     freq.clamp(
-                        rel_to_freq + rel_bound.min.unwrap_or(0),
+                        rel_to_freq + rel_bound.min.unwrap_or(isize::MIN),
                         rel_to_freq + rel_bound.max.unwrap_or(isize::MAX),
                     )
                 }
