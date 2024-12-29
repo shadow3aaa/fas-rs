@@ -85,9 +85,9 @@ fn adjust_target_fps(target_fps: f64, controller_state: &mut ControllerState) ->
     if controller_state.usage_sample_timer.elapsed() >= Duration::from_secs(1) {
         controller_state.usage_sample_timer = Instant::now();
         let usage = controller_state.controller.usage_max();
-        if usage <= 55.0 {
+        if usage <= 40.0 {
             controller_state.target_fps_offset -= 0.1;
-        } else if usage >= 80.0 {
+        } else if usage >= 70.0 {
             controller_state.target_fps_offset += 0.1;
         }
     }
