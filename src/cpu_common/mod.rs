@@ -166,21 +166,7 @@ impl Controller {
 
         let fas_freq_max = fas_freqs.values().max().copied().unwrap();
 
-        #[cfg(debug_assertions)]
-        debug!(
-            "policy{} freq: {}",
-            self.cpu_infos.last().unwrap().policy,
-            fas_freq_max
-        );
-
-        let _ = self
-            .cpu_infos
-            .last_mut()
-            .unwrap()
-            .write_freq(fas_freq_max, &mut self.file_handler);
-
-        // skip P cores
-        for cpu in self.cpu_infos.iter_mut().rev().skip(1) {
+        for cpu in self.cpu_infos.iter_mut().rev() {
             let freq = fas_freqs.get(&cpu.policy).copied().unwrap();
             let freq = freq.max(fas_freq_max * 80 / 100);
 
