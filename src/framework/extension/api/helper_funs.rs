@@ -27,6 +27,17 @@ use crate::cpu_common::{
 
 static WARNING_FLAG: AtomicBool = AtomicBool::new(false);
 
+pub fn remove_extra_policy(policy: i32) {
+    *EXTRA_POLICY_MAP
+        .get()
+        .context("EXTRA_POLICY_MAP not initialized")
+        .unwrap()
+        .get(&policy)
+        .context("CPU Policy not found")
+        .unwrap()
+        .lock() = ExtraPolicy::None;
+}
+
 pub fn set_extra_policy_abs(policy: i32, min: Option<isize>, max: Option<isize>) {
     let extra_policy = if min.is_none() && max.is_none() {
         ExtraPolicy::None
