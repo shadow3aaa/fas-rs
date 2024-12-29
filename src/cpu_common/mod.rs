@@ -144,9 +144,21 @@ impl Controller {
         #[cfg(debug_assertions)]
         debug!("change freq: {}", control);
 
-        let fas_freqs: HashMap<_, _> = self
-            .cpu_infos
-            .iter_mut()
+        let fas_freqs = self.compute_target_frequencies(control);
+        let sorted_policies = self.sort_policies_topologically();
+        let fas_freqs = Self::apply_absolute_constraints(fas_freqs, &sorted_policies);
+        let fas_freqs = Self::apply_relative_constraints(fas_freqs, &sorted_policies);
+
+        for cpu in &mut self.cpu_infos {
+            if let Some(freq) = fas_freqs.get(&cpu.policy).copied() {
+                let _ = cpu.write_freq(freq, &mut self.file_handler);
+            }
+        }
+    }
+
+    fn compute_target_frequencies(&self, control: isize) -> HashMap<i32, isize> {
+        self.cpu_infos
+            .iter()
             .map(|cpu| {
                 let cpu_usage = cpu
                     .cpu_usage()
@@ -162,38 +174,128 @@ impl Controller {
                         .clamp(0, self.max_freq),
                 )
             })
-            .collect();
+            .collect()
+    }
 
-        for cpu in self.cpu_infos.iter_mut() {
-            let freq = fas_freqs.get(&cpu.policy).copied().unwrap();
-            let freq = match *EXTRA_POLICY_MAP
+    fn sort_policies_topologically(&self) -> Vec<i32> {
+        let mut graph: HashMap<_, Vec<_>> = HashMap::new();
+        let mut indegree: HashMap<_, _> = HashMap::new();
+
+        for cpu in &self.cpu_infos {
+            let policy = cpu.policy;
+
+            if let ExtraPolicy::RelRangeBound(ref rel_bound) = *EXTRA_POLICY_MAP
                 .get()
                 .context("EXTRA_POLICY_MAP not initialized")
                 .unwrap()
-                .get(&cpu.policy)
+                .get(&policy)
                 .context("CPU Policy not found")
                 .unwrap()
                 .lock()
             {
-                ExtraPolicy::AbsRangeBound(ref abs_bound) => freq.clamp(
-                    abs_bound.min.unwrap_or(0),
-                    abs_bound.max.unwrap_or(isize::MAX),
-                ),
-                ExtraPolicy::RelRangeBound(ref rel_bound) => {
-                    let rel_to_freq = fas_freqs.get(&rel_bound.rel_to).copied().unwrap();
-                    freq.clamp(
-                        rel_to_freq + rel_bound.min.unwrap_or(isize::MIN),
-                        rel_to_freq + rel_bound.max.unwrap_or(isize::MAX),
-                    )
-                }
-                ExtraPolicy::None => freq,
-            };
+                graph.entry(rel_bound.rel_to).or_default().push(policy);
+                *indegree.entry(policy).or_insert(0) += 1;
+            }
 
-            #[cfg(debug_assertions)]
-            debug!("policy{} freq: {}", cpu.policy, freq);
-
-            let _ = cpu.write_freq(freq, &mut self.file_handler);
+            indegree.entry(policy).or_insert(0);
         }
+
+        let mut queue: Vec<_> = indegree
+            .iter()
+            .filter(|(_, &deg)| deg == 0)
+            .map(|(&policy, _)| policy)
+            .collect();
+        let mut sorted_policies = Vec::new();
+
+        while let Some(policy) = queue.pop() {
+            sorted_policies.push(policy);
+            if let Some(dependents) = graph.get(&policy) {
+                for &dependent in dependents {
+                    if let Some(deg) = indegree.get_mut(&dependent) {
+                        *deg -= 1;
+                        if *deg == 0 {
+                            queue.push(dependent);
+                        }
+                    }
+                }
+            }
+        }
+
+        assert!(
+            (sorted_policies.len() >= indegree.len()),
+            "Circular dependency detected in CPU policies"
+        );
+
+        sorted_policies
+    }
+
+    fn apply_absolute_constraints(
+        mut fas_freqs: HashMap<i32, isize>,
+        sorted_policies: &[i32],
+    ) -> HashMap<i32, isize> {
+        for policy in sorted_policies {
+            if let Some(freq) = fas_freqs.get(policy).copied() {
+                if let ExtraPolicy::AbsRangeBound(ref abs_bound) = *EXTRA_POLICY_MAP
+                    .get()
+                    .context("EXTRA_POLICY_MAP not initialized")
+                    .unwrap()
+                    .get(policy)
+                    .context("CPU Policy not found")
+                    .unwrap()
+                    .lock()
+                {
+                    let clamped_freq = freq.clamp(
+                        abs_bound.min.unwrap_or(0),
+                        abs_bound.max.unwrap_or(isize::MAX),
+                    );
+                    fas_freqs.insert(*policy, clamped_freq);
+                }
+            }
+        }
+
+        fas_freqs
+    }
+
+    fn apply_relative_constraints(
+        mut fas_freqs: HashMap<i32, isize>,
+        sorted_policies: &[i32],
+    ) -> HashMap<i32, isize> {
+        for policy in sorted_policies {
+            if let Some(freq) = fas_freqs.get(policy).copied() {
+                let adjusted_freq = match *EXTRA_POLICY_MAP
+                    .get()
+                    .context("EXTRA_POLICY_MAP not initialized")
+                    .unwrap()
+                    .get(policy)
+                    .context("CPU Policy not found")
+                    .unwrap()
+                    .lock()
+                {
+                    ExtraPolicy::RelRangeBound(ref rel_bound) => {
+                        let rel_to_freq = fas_freqs.get(&rel_bound.rel_to).copied().unwrap_or(0);
+
+                        #[cfg(debug_assertions)]
+                        debug!("policy{} rel_to {}", policy, rel_to_freq);
+
+                        freq.clamp(
+                            rel_to_freq + rel_bound.min.unwrap_or(isize::MIN),
+                            rel_to_freq + rel_bound.max.unwrap_or(isize::MAX),
+                        )
+                    }
+                    _ => freq,
+                };
+
+                #[cfg(debug_assertions)]
+                debug!(
+                    "policy{} freq after relative bound: {}",
+                    policy, adjusted_freq
+                );
+
+                fas_freqs.insert(*policy, adjusted_freq);
+            }
+        }
+
+        fas_freqs
     }
 
     fn set_all_cpu_freq(&mut self, freq: isize) {
