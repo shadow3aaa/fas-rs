@@ -15,26 +15,74 @@
 // You should have received a copy of the GNU General Public License along
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::cpu_common::{IGNORE_MAP, OFFSET_MAP};
+use anyhow::Context;
+use log::warn;
 
-pub fn set_policy_freq_offset(policy: i32, offset: isize) -> mlua::Result<()> {
-    OFFSET_MAP
+use crate::cpu_common::{
+    extra_policy::{AbsRangeBound, ExtraPolicy, RelRangeBound},
+    EXTRA_POLICY_MAP, IGNORE_MAP,
+};
+
+static WARNING_FLAG: AtomicBool = AtomicBool::new(false);
+
+pub fn set_extra_policy_abs(policy: i32, min: Option<isize>, max: Option<isize>) {
+    let extra_policy = if min.is_none() && max.is_none() {
+        ExtraPolicy::None
+    } else {
+        ExtraPolicy::AbsRangeBound(AbsRangeBound { min, max })
+    };
+
+    *EXTRA_POLICY_MAP
         .get()
+        .context("EXTRA_POLICY_MAP not initialized")
         .unwrap()
         .get(&policy)
-        .ok_or_else(|| mlua::Error::runtime("Policy Not Found!"))?
-        .store(offset, Ordering::Release);
-    Ok(())
+        .context("CPU Policy not found")
+        .unwrap()
+        .lock() = extra_policy;
 }
 
-pub fn set_ignore_policy(policy: i32, val: bool) -> mlua::Result<()> {
+pub fn set_extra_policy_rel(
+    policy: i32,
+    target_policy: i32,
+    min: Option<isize>,
+    max: Option<isize>,
+) {
+    let extra_policy = if min.is_none() && max.is_none() {
+        ExtraPolicy::None
+    } else {
+        ExtraPolicy::RelRangeBound(RelRangeBound {
+            min,
+            max,
+            rel_to: target_policy,
+        })
+    };
+
+    *EXTRA_POLICY_MAP
+        .get()
+        .context("EXTRA_POLICY_MAP not initialized")
+        .unwrap()
+        .get(&policy)
+        .context("CPU Policy not found")
+        .unwrap()
+        .lock() = extra_policy;
+}
+
+pub fn set_policy_freq_offset(_: i32, _: isize) {
+    if !WARNING_FLAG.load(Ordering::Acquire) {
+        warn!("The API set_policy_freq_offset was removed in v4.2.0. If you see this warning, it means an outdated plugin is trying to use it. The warning will only appear once.");
+        WARNING_FLAG.store(true, Ordering::Release);
+    }
+}
+
+pub fn set_ignore_policy(policy: i32, val: bool) {
     IGNORE_MAP
         .get()
         .unwrap()
         .get(&policy)
-        .ok_or_else(|| mlua::Error::runtime("Policy Not Found!"))?
+        .ok_or_else(|| mlua::Error::runtime("Policy Not Found!"))
+        .unwrap()
         .store(val, Ordering::Release);
-    Ok(())
 }

@@ -16,33 +16,33 @@
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
 mod cpu_info;
+pub mod extra_policy;
 
 use std::{
     cmp,
     collections::HashMap,
     fs,
     path::Path,
-    sync::{
-        atomic::{AtomicBool, AtomicIsize, Ordering},
-        OnceLock,
-    },
+    sync::{atomic::AtomicBool, OnceLock},
     thread,
     time::Duration,
 };
 
 use anyhow::{Context, Result};
-use cpu_info::Info;
 #[cfg(debug_assertions)]
 use log::debug;
 use log::warn;
+use parking_lot::Mutex;
 
 use crate::{
     api::{trigger_init_cpu_freq, trigger_reset_cpu_freq},
     file_handler::FileHandler,
     Extension,
 };
+use cpu_info::Info;
+use extra_policy::ExtraPolicy;
 
-pub static OFFSET_MAP: OnceLock<HashMap<i32, AtomicIsize>> = OnceLock::new();
+pub static EXTRA_POLICY_MAP: OnceLock<HashMap<i32, Mutex<ExtraPolicy>>> = OnceLock::new();
 pub static IGNORE_MAP: OnceLock<HashMap<i32, AtomicBool>> = OnceLock::new();
 
 #[derive(Debug)]
@@ -57,10 +57,10 @@ impl Controller {
         let mut cpu_infos = Self::load_cpu_infos()?;
         cpu_infos.sort_by_key(|cpu| cpu.policy);
 
-        OFFSET_MAP.get_or_init(|| {
+        EXTRA_POLICY_MAP.get_or_init(|| {
             cpu_infos
                 .iter()
-                .map(|cpu| (cpu.policy, AtomicIsize::new(0)))
+                .map(|cpu| (cpu.policy, Mutex::new(ExtraPolicy::None)))
                 .collect()
         });
         IGNORE_MAP.get_or_init(|| {
@@ -164,21 +164,30 @@ impl Controller {
             })
             .collect();
 
-        let fas_freq_max = fas_freqs.values().max().copied().unwrap();
-
         for cpu in self.cpu_infos.iter_mut().rev() {
             let freq = fas_freqs.get(&cpu.policy).copied().unwrap();
-            let freq = freq.max(fas_freq_max * 80 / 100);
-
-            let offset = OFFSET_MAP
+            let freq = match *EXTRA_POLICY_MAP
                 .get()
-                .context("OFFSET_MAP not initialized")
+                .context("EXTRA_POLICY_MAP not initialized")
                 .unwrap()
                 .get(&cpu.policy)
-                .context("Policy offset not found")
+                .context("CPU Policy not found")
                 .unwrap()
-                .load(Ordering::Acquire);
-            let freq = freq.min(fas_freq_max.saturating_add(offset));
+                .lock()
+            {
+                ExtraPolicy::AbsRangeBound(ref abs_bound) => freq.clamp(
+                    abs_bound.min.unwrap_or(0),
+                    abs_bound.max.unwrap_or(isize::MAX),
+                ),
+                ExtraPolicy::RelRangeBound(ref rel_bound) => {
+                    let rel_to_freq = fas_freqs.get(&rel_bound.rel_to).copied().unwrap();
+                    freq.clamp(
+                        rel_to_freq + rel_bound.min.unwrap_or(0),
+                        rel_to_freq + rel_bound.max.unwrap_or(isize::MAX),
+                    )
+                }
+                ExtraPolicy::None => freq,
+            };
 
             #[cfg(debug_assertions)]
             debug!("policy{} freq: {}", cpu.policy, freq);
