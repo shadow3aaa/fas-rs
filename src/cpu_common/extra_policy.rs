@@ -15,17 +15,20 @@
 // You should have received a copy of the GNU General Public License along
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
+#[derive(Debug)]
 pub enum ExtraPolicy {
     AbsRangeBound(AbsRangeBound),
     RelRangeBound(RelRangeBound),
     None,
 }
 
+#[derive(Debug)]
 pub struct AbsRangeBound {
     pub min: Option<isize>,
     pub max: Option<isize>,
 }
 
+#[derive(Debug)]
 pub struct RelRangeBound {
     pub rel_to: i32,
     pub min: Option<isize>,

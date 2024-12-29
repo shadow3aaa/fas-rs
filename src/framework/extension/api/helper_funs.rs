@@ -18,6 +18,8 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use anyhow::Context;
+#[cfg(debug_assertions)]
+use log::debug;
 use log::warn;
 
 use crate::cpu_common::{
@@ -53,6 +55,9 @@ pub fn set_extra_policy_abs(policy: i32, min: Option<isize>, max: Option<isize>)
         .context("CPU Policy not found")
         .unwrap()
         .lock() = extra_policy;
+
+    #[cfg(debug_assertions)]
+    debug!("EXTRA_POLICY_MAP: {:?}", EXTRA_POLICY_MAP.get().unwrap());
 }
 
 pub fn set_extra_policy_rel(
@@ -79,6 +84,9 @@ pub fn set_extra_policy_rel(
         .context("CPU Policy not found")
         .unwrap()
         .lock() = extra_policy;
+
+    #[cfg(debug_assertions)]
+    debug!("EXTRA_POLICY_MAP: {:?}", EXTRA_POLICY_MAP.get().unwrap());
 }
 
 pub fn set_policy_freq_offset(_: i32, _: isize) {
