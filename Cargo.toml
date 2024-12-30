@@ -42,7 +42,7 @@ mlua = { version = "0.10.2", features = ["luajit", "vendored", "error-send"] }
 frame-analyzer = "0.3.3"
 dumpsys-rs = { git = "https://github.com/shadow3aaa/dumpsys-rs" }
 mimalloc = "0.1.43"
-sysinfo = "0.33.0"
+sysinfo = "0.33.1"
 
 [build-dependencies]
 anyhow = "1.0.95"
