@@ -157,6 +157,12 @@ impl Controller {
     }
 
     fn compute_target_frequencies(&self, control: isize) -> HashMap<i32, isize> {
+        let cur_freq_max = self
+            .cpu_infos
+            .iter()
+            .map(|cpu| cpu.cur_freq)
+            .max()
+            .unwrap_or_default();
         self.cpu_infos
             .iter()
             .map(|cpu| {
@@ -171,7 +177,7 @@ impl Controller {
                 let control = (control as f64 * control_factor) as isize;
                 (
                     cpu.policy,
-                    cpu.cur_freq
+                    cur_freq_max
                         .saturating_add(control)
                         .min(usage_tracking_sugg_freq)
                         .clamp(0, self.max_freq),
