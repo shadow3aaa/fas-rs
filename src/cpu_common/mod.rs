@@ -172,9 +172,6 @@ impl Controller {
                     .unwrap_or_default();
                 let usage_tracking_sugg_freq =
                     (cpu.cur_freq as f32 * cpu_usage / 100.0 / 0.5) as isize; // target_usage: 50%
-                let control_factor =
-                    (1.0 - cpu.cur_freq as f64 / cpu.freqs.last().copied().unwrap() as f64) + 0.65;
-                let control = (control as f64 * control_factor) as isize;
                 (
                     cpu.policy,
                     cur_freq_max
