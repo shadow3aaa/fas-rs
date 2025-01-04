@@ -1,5 +1,5 @@
 #!/bin/python3
-# Copyright 2023-2024, shadow3 (@shadow3aaa)
+# Copyright 2023-2025, shadow3 (@shadow3aaa)
 #
 # This file is part of fas-rs.
 #
