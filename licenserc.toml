@@ -18,7 +18,3 @@
 headerPath = "NOTICES"
 includes = ["licenserc.toml", "src/**", "Cargo.toml", "build.rs", "make.py", "maketools/**", "module/**", ".github/**"]
 excludes = ["module/games.toml", "module/META-INF/**", "module/*.prop"]
-
-[properties]
-inceptionYear = 2024
-copyrightOwner = "shadow3 (@shadow3aaa)"
