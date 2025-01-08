@@ -89,7 +89,7 @@ impl Buffer {
 
         let current_fps = self.calculate_max_fps_over_samples(5)?;
 
-        if unlikely(current_fps < (target_fpses[0].saturating_sub(10).max(10)).into()) {
+        if unlikely(current_fps < (target_fpses.first()?.saturating_sub(10).max(10)).into()) {
             return None;
         }
 
