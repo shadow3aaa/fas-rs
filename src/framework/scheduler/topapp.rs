@@ -75,7 +75,15 @@ impl TopAppsWatcher {
 
     fn cache(&mut self) -> &WindowsInfo {
         if self.last_refresh.elapsed() > REFRESH_TIME {
-            let dump = self.windows_dumper.dump(&["visible-apps"]).unwrap();
+            let dump = loop {
+                match self.windows_dumper.dump(&["visible-apps"]) {
+                    Ok(dump) => break dump,
+                    Err(e) => {
+                        log::error!("Failed to dump windows: {}, retrying", e);
+                        std::thread::sleep(Duration::from_secs(1));
+                    }
+                }
+            };
             self.cache = WindowsInfo::new(&dump);
 
             self.last_refresh = Instant::now();
