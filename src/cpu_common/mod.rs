@@ -40,10 +40,11 @@ use crate::{
     Extension,
 };
 use cpu_info::Info;
-use extra_policy::ExtraPolicy;
+use extra_policy::{ExtraPolicy, RelRangeBound};
 
 pub static EXTRA_POLICY_MAP: OnceLock<HashMap<i32, Mutex<ExtraPolicy>>> = OnceLock::new();
 pub static IGNORE_MAP: OnceLock<HashMap<i32, AtomicBool>> = OnceLock::new();
+static EXTRA_POLICY_MAP_DEFAULT: OnceLock<HashMap<i32, ExtraPolicy>> = OnceLock::new();
 
 #[derive(Debug)]
 pub struct Controller {
@@ -61,6 +62,26 @@ impl Controller {
             cpu_infos
                 .iter()
                 .map(|cpu| (cpu.policy, Mutex::new(ExtraPolicy::None)))
+                .collect()
+        });
+        EXTRA_POLICY_MAP_DEFAULT.get_or_init(|| {
+            let prime_policy = cpu_infos.last().map(|info| info.policy).unwrap();
+            cpu_infos
+                .iter()
+                .map(|info| {
+                    if info.policy == prime_policy {
+                        (info.policy, ExtraPolicy::None)
+                    } else {
+                        (
+                            info.policy,
+                            ExtraPolicy::RelRangeBound(RelRangeBound {
+                                rel_to: prime_policy,
+                                min: Some(-100_000),
+                                max: Some(100_000),
+                            }),
+                        )
+                    }
+                })
                 .collect()
         });
         IGNORE_MAP.get_or_init(|| {
@@ -268,27 +289,58 @@ impl Controller {
     ) -> HashMap<i32, isize> {
         for policy in sorted_policies {
             if let Some(freq) = fas_freqs.get(policy).copied() {
-                let adjusted_freq = match *EXTRA_POLICY_MAP
+                let extra_policy_map = EXTRA_POLICY_MAP
                     .get()
                     .context("EXTRA_POLICY_MAP not initialized")
-                    .unwrap()
-                    .get(policy)
-                    .context("CPU Policy not found")
-                    .unwrap()
-                    .lock()
+                    .unwrap();
+                let adjusted_freq = if extra_policy_map
+                    .values()
+                    .all(|policy| *policy.lock() == ExtraPolicy::None)
                 {
-                    ExtraPolicy::RelRangeBound(ref rel_bound) => {
-                        let rel_to_freq = fas_freqs.get(&rel_bound.rel_to).copied().unwrap_or(0);
+                    let extra_policy_map = EXTRA_POLICY_MAP_DEFAULT
+                        .get()
+                        .context("EXTRA_POLICY_MAP_DEFAULT not initialized")
+                        .unwrap();
+                    match *extra_policy_map
+                        .get(policy)
+                        .context("CPU Policy not found")
+                        .unwrap()
+                    {
+                        ExtraPolicy::RelRangeBound(ref rel_bound) => {
+                            let rel_to_freq =
+                                fas_freqs.get(&rel_bound.rel_to).copied().unwrap_or(0);
 
-                        #[cfg(debug_assertions)]
-                        debug!("policy{} rel_to {}", policy, rel_to_freq);
+                            #[cfg(debug_assertions)]
+                            debug!("policy{} rel_to {}", policy, rel_to_freq);
 
-                        freq.clamp(
-                            rel_to_freq + rel_bound.min.unwrap_or(isize::MIN),
-                            rel_to_freq + rel_bound.max.unwrap_or(isize::MAX),
-                        )
+                            freq.clamp(
+                                rel_to_freq + rel_bound.min.unwrap_or(isize::MIN),
+                                rel_to_freq + rel_bound.max.unwrap_or(isize::MAX),
+                            )
+                        }
+                        _ => freq,
                     }
-                    _ => freq,
+                } else {
+                    match *extra_policy_map
+                        .get(policy)
+                        .context("CPU Policy not found")
+                        .unwrap()
+                        .lock()
+                    {
+                        ExtraPolicy::RelRangeBound(ref rel_bound) => {
+                            let rel_to_freq =
+                                fas_freqs.get(&rel_bound.rel_to).copied().unwrap_or(0);
+
+                            #[cfg(debug_assertions)]
+                            debug!("policy{} rel_to {}", policy, rel_to_freq);
+
+                            freq.clamp(
+                                rel_to_freq + rel_bound.min.unwrap_or(isize::MIN),
+                                rel_to_freq + rel_bound.max.unwrap_or(isize::MAX),
+                            )
+                        }
+                        _ => freq,
+                    }
                 };
 
                 #[cfg(debug_assertions)]
