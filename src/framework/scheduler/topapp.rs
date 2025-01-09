@@ -58,8 +58,15 @@ pub struct TopAppsWatcher {
 
 impl TopAppsWatcher {
     pub fn new() -> Self {
+        let windows_dumper = loop {
+            match Dumpsys::new("window") {
+                Some(d) => break d,
+                None => std::thread::sleep(Duration::from_secs(1)),
+            }
+        };
+
         Self {
-            windows_dumper: Dumpsys::new("window").unwrap(),
+            windows_dumper,
             cache: WindowsInfo::default(),
             last_refresh: Instant::now(),
         }
