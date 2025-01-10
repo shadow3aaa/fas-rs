@@ -156,15 +156,6 @@ impl Controller {
         }
     }
 
-    fn use_default_extra_policy() -> bool {
-        EXTRA_POLICY_MAP
-            .get()
-            .context("EXTRA_POLICY_MAP not initialized")
-            .unwrap()
-            .values()
-            .all(|policy| *policy.lock() == ExtraPolicy::None)
-    }
-
     fn compute_target_frequencies(&self, control: isize) -> HashMap<i32, isize> {
         let cur_freq_max = self
             .cpu_infos
@@ -172,8 +163,6 @@ impl Controller {
             .map(|cpu| cpu.cur_freq)
             .max()
             .unwrap_or_default();
-        let last_cpu_policy = self.cpu_infos.last().map(|info| info.policy).unwrap();
-        let use_default_extra_policy = Self::use_default_extra_policy();
         self.cpu_infos
             .iter()
             .map(|cpu| {
@@ -183,17 +172,12 @@ impl Controller {
                     .unwrap_or_default();
                 let usage_tracking_sugg_freq =
                     (cpu.cur_freq as f32 * cpu_usage / 100.0 / 0.5) as isize; // target_usage: 50%
-
                 (
                     cpu.policy,
-                    if use_default_extra_policy && cpu.policy == last_cpu_policy {
-                        cur_freq_max.saturating_add(control).clamp(0, self.max_freq)
-                    } else {
-                        cur_freq_max
-                            .saturating_add(control)
-                            .min(usage_tracking_sugg_freq)
-                            .clamp(0, self.max_freq)
-                    },
+                    cur_freq_max
+                        .saturating_add(control)
+                        .min(usage_tracking_sugg_freq)
+                        .clamp(0, self.max_freq),
                 )
             })
             .collect()
