@@ -149,9 +149,22 @@ impl Controller {
         let fas_freqs = Self::apply_absolute_constraints(fas_freqs, &sorted_policies);
         let fas_freqs = Self::apply_relative_constraints(fas_freqs, &sorted_policies);
 
-        for cpu in &mut self.cpu_infos {
-            if let Some(freq) = fas_freqs.get(&cpu.policy).copied() {
-                let _ = cpu.write_freq(freq, &mut self.file_handler);
+        if no_extra_policy() {
+            let fas_freq_max = fas_freqs.values().max().copied().unwrap();
+            for cpu in &mut self.cpu_infos {
+                if let Some(freq) = fas_freqs.get(&cpu.policy).copied() {
+                    let freq = freq.clamp(
+                        fas_freq_max.saturating_sub(100_000),
+                        fas_freq_max.saturating_add(100_000),
+                    );
+                    let _ = cpu.write_freq(freq, &mut self.file_handler);
+                }
+            }
+        } else {
+            for cpu in &mut self.cpu_infos {
+                if let Some(freq) = fas_freqs.get(&cpu.policy).copied() {
+                    let _ = cpu.write_freq(freq, &mut self.file_handler);
+                }
             }
         }
     }
@@ -163,6 +176,7 @@ impl Controller {
             .map(|cpu| cpu.cur_freq)
             .max()
             .unwrap_or_default();
+
         self.cpu_infos
             .iter()
             .map(|cpu| {
@@ -333,4 +347,13 @@ impl Controller {
             .max_by(|a, b| a.partial_cmp(b).unwrap_or(cmp::Ordering::Equal))
             .unwrap_or_default()
     }
+}
+
+fn no_extra_policy() -> bool {
+    EXTRA_POLICY_MAP
+        .get()
+        .context("EXTRA_POLICY_MAP not initialized")
+        .unwrap()
+        .values()
+        .all(|policy| *policy.lock() == ExtraPolicy::None)
 }
