@@ -22,7 +22,6 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use sysinfo::{Cpu, CpuRefreshKind, RefreshKind, System};
 
 use super::IGNORE_MAP;
 use crate::file_handler::FileHandler;
@@ -33,8 +32,7 @@ pub struct Info {
     path: PathBuf,
     pub cur_freq: isize,
     pub freqs: Vec<isize>,
-    sys: System,
-    cpus: Vec<i32>,
+    pub cpus: Vec<i32>,
 }
 
 impl Info {
@@ -68,16 +66,11 @@ impl Info {
             .collect::<Result<_>>()?;
         freqs.sort_unstable();
 
-        let sys = System::new_with_specifics(
-            RefreshKind::nothing().with_cpu(CpuRefreshKind::nothing().with_cpu_usage()),
-        );
-
         Ok(Self {
             policy,
             path,
             cur_freq: *freqs.last().context("No frequencies available")?,
             freqs,
-            sys,
             cpus,
         })
     }
@@ -120,25 +113,21 @@ impl Info {
         Ok(())
     }
 
+    pub fn read_freq(&self) -> isize {
+        fs::read_to_string(self.path.join("scaling_cur_freq"))
+            .context("Failed to read scaling_cur_freq")
+            .unwrap()
+            .trim()
+            .parse::<isize>()
+            .context("Failed to parse scaling_cur_freq")
+            .unwrap()
+    }
+
     fn max_freq_path(&self) -> PathBuf {
         self.path.join("scaling_max_freq")
     }
 
     fn min_freq_path(&self) -> PathBuf {
         self.path.join("scaling_min_freq")
-    }
-
-    pub fn cpu_usage(&self) -> impl Iterator<Item = f32> + '_ {
-        self.sys
-            .cpus()
-            .iter()
-            .enumerate()
-            .filter(|(id, _)| self.cpus.contains(&(*id as i32)))
-            .map(|(_, cpu)| cpu)
-            .map(Cpu::cpu_usage)
-    }
-
-    pub fn refresh_cpu_usage(&mut self) {
-        self.sys.refresh_cpu_usage();
     }
 }

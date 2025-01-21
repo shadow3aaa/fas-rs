@@ -166,7 +166,10 @@ impl Looper {
                 self.fas_state.mode = new_mode;
 
                 if self.fas_state.working_state == State::Working {
-                    self.controller_state.controller.init_game(&self.extension);
+                    self.controller_state.controller.init_game(
+                        self.fas_state.buffer.as_ref().unwrap().package_info.pid,
+                        &self.extension,
+                    );
                 }
             }
         }
@@ -209,7 +212,6 @@ impl Looper {
             return;
         }
 
-        self.controller_state.controller.refresh_cpu_usage();
         let control = if let Some(buffer) = &self.fas_state.buffer {
             let target_fps_offset = self
                 .therminal
@@ -283,7 +285,10 @@ impl Looper {
                     self.fas_state.working_state = State::Working;
                     self.cleaner.cleanup();
                     self.controller_state.target_fps_offset = 0.0;
-                    self.controller_state.controller.init_game(&self.extension);
+                    self.controller_state.controller.init_game(
+                        self.fas_state.buffer.as_ref().unwrap().package_info.pid,
+                        &self.extension,
+                    );
                 }
             }
             State::Working => (),

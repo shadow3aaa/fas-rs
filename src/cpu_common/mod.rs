@@ -17,13 +17,18 @@
 
 mod cpu_info;
 pub mod extra_policy;
+mod thread_tracker;
 
 use std::{
     cmp,
     collections::HashMap,
     fs,
     path::Path,
-    sync::{atomic::AtomicBool, OnceLock},
+    sync::{
+        atomic::{AtomicBool, AtomicI32, Ordering},
+        mpsc::{self, SyncSender},
+        Arc, OnceLock,
+    },
     thread,
     time::Duration,
 };
@@ -33,6 +38,7 @@ use anyhow::{Context, Result};
 use log::debug;
 use log::warn;
 use parking_lot::Mutex;
+use thread_tracker::thread_tracker;
 
 use crate::{
     api::{trigger_init_cpu_freq, trigger_reset_cpu_freq},
@@ -50,6 +56,8 @@ pub struct Controller {
     max_freq: isize,
     cpu_infos: Vec<Info>,
     file_handler: FileHandler,
+    thread_map: Arc<HashMap<Vec<i32>, AtomicI32>>,
+    target_pid_sender: SyncSender<Option<i32>>,
 }
 
 impl Controller {
@@ -80,10 +88,30 @@ impl Controller {
             .copied()
             .unwrap_or(0);
 
+        let thread_map: Arc<HashMap<_, _>> = Arc::new(
+            cpu_infos
+                .iter()
+                .map(|info| (info.cpus.clone(), AtomicI32::new(0)))
+                .collect(),
+        );
+        let (target_pid_sender, target_pid_receiver) = mpsc::sync_channel(0);
+        {
+            let thread_map = thread_map.clone();
+
+            thread::Builder::new()
+                .name("UtilTracker".to_string())
+                .spawn(move || {
+                    thread_tracker(&thread_map, &target_pid_receiver);
+                })
+                .unwrap();
+        }
+
         Ok(Self {
             max_freq,
             cpu_infos,
             file_handler: FileHandler::new(),
+            thread_map,
+            target_pid_sender,
         })
     }
 
@@ -130,14 +158,16 @@ impl Controller {
         }
     }
 
-    pub fn init_game(&mut self, extension: &Extension) {
+    pub fn init_game(&mut self, pid: i32, extension: &Extension) {
         trigger_init_cpu_freq(extension);
         self.set_all_cpu_freq(self.max_freq);
+        self.target_pid_sender.send(Some(pid)).unwrap();
     }
 
     pub fn init_default(&mut self, extension: &Extension) {
         trigger_reset_cpu_freq(extension);
         self.reset_all_cpu_freq();
+        self.target_pid_sender.send(None).unwrap();
     }
 
     pub fn fas_update_freq(&mut self, control: isize) {
@@ -180,17 +210,25 @@ impl Controller {
         self.cpu_infos
             .iter()
             .map(|cpu| {
-                let cpu_usage = cpu
-                    .cpu_usage()
-                    .max_by(|a, b| a.partial_cmp(b).unwrap_or(cmp::Ordering::Equal))
-                    .unwrap_or_default();
-                let usage_tracking_sugg_freq =
-                    (cpu.cur_freq as f32 * cpu_usage / 100.0 / 0.5) as isize; // target_usage: 50%
+                let util = f64::from(
+                    self.thread_map
+                        .get(&cpu.cpus)
+                        .unwrap()
+                        .load(Ordering::Acquire),
+                ) / (cpu.read_freq() * 1000) as f64;
+                let util_tracking_sugg_freq = (cpu.read_freq() as f64 * util / 0.2) as isize; // min_util: 20%
+
+                #[cfg(debug_assertions)]
+                debug!(
+                    "cpu: {}, util: {}, util_tracking_sugg_freq: {}",
+                    cpu.policy, util, util_tracking_sugg_freq
+                );
+
                 (
                     cpu.policy,
                     cur_freq_max
                         .saturating_add(control)
-                        .min(usage_tracking_sugg_freq)
+                        .min(util_tracking_sugg_freq)
                         .clamp(0, self.max_freq),
                 )
             })
@@ -330,19 +368,16 @@ impl Controller {
         }
     }
 
-    pub fn refresh_cpu_usage(&mut self) {
-        for cpu in &mut self.cpu_infos {
-            cpu.refresh_cpu_usage();
-        }
-    }
-
-    pub fn usage_max(&mut self) -> f32 {
+    pub fn util_max(&mut self) -> f64 {
         self.cpu_infos
             .iter_mut()
             .map(|cpu| {
-                cpu.cpu_usage()
-                    .max_by(|a, b| a.partial_cmp(b).unwrap_or(cmp::Ordering::Equal))
-                    .unwrap_or_default()
+                f64::from(
+                    self.thread_map
+                        .get(&cpu.cpus)
+                        .unwrap()
+                        .load(Ordering::Acquire),
+                ) / cpu.read_freq() as f64
             })
             .max_by(|a, b| a.partial_cmp(b).unwrap_or(cmp::Ordering::Equal))
             .unwrap_or_default()
