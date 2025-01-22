@@ -76,11 +76,11 @@
 
   - #### **模式参数说明:**
 
-    - **margin:**
+    - **margin_fps:**
 
-      - 类型: `整数`
-      - 单位: `milliseconds`
-      - 允许的掉帧余量，越小帧率越高，越大越省电(0 <= margin < 1000)
+      - 类型: `整数/浮点数`
+      - 单位: `fps`
+      - 额外允许的掉帧量
 
     - **core_temp_thresh:**
 
@@ -109,19 +109,19 @@ scene_game_list = true
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
 [powersave]
-margin = 3
+margin_fps = 3
 core_temp_thresh = 80000
 
 [balance]
-margin = 2
+margin_fps = 1
 core_temp_thresh = 90000
 
 [performance]
-margin = 1
+margin_fps = 0
 core_temp_thresh = 95000
 
 [fast]
-margin = 0
+margin_fps = 0
 core_temp_thresh = 95000
 ```
 

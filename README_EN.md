@@ -78,11 +78,11 @@
 
   - #### **Mode Parameter Description:**
 
-    - **margin:**
+    - **margin_fps:**
 
-      - Type: `integer`
-      - Unit: `milliseconds`
-      - Allowed frame drop margin, the smaller the margin, the higher the frame rate, the larger the margin, the more power-saving (0 <= margin < 1000)
+      - Type: `integer/float`
+        - Unit: `fps`
+        - Additional allowed frame drop
 
     - **core_temp_thresh:**
 
@@ -111,19 +111,19 @@ scene_game_list = true
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
 [powersave]
-margin = 3
+margin_fps = 3
 core_temp_thresh = 80000
 
 [balance]
-margin = 2
+margin_fps = 1
 core_temp_thresh = 90000
 
 [performance]
-margin = 1
+margin_fps = 0
 core_temp_thresh = 95000
 
 [fast]
-margin = 0
+margin_fps = 0
 core_temp_thresh = 95000
 ```
 

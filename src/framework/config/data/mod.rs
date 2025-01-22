@@ -45,7 +45,7 @@ pub struct Config {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct ModeConfig {
-    pub margin: u64,
+    pub margin_fps: MarginFps,
     pub core_temp_thresh: TemperatureThreshold,
 }
 
@@ -55,6 +55,14 @@ pub enum TemperatureThreshold {
     Disabled,
     #[serde(untagged)]
     Temp(u64),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub enum MarginFps {
+    #[serde(untagged)]
+    Float(f64),
+    #[serde(untagged)]
+    Int(u64),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
