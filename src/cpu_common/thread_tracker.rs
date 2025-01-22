@@ -133,8 +133,7 @@ impl ThreadTracker {
 
         for thread in self.obvserve_threads.iter().copied() {
             for cpu in 0..num_cpus::get() {
-                if let Ok(mut counter) = perf_event::Builder::new()
-                    .kind(Hardware::CPU_CYCLES)
+                if let Ok(mut counter) = perf_event::Builder::new(Hardware::CPU_CYCLES)
                     .one_cpu(cpu)
                     .observe_pid(thread as i32)
                     .build()
