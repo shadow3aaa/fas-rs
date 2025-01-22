@@ -30,7 +30,8 @@ pub fn calculate_control(
     mode: Mode,
     controller_state: &mut ControllerState,
     target_fps_offset_thermal: f64,
-) -> Option<isize> {
+) -> Option<(isize, bool)> // control, is_janked
+{
     if unlikely(buffer.frametime_state.frametimes.len() < 60) {
         return None;
     }
@@ -52,11 +53,9 @@ pub fn calculate_control(
 
     let target_frametime = Duration::from_secs(1);
 
-    Some(calculate_control_inner(
-        target_fps,
-        controller_state,
-        adjusted_last_frame,
-        target_frametime,
+    Some((
+        calculate_control_inner(controller_state, adjusted_last_frame, target_frametime),
+        buffer.frametime_state.current_fps_long < target_fps - 2.0,
     ))
 }
 
@@ -75,7 +74,8 @@ fn adjust_target_fps(target_fps: f64, controller_state: &mut ControllerState) ->
     if controller_state.usage_sample_timer.elapsed() >= Duration::from_secs(1) {
         controller_state.usage_sample_timer = Instant::now();
         let util = controller_state.controller.util_max();
-        if util <= 0.2 {
+
+        if util <= 0.3 {
             controller_state.target_fps_offset -= 0.1;
         } else if util >= 0.4 {
             controller_state.target_fps_offset += 0.1;
@@ -87,14 +87,12 @@ fn adjust_target_fps(target_fps: f64, controller_state: &mut ControllerState) ->
 }
 
 fn calculate_control_inner(
-    target_fps: f64,
     controller_state: &ControllerState,
     current_frametime: Duration,
     target_frametime: Duration,
 ) -> isize {
     let error_p = (current_frametime.as_nanos() as f64 - target_frametime.as_nanos() as f64)
         * controller_state.params.kp;
-    let error_p = error_p * 120.0 / target_fps;
 
     #[cfg(debug_assertions)]
     debug!("error_p {error_p}");

@@ -41,9 +41,10 @@ pub struct PackageInfo {
 
 #[derive(Debug)]
 pub struct FrameTimeState {
-    pub current_fps: f64,
-    pub current_fpses: VecDeque<f64>,
-    pub avg_time: Duration,
+    pub current_fps_long: f64,
+    pub avg_time_long: Duration,
+    pub current_fps_short: f64,
+    pub avg_time_short: Duration,
     pub frametimes: VecDeque<Duration>,
     pub additional_frametime: Duration,
 }
@@ -51,9 +52,10 @@ pub struct FrameTimeState {
 impl FrameTimeState {
     fn new() -> Self {
         Self {
-            current_fps: 0.0,
-            current_fpses: VecDeque::with_capacity(144 * 3),
-            avg_time: Duration::ZERO,
+            current_fps_long: 0.0,
+            avg_time_long: Duration::ZERO,
+            current_fps_short: 0.0,
+            avg_time_short: Duration::ZERO,
             frametimes: VecDeque::with_capacity(1440),
             additional_frametime: Duration::ZERO,
         }

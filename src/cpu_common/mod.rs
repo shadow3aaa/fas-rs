@@ -170,11 +170,11 @@ impl Controller {
         self.target_pid_sender.send(None).unwrap();
     }
 
-    pub fn fas_update_freq(&mut self, control: isize) {
+    pub fn fas_update_freq(&mut self, control: isize, is_janked: bool) {
         #[cfg(debug_assertions)]
         debug!("change freq: {}", control);
 
-        let fas_freqs = self.compute_target_frequencies(control);
+        let fas_freqs = self.compute_target_frequencies(control, is_janked);
         let sorted_policies = self.sort_policies_topologically();
         let fas_freqs = Self::apply_absolute_constraints(fas_freqs, &sorted_policies);
         let fas_freqs = Self::apply_relative_constraints(fas_freqs, &sorted_policies);
@@ -199,7 +199,7 @@ impl Controller {
         }
     }
 
-    fn compute_target_frequencies(&self, control: isize) -> HashMap<i32, isize> {
+    fn compute_target_frequencies(&self, control: isize, is_janked: bool) -> HashMap<i32, isize> {
         let cur_freq_max = self
             .cpu_infos
             .iter()
@@ -216,7 +216,7 @@ impl Controller {
                         .unwrap()
                         .load(Ordering::Acquire),
                 ) / (cpu.read_freq() * 1000) as f64;
-                let util_tracking_sugg_freq = (cpu.read_freq() as f64 * util / 0.2) as isize; // min_util: 20%
+                let util_tracking_sugg_freq = (cpu.read_freq() as f64 * util / 0.3) as isize; // min_util: 30%
 
                 #[cfg(debug_assertions)]
                 debug!(
@@ -226,10 +226,14 @@ impl Controller {
 
                 (
                     cpu.policy,
-                    cur_freq_max
-                        .saturating_add(control)
-                        .min(util_tracking_sugg_freq)
-                        .clamp(0, self.max_freq),
+                    if is_janked {
+                        cur_freq_max.saturating_add(control).clamp(0, self.max_freq)
+                    } else {
+                        cur_freq_max
+                            .saturating_add(control)
+                            .min(util_tracking_sugg_freq)
+                            .clamp(0, self.max_freq)
+                    },
                 )
             })
             .collect()
@@ -377,7 +381,7 @@ impl Controller {
                         .get(&cpu.cpus)
                         .unwrap()
                         .load(Ordering::Acquire),
-                ) / cpu.read_freq() as f64
+                ) / (cpu.read_freq() * 1000) as f64
             })
             .max_by(|a, b| a.partial_cmp(b).unwrap_or(cmp::Ordering::Equal))
             .unwrap_or_default()

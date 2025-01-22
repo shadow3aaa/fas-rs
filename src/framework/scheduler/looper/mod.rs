@@ -212,7 +212,7 @@ impl Looper {
             return;
         }
 
-        let control = if let Some(buffer) = &self.fas_state.buffer {
+        let (control, is_janked) = if let Some(buffer) = &self.fas_state.buffer {
             let target_fps_offset = self
                 .therminal
                 .target_fps_offset(&mut self.config, self.fas_state.mode);
@@ -231,7 +231,9 @@ impl Looper {
         #[cfg(debug_assertions)]
         debug!("control: {control}khz");
 
-        self.controller_state.controller.fas_update_freq(control);
+        self.controller_state
+            .controller
+            .fas_update_freq(control, is_janked);
     }
 
     pub fn retain_topapp(&mut self) {
