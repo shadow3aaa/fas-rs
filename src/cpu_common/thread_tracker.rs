@@ -194,7 +194,7 @@ pub fn thread_tracker(
                     thread_tracker.build_counters();
                 }
 
-                thread::sleep(Duration::from_millis(8));
+                thread::sleep(Duration::from_millis(24));
 
                 for (cpus, cycles) in thread_map.iter() {
                     let new_cycles = thread_tracker.calculate_cycles_per_sec(cpus);

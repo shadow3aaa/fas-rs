@@ -131,9 +131,9 @@ impl Buffer {
     }
 
     fn try_calculate(&mut self, extension: &Extension) {
+        self.calculate_current_fps();
         if unlikely(self.state.calculate_timer.elapsed() >= Duration::from_millis(100)) {
             self.state.calculate_timer = Instant::now();
-            self.calculate_current_fps();
             self.calculate_target_fps(extension);
         }
     }

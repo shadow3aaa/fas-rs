@@ -216,7 +216,7 @@ impl Controller {
                         .unwrap()
                         .load(Ordering::Acquire),
                 ) / (cpu.read_freq() * 1000) as f64;
-                let util_tracking_sugg_freq = (cpu.read_freq() as f64 * util / 0.3) as isize; // min_util: 30%
+                let util_tracking_sugg_freq = (cpu.read_freq() as f64 * util / 0.2) as isize; // min_util: 20%
 
                 #[cfg(debug_assertions)]
                 debug!(

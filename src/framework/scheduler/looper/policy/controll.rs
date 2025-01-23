@@ -62,7 +62,7 @@ pub fn calculate_control(
 fn get_normalized_last_frame(buffer: &Buffer, target_fps: f64) -> Option<Duration> {
     Some(
         if buffer.frametime_state.additional_frametime == Duration::ZERO {
-            buffer.frametime_state.frametimes.front().copied()?
+            buffer.frametime_state.frametimes.iter().take(5).sum::<Duration>() / 5
         } else {
             buffer.frametime_state.additional_frametime
         }
@@ -75,7 +75,7 @@ fn adjust_target_fps(target_fps: f64, controller_state: &mut ControllerState) ->
         controller_state.usage_sample_timer = Instant::now();
         let util = controller_state.controller.util_max();
 
-        if util <= 0.3 {
+        if util <= 0.2 {
             controller_state.target_fps_offset -= 0.1;
         } else if util >= 0.4 {
             controller_state.target_fps_offset += 0.1;
