@@ -32,7 +32,6 @@ pub struct Info {
     path: PathBuf,
     pub cur_freq: isize,
     pub freqs: Vec<isize>,
-    pub cpus: Vec<i32>,
 }
 
 impl Info {
@@ -47,17 +46,6 @@ impl Info {
             .parse::<i32>()
             .context("Failed to parse policy")?;
 
-        let cpus = fs::read_to_string(path.join("affected_cpus"))
-            .context("Failed to read affected_cpus")
-            .unwrap()
-            .split_whitespace()
-            .map(|c| {
-                c.parse::<i32>()
-                    .context("Failed to parse affected_cpus")
-                    .unwrap()
-            })
-            .collect();
-
         let freqs_content = fs::read_to_string(path.join("scaling_available_frequencies"))
             .context("Failed to read frequencies")?;
         let mut freqs: Vec<isize> = freqs_content
@@ -71,7 +59,6 @@ impl Info {
             path,
             cur_freq: *freqs.last().context("No frequencies available")?,
             freqs,
-            cpus,
         })
     }
 

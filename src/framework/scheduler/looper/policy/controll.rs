@@ -46,7 +46,7 @@ pub fn calculate_control(
     let target_fps = (f64::from(buffer.target_fps_state.target_fps?) + target_fps_offset_thermal)
         .clamp(0.0, f64::from(buffer.target_fps_state.target_fps?));
     let adjusted_target_fps = adjust_target_fps(target_fps, controller_state) - margin_fps;
-    let adjusted_last_frame = get_normalized_last_frame(buffer, adjusted_target_fps)?;
+    let adjusted_last_frame = get_normalized_last_frame(buffer, adjusted_target_fps);
 
     #[cfg(debug_assertions)]
     debug!("adjusted_last_frame: {adjusted_last_frame:?}");
@@ -59,15 +59,19 @@ pub fn calculate_control(
     ))
 }
 
-fn get_normalized_last_frame(buffer: &Buffer, target_fps: f64) -> Option<Duration> {
-    Some(
-        if buffer.frametime_state.additional_frametime == Duration::ZERO {
-            buffer.frametime_state.frametimes.iter().take(5).sum::<Duration>() / 5
-        } else {
-            buffer.frametime_state.additional_frametime
-        }
-        .mul_f64(target_fps),
-    )
+fn get_normalized_last_frame(buffer: &Buffer, target_fps: f64) -> Duration {
+    if buffer.frametime_state.additional_frametime == Duration::ZERO {
+        buffer
+            .frametime_state
+            .frametimes
+            .iter()
+            .take(5)
+            .sum::<Duration>()
+            / 5
+    } else {
+        buffer.frametime_state.additional_frametime
+    }
+    .mul_f64(target_fps)
 }
 
 fn adjust_target_fps(target_fps: f64, controller_state: &mut ControllerState) -> f64 {
@@ -75,9 +79,9 @@ fn adjust_target_fps(target_fps: f64, controller_state: &mut ControllerState) ->
         controller_state.usage_sample_timer = Instant::now();
         let util = controller_state.controller.util_max();
 
-        if util <= 0.2 {
+        if util <= 0.25 {
             controller_state.target_fps_offset -= 0.1;
-        } else if util >= 0.4 {
+        } else if util >= 0.3 {
             controller_state.target_fps_offset += 0.1;
         }
     }

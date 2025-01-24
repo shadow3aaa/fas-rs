@@ -42,7 +42,6 @@ mlua = { version = "0.10.2", features = ["luajit", "vendored", "error-send"] }
 frame-analyzer = "0.3.3"
 dumpsys-rs = { git = "https://github.com/shadow3aaa/dumpsys-rs" }
 mimalloc = "0.1.43"
-perf-event2 = "0.7.4"
 num_cpus = "1.16.0"
 
 [build-dependencies]
