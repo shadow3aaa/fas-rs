@@ -175,31 +175,39 @@ impl Controller {
     }
 
     fn compute_target_frequencies(&self, control: isize, is_janked: bool) -> HashMap<i32, isize> {
+        let cur_fas_freq_max = self
+            .cpu_infos
+            .iter()
+            .map(|cpu| cpu.cur_fas_freq)
+            .max()
+            .unwrap_or_default();
         let cur_freq_max = self
             .cpu_infos
             .iter()
-            .map(|cpu| cpu.cur_freq)
+            .map(cpu_info::Info::read_freq)
             .max()
             .unwrap_or_default();
+
+        let util = self.process_monitor.util_max();
+        let util_tracking_sugg_freq = (cur_freq_max as f64 * util / 0.5) as isize; // min_util: 50%
+
+        #[cfg(debug_assertions)]
+        debug!(
+            "util: {}, cur_freq_max: {}, util_tracking_sugg_freq: {}",
+            util, cur_freq_max, util_tracking_sugg_freq
+        );
 
         self.cpu_infos
             .iter()
             .map(|cpu| {
-                let util = self.process_monitor.util_max();
-                let util_tracking_sugg_freq = (cpu.read_freq() as f64 * util / 0.50) as isize; // min_util: 50%
-
-                #[cfg(debug_assertions)]
-                debug!(
-                    "cpu: {}, util: {}, util_tracking_sugg_freq: {}",
-                    cpu.policy, util, util_tracking_sugg_freq
-                );
-
                 (
                     cpu.policy,
                     if is_janked {
-                        cur_freq_max.saturating_add(control).clamp(0, self.max_freq)
+                        cur_fas_freq_max
+                            .saturating_add(control)
+                            .clamp(0, self.max_freq)
                     } else {
-                        cur_freq_max
+                        cur_fas_freq_max
                             .saturating_add(control)
                             .min(util_tracking_sugg_freq)
                             .clamp(0, self.max_freq)

@@ -30,7 +30,7 @@ use crate::file_handler::FileHandler;
 pub struct Info {
     pub policy: i32,
     path: PathBuf,
-    pub cur_freq: isize,
+    pub cur_fas_freq: isize,
     pub freqs: Vec<isize>,
 }
 
@@ -57,7 +57,7 @@ impl Info {
         Ok(Self {
             policy,
             path,
-            cur_freq: *freqs.last().context("No frequencies available")?,
+            cur_fas_freq: *freqs.last().context("No frequencies available")?,
             freqs,
         })
     }
@@ -67,7 +67,7 @@ impl Info {
         let max_freq = *self.freqs.last().context("No frequencies available")?;
 
         let adjusted_freq = freq.clamp(min_freq, max_freq);
-        self.cur_freq = adjusted_freq;
+        self.cur_fas_freq = adjusted_freq;
         let adjusted_freq = adjusted_freq.to_string();
 
         if !IGNORE_MAP
