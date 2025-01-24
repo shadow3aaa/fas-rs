@@ -172,7 +172,7 @@ dependencies = [
 [[package]]
 name = "binder_ndk"
 version = "0.2.0"
-source = "git+https://github.com/shadow3aaa/binder_rs#035bd9f76841bd9a9d1904677e2abfd8a9fe885c"
+source = "git+https://github.com/shadow3aaa/binder_rs#0588851cb41caac2df5da41390d1058eb6aa73c5"
 dependencies = [
  "binder_ndk_sys",
  "downcast-rs",
@@ -182,7 +182,7 @@ dependencies = [
 [[package]]
 name = "binder_ndk_sys"
 version = "0.2.0"
-source = "git+https://github.com/shadow3aaa/binder_rs#035bd9f76841bd9a9d1904677e2abfd8a9fe885c"
+source = "git+https://github.com/shadow3aaa/binder_rs#0588851cb41caac2df5da41390d1058eb6aa73c5"
 dependencies = [
  "anyhow",
  "bindgen",
