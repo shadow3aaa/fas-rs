@@ -16,5 +16,17 @@
 # with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
 headerPath = "NOTICES"
-includes = ["licenserc.toml", "src/**", "Cargo.toml", "build.rs", "make.py", "maketools/**", "module/**", ".github/**"]
+includes = [
+    "licenserc.toml",
+    "src/**",
+    "Cargo.toml",
+    "build.rs",
+    "make.py",
+    "maketools/**",
+    "module/**",
+    ".github/**",
+    ".cargo/**",
+    "xtask/src/**",
+    "xtask/Cargo.toml",
+]
 excludes = ["module/games.toml", "module/META-INF/**", "module/*.prop"]

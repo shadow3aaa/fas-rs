@@ -15,6 +15,9 @@
 # You should have received a copy of the GNU General Public License along
 # with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
+[workspace]
+members = ["xtask"]
+
 [package]
 name = "fas-rs"
 version = "4.3.0"
