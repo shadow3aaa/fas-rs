@@ -129,6 +129,7 @@ fn build(release: bool, verbose: bool) -> Result<()> {
         "trim-paths",
     ]);
     cargo.env("RUSTFLAGS", "-C default-linker-libraries");
+    cargo.env("CARGO_CFG_BPF_TARGET_ARCH", "aarch64");
 
     if release {
         cargo.arg("--release");
@@ -147,6 +148,7 @@ fn build(release: bool, verbose: bool) -> Result<()> {
         &dir::CopyOptions::new().overwrite(true).content_only(true),
     )
     .unwrap();
+    fs::remove_file(temp_dir.join(".gitignore")).unwrap();
     file::copy(
         bin_path(release),
         temp_dir.join("fas-rs"),
