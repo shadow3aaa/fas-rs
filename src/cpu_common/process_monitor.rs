@@ -20,8 +20,8 @@ use std::{
     collections::{hash_map::Entry, HashMap},
     fs,
     sync::{
-        atomic::{AtomicBool, AtomicU64, Ordering},
-        mpsc::{self, Receiver, SyncSender},
+        atomic::{AtomicBool, Ordering},
+        mpsc::{self, Receiver, Sender, SyncSender},
         Arc,
     },
     thread,
@@ -64,23 +64,22 @@ impl UsageTracker {
 pub struct ProcessMonitor {
     stop: Arc<AtomicBool>,
     sender: SyncSender<Option<i32>>,
-    util_max: Arc<AtomicU64>, // Shared atomic value for max CPU utilization (scaled by 100)
+    util_max: Receiver<f64>,
 }
 
 impl ProcessMonitor {
     pub fn new() -> Self {
         let (sender, receiver) = mpsc::sync_channel(0);
         let stop = Arc::new(AtomicBool::new(false));
-        let util_max = Arc::new(AtomicU64::new(0));
+        let (util_max_sender, util_max) = mpsc::channel();
 
         {
             let stop = stop.clone();
-            let util_max = util_max.clone();
 
             thread::Builder::new()
                 .name("ProcessMonitor".to_string())
                 .spawn(move || {
-                    monitor_thread(&stop, &receiver, &util_max);
+                    monitor_thread(&stop, &receiver, &util_max_sender);
                 })
                 .unwrap();
         }
@@ -100,9 +99,8 @@ impl ProcessMonitor {
         self.stop.store(true, Ordering::Release);
     }
 
-    pub fn util_max(&self) -> f64 {
-        let util_max = self.util_max.load(Ordering::Acquire);
-        util_max as f64 / 100.0
+    pub fn update_util_max(&self) -> Option<f64> {
+        self.util_max.try_iter().last()
     }
 }
 
@@ -115,7 +113,7 @@ impl Drop for ProcessMonitor {
 fn monitor_thread(
     stop: &Arc<AtomicBool>,
     receiver: &Receiver<Option<i32>>,
-    util_max: &Arc<AtomicU64>,
+    util_max: &Sender<f64>,
 ) {
     let mut current_pid = None;
     let mut last_full_update = Instant::now();
@@ -172,7 +170,7 @@ fn monitor_thread(
                 }
             }
 
-            util_max.store((max_usage * 100.0) as u64, Ordering::Release);
+            util_max.send(max_usage).unwrap();
         }
 
         thread::sleep(Duration::from_millis(300));

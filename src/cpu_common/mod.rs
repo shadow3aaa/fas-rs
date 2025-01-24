@@ -52,6 +52,7 @@ pub struct Controller {
     cpu_infos: Vec<Info>,
     file_handler: FileHandler,
     process_monitor: ProcessMonitor,
+    util_max: Option<f64>,
 }
 
 impl Controller {
@@ -87,6 +88,7 @@ impl Controller {
             cpu_infos,
             file_handler: FileHandler::new(),
             process_monitor: ProcessMonitor::new(),
+            util_max: None,
         })
     }
 
@@ -137,12 +139,14 @@ impl Controller {
         trigger_init_cpu_freq(extension);
         self.set_all_cpu_freq(self.max_freq);
         self.process_monitor.set_pid(Some(pid));
+        self.util_max = None;
     }
 
     pub fn init_default(&mut self, extension: &Extension) {
         trigger_reset_cpu_freq(extension);
         self.reset_all_cpu_freq();
         self.process_monitor.set_pid(None);
+        self.util_max = None;
     }
 
     pub fn fas_update_freq(&mut self, control: isize, is_janked: bool) {
@@ -174,7 +178,17 @@ impl Controller {
         }
     }
 
-    fn compute_target_frequencies(&self, control: isize, is_janked: bool) -> HashMap<i32, isize> {
+    fn update_util_max(&mut self) {
+        if let Some(util_max) = self.process_monitor.update_util_max() {
+            self.util_max = Some(util_max);
+        }
+    }
+
+    fn compute_target_frequencies(
+        &mut self,
+        control: isize,
+        is_janked: bool,
+    ) -> HashMap<i32, isize> {
         let cur_fas_freq_max = self
             .cpu_infos
             .iter()
@@ -188,25 +202,31 @@ impl Controller {
             .max()
             .unwrap_or_default();
 
-        let util = self.process_monitor.util_max();
-        let util_tracking_sugg_freq = (cur_freq_max as f64 * util / 0.5) as isize; // min_util: 50%
-
-        #[cfg(debug_assertions)]
-        debug!(
-            "util: {}, cur_freq_max: {}, util_tracking_sugg_freq: {}",
-            util, cur_freq_max, util_tracking_sugg_freq
-        );
+        if is_janked {
+            self.util_max = None;
+        } else {
+            self.update_util_max();
+        }
 
         self.cpu_infos
             .iter()
             .map(|cpu| {
                 (
                     cpu.policy,
-                    if is_janked {
+                    if is_janked || self.util_max.is_none() {
                         cur_fas_freq_max
                             .saturating_add(control)
                             .clamp(0, self.max_freq)
                     } else {
+                        let util_tracking_sugg_freq =
+                            (cur_freq_max as f64 * self.util_max.unwrap() / 0.5) as isize; // min_util: 50%
+                        #[cfg(debug_assertions)]
+                        debug!(
+                            "util: {}, cur_freq_max: {}, util_tracking_sugg_freq: {}",
+                            self.util_max.unwrap(),
+                            cur_freq_max,
+                            util_tracking_sugg_freq
+                        );
                         cur_fas_freq_max
                             .saturating_add(control)
                             .min(util_tracking_sugg_freq)
@@ -351,7 +371,7 @@ impl Controller {
     }
 
     pub fn util_max(&self) -> f64 {
-        self.process_monitor.util_max()
+        self.util_max.unwrap_or_default()
     }
 }
 
