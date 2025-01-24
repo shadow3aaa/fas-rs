@@ -52,7 +52,7 @@ jobs:
           export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
           export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
 
-          python3 ./make.py build --release --nightly
+          cargo xtask build -r -v
       - name: Prepare artifacts
         run: |
           mkdir -p output/artifact/release
@@ -92,7 +92,7 @@ jobs:
           export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
           export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
     
-          python3 ./make.py build --debug --nightly
+          cargo xtask build -v
       - name: Prepare artifacts
         run: |
           mkdir -p output/artifact/debug

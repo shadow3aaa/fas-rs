@@ -153,10 +153,7 @@ core_temp_thresh = 95000
 
 ```bash
 # Ubuntu (NDK is required)
-apt install gcc-multilib git-lfs clang python3
-
-# ruff (Python lints & format)
-pip install ruff
+apt install gcc-multilib git-lfs
 
 # Rust (Nightly version is required)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -172,7 +169,5 @@ git clone https://github.com/shadow3aaa/fas-rs
 cd fas-rs
 
 # Compile
-python3 ./make.py build --release
-# Use the `--nightly` option when building(Some nightly flags will be added to produce smaller artifacts)
-python3 ./make.py build --release --nightly
+cargo xtask build -r
 ```
