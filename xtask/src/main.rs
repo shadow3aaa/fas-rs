@@ -128,8 +128,6 @@ fn build(release: bool, verbose: bool) -> Result<()> {
         "-Z",
         "trim-paths",
     ]);
-    cargo.env("RUSTFLAGS", "-C default-linker-libraries");
-    cargo.env("CARGO_CFG_BPF_TARGET_ARCH", "aarch64");
 
     if release {
         cargo.arg("--release");
@@ -268,5 +266,7 @@ fn bin_path(release: bool) -> PathBuf {
 fn cargo_ndk() -> Command {
     let mut command = Command::new("cargo");
     command.args(["+nightly", "ndk", "-p", "31", "-t", "arm64-v8a"]);
+    command.env("RUSTFLAGS", "-C default-linker-libraries");
+    command.env("CARGO_CFG_BPF_TARGET_ARCH", "aarch64");
     command
 }
