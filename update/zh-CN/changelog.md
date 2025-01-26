@@ -1,4 +1,4 @@
-# v4.4.0 (2025-01-24)
+# v4.5.0 (2025-01-25)
 
 * fix: Fix #136 ([3ff7ec7](https://github.com/shadow3aaa/fas-rs/commit/3ff7ec7)), closes [#136](https://github.com/shadow3aaa/fas-rs/issues/136)
 * fix: 更新README中的图标未链接修复本地查看可能看不到图标的问题 ([5762ad5](https://github.com/shadow3aaa/fas-rs/commit/5762ad5))
