@@ -15,27 +15,25 @@
 // You should have received a copy of the GNU General Public License along
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
-use std::{collections::HashMap, ffi::CString, fs, path::Path, ptr};
+use std::{collections::HashMap, ffi::CString, fs::{self, set_permissions}, os::unix::fs::PermissionsExt, path::Path, ptr};
 
 use libc::{mount, umount, umount2, MS_BIND, MS_REC};
 
 use crate::framework::error::Result;
 
-fn lock_value<P: AsRef<Path>, S: AsRef<str>>(path: P, value: S) -> Result<()> {
+fn lock_value<P: AsRef<Path>, S: AsRef<str>>(path: P, value: S) {
     let value = value.as_ref();
     let path = path.as_ref();
 
     let path_str = path.display().to_string();
     let mount_path = format!("/cache/mount_mask_{value}");
 
-    unmount(&path_str)?;
-
-    fs::write(&path_str, value)?;
-    fs::write(&mount_path, value)?;
-
-    mount_bind(&mount_path, &path_str)?;
-
-    Ok(())
+    let _ = unmount(&path_str);
+    let _ = set_permissions(path, PermissionsExt::from_mode(0o644));
+    let _ = fs::write(&path_str, value);
+    let _ = set_permissions(path, PermissionsExt::from_mode(0o444));
+    let _ = fs::write(&mount_path, value);
+    let _ = mount_bind(&mount_path, &path_str);
 }
 
 fn mount_bind(src_path: &str, dest_path: &str) -> Result<()> {
@@ -75,7 +73,7 @@ macro_rules! lock_values {
                 $map.insert($path, last_value);
             }
 
-            let _ = lock_value($path, $value);
+            lock_value($path, $value);
         )*
     }
 }
