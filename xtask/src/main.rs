@@ -16,7 +16,7 @@
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
 use std::{
-    fs,
+    fs::{self},
     path::{Path, PathBuf},
     process::{self, Command},
 };
@@ -217,7 +217,7 @@ fn lint(fix: bool) -> Result<()> {
         let mut command = cargo_ndk();
         command.arg("clippy");
         if fix {
-            command.args(["--fix", "--allow-dirty", "--allow-staged"]);
+            command.args(["--fix", "--allow-dirty", "--allow-staged", "--all"]);
         }
         command.args(["--target", "aarch64-linux-android"]);
         command
