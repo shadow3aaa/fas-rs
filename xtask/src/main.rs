@@ -22,10 +22,9 @@ use std::{
 };
 
 use anyhow::Result;
-use chrono::Utc;
 use clap::{Parser, Subcommand};
 use fs_extra::{dir, file};
-use zip::{CompressionMethod, write::FileOptions};
+use zip::{write::FileOptions, CompressionMethod};
 use zip_extensions::zip_create_from_directory_with_options;
 
 #[derive(Parser)]
@@ -154,10 +153,8 @@ fn build(release: bool, verbose: bool) -> Result<()> {
     )
     .unwrap();
 
-    let build_time = Utc::now().format("%Y-%m-%d-%Hh%Mm%Ss").to_string();
     let build_type = if release { "release" } else { "debug" };
-    let package_path =
-        Path::new("output").join(format!("fas-rs_{}_{}.zip", build_type, build_time));
+    let package_path = Path::new("output").join(format!("fas-rs({build_type}).zip"));
 
     let options: FileOptions<'_, ()> = FileOptions::default()
         .compression_method(CompressionMethod::Deflated)

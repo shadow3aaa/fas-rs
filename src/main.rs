@@ -40,7 +40,7 @@ use framework::prelude::*;
 
 use anyhow::Result;
 use flexi_logger::{DeferredNow, LogSpecification, Logger, Record};
-use log::{error, info, warn};
+use log::{error, warn};
 use mimalloc::MiMalloc;
 
 #[cfg(debug_assertions)]
@@ -88,8 +88,6 @@ fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
         .format(log_format)
         .start()?;
 
-    log_metainfo();
-
     let std_path = std_path.as_ref();
 
     let self_pid = process::id();
@@ -116,27 +114,4 @@ fn log_format(
 ) -> Result<(), io::Error> {
     let time = now.format("%Y-%m-%d %H:%M:%S");
     write!(write, "[{time}] {}: {}", record.level(), record.args())
-}
-
-fn log_metainfo() {
-    info!(
-        "fas-rs v{} {}, llvm-{}, rustc-{}, build by {} at {} on {},{},{}",
-        env!("CARGO_PKG_VERSION"),
-        build_type(),
-        env!("VERGEN_RUSTC_LLVM_VERSION"),
-        env!("VERGEN_RUSTC_SEMVER"),
-        env!("VERGEN_SYSINFO_USER"),
-        env!("VERGEN_BUILD_TIMESTAMP"),
-        env!("VERGEN_SYSINFO_NAME"),
-        env!("VERGEN_SYSINFO_OS_VERSION"),
-        env!("VERGEN_RUSTC_HOST_TRIPLE")
-    );
-}
-
-const fn build_type() -> &'static str {
-    if cfg!(debug_assertions) {
-        "debug"
-    } else {
-        "release"
-    }
 }
