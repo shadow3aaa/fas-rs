@@ -79,10 +79,10 @@
   - #### **Mode Parameter Description:**
 
     - **margin_fps:**
-
-      - Type: `integer/float`
-        - Unit: `fps`
-        - Additional allowed frame drop
+      - Supports two formats:
+       1. Full format: `margin_fps = { base = <float>, <target_fps margin override> = <float>(multiple allowed) }`
+       2. Short form: `margin_fps = <float>`, equivalent to `margin_fps = { base = <float> }`
+      - Description: Additional allowed frame drops in fps units. Unless forced by `target_fps margin override`, the value will scale according to formula (`target_fps / 60 * base`)
 
     - **core_temp_thresh:**
 

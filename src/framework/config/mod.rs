@@ -117,12 +117,12 @@ impl Config {
     }
 
     #[must_use]
-    pub fn mode_config(&mut self, m: Mode) -> ModeConfig {
+    pub fn mode_config(&mut self, m: Mode) -> &ModeConfig {
         match m {
-            Mode::Powersave => self.inner.config().powersave,
-            Mode::Balance => self.inner.config().balance,
-            Mode::Performance => self.inner.config().performance,
-            Mode::Fast => self.inner.config().fast,
+            Mode::Powersave => &self.inner.config().powersave,
+            Mode::Balance => &self.inner.config().balance,
+            Mode::Performance => &self.inner.config().performance,
+            Mode::Fast => &self.inner.config().fast,
         }
     }
 

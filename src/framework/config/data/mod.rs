@@ -17,7 +17,7 @@
 
 mod default;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 use toml::Table;
@@ -43,7 +43,7 @@ pub struct Config {
     pub scene_game_list: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModeConfig {
     pub margin_fps: MarginFps,
     pub core_temp_thresh: TemperatureThreshold,
@@ -57,12 +57,33 @@ pub enum TemperatureThreshold {
     Temp(u64),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum MarginFps {
+    #[serde(untagged)]
+    BaseOnly(MarginFpsValue),
+    #[serde(untagged)]
+    Advanced {
+        base: MarginFpsValue,
+        #[serde(flatten)]
+        overrides: HashMap<String, MarginFpsValue>,
+    },
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub enum MarginFpsValue {
     #[serde(untagged)]
     Float(f64),
     #[serde(untagged)]
     Int(u64),
+}
+
+impl From<MarginFpsValue> for f64 {
+    fn from(value: MarginFpsValue) -> Self {
+        match value {
+            MarginFpsValue::Float(f) => f,
+            MarginFpsValue::Int(i) => i as Self,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -36,15 +36,18 @@ pub fn calculate_control(
         return None;
     }
 
-    let margin_fps = match config.mode_config(mode).margin_fps {
-        MarginFps::Float(f) => f,
-        MarginFps::Int(i) => i as f64,
+    let target_fps = f64::from(buffer.target_fps_state.target_fps?);
+    let margin_fps: f64 = match &config.mode_config(mode).margin_fps {
+        MarginFps::BaseOnly(base) => target_fps / 60.0 * f64::from(*base),
+        MarginFps::Advanced { base, overrides } => overrides
+            .get(&target_fps.to_string())
+            .copied()
+            .map_or_else(|| target_fps / 60.0 * f64::from(*base), f64::from),
     };
 
     assert!(margin_fps.is_sign_positive(), "margin_fps must be positive");
 
-    let target_fps = (f64::from(buffer.target_fps_state.target_fps?) + target_fps_offset_thermal)
-        .clamp(0.0, f64::from(buffer.target_fps_state.target_fps?));
+    let target_fps = (target_fps + target_fps_offset_thermal).clamp(0.0, target_fps);
     let adjusted_target_fps = adjust_target_fps(target_fps, controller_state) - margin_fps;
     let adjusted_last_frame = get_normalized_last_frame(buffer, adjusted_target_fps);
 

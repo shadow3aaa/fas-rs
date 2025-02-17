@@ -77,10 +77,10 @@
   - #### **模式参数说明:**
 
     - **margin_fps:**
-
-      - 类型: `整数/浮点数`
-      - 单位: `fps`
-      - 额外允许的掉帧量
+      - 支持两种格式:
+       1. 完整格式：`margin_fps = { base = <float>, <target_fps margin override> = <float>(可多项) }`
+       2. 简写：`margin_fps = <float>`，等效`margin_fps = { base = <float> }`
+      - 解释: 以 fps 为单位的额外允许掉帧量，除非用`target_fps margin override`强制指定`margin_fps`值，否则会根据公式(`target_fps / 60 * base`)缩放
 
     - **core_temp_thresh:**
 
