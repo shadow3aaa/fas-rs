@@ -1,4 +1,4 @@
-// Copyright 2024-2025, shadow3aaa
+// Copyright 2025-2025, shadow3aaa
 //
 // This file is part of fas-rs.
 //
