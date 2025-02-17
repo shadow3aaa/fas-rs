@@ -59,7 +59,6 @@ opt-level = 3
 strip = true
 
 [profile.release]
-debug = true
 overflow-checks = false
 codegen-units = 1
 lto = "fat"
