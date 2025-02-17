@@ -1,4 +1,4 @@
-// Copyright 2023-2025, dependabot[bot], shadow3aaa
+// Copyright 2024-2025, dependabot[bot], shadow3aaa
 //
 // This file is part of fas-rs.
 //

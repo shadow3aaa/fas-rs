@@ -1,4 +1,4 @@
-Copyright 2023-2025, {{ attrs.git_authors | join(", ") }}
+Copyright {{ attrs.git_file_created_year }}-{{ attrs.git_file_modified_year }}, {{ attrs.git_authors | join(", ") }}
 
 This file is part of fas-rs.
 
