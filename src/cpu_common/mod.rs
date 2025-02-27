@@ -23,7 +23,7 @@ use std::{
     collections::HashMap,
     fs,
     path::Path,
-    sync::{atomic::AtomicBool, OnceLock},
+    sync::{OnceLock, atomic::AtomicBool},
     thread,
     time::Duration,
 };
@@ -36,9 +36,9 @@ use parking_lot::Mutex;
 use process_monitor::ProcessMonitor;
 
 use crate::{
+    Extension,
     api::{trigger_init_cpu_freq, trigger_reset_cpu_freq},
     file_handler::FileHandler,
-    Extension,
 };
 use cpu_info::Info;
 use extra_policy::ExtraPolicy;
@@ -262,7 +262,7 @@ impl Controller {
 
         let mut queue: Vec<_> = indegree
             .iter()
-            .filter(|(_, &deg)| deg == 0)
+            .filter(|&(_, &deg)| deg == 0)
             .map(|(&policy, _)| policy)
             .collect();
         let mut sorted_policies = Vec::new();

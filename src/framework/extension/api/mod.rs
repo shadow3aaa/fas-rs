@@ -23,7 +23,7 @@ pub mod v2;
 pub mod v3;
 pub mod v4;
 
-use super::{core::ExtensionMap, Extension};
+use super::{Extension, core::ExtensionMap};
 pub use v0::ApiV0;
 use v1::ApiV1;
 use v2::ApiV2;

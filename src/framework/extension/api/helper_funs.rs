@@ -23,8 +23,8 @@ use log::debug;
 use log::warn;
 
 use crate::cpu_common::{
-    extra_policy::{AbsRangeBound, ExtraPolicy, RelRangeBound},
     EXTRA_POLICY_MAP, IGNORE_MAP,
+    extra_policy::{AbsRangeBound, ExtraPolicy, RelRangeBound},
 };
 
 static WARNING_FLAG: AtomicBool = AtomicBool::new(false);
@@ -91,7 +91,9 @@ pub fn set_extra_policy_rel(
 
 pub fn set_policy_freq_offset(_: i32, _: isize) {
     if !WARNING_FLAG.load(Ordering::Acquire) {
-        warn!("The API set_policy_freq_offset was removed in v4.2.0. If you see this warning, it means an outdated plugin is trying to use it. The warning will only appear once.");
+        warn!(
+            "The API set_policy_freq_offset was removed in v4.2.0. If you see this warning, it means an outdated plugin is trying to use it. The warning will only appear once."
+        );
         WARNING_FLAG.store(true, Ordering::Release);
     }
 }

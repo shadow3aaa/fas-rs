@@ -25,7 +25,7 @@ use std::{
 use libc::pid_t;
 use likely_stable::unlikely;
 
-use crate::{framework::config::TargetFps, Extension};
+use crate::{Extension, framework::config::TargetFps};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BufferWorkingState {

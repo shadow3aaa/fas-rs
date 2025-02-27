@@ -24,7 +24,7 @@ use std::{
     ptr,
 };
 
-use libc::{mount, umount, umount2, MS_BIND, MS_REC};
+use libc::{MS_BIND, MS_REC, mount, umount, umount2};
 
 use crate::framework::error::Result;
 

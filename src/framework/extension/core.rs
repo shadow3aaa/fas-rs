@@ -22,8 +22,8 @@ use log::{debug, error, info};
 use mlua::Lua;
 
 use super::{
-    api::{helper_funs, Api},
     EXTENSIONS_PATH,
+    api::{Api, helper_funs},
 };
 use crate::framework::error::Result;
 

@@ -26,19 +26,19 @@ use likely_stable::{likely, unlikely};
 #[cfg(debug_assertions)]
 use log::debug;
 use log::info;
-use policy::{controll::calculate_control, ControllerParams};
+use policy::{ControllerParams, controll::calculate_control};
 
-use super::{thermal::Thermal, topapp::TopAppsWatcher, FasData};
+use super::{FasData, thermal::Thermal, topapp::TopAppsWatcher};
 use crate::{
+    Controller,
     api::{trigger_load_fas, trigger_start_fas, trigger_stop_fas, trigger_unload_fas},
     framework::{
+        Extension,
         config::Config,
         error::Result,
         node::{Mode, Node},
         pid_utils::get_process_name,
-        Extension,
     },
-    Controller,
 };
 
 use buffer::{Buffer, BufferWorkingState};

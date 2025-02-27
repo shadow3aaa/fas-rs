@@ -16,4 +16,4 @@
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
 #![allow(unused_imports)]
-pub use super::{api, config::Config, node::Mode, Api, Extension, Scheduler};
+pub use super::{Api, Extension, Scheduler, api, config::Config, node::Mode};

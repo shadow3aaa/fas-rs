@@ -22,10 +22,10 @@ mod topapp;
 use std::time::Duration;
 
 use super::{
+    Extension,
     config::Config,
     error::{Error, Result},
     node::Node,
-    Extension,
 };
 use crate::Controller;
 

@@ -17,19 +17,19 @@
 
 use std::{
     cmp,
-    collections::{hash_map::Entry, HashMap},
+    collections::{HashMap, hash_map::Entry},
     fs,
     sync::{
+        Arc,
         atomic::{AtomicBool, Ordering},
         mpsc::{self, Receiver, Sender, SyncSender},
-        Arc,
     },
     thread,
     time::{Duration, Instant},
 };
 
 use anyhow::Result;
-use libc::{sysconf, _SC_CLK_TCK};
+use libc::{_SC_CLK_TCK, sysconf};
 
 #[derive(Debug, Clone, Copy)]
 struct UsageTracker {

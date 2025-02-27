@@ -24,7 +24,7 @@ use std::{
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use fs_extra::{dir, file};
-use zip::{write::FileOptions, CompressionMethod};
+use zip::{CompressionMethod, write::FileOptions};
 use zip_extensions::zip_create_from_directory_with_options;
 
 #[derive(Parser)]

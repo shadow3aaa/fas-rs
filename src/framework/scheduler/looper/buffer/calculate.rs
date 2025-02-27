@@ -22,7 +22,7 @@ use likely_stable::unlikely;
 use log::debug;
 
 use super::Buffer;
-use crate::{api::trigger_target_fps_change, framework::config::TargetFps, Extension};
+use crate::{Extension, api::trigger_target_fps_change, framework::config::TargetFps};
 
 impl Buffer {
     pub fn calculate_current_fps(&mut self) {

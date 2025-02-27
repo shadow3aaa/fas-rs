@@ -19,8 +19,8 @@ use libc::pid_t;
 
 use super::{
     super::core::ExtensionMap,
-    misc::{do_callback, get_api_version},
     Api,
+    misc::{do_callback, get_api_version},
 };
 
 #[derive(Debug, Clone)]

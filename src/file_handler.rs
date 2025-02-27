@@ -16,15 +16,15 @@
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
 use std::{
-    collections::{hash_map::Entry, HashMap},
-    fs::{set_permissions, File},
-    io::{self, prelude::*, ErrorKind},
+    collections::{HashMap, hash_map::Entry},
+    fs::{File, set_permissions},
+    io::{self, ErrorKind, prelude::*},
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
 
 use anyhow::Result;
-use sys_mount::{unmount, UnmountFlags};
+use sys_mount::{UnmountFlags, unmount};
 
 #[derive(Debug)]
 pub struct FileHandler {
