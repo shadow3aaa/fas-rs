@@ -43,8 +43,8 @@ if [ $ARCH != arm64 ]; then
 elif [ $API -le 30 ]; then
 	local_print "系统版本过低, 需要安卓12及以上的系统版本版本" "Required A12+ !"
 	abort
-elif uname -r | awk -F. '{if ($1 < 5 || ($1 == 5 && $2 < 10)) exit 0; else exit 1}'; then
-	local_print "内核版本过低，需要5.10或以上 !" "The kernel version is too low. Requires 5.10+ !"
+elif uname -r | awk -F. '{if ($1 < 5 || ($1 == 5 && $2 < 8)) exit 0; else exit 1}'; then
+	local_print "内核版本过低，需要5.8或以上 !" "The kernel version is too low. Requires 5.8+ !"
 	abort
 fi
 
