@@ -50,11 +50,14 @@ pub fn calculate_control(
     let target_fps = (target_fps + target_fps_offset_thermal).clamp(0.0, target_fps);
     let adjusted_target_fps = adjust_target_fps(target_fps, controller_state) - margin_fps;
     let adjusted_last_frame = get_normalized_last_frame(buffer, adjusted_target_fps);
+    let target_frametime = Duration::from_secs(1);
 
     #[cfg(debug_assertions)]
-    debug!("adjusted_last_frame: {adjusted_last_frame:?}");
-
-    let target_frametime = Duration::from_secs(1);
+    {
+        debug!("adjusted_target_fps: {adjusted_target_fps}");
+        debug!("adjusted_last_frame: {adjusted_last_frame:?}");
+        debug!("target_frametime: {target_frametime:?}");
+    }
 
     Some((
         calculate_control_inner(controller_state, adjusted_last_frame, target_frametime),
@@ -63,16 +66,17 @@ pub fn calculate_control(
 }
 
 fn get_normalized_last_frame(buffer: &Buffer, target_fps: f64) -> Duration {
+    let last_frame = buffer
+        .frametime_state
+        .frametimes
+        .front()
+        .copied()
+        .unwrap_or_default();
+
     if buffer.frametime_state.additional_frametime == Duration::ZERO {
-        buffer
-            .frametime_state
-            .frametimes
-            .iter()
-            .take(5)
-            .sum::<Duration>()
-            / 5
+        last_frame
     } else {
-        buffer.frametime_state.additional_frametime
+        buffer.frametime_state.additional_frametime.max(last_frame)
     }
     .mul_f64(target_fps)
 }
