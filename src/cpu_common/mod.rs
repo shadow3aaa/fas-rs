@@ -365,7 +365,7 @@ impl Controller {
     }
 
     fn reset_all_cpu_freq(&mut self) {
-        for cpu in &self.cpu_infos {
+        for cpu in &mut self.cpu_infos {
             let _ = cpu.reset_freq(&mut self.file_handler);
         }
     }

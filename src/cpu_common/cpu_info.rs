@@ -19,9 +19,11 @@ use std::{
     fs,
     path::{Path, PathBuf},
     sync::atomic::Ordering,
+    time::{Duration, Instant},
 };
 
 use anyhow::{Context, Result};
+use log::warn;
 
 use super::IGNORE_MAP;
 use crate::file_handler::FileHandler;
@@ -32,6 +34,8 @@ pub struct Info {
     path: PathBuf,
     pub cur_fas_freq: isize,
     pub freqs: Vec<isize>,
+    verify_freq: Option<isize>,
+    verify_timer: Instant,
 }
 
 impl Info {
@@ -59,14 +63,44 @@ impl Info {
             path,
             cur_fas_freq: *freqs.last().context("No frequencies available")?,
             freqs,
+            verify_freq: None,
+            verify_timer: Instant::now(),
         })
     }
 
     pub fn write_freq(&mut self, freq: isize, file_handler: &mut FileHandler) -> Result<()> {
+        if self.verify_timer.elapsed() >= Duration::from_secs(3) {
+            self.verify_timer = Instant::now();
+
+            if let Some(verify_freq) = self.verify_freq {
+                let current_freq = self.read_freq();
+                let min_acceptable_freq = self
+                    .freqs
+                    .iter()
+                    .take_while(|freq| **freq < current_freq)
+                    .last()
+                    .copied()
+                    .unwrap_or(current_freq);
+                let max_acceptable_freq = self
+                    .freqs
+                    .iter()
+                    .find(|freq| **freq > current_freq)
+                    .copied()
+                    .unwrap_or(current_freq);
+                if !(min_acceptable_freq..=max_acceptable_freq).contains(&verify_freq) {
+                    warn!(
+                        "CPU Policy{}: Frequency control does not meet expectations! Expected: {}-{}, Actual: {}",
+                        self.policy, min_acceptable_freq, max_acceptable_freq, verify_freq
+                    );
+                }
+            }
+        }
+
         let min_freq = *self.freqs.first().context("No frequencies available")?;
         let max_freq = *self.freqs.last().context("No frequencies available")?;
 
         let adjusted_freq = freq.clamp(min_freq, max_freq);
+        self.verify_freq = Some(adjusted_freq);
         self.cur_fas_freq = adjusted_freq;
         let adjusted_freq = adjusted_freq.to_string();
 
@@ -83,7 +117,7 @@ impl Info {
         Ok(())
     }
 
-    pub fn reset_freq(&self, file_handler: &mut FileHandler) -> Result<()> {
+    pub fn reset_freq(&mut self, file_handler: &mut FileHandler) -> Result<()> {
         let min_freq = self
             .freqs
             .first()
@@ -94,6 +128,7 @@ impl Info {
             .last()
             .context("No frequencies available")?
             .to_string();
+        self.verify_freq = None;
 
         file_handler.write_with_workround(self.max_freq_path(), &max_freq)?;
         file_handler.write_with_workround(self.min_freq_path(), &min_freq)?;
