@@ -77,20 +77,20 @@ impl Info {
                 let min_acceptable_freq = self
                     .freqs
                     .iter()
-                    .take_while(|freq| **freq < current_freq)
+                    .take_while(|freq| **freq <= verify_freq)
                     .last()
                     .copied()
-                    .unwrap_or(current_freq);
+                    .unwrap_or(verify_freq);
                 let max_acceptable_freq = self
                     .freqs
                     .iter()
-                    .find(|freq| **freq > current_freq)
+                    .find(|freq| **freq >= verify_freq)
                     .copied()
-                    .unwrap_or(current_freq);
-                if !(min_acceptable_freq..=max_acceptable_freq).contains(&verify_freq) {
+                    .unwrap_or(verify_freq);
+                if !(min_acceptable_freq..=max_acceptable_freq).contains(&current_freq) {
                     warn!(
                         "CPU Policy{}: Frequency control does not meet expectations! Expected: {}-{}, Actual: {}",
-                        self.policy, min_acceptable_freq, max_acceptable_freq, verify_freq
+                        self.policy, min_acceptable_freq, max_acceptable_freq, current_freq
                     );
                 }
             }
