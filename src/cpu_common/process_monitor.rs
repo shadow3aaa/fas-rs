@@ -14,17 +14,10 @@
 //
 // You should have received a copy of the GNU General Public License along
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
-
 use std::{
     cmp,
     collections::{HashMap, hash_map::Entry},
     fs,
-    sync::{
-        Arc,
-        atomic::{AtomicBool, Ordering},
-        mpsc::{self, Receiver, Sender, SyncSender},
-    },
-    thread,
     time::{Duration, Instant},
 };
 
@@ -37,6 +30,7 @@ struct UsageTracker {
     tid: i32,
     last_cputime: u64,
     read_timer: Instant,
+    current_usage: f64,
 }
 
 impl UsageTracker {
@@ -46,6 +40,7 @@ impl UsageTracker {
             tid,
             last_cputime: get_thread_cpu_time(pid, tid)?,
             read_timer: Instant::now(),
+            current_usage: 0.0,
         })
     }
 
@@ -56,124 +51,101 @@ impl UsageTracker {
         self.read_timer = Instant::now();
         let cputime_slice = new_cputime - self.last_cputime;
         self.last_cputime = new_cputime;
-        Ok(cputime_slice as f64 / elapsed_ticks)
+        self.current_usage = cputime_slice as f64 / elapsed_ticks;
+        Ok(self.current_usage)
     }
 }
 
 #[derive(Debug)]
 pub struct ProcessMonitor {
-    stop: Arc<AtomicBool>,
-    sender: SyncSender<Option<i32>>,
-    util_max: Receiver<f64>,
+    current_pid: Option<i32>,
+    all_trackers: HashMap<i32, UsageTracker>,
+    top_trackers: HashMap<i32, UsageTracker>,
+    last_full_update: Instant,
+    last_update: Instant,
 }
 
 impl ProcessMonitor {
     pub fn new() -> Self {
-        let (sender, receiver) = mpsc::sync_channel(0);
-        let stop = Arc::new(AtomicBool::new(false));
-        let (util_max_sender, util_max) = mpsc::channel();
-
-        {
-            let stop = stop.clone();
-
-            thread::Builder::new()
-                .name("ProcessMonitor".to_string())
-                .spawn(move || {
-                    monitor_thread(&stop, &receiver, &util_max_sender);
-                })
-                .unwrap();
-        }
-
         Self {
-            stop,
-            sender,
-            util_max,
+            current_pid: None,
+            all_trackers: HashMap::new(),
+            top_trackers: HashMap::new(),
+            last_full_update: Instant::now(),
+            last_update: Instant::now(),
         }
     }
 
-    pub fn set_pid(&self, pid: Option<i32>) {
-        self.sender.send(pid).unwrap();
+    pub fn set_pid(&mut self, pid: Option<i32>) {
+        if self.current_pid != pid {
+            self.current_pid = pid;
+            self.all_trackers.clear();
+            self.top_trackers.clear();
+            self.last_full_update = Instant::now();
+            self.last_update = Instant::now();
+        }
     }
 
-    fn stop(&self) {
-        self.stop.store(true, Ordering::Release);
-    }
-
-    pub fn update_util_max(&self) -> Option<f64> {
-        self.util_max.try_iter().last()
-    }
-}
-
-impl Drop for ProcessMonitor {
-    fn drop(&mut self) {
-        self.stop();
-    }
-}
-
-fn monitor_thread(
-    stop: &Arc<AtomicBool>,
-    receiver: &Receiver<Option<i32>>,
-    util_max: &Sender<f64>,
-) {
-    let mut current_pid = None;
-    let mut last_full_update = Instant::now();
-    let mut all_trackers = HashMap::new();
-    let mut top_trackers = HashMap::new();
-
-    while !stop.load(Ordering::Acquire) {
-        if let Ok(pid) = receiver.try_recv() {
-            current_pid = pid;
-            all_trackers.clear();
-            top_trackers.clear();
+    pub fn update(&mut self) -> Option<f64> {
+        if self.last_update.elapsed() < Duration::from_millis(300) {
+            return None;
         }
 
-        if let Some(pid) = current_pid {
-            if last_full_update.elapsed() >= Duration::from_secs(1) {
-                if let Ok(threads) = get_thread_ids(pid) {
-                    all_trackers = threads
-                        .iter()
-                        .copied()
-                        .filter_map(|tid| {
-                            Some((
-                                tid,
-                                match all_trackers.entry(tid) {
-                                    Entry::Occupied(o) => o.remove(),
-                                    Entry::Vacant(_) => UsageTracker::new(pid, tid).ok()?,
-                                },
-                            ))
-                        })
-                        .collect();
-                    let mut top_threads: Vec<_> = all_trackers
-                        .iter()
-                        .filter_map(|(tid, tracker)| {
-                            Some((*tid, tracker.clone().try_calculate().ok()?))
-                        })
-                        .collect();
-                    top_threads
-                        .sort_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap_or(cmp::Ordering::Equal));
-                    top_threads.truncate(5);
-                    top_trackers = top_threads
-                        .into_iter()
-                        .filter_map(|(tid, _)| match top_trackers.entry(tid) {
-                            Entry::Occupied(o) => Some((tid, o.remove())),
-                            Entry::Vacant(_) => Some((tid, UsageTracker::new(pid, tid).ok()?)),
-                        })
-                        .collect();
-                    last_full_update = Instant::now();
-                }
+        self.last_update = Instant::now();
+        let pid = self.current_pid?;
+
+        if self.last_full_update.elapsed() >= Duration::from_secs(1) {
+            self.update_thread_list(pid);
+            self.last_full_update = Instant::now();
+        }
+
+        let mut util_max: f64 = 0.0;
+        for tracker in self.top_trackers.values_mut() {
+            if let Ok(usage) = tracker.try_calculate() {
+                util_max = util_max.max(usage);
             }
-
-            let mut max_usage: f64 = 0.0;
-            for tracker in top_trackers.values_mut() {
-                if let Ok(usage) = tracker.try_calculate() {
-                    max_usage = max_usage.max(usage);
-                }
-            }
-
-            util_max.send(max_usage).unwrap();
         }
 
-        thread::sleep(Duration::from_millis(300));
+        Some(util_max)
+    }
+
+    fn update_thread_list(&mut self, pid: i32) {
+        if let Ok(threads) = get_thread_ids(pid) {
+            self.all_trackers = threads
+                .iter()
+                .copied()
+                .filter_map(|tid| {
+                    Some((
+                        tid,
+                        match self.all_trackers.entry(tid) {
+                            Entry::Occupied(o) => o.remove(),
+                            Entry::Vacant(_) => UsageTracker::new(pid, tid).ok()?,
+                        },
+                    ))
+                })
+                .collect();
+
+            let mut top_threads: Vec<_> = self
+                .all_trackers
+                .iter()
+                .filter_map(|(tid, tracker)| Some((*tid, tracker.clone().try_calculate().ok()?)))
+                .collect();
+
+            top_threads.sort_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap_or(cmp::Ordering::Equal));
+            top_threads.truncate(8);
+
+            self.top_trackers = top_threads
+                .into_iter()
+                .filter_map(|(tid, _)| match self.top_trackers.entry(tid) {
+                    Entry::Occupied(o) => Some((tid, o.remove())),
+                    Entry::Vacant(_) => Some((tid, UsageTracker::new(pid, tid).ok()?)),
+                })
+                .collect();
+        }
+    }
+
+    pub fn top_threads(&self) -> impl Iterator<Item = i32> {
+        self.top_trackers.keys().copied()
     }
 }
 

@@ -24,6 +24,7 @@ use std::{
 
 use anyhow::{Context, Result};
 use log::warn;
+use nix::sched::CpuSet;
 
 use super::IGNORE_MAP;
 use crate::file_handler::FileHandler;
@@ -32,6 +33,7 @@ use crate::file_handler::FileHandler;
 pub struct Info {
     pub policy: i32,
     path: PathBuf,
+    affected_cpus: Vec<usize>,
     pub cur_fas_freq: isize,
     pub freqs: Vec<isize>,
     verify_freq: Option<isize>,
@@ -58,9 +60,20 @@ impl Info {
             .collect::<Result<_>>()?;
         freqs.sort_unstable();
 
+        let affected_cpus = fs::read_to_string(path.join("affected_cpus"))
+            .context("Failed to read affected_cpus")?
+            .split_whitespace()
+            .map(|core| {
+                core.parse::<usize>()
+                    .context("Failed to parse core")
+                    .unwrap()
+            })
+            .collect();
+
         Ok(Self {
             policy,
             path,
+            affected_cpus,
             cur_fas_freq: *freqs.last().context("No frequencies available")?,
             freqs,
             verify_freq: None,
@@ -68,7 +81,7 @@ impl Info {
         })
     }
 
-    pub fn write_freq(&mut self, freq: isize, file_handler: &mut FileHandler) -> Result<()> {
+    fn verify_freq(&mut self, write_freq: isize) {
         if self.verify_timer.elapsed() >= Duration::from_secs(3) {
             self.verify_timer = Instant::now();
 
@@ -96,28 +109,58 @@ impl Info {
             }
         }
 
-        let min_freq = *self.freqs.first().context("No frequencies available")?;
-        let max_freq = *self.freqs.last().context("No frequencies available")?;
+        self.verify_freq = Some(write_freq);
+    }
 
-        let adjusted_freq = freq.clamp(min_freq, max_freq);
-        self.verify_freq = Some(adjusted_freq);
-        self.cur_fas_freq = adjusted_freq;
-        let adjusted_freq = adjusted_freq.to_string();
-
-        if !IGNORE_MAP
+    fn ignore_write(&self) -> Result<bool> {
+        Ok(IGNORE_MAP
             .get()
             .context("IGNORE_MAP not initialized")?
             .get(&self.policy)
             .context("Policy ignore flag not found")?
-            .load(Ordering::Acquire)
-        {
-            file_handler.write_with_workround(self.max_freq_path(), &adjusted_freq)?;
-            file_handler.write_with_workround(self.min_freq_path(), &adjusted_freq)?;
+            .load(Ordering::Acquire))
+    }
+
+    fn critical_policy(&self, top_used_cores: CpuSet) -> bool {
+        self.affected_cpus
+            .iter()
+            .any(|core| top_used_cores.is_set(*core).unwrap())
+    }
+
+    pub fn write_freq(
+        &mut self,
+        top_used_cores: CpuSet,
+        freq: isize,
+        file_handler: &mut FileHandler,
+    ) -> Result<()> {
+        let min_freq = *self.freqs.first().context("No frequencies available")?;
+        let max_freq = *self.freqs.last().context("No frequencies available")?;
+
+        let adjusted_freq = freq.clamp(min_freq, max_freq);
+        self.cur_fas_freq = adjusted_freq;
+
+        if !self.ignore_write()? {
+            if self.critical_policy(top_used_cores) {
+                self.verify_freq(adjusted_freq);
+                let adjusted_freq = adjusted_freq.to_string();
+                file_handler.write_with_workround(self.max_freq_path(), &adjusted_freq)?;
+                file_handler.write_with_workround(self.min_freq_path(), &adjusted_freq)?;
+            } else {
+                let adjusted_freq = adjusted_freq.to_string();
+                let min_freq = self
+                    .freqs
+                    .first()
+                    .context("No frequencies available")?
+                    .to_string();
+                file_handler.write_with_workround(self.min_freq_path(), &min_freq)?;
+                file_handler.write_with_workround(self.max_freq_path(), &adjusted_freq)?;
+            }
         }
+
         Ok(())
     }
 
-    pub fn reset_freq(&mut self, file_handler: &mut FileHandler) -> Result<()> {
+    pub fn reset(&mut self, file_handler: &mut FileHandler) -> Result<()> {
         let min_freq = self
             .freqs
             .first()

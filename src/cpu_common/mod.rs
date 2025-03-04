@@ -32,6 +32,10 @@ use anyhow::{Context, Result};
 #[cfg(debug_assertions)]
 use log::debug;
 use log::warn;
+use nix::{
+    sched::{CpuSet, sched_getaffinity},
+    unistd::Pid,
+};
 use parking_lot::Mutex;
 use process_monitor::ProcessMonitor;
 
@@ -137,7 +141,7 @@ impl Controller {
 
     pub fn init_game(&mut self, pid: i32, extension: &Extension) {
         trigger_init_cpu_freq(extension);
-        self.set_all_cpu_freq(self.max_freq);
+        self.reset_all_cpu_freq();
         self.process_monitor.set_pid(Some(pid));
         self.util_max = None;
     }
@@ -157,6 +161,13 @@ impl Controller {
         let sorted_policies = self.sort_policies_topologically();
         let fas_freqs = Self::apply_absolute_constraints(fas_freqs, &sorted_policies);
         let fas_freqs = Self::apply_relative_constraints(fas_freqs, &sorted_policies);
+        let top_used_cores = self.top_used_cores().unwrap_or_else(|| {
+            let mut all_cores = CpuSet::new();
+            for core in 0..num_cpus::get() {
+                all_cores.set(core).unwrap();
+            }
+            all_cores
+        });
 
         if no_extra_policy() {
             let fas_freq_max = fas_freqs.values().max().copied().unwrap();
@@ -166,20 +177,20 @@ impl Controller {
                         fas_freq_max.saturating_sub(100_000),
                         fas_freq_max.saturating_add(100_000),
                     );
-                    let _ = cpu.write_freq(freq, &mut self.file_handler);
+                    let _ = cpu.write_freq(top_used_cores, freq, &mut self.file_handler);
                 }
             }
         } else {
             for cpu in &mut self.cpu_infos {
                 if let Some(freq) = fas_freqs.get(&cpu.policy).copied() {
-                    let _ = cpu.write_freq(freq, &mut self.file_handler);
+                    let _ = cpu.write_freq(top_used_cores, freq, &mut self.file_handler);
                 }
             }
         }
     }
 
     fn update_util_max(&mut self) {
-        if let Some(util_max) = self.process_monitor.update_util_max() {
+        if let Some(util_max) = self.process_monitor.update() {
             self.util_max = Some(util_max);
         }
     }
@@ -289,6 +300,35 @@ impl Controller {
         sorted_policies
     }
 
+    fn top_used_cores(&self) -> Option<CpuSet> {
+        let top_threads_cpu_sets: Vec<_> = self
+            .process_monitor
+            .top_threads()
+            .filter_map(|tid| sched_getaffinity(Pid::from_raw(tid)).ok())
+            .collect();
+
+        let mut counts = HashMap::new();
+        for cpu_set in top_threads_cpu_sets.iter().copied() {
+            *counts.entry(cpu_set).or_insert(0) += 1;
+        }
+
+        let (mode, _) = counts.into_iter().max_by_key(|&(_num, count)| count)?;
+
+        let mut top_used_cores = CpuSet::new();
+        for cpuset in top_threads_cpu_sets
+            .into_iter()
+            .filter(|cpu_set| *cpu_set != mode)
+        {
+            for core in 0..num_cpus::get() {
+                if cpuset.is_set(core).unwrap() {
+                    top_used_cores.set(core).unwrap();
+                }
+            }
+        }
+
+        Some(top_used_cores)
+    }
+
     fn apply_absolute_constraints(
         mut fas_freqs: HashMap<i32, isize>,
         sorted_policies: &[i32],
@@ -358,15 +398,9 @@ impl Controller {
         fas_freqs
     }
 
-    fn set_all_cpu_freq(&mut self, freq: isize) {
-        for cpu in &mut self.cpu_infos {
-            let _ = cpu.write_freq(freq, &mut self.file_handler);
-        }
-    }
-
     fn reset_all_cpu_freq(&mut self) {
         for cpu in &mut self.cpu_infos {
-            let _ = cpu.reset_freq(&mut self.file_handler);
+            let _ = cpu.reset(&mut self.file_handler);
         }
     }
 

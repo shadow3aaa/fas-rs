@@ -581,6 +581,7 @@ dependencies = [
  "log",
  "mimalloc",
  "mlua",
+ "nix",
  "num_cpus",
  "parking_lot",
  "quick-xml",
