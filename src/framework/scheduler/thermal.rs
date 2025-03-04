@@ -83,6 +83,6 @@ impl Thermal {
             .filter_map(|path| fs::read_to_string(path).ok())
             .map(|temp| temp.trim().parse::<u64>().unwrap_or_default())
             .max()
-            .unwrap();
+            .unwrap_or_default();
     }
 }
