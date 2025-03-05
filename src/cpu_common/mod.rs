@@ -312,6 +312,19 @@ impl Controller {
             *counts.entry(cpu_set).or_insert(0) += 1;
         }
 
+        if counts.len() <= 1 {
+            let mut top_used_cores = CpuSet::new();
+            for cpuset in top_threads_cpu_sets {
+                for core in 0..num_cpus::get() {
+                    if cpuset.is_set(core).unwrap() {
+                        top_used_cores.set(core).unwrap();
+                    }
+                }
+            }
+
+            return Some(top_used_cores);
+        }
+
         let (mode, _) = counts.into_iter().max_by_key(|&(_num, count)| count)?;
 
         let mut top_used_cores = CpuSet::new();
