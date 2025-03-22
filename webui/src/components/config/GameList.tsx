@@ -66,29 +66,27 @@ export function GameList({
                 <CardTitle className="text-md">{t('common:add_game')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-base font-medium">{t('common:package_name')}</label>
-                    <Input
-                      type="text"
-                      value={newGamePackage}
-                      onChange={(e) => setNewGamePackage(e.target.value)}
-                      placeholder="com.example.game"
-                      className="min-h-[64px] text-xl whitespace-pre-wrap leading-relaxed"
-                      style={{ whiteSpace: 'pre-wrap' }}
-                      inputMode="text"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-base font-medium">{t('common:fps_values')}</label>
-                    <Input
-                      type="text"
-                      value={newGameFps}
-                      onChange={(e) => setNewGameFps(e.target.value)}
-                      placeholder="30, 60, 90"
-                      className="h-16 text-xl"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-base font-medium">{t('common:package_name')}</label>
+                  <Input
+                    type="text"
+                    value={newGamePackage}
+                    onChange={(e) => setNewGamePackage(e.target.value)}
+                    placeholder="com.example.game"
+                    className="min-h-[64px] text-xl whitespace-pre-wrap leading-relaxed"
+                    style={{ whiteSpace: 'pre-wrap' }}
+                    inputMode="text"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-base font-medium">{t('common:fps_values')}</label>
+                  <Input
+                    type="text"
+                    value={newGameFps}
+                    onChange={(e) => setNewGameFps(e.target.value)}
+                    placeholder="30, 60, 90"
+                    className="h-16 text-xl"
+                  />
                 </div>
               </CardContent>
               <CardFooter className="flex justify-end gap-2">

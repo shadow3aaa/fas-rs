@@ -28,7 +28,7 @@ export function Slider({
         type="button"
         onClick={() =>
           props.onValueChange?.([
-            Math.max(min, (value?.[0] || defaultValue?.[0] || 0) - 0.1),
+            Math.max(min, (value?.[0] || defaultValue?.[0] || 0) - (props.step ?? 0.1)),
           ])
         }
         className="size-8 flex items-center justify-center rounded-md bg-muted p-2 hover:bg-accent active:scale-95"
@@ -78,7 +78,7 @@ export function Slider({
         type="button"
         onClick={() =>
           props.onValueChange?.([
-            Math.min(max, (value?.[0] || defaultValue?.[0] || 0) + 0.1),
+            Math.min(max, (value?.[0] || defaultValue?.[0] || 0) + (props.step ?? 0.1)),
           ])
         }
         className="size-8 flex items-center justify-center rounded-md bg-muted p-2 hover:bg-accent active:scale-95"

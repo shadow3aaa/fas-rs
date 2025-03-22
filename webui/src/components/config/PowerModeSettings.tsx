@@ -44,7 +44,7 @@ export function PowerModeSettings({ mode, settings, updatePowerMode }: PowerMode
             value={[settings.core_temp_thresh]}
             min={60000}
             max={100000}
-            step={5000}
+            step={1000}
             onValueChange={(value) => updatePowerMode(mode, "core_temp_thresh", value)}
             className="py-3 [&_[data-part=thumb]]:h-6 [&_[data-part=thumb]]:w-6 [&_[data-part=track]]:h-3"
           />
