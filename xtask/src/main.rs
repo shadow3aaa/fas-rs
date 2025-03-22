@@ -153,6 +153,14 @@ fn build(release: bool, verbose: bool) -> Result<()> {
     )
     .unwrap();
 
+    build_webui().spawn()?.wait()?;
+    dir::copy(
+        webroot_dir(),
+        &temp_dir,
+        &dir::CopyOptions::new().overwrite(true),
+    )
+    .unwrap();
+
     let build_type = if release { "release" } else { "debug" };
     let package_path = Path::new("output").join(format!("fas-rs({build_type}).zip"));
 
@@ -262,8 +270,19 @@ fn bin_path(release: bool) -> PathBuf {
 
 fn cargo_ndk() -> Command {
     let mut command = Command::new("cargo");
-    command.args(["+nightly", "ndk", "-p", "31", "-t", "arm64-v8a"]);
-    command.env("RUSTFLAGS", "-C default-linker-libraries");
-    command.env("CARGO_CFG_BPF_TARGET_ARCH", "aarch64");
+    command
+        .args(["+nightly", "ndk", "-p", "31", "-t", "arm64-v8a"])
+        .env("RUSTFLAGS", "-C default-linker-libraries")
+        .env("CARGO_CFG_BPF_TARGET_ARCH", "aarch64");
+    command
+}
+
+fn webroot_dir() -> PathBuf {
+    Path::new("webui").join("webroot")
+}
+
+fn build_webui() -> Command {
+    let mut command = Command::new("npm");
+    command.args(["run", "build"]).current_dir("webui");
     command
 }
