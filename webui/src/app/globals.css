@@ -140,16 +140,4 @@
     animation: slide 0.3s ease-out;
   }
   
-  .tab-trigger {
-    @apply relative transition-colors duration-300;
-  }
-
-  .tab-indicator {
-    @apply absolute bottom-0 left-0 h-[2px] bg-primary opacity-0 w-0 
-      transition-all duration-300 ease-out;
-  }
-
-  [data-state="active"] .tab-indicator {
-    @apply w-full opacity-100;
-  }
 }
