@@ -3,7 +3,6 @@
 import { Save } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useConfig } from "@/hooks/useConfig";
 import { GeneralConfig } from "@/components/config/GeneralConfig";
@@ -35,23 +34,23 @@ export default function Home() {
   } = useConfig();
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800 p-4">
+    <div>
       {/* Main content */}
-      <Card className="max-w-4xl mx-auto mb-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
-        <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/80">
+      <div>
+        <div className="border-b border-gray-200 dark:border-gray-700 p-6 bg-gray-50/80 dark:bg-gray-900/80">
           <div className="flex justify-between items-center">
-            <CardTitle>{t('common:games_config')}</CardTitle>
+            <h1 className="text-2xl font-semibold">{t('common:games_config')}</h1>
             <Button onClick={saveConfiguration} className="gap-2">
               <Save className="w-4 h-4" />
               {t('common:save_configuration')}
             </Button>
           </div>
-          <CardDescription>
+          <p className="text-sm text-muted-foreground mt-2">
             {t('common:manage_settings')}
-          </CardDescription>
-        </CardHeader>
+          </p>
+        </div>
 
-        <CardContent className="p-0">
+        <div className="p-0">
           <Tabs defaultValue="config" className="w-full">
             <TabsList className="w-full justify-start rounded-none border-b px-2 space-x-4">
               <TabsTrigger value="config" className="text-lg px-6 py-3">{t('common:tab_general')}</TabsTrigger>
@@ -95,8 +94,8 @@ export default function Home() {
               />
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
