@@ -43,6 +43,11 @@ jobs:
           rustup update
       - name: Install cargo ndk
         run: cargo install cargo-ndk
+      - name: Setup WebUI Deps
+        run: |
+          npm install next@latest react@latest react-dom@latest
+          cd webui
+          npm install
       - name: Other deps
         run: |
           sudo apt update
@@ -83,6 +88,11 @@ jobs:
           rustup update
       - name: Install cargo ndk
         run: cargo install cargo-ndk
+      - name: Setup WebUI Deps
+        run: |
+          npm install next@latest react@latest react-dom@latest
+          cd webui
+          npm install
       - name: Other deps
         run: |
           sudo apt update
