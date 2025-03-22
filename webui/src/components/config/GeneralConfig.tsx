@@ -1,7 +1,6 @@
 import { ConfigOptions } from "@/types/config";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { useTranslation } from 'react-i18next';
 
 interface GeneralConfigProps {
@@ -29,8 +28,6 @@ export function GeneralConfig({ configOptions, toggleConfigOption }: GeneralConf
             onCheckedChange={() => toggleConfigOption("keep_std")}
           />
         </div>
-        
-        <Separator />
         
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">

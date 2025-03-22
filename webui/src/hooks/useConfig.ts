@@ -1,4 +1,5 @@
-import { useState, useEffect, createContext, type Dispatch, type SetStateAction } from "react";
+import { useState, useEffect, createContext, type Dispatch, type SetStateAction, useCallback } from "react";
+import { useDebouncedCallback } from 'use-debounce';
 import { ConfigOptions, GameList, PowerModes, FpsValue, PowerSettings } from "@/types/config";
 import { toast } from "sonner";
 import { exec } from '../lib/kernelsu';
@@ -99,23 +100,33 @@ export function useConfig() {
   const [editingGame, setEditingGame] = useState<string | null>(null);
   const [editingGameFps, setEditingGameFps] = useState<string>("");
 
+  const debouncedSave = useDebouncedCallback(() => {
+    saveConfiguration();
+  }, 300);
+
   const toggleConfigOption = (option: keyof ConfigOptions): void => {
-    setConfigOptions({
-      ...configOptions,
-      [option]: !configOptions[option]
+    setConfigOptions(prev => {
+      return {
+        ...prev,
+        [option]: !prev[option]
+      };
     });
+    debouncedSave();
   };
 
   const updatePowerMode = (mode: keyof PowerModes, setting: keyof PowerSettings, value: number | number[]): void => {
-    setPowerModes({
-      ...powerModes,
-      [mode]: {
-        ...powerModes[mode],
-        [setting]: setting === "margin_fps" ?
-          typeof value === "number" ? value : value[0] :
-          typeof value === "number" ? Math.round(value) : Math.round(value[0])
-      }
+    setPowerModes(prev => {
+      return {
+        ...prev,
+        [mode]: {
+          ...prev[mode],
+          [setting]: setting === "margin_fps" ?
+            typeof value === "number" ? value : value[0] :
+            typeof value === "number" ? Math.round(value) : Math.round(value[0])
+        }
+      };
     });
+    debouncedSave();
   };
 
   const addNewGame = (): void => {
@@ -167,7 +178,13 @@ export function useConfig() {
     }
   };
 
-  const saveConfiguration = async (): Promise<void> => {
+  useEffect(() => {
+    return () => {
+      debouncedSave.cancel();
+    };
+  }, [debouncedSave]);
+
+  const saveConfiguration = useCallback(async (): Promise<void> => {
     try {
       await writeConfig({
         configOptions,
@@ -178,7 +195,7 @@ export function useConfig() {
     } catch (error) {
       toast.error("Failed to save configuration: " + error);
     }
-  };
+  }, [configOptions, gameList, powerModes]);
 
   const readConfig = async (): Promise<{
     configOptions: ConfigOptions;
@@ -300,7 +317,6 @@ export function useConfig() {
     removeGame,
     startEditGame,
     saveEditedGame,
-    saveConfiguration,
     toggleLanguage,
     language
   };

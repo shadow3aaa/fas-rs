@@ -1,9 +1,7 @@
 "use client";
 
-import { Save } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { useConfig } from "@/hooks/useConfig";
 import { GeneralConfig } from "@/components/config/GeneralConfig";
 import { GameList } from "@/components/config/GameList";
@@ -30,7 +28,6 @@ export default function Home() {
     removeGame,
     startEditGame,
     saveEditedGame,
-    saveConfiguration
   } = useConfig();
 
   return (
@@ -40,10 +37,6 @@ export default function Home() {
         <div className="border-b border-gray-200 dark:border-gray-700 p-6 bg-gray-50/80 dark:bg-gray-900/80">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-semibold">{t('common:games_config')}</h1>
-            <Button onClick={saveConfiguration} className="gap-2">
-              <Save className="w-4 h-4" />
-              {t('common:save_configuration')}
-            </Button>
           </div>
           <p className="text-sm text-muted-foreground mt-2">
             {t('common:manage_settings')}
