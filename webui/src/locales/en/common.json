@@ -30,7 +30,7 @@
   "basic_settings": "Basic settings for fas-rs",
   "games_config": "Game Configuration",
   "manage_settings": "Manage performance settings for your games",
-  "tab_general": "General Settings",
-  "tab_games": "Game Management", 
-  "tab_power": "Power Modes"
+  "tab_general": "General",
+  "tab_games": "Game List", 
+  "tab_power": "Modes"
 }
