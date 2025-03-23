@@ -1,5 +1,5 @@
 import { PowerModes, PowerSettings } from "@/types/config";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { useTranslation } from 'react-i18next';
@@ -15,13 +15,14 @@ export function PowerModeSettings({ mode, settings, updatePowerMode }: PowerMode
   return (
     <Card key={mode}>
       <CardHeader>
-        <CardTitle className="text-lg capitalize">{mode}</CardTitle>
+        <CardTitle className="text-lg capitalize">{t(`common:${mode}_mode`)}</CardTitle>
+        <CardDescription>{t(`common:${mode}_mode_desc`)}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-base font-medium">{t('common:performance_margin')}: {settings.margin_fps.toFixed(1)} fps</span>
-            <span className="text-sm text-gray-600">{t(`common:${mode}`)}</span>
+            <span className="text-base font-medium">{t('common:fas_margin')}</span>
+            <span className="text-sm text-gray-600">{settings.margin_fps.toFixed(1)} fps</span>
           </div>
           <Slider
             value={[settings.margin_fps]}
@@ -31,14 +32,17 @@ export function PowerModeSettings({ mode, settings, updatePowerMode }: PowerMode
             onValueChange={(value) => updatePowerMode(mode, "margin_fps", value)}
             className="py-3 [&_[data-part=thumb]]:h-6 [&_[data-part=thumb]]:w-6 [&_[data-part=track]]:h-3"
           />
+          <p className="text-sm text-gray-600 mt-3">
+            {t('common:margin')}
+          </p>
         </div>
 
         <Separator className="my-4" />
 
         <div className="space-y-4">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-base font-medium">{t('common:temperature_limit')}: {Math.round(settings.core_temp_thresh / 1000)}°C</span>
-            <span className="text-sm text-gray-600">{t('common:threshold')}</span>
+            <span className="text-base font-medium">{t('common:thermal')}</span>
+            <span className="text-sm text-gray-600">{Math.round(settings.core_temp_thresh / 1000)}°C</span>
           </div>
           <Slider
             value={[settings.core_temp_thresh]}
@@ -49,7 +53,7 @@ export function PowerModeSettings({ mode, settings, updatePowerMode }: PowerMode
             className="py-3 [&_[data-part=thumb]]:h-6 [&_[data-part=thumb]]:w-6 [&_[data-part=track]]:h-3"
           />
           <p className="text-sm text-gray-600 mt-3">
-            {t('common:thermal_throttling')}
+            {t('common:thermal_desc')}
           </p>
         </div>
       </CardContent>

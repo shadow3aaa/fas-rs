@@ -22,16 +22,22 @@ export function GeneralConfig({ configOptions, toggleConfigOption }: GeneralConf
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <label className="text-base font-medium">{t('common:keep_std')}</label>
+            <CardDescription>
+              {t("common:keep_std_desc")}
+            </CardDescription>
           </div>
           <Switch
             checked={configOptions.keep_std}
             onCheckedChange={() => toggleConfigOption("keep_std")}
           />
         </div>
-        
+
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <label className="text-base font-medium">{t('common:scene_game_list')}</label>
+            <CardDescription>
+              {t("common:scene_game_list_desc")}
+            </CardDescription>
           </div>
           <Switch
             checked={configOptions.scene_game_list}
