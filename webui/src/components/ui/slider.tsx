@@ -33,6 +33,7 @@ export function Slider({
         }
         className="size-8 flex items-center justify-center rounded-md bg-muted p-2 hover:bg-accent active:scale-95"
         aria-label="Decrease"
+        disabled={props.disabled}
       >
         -
       </button>
@@ -83,6 +84,7 @@ export function Slider({
         }
         className="size-8 flex items-center justify-center rounded-md bg-muted p-2 hover:bg-accent active:scale-95"
         aria-label="Increase"
+        disabled={props.disabled}
       >
         +
       </button>

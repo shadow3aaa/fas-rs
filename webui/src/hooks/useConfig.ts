@@ -17,19 +17,19 @@ const defaultGameList: GameList = {
 const defaultPowerModes: PowerModes = {
   powersave: {
     margin_fps: 3.0,
-    core_temp_thresh: 80000
+    core_temp_thresh: 80000 as number | "disabled"
   },
   balance: {
     margin_fps: 1.0,
-    core_temp_thresh: 90000
+    core_temp_thresh: 90000 as number | "disabled"
   },
   performance: {
     margin_fps: 0.3,
-    core_temp_thresh: 95000
+    core_temp_thresh: 95000 as number | "disabled"
   },
   fast: {
     margin_fps: 0,
-    core_temp_thresh: 95000
+    core_temp_thresh: 95000 as number | "disabled"
   }
 };
 
@@ -47,7 +47,7 @@ interface ConfigContextType {
   editingGameFps: string;
   setEditingGameFps: Dispatch<SetStateAction<string>>;
   toggleConfigOption: (option: keyof ConfigOptions) => void;
-  updatePowerMode: (mode: keyof PowerModes, setting: keyof PowerSettings, value: number | number[]) => void;
+  updatePowerMode: (mode: keyof PowerModes, setting: keyof PowerSettings, value: number | number[] | "disabled") => void;
   addNewGame: () => void;
   removeGame: (gamePackage: string) => void;
   startEditGame: (game: string, fps: FpsValue) => void;
@@ -114,15 +114,17 @@ export function useConfig() {
     debouncedSave();
   };
 
-  const updatePowerMode = (mode: keyof PowerModes, setting: keyof PowerSettings, value: number | number[]): void => {
+  const updatePowerMode = (mode: keyof PowerModes, setting: keyof PowerSettings, value: number | number[] | "disabled"): void => {
     setPowerModes(prev => {
       return {
         ...prev,
         [mode]: {
           ...prev[mode],
-          [setting]: setting === "margin_fps" ?
-            typeof value === "number" ? value : value[0] :
-            typeof value === "number" ? Math.round(value) : Math.round(value[0])
+          [setting]: setting === "core_temp_thresh" && value === "disabled" ? 
+            "disabled" :
+            setting === "margin_fps" ?
+              typeof value === "number" ? value : value[0] :
+              typeof value === "number" ? Math.round(value) : Math.round(value[0] as number)
         }
       };
     });
@@ -143,6 +145,7 @@ export function useConfig() {
       setNewGameFps("");
       setIsAddingGame(false);
       toast.success("Game added successfully!");
+      debouncedSave();
     }
   };
 
@@ -151,6 +154,7 @@ export function useConfig() {
     delete updatedGameList[gamePackage];
     setGameList(updatedGameList);
     toast.success("Game removed successfully!");
+    debouncedSave();
   };
 
   const startEditGame = (game: string, fps: FpsValue): void => {
@@ -175,6 +179,7 @@ export function useConfig() {
       setEditingGame(null);
       setEditingGameFps("");
       toast.success("Game settings updated!");
+      debouncedSave();
     }
   };
 

@@ -6,8 +6,14 @@ export type ConfigOptions = {
 
 export type PowerSettings = {
   margin_fps: number;
-  core_temp_thresh: number;
+  core_temp_thresh: number | "disabled";
 };
+
+export type UpdatePowerModeFn = (
+  mode: keyof PowerModes, 
+  setting: keyof PowerSettings, 
+  value: number | number[] | "disabled"
+) => void;
 
 export type PowerModes = {
   powersave: PowerSettings;

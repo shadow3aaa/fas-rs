@@ -3,7 +3,7 @@ import { PowerModeSettings } from "./PowerModeSettings";
 
 interface PowerModesProps {
   powerModes: PowerModesType;
-  updatePowerMode: (mode: keyof PowerModesType, setting: keyof PowerSettings, value: number | number[]) => void;
+  updatePowerMode: (mode: keyof PowerModesType, setting: keyof PowerSettings, value: number | number[] | "disabled") => void;
 }
 
 export function PowerModes({ powerModes, updatePowerMode }: PowerModesProps) {
