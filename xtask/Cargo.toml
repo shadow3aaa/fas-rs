@@ -24,5 +24,4 @@ edition = "2024"
 anyhow = "1.0.97"
 clap = { version = "4.5.35", features = ["derive"] }
 fs_extra = "1.3.0"
-zip = "2.5.0"
-zip-extensions = "0.8.1"
+zip = "2.6.1"

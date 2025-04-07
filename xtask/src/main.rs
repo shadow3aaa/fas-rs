@@ -15,6 +15,8 @@
 // You should have received a copy of the GNU General Public License along
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
+mod zip_ext;
+
 use std::{
     fs::{self},
     path::{Path, PathBuf},
@@ -25,7 +27,8 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use fs_extra::{dir, file};
 use zip::{CompressionMethod, write::FileOptions};
-use zip_extensions::zip_create_from_directory_with_options;
+
+use zip_ext::zip_create_from_directory_with_options;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
