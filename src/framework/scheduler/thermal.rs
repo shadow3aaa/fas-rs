@@ -63,7 +63,7 @@ impl Thermal {
 
         #[cfg(debug_assertions)]
         {
-            debug!("target_core_temperature: {}", target_core_temperature);
+            debug!("target_core_temperature: {target_core_temperature}");
             debug!("core_temperature: {}", self.core_temperature);
         }
 

@@ -69,7 +69,7 @@ fn main() -> Result<()> {
         setprop("fas-rs-server-started", "true");
         run(&args[2]).unwrap_or_else(|e| {
             for cause in e.chain() {
-                error!("{:#?}", cause);
+                error!("{cause:#?}");
             }
             error!("{:#?}", e.backtrace());
         });

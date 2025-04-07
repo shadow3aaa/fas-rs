@@ -78,7 +78,7 @@ impl Controller {
         });
 
         #[cfg(debug_assertions)]
-        debug!("cpu infos: {:?}", cpu_infos);
+        debug!("cpu infos: {cpu_infos:?}");
 
         let max_freq = cpu_infos
             .iter()
@@ -103,7 +103,7 @@ impl Controller {
             let path = match entry {
                 Ok(entry) => entry.path(),
                 Err(e) => {
-                    warn!("Failed to read entry: {:?}", e);
+                    warn!("Failed to read entry: {e:?}");
                     continue;
                 }
             };
@@ -131,7 +131,7 @@ impl Controller {
             match Info::new(path) {
                 Ok(info) => return info,
                 Err(e) => {
-                    warn!("Failed to read cpu info from: {:?}, reason: {:?}", path, e);
+                    warn!("Failed to read cpu info from: {path:?}, reason: {e:?}");
                     warn!("Retrying...");
                     thread::sleep(Duration::from_secs(1));
                 }
@@ -155,7 +155,7 @@ impl Controller {
 
     pub fn fas_update_freq(&mut self, control: isize, is_janked: bool) {
         #[cfg(debug_assertions)]
-        debug!("change freq: {}", control);
+        debug!("change freq: {control}");
 
         let fas_freqs = self.compute_target_frequencies(control, is_janked);
         let sorted_policies = self.sort_policies_topologically();
@@ -388,7 +388,7 @@ impl Controller {
                         let rel_to_freq = fas_freqs.get(&rel_bound.rel_to).copied().unwrap_or(0);
 
                         #[cfg(debug_assertions)]
-                        debug!("policy{} rel_to {}", policy, rel_to_freq);
+                        debug!("policy{policy} rel_to {rel_to_freq}");
 
                         freq.clamp(
                             rel_to_freq + rel_bound.min.unwrap_or(isize::MIN),
@@ -400,8 +400,7 @@ impl Controller {
 
                 #[cfg(debug_assertions)]
                 debug!(
-                    "policy{} freq after relative bound: {}",
-                    policy, adjusted_freq
+                    "policy{policy} freq after relative bound: {adjusted_freq}"
                 );
 
                 fas_freqs.insert(*policy, adjusted_freq);

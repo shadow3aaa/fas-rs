@@ -86,7 +86,7 @@ impl TopAppsWatcher {
                 match self.windows_dumper.dump(&["visible-apps"]) {
                     Ok(dump) => break dump,
                     Err(e) => {
-                        log::error!("Failed to dump windows: {}, retrying", e);
+                        log::error!("Failed to dump windows: {e}, retrying");
                         std::thread::sleep(Duration::from_secs(1));
                     }
                 }

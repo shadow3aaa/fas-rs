@@ -34,13 +34,13 @@ pub(super) fn wait_and_read(path: &Path, std_path: &Path, sx: &Sender<ConfigData
             Ok(mut config) => {
                 if config.config.scene_game_list {
                     if let Err(e) = read_scene_games(&mut config) {
-                        error!("Failed to read scene games: {}", e);
+                        error!("Failed to read scene games: {e}");
                     }
                 }
                 sx.send(config).unwrap();
             }
             Err(e) => {
-                error!("Too many retries reading config: {}", e);
+                error!("Too many retries reading config: {e}");
                 error!("Using standard profile until user config is available.");
                 sx.send(std_config.clone()).unwrap();
             }
@@ -63,7 +63,7 @@ fn read_config_with_retry(path: &Path) -> Result<ConfigData> {
         match read_config(path) {
             Ok(config) => return Ok(config),
             Err(e) => {
-                debug!("Failed to read config at {:?}: {}", path, e);
+                debug!("Failed to read config at {path:?}: {e}");
                 retry_count += 1;
                 if retry_count >= MAX_RETRY_COUNT {
                     return Err(e);

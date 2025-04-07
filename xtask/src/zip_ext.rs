@@ -1,4 +1,4 @@
-use std::{fs::File, io::{Read, Write}, path::{Component, PathBuf}};
+use std::{fs::File, io::{Read, Write}, path::{Component, Path, PathBuf}};
 
 use zip::{result::ZipResult, write::{FileOptionExtension, FileOptions}, ZipWriter};
 
@@ -57,7 +57,7 @@ where
     Ok(())
 }
 
-fn make_relative_path(root: &PathBuf, current: &PathBuf) -> PathBuf {
+fn make_relative_path(root: &Path, current: &Path) -> PathBuf {
     let mut result = PathBuf::new();
     let root_components = root.components().collect::<Vec<Component>>();
     let current_components = current.components().collect::<Vec<_>>();

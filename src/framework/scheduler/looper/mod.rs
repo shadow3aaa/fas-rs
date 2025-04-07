@@ -160,8 +160,8 @@ impl Looper {
             if likely(self.fas_state.mode != new_mode) {
                 info!(
                     "Switch mode: {} -> {}",
-                    self.fas_state.mode.to_string(),
-                    new_mode.to_string()
+                    self.fas_state.mode,
+                    new_mode
                 );
                 self.fas_state.mode = new_mode;
 
