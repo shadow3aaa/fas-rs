@@ -34,6 +34,6 @@
   "tab_games": "Game List",
   "tab_power": "Modes",
   "delete_game": "Delete Game",
-  "delete_game_confirm": "Are you sure you want to delete {game}? This action cannot be undone.",
+  "delete_game_confirm": "Are you sure you want to delete {{game}}? This action cannot be undone.",
   "delete": "Delete"
 }
