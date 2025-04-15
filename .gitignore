@@ -9,3 +9,6 @@
 
 # idea
 /.idea
+
+# Darwin
+/.DS_Store
