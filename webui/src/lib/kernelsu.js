@@ -32,79 +32,79 @@ export function exec(command, options) {
 }
 
 function Stdio() {
-    this.listeners = {};
-  }
-  
-  Stdio.prototype.on = function (event, listener) {
-    if (!this.listeners[event]) {
-      this.listeners[event] = [];
-    }
-    this.listeners[event].push(listener);
-  };
-  
-  Stdio.prototype.emit = function (event, ...args) {
-    if (this.listeners[event]) {
-      this.listeners[event].forEach((listener) => listener(...args));
-    }
-  };
-  
-  function ChildProcess() {
-    this.listeners = {};
-    this.stdin = new Stdio();
-    this.stdout = new Stdio();
-    this.stderr = new Stdio();
-  }
-  
-  ChildProcess.prototype.on = function (event, listener) {
-    if (!this.listeners[event]) {
-      this.listeners[event] = [];
-    }
-    this.listeners[event].push(listener);
-  };
-  
-  ChildProcess.prototype.emit = function (event, ...args) {
-    if (this.listeners[event]) {
-      this.listeners[event].forEach((listener) => listener(...args));
-    }
-  };
-  
-  export function spawn(command, args, options) {
-    if (typeof args === "undefined") {
-      args = [];
-    } else if (!(args instanceof Array)) {
-        // allow for (command, options) signature
-        options = args;
-    }
-    
-    if (typeof options === "undefined") {
-      options = {};
-    }
-  
-    const child = new ChildProcess();
-    const childCallbackName = getUniqueCallbackName("spawn");
-    window[childCallbackName] = child;
-  
-    function cleanup(name) {
-      delete window[name];
-    }
+  this.listeners = {};
+}
 
-    child.on("exit", _ => {
-        cleanup(childCallbackName);
-    });
-
-    try {
-      ksu.spawn(
-        command,
-        JSON.stringify(args),
-        JSON.stringify(options),
-        childCallbackName
-      );
-    } catch (error) {
-      child.emit("error", error);
-      cleanup(childCallbackName);
-    }
-    return child;
+Stdio.prototype.on = function (event, listener) {
+  if (!this.listeners[event]) {
+    this.listeners[event] = [];
   }
+  this.listeners[event].push(listener);
+};
+
+Stdio.prototype.emit = function (event, ...args) {
+  if (this.listeners[event]) {
+    this.listeners[event].forEach((listener) => listener(...args));
+  }
+};
+
+function ChildProcess() {
+  this.listeners = {};
+  this.stdin = new Stdio();
+  this.stdout = new Stdio();
+  this.stderr = new Stdio();
+}
+
+ChildProcess.prototype.on = function (event, listener) {
+  if (!this.listeners[event]) {
+    this.listeners[event] = [];
+  }
+  this.listeners[event].push(listener);
+};
+
+ChildProcess.prototype.emit = function (event, ...args) {
+  if (this.listeners[event]) {
+    this.listeners[event].forEach((listener) => listener(...args));
+  }
+};
+
+export function spawn(command, args, options) {
+  if (typeof args === "undefined") {
+    args = [];
+  } else if (!(args instanceof Array)) {
+    // allow for (command, options) signature
+    options = args;
+  }
+
+  if (typeof options === "undefined") {
+    options = {};
+  }
+
+  const child = new ChildProcess();
+  const childCallbackName = getUniqueCallbackName("spawn");
+  window[childCallbackName] = child;
+
+  function cleanup(name) {
+    delete window[name];
+  }
+
+  child.on("exit", (_) => {
+    cleanup(childCallbackName);
+  });
+
+  try {
+    ksu.spawn(
+      command,
+      JSON.stringify(args),
+      JSON.stringify(options),
+      childCallbackName,
+    );
+  } catch (error) {
+    child.emit("error", error);
+    cleanup(childCallbackName);
+  }
+  return child;
+}
 
 export function fullScreen(isFullScreen) {
   ksu.fullScreen(isFullScreen);

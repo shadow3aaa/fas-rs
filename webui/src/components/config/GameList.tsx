@@ -1,10 +1,19 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { GameItem } from "./GameItem";
-import { GameList as GameListType, FpsValue } from "@/types/config";
-import { Plus } from "lucide-react";
-import { useTranslation } from 'react-i18next';
+import type { GameList as GameListType, FpsValue } from "@/types/config";
+import { Plus, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface GameListProps {
   gameList: GameListType;
@@ -37,94 +46,122 @@ export function GameList({
   addNewGame,
   removeGame,
   startEditGame,
-  saveEditedGame
+  saveEditedGame,
 }: GameListProps) {
   const { t } = useTranslation();
+
   return (
     <div className="relative">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+      <Card className="shadow-sm border border-border/40">
+        <CardHeader className="pb-2 border-b border-border/20 flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-lg">{t('common:game_list')}</CardTitle>
-            <CardDescription>
-              {t('common:configure_fps')}
-            </CardDescription>
+            <CardTitle className="text-lg font-bold">
+              {t("common:game_list")}
+            </CardTitle>
+            <CardDescription>{t("common:configure_fps")}</CardDescription>
           </div>
           {!isAddingGame && (
-            <Button onClick={() => setIsAddingGame(true)} variant="outline" size="sm" className="gap-1">
+            <Button
+              onClick={() => setIsAddingGame(true)}
+              size="icon"
+              className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 text-white"
+            >
               <Plus className="h-4 w-4" />
-              {t('common:add_game')}
             </Button>
           )}
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="p-4 space-y-4">
           {/* Add new game form */}
           {isAddingGame && (
-            <Card className="bg-gray-50 dark:bg-gray-900 mb-4">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-md">{t('common:add_game')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-base font-medium">{t('common:package_name')}</label>
-                  <Input
-                    type="text"
-                    value={newGamePackage}
-                    onChange={(e) => setNewGamePackage(e.target.value)}
-                    placeholder="com.example.game"
-                    className="min-h-[64px] text-xl whitespace-pre-wrap leading-relaxed"
-                    style={{ whiteSpace: 'pre-wrap' }}
-                    inputMode="text"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-base font-medium">{t('common:fps_values')}</label>
-                  <Input
-                    type="text"
-                    value={newGameFps}
-                    onChange={(e) => setNewGameFps(e.target.value)}
-                    placeholder="30, 60, 90"
-                    className="h-16 text-xl"
-                  />
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-end gap-2">
+            <div className="overflow-hidden">
+              <Card className="bg-muted/10 border border-border/40 mb-4 relative">
                 <Button
                   onClick={() => setIsAddingGame(false)}
-                  variant="outline"
-                  size="lg"
-                  className="px-8 py-5 text-lg"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute right-2 top-2 h-8 w-8 rounded-full"
                 >
-                  {t('common:cancel')}
+                  <X className="h-4 w-4" />
                 </Button>
-                <Button
-                  onClick={addNewGame}
-                  size="lg"
-                  className="px-10 py-5 text-lg"
-                >
-                  {t('common:add')}
-                </Button>
-              </CardFooter>
-            </Card>
+
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-md">
+                    {t("common:add_game")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-base font-medium">
+                      {t("common:package_name")}
+                    </label>
+                    <Input
+                      type="text"
+                      value={newGamePackage}
+                      onChange={(e) => setNewGamePackage(e.target.value)}
+                      placeholder="com.example.game"
+                      className="min-h-[64px] text-xl whitespace-pre-wrap leading-relaxed focus-visible:ring-primary"
+                      style={{ whiteSpace: "pre-wrap" }}
+                      inputMode="text"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-base font-medium">
+                      {t("common:fps_values")}
+                    </label>
+                    <Input
+                      type="text"
+                      value={newGameFps}
+                      onChange={(e) => setNewGameFps(e.target.value)}
+                      placeholder="30, 60, 90"
+                      className="h-16 text-xl focus-visible:ring-primary"
+                    />
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-end gap-2">
+                  <Button
+                    onClick={() => setIsAddingGame(false)}
+                    variant="outline"
+                    size="lg"
+                    className="px-8 py-5 text-lg"
+                  >
+                    {t("common:cancel")}
+                  </Button>
+                  <Button
+                    onClick={addNewGame}
+                    size="lg"
+                    className="px-10 py-5 text-lg"
+                  >
+                    {t("common:add")}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
           )}
 
           {/* Game list */}
           <div className="space-y-4 overflow-x-auto">
             <div className="grid grid-cols-1 gap-4">
-              {Object.entries(gameList).map(([game, fps]) => (
-                <GameItem
-                  key={game}
-                  game={game}
-                  fps={fps}
-                  editingGame={editingGame}
-                  editingGameFps={editingGameFps}
-                  setEditingGameFps={setEditingGameFps}
-                  startEditGame={startEditGame}
-                  saveEditedGame={saveEditedGame}
-                  removeGame={removeGame}
-                />
-              ))}
+              {Object.entries(gameList).length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  {t("common:no_games")}
+                </div>
+              ) : (
+                Object.entries(gameList).map(([game, fps], index) => (
+                  <GameItem
+                    key={game}
+                    game={game}
+                    fps={fps}
+                    editingGame={editingGame}
+                    editingGameFps={editingGameFps}
+                    setEditingGameFps={setEditingGameFps}
+                    startEditGame={startEditGame}
+                    saveEditedGame={saveEditedGame}
+                    removeGame={removeGame}
+                    index={index}
+                  />
+                ))
+              )}
             </div>
           </div>
         </CardContent>

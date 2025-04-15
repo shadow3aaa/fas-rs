@@ -12,7 +12,7 @@
   "save_configuration": "Save Configuration",
   "fas_margin": "Fps Margin",
   "margin": "Allowable frame drop amount",
-  "thermal": "Thermal Threshold", 
+  "thermal": "Thermal Threshold",
   "thermal_desc": "Enable thermal throttling when exceeded",
   "powersave_mode": "Powersave",
   "powersave_mode_desc": "ECO-Friendly",
@@ -31,6 +31,9 @@
   "games_config": "Game Configuration",
   "manage_settings": "Manage performance settings for your games",
   "tab_general": "General",
-  "tab_games": "Game List", 
-  "tab_power": "Modes"
+  "tab_games": "Game List",
+  "tab_power": "Modes",
+  "delete_game": "Delete Game",
+  "delete_game_confirm": "Are you sure you want to delete {game}? This action cannot be undone.",
+  "delete": "Delete"
 }

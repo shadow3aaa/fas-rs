@@ -32,5 +32,8 @@
   "manage_settings": "管理游戏性能设置",
   "tab_general": "全局",
   "tab_games": "游戏列表",
-  "tab_power": "模式"
+  "tab_power": "模式",
+  "delete_game": "删除游戏",
+  "delete_game_confirm": "您确定要删除 {game} 吗？此操作无法撤消。",
+  "delete": "删除"
 }
