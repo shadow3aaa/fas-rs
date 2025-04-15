@@ -36,7 +36,10 @@ pub fn do_callback<P: AsRef<Path>, S: AsRef<str>, A: IntoLuaMulti>(
 
     if let Ok(func) = lua.globals().get::<Function>(function) {
         func.call(args).unwrap_or_else_likely(|e| {
-            error!("Got an error when executing extension '{extension:?}', reason: {e:#?}");
+            error!(
+                "Got an error when executing extension '{}', reason: {e:#?}",
+                extension.display()
+            );
         });
     }
 }

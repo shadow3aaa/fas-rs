@@ -131,7 +131,10 @@ impl Controller {
             match Info::new(path) {
                 Ok(info) => return info,
                 Err(e) => {
-                    warn!("Failed to read cpu info from: {path:?}, reason: {e:?}");
+                    warn!(
+                        "Failed to read cpu info from: {}, reason: {e:?}",
+                        path.display()
+                    );
                     warn!("Retrying...");
                     thread::sleep(Duration::from_secs(1));
                 }
@@ -399,9 +402,7 @@ impl Controller {
                 };
 
                 #[cfg(debug_assertions)]
-                debug!(
-                    "policy{policy} freq after relative bound: {adjusted_freq}"
-                );
+                debug!("policy{policy} freq after relative bound: {adjusted_freq}");
 
                 fas_freqs.insert(*policy, adjusted_freq);
             }

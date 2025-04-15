@@ -107,9 +107,7 @@ impl Buffer {
         for &target_fps in &target_fpses {
             if current_fps <= f64::from(target_fps) + 3.0 {
                 #[cfg(debug_assertions)]
-                debug!(
-                    "Matched target_fps: current: {current_fps:.2} target_fps: {target_fps}"
-                );
+                debug!("Matched target_fps: current: {current_fps:.2} target_fps: {target_fps}");
                 return Some(target_fps);
             }
         }

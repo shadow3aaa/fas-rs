@@ -139,7 +139,7 @@ fn load_extensions() -> Result<ExtensionMap> {
 
         match lua.load(&file).exec() {
             Ok(()) => {
-                info!("Extension loaded successfully: {path:?}");
+                info!("Extension loaded successfully: {}", path.display());
                 map.insert(path, lua);
             }
             Err(e) => {

@@ -63,7 +63,7 @@ fn read_config_with_retry(path: &Path) -> Result<ConfigData> {
         match read_config(path) {
             Ok(config) => return Ok(config),
             Err(e) => {
-                debug!("Failed to read config at {path:?}: {e}");
+                debug!("Failed to read config at {}: {e}", path.display());
                 retry_count += 1;
                 if retry_count >= MAX_RETRY_COUNT {
                     return Err(e);

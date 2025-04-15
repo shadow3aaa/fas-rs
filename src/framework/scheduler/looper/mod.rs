@@ -158,11 +158,7 @@ impl Looper {
     fn switch_mode(&mut self) {
         if let Ok(new_mode) = self.node.get_mode() {
             if likely(self.fas_state.mode != new_mode) {
-                info!(
-                    "Switch mode: {} -> {}",
-                    self.fas_state.mode,
-                    new_mode
-                );
+                info!("Switch mode: {} -> {}", self.fas_state.mode, new_mode);
                 self.fas_state.mode = new_mode;
 
                 if self.fas_state.working_state == State::Working {
