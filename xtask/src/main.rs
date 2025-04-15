@@ -156,7 +156,7 @@ fn build(release: bool, verbose: bool) -> Result<()> {
     )
     .unwrap();
 
-    build_webui().spawn()?.wait()?;
+    build_webui()?;
     dir::copy(
         webroot_dir(),
         &temp_dir,
@@ -284,8 +284,15 @@ fn webroot_dir() -> PathBuf {
     Path::new("webui").join("webroot")
 }
 
-fn build_webui() -> Command {
-    let mut command = Command::new("npm");
-    command.args(["run", "build"]).current_dir("webui");
-    command
+fn build_webui() -> Result<()> {
+    let npm = || {
+        let mut command = Command::new("npm");
+        command.current_dir("webui");
+        command
+    };
+
+    npm().arg("install").spawn()?.wait()?;
+    npm().args(["run", "build"]).spawn()?.wait()?;
+
+    Ok(())
 }
