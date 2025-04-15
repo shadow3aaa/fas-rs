@@ -1,11 +1,12 @@
 "use client";
 
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useConfig } from "@/hooks/useConfig";
 import { GeneralConfig } from "@/components/config/GeneralConfig";
 import { GameList } from "@/components/config/GameList";
 import { PowerModes } from "@/components/config/PowerModes";
+import { Settings, Gamepad, Zap } from "lucide-react";
 
 export default function Home() {
   const { t } = useTranslation();
@@ -31,63 +32,79 @@ export default function Home() {
   } = useConfig();
 
   return (
-    <div>
-      {/* Main content */}
-      <div>
-        <div className="border-b border-gray-200 dark:border-gray-700 p-6 bg-gray-50/80 dark:bg-gray-900/80">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-semibold">{t('common:games_config')}</h1>
-          </div>
-          <p className="text-sm text-muted-foreground mt-2">
-            {t('common:manage_settings')}
-          </p>
-        </div>
+    <div className="flex flex-col min-h-screen pt-16">
+      {/* Header */}
+      <div className="p-4 border-b border-border/20">
+        <h1 className="text-xl font-bold text-primary">
+          {t("common:games_config")}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {t("common:manage_settings")}
+        </p>
+      </div>
 
-        <div className="p-0">
-          <Tabs defaultValue="config" className="w-full">
-            <TabsList className="w-full justify-start rounded-none border-b px-2 space-x-4">
-              <TabsTrigger value="config" className="text-lg px-6 py-3">{t('common:tab_general')}</TabsTrigger>
-              <TabsTrigger value="games" className="text-lg px-6 py-3">{t('common:tab_games')}</TabsTrigger>
-              <TabsTrigger value="power" className="text-lg px-6 py-3">{t('common:tab_power')}</TabsTrigger>
-            </TabsList>
-            
-            {/* General Config Tab */}
-            <TabsContent value="config" className="p-6">
-              <GeneralConfig 
-                configOptions={configOptions}
-                toggleConfigOption={toggleConfigOption}
-              />
-            </TabsContent>
+      <div className="p-4">
+        <Tabs defaultValue="config" className="w-full">
+          <TabsList className="w-full justify-start rounded-xl mb-4 p-1 bg-muted/50">
+            <TabsTrigger
+              value="config"
+              className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all duration-200"
+            >
+              <Settings className="h-4 w-4" />
+              <span>{t("common:tab_general")}</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="games"
+              className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all duration-200"
+            >
+              <Gamepad className="h-4 w-4" />
+              <span>{t("common:tab_games")}</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="power"
+              className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all duration-200"
+            >
+              <Zap className="h-4 w-4" />
+              <span>{t("common:tab_power")}</span>
+            </TabsTrigger>
+          </TabsList>
 
-            {/* Game List Tab */}
-            <TabsContent value="games" className="p-6">
-              <GameList
-                gameList={gameList}
-                newGamePackage={newGamePackage}
-                setNewGamePackage={setNewGamePackage}
-                newGameFps={newGameFps}
-                setNewGameFps={setNewGameFps}
-                isAddingGame={isAddingGame}
-                setIsAddingGame={setIsAddingGame}
-                editingGame={editingGame}
-                editingGameFps={editingGameFps}
-                setEditingGameFps={setEditingGameFps}
-                addNewGame={addNewGame}
-                removeGame={removeGame}
-                startEditGame={startEditGame}
-                saveEditedGame={saveEditedGame}
-              />
-            </TabsContent>
+          {/* General Config Tab */}
+          <TabsContent value="config" className="space-y-4">
+            <GeneralConfig
+              configOptions={configOptions}
+              toggleConfigOption={toggleConfigOption}
+            />
+          </TabsContent>
 
-            {/* Power Modes Tab */}
-            <TabsContent value="power" className="p-6">
-              <PowerModes 
-                powerModes={powerModes}
-                updatePowerMode={updatePowerMode}
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
+          {/* Game List Tab */}
+          <TabsContent value="games" className="space-y-4">
+            <GameList
+              gameList={gameList}
+              newGamePackage={newGamePackage}
+              setNewGamePackage={setNewGamePackage}
+              newGameFps={newGameFps}
+              setNewGameFps={setNewGameFps}
+              isAddingGame={isAddingGame}
+              setIsAddingGame={setIsAddingGame}
+              editingGame={editingGame}
+              editingGameFps={editingGameFps}
+              setEditingGameFps={setEditingGameFps}
+              addNewGame={addNewGame}
+              removeGame={removeGame}
+              startEditGame={startEditGame}
+              saveEditedGame={saveEditedGame}
+            />
+          </TabsContent>
+
+          {/* Power Modes Tab */}
+          <TabsContent value="power" className="space-y-4">
+            <PowerModes
+              powerModes={powerModes}
+              updatePowerMode={updatePowerMode}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

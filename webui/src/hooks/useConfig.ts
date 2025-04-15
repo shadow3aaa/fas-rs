@@ -1,36 +1,48 @@
-import { useState, useEffect, createContext, type Dispatch, type SetStateAction, useCallback } from "react";
-import { useDebouncedCallback } from 'use-debounce';
-import { ConfigOptions, GameList, PowerModes, FpsValue, PowerSettings } from "@/types/config";
+import {
+  useState,
+  useEffect,
+  createContext,
+  type Dispatch,
+  type SetStateAction,
+  useCallback,
+} from "react";
+import { useDebouncedCallback } from "use-debounce";
+import {
+  ConfigOptions,
+  GameList,
+  PowerModes,
+  FpsValue,
+  PowerSettings,
+} from "@/types/config";
 import { toast } from "sonner";
-import { exec } from '../lib/kernelsu';
-import TOML from '@iarna/toml';
+import { exec } from "../lib/kernelsu";
+import TOML from "@iarna/toml";
 
 const defaultConfig: ConfigOptions = {
   keep_std: true,
   scene_game_list: true,
-  language: "en"
+  language: "en",
 };
 
-const defaultGameList: GameList = {
-};
+const defaultGameList: GameList = {};
 
 const defaultPowerModes: PowerModes = {
   powersave: {
     margin_fps: 3.0,
-    core_temp_thresh: 80000 as number | "disabled"
+    core_temp_thresh: 80000 as number | "disabled",
   },
   balance: {
     margin_fps: 1.0,
-    core_temp_thresh: 90000 as number | "disabled"
+    core_temp_thresh: 90000 as number | "disabled",
   },
   performance: {
     margin_fps: 0.3,
-    core_temp_thresh: 95000 as number | "disabled"
+    core_temp_thresh: 95000 as number | "disabled",
   },
   fast: {
     margin_fps: 0,
-    core_temp_thresh: 95000 as number | "disabled"
-  }
+    core_temp_thresh: 95000 as number | "disabled",
+  },
 };
 
 interface ConfigContextType {
@@ -47,23 +59,30 @@ interface ConfigContextType {
   editingGameFps: string;
   setEditingGameFps: Dispatch<SetStateAction<string>>;
   toggleConfigOption: (option: keyof ConfigOptions) => void;
-  updatePowerMode: (mode: keyof PowerModes, setting: keyof PowerSettings, value: number | number[] | "disabled") => void;
+  updatePowerMode: (
+    mode: keyof PowerModes,
+    setting: keyof PowerSettings,
+    value: number | number[] | "disabled",
+  ) => void;
   addNewGame: () => void;
   removeGame: (gamePackage: string) => void;
   startEditGame: (game: string, fps: FpsValue) => void;
   saveEditedGame: () => void;
   saveConfiguration: () => void;
   toggleLanguage: () => void;
-  language: 'en' | 'zh';
+  language: "en" | "zh";
 }
 
-export const ConfigContext = createContext<ConfigContextType>({} as ConfigContextType);
+export const ConfigContext = createContext<ConfigContextType>(
+  {} as ConfigContextType,
+);
 
 export function useConfig() {
-  const [configOptions, setConfigOptions] = useState<ConfigOptions>(defaultConfig);
+  const [configOptions, setConfigOptions] =
+    useState<ConfigOptions>(defaultConfig);
   const [gameList, setGameList] = useState<GameList>(defaultGameList);
   const [powerModes, setPowerModes] = useState<PowerModes>(defaultPowerModes);
-  const [language, setLanguage] = useState<'en' | 'zh'>('en');
+  const [language, setLanguage] = useState<"en" | "zh">("en");
 
   useEffect(() => {
     const initializeConfig = async () => {
@@ -73,23 +92,23 @@ export function useConfig() {
         setGameList(configData.gameList || defaultGameList);
         setPowerModes(configData.powerModes || defaultPowerModes);
       } catch (_error) {
-        toast.error('Failed to load configuration');
+        toast.error("Failed to load configuration");
       }
     };
 
-    const savedLang = localStorage.getItem('fasrs-lang');
-    if (savedLang === 'zh') {
-      setLanguage('zh');
+    const savedLang = localStorage.getItem("fasrs-lang");
+    if (savedLang === "zh") {
+      setLanguage("zh");
     }
 
     initializeConfig();
   }, []);
 
   const toggleLanguage = () => {
-    const newLang = language === 'en' ? 'zh' : 'en';
+    const newLang = language === "en" ? "zh" : "en";
     setLanguage(newLang);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('fasrs-lang', newLang);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("fasrs-lang", newLang);
       window.location.reload();
     }
   };
@@ -105,27 +124,36 @@ export function useConfig() {
   }, 300);
 
   const toggleConfigOption = (option: keyof ConfigOptions): void => {
-    setConfigOptions(prev => {
+    setConfigOptions((prev) => {
       return {
         ...prev,
-        [option]: !prev[option]
+        [option]: !prev[option],
       };
     });
     debouncedSave();
   };
 
-  const updatePowerMode = (mode: keyof PowerModes, setting: keyof PowerSettings, value: number | number[] | "disabled"): void => {
-    setPowerModes(prev => {
+  const updatePowerMode = (
+    mode: keyof PowerModes,
+    setting: keyof PowerSettings,
+    value: number | number[] | "disabled",
+  ): void => {
+    setPowerModes((prev) => {
       return {
         ...prev,
         [mode]: {
           ...prev[mode],
-          [setting]: setting === "core_temp_thresh" && value === "disabled" ? 
-            "disabled" :
-            setting === "margin_fps" ?
-              typeof value === "number" ? value : value[0] :
-              typeof value === "number" ? Math.round(value) : Math.round(value[0] as number)
-        }
+          [setting]:
+            setting === "core_temp_thresh" && value === "disabled"
+              ? "disabled"
+              : setting === "margin_fps"
+                ? typeof value === "number"
+                  ? value
+                  : value[0]
+                : typeof value === "number"
+                  ? Math.round(value)
+                  : Math.round(value[0] as number),
+        },
       };
     });
     debouncedSave();
@@ -133,12 +161,16 @@ export function useConfig() {
 
   const addNewGame = (): void => {
     if (newGamePackage && newGameFps) {
-      const fpsValues = newGameFps.split(",").map(v => parseInt(v.trim())).filter(v => !isNaN(v));
-      const fpsValue: FpsValue = fpsValues.length === 1 ? fpsValues[0] : fpsValues;
+      const fpsValues = newGameFps
+        .split(",")
+        .map((v) => parseInt(v.trim()))
+        .filter((v) => !isNaN(v));
+      const fpsValue: FpsValue =
+        fpsValues.length === 1 ? fpsValues[0] : fpsValues;
 
       setGameList({
         ...gameList,
-        [newGamePackage]: fpsValue
+        [newGamePackage]: fpsValue,
       });
 
       setNewGamePackage("");
@@ -166,14 +198,17 @@ export function useConfig() {
     if (editingGame && editingGameFps) {
       let fpsValue: FpsValue;
       if (editingGameFps.includes(",")) {
-        fpsValue = editingGameFps.split(",").map(v => parseInt(v.trim())).filter(v => !isNaN(v));
+        fpsValue = editingGameFps
+          .split(",")
+          .map((v) => parseInt(v.trim()))
+          .filter((v) => !isNaN(v));
       } else {
         fpsValue = parseInt(editingGameFps.trim());
       }
 
       setGameList({
         ...gameList,
-        [editingGame]: fpsValue
+        [editingGame]: fpsValue,
       });
 
       setEditingGame(null);
@@ -194,7 +229,7 @@ export function useConfig() {
       await writeConfig({
         configOptions,
         gameList,
-        powerModes
+        powerModes,
       });
       toast.success("Configuration saved successfully!");
     } catch (error) {
@@ -207,35 +242,35 @@ export function useConfig() {
     gameList: GameList;
     powerModes: PowerModes;
   }> => {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       return {
         configOptions: {
           keep_std: true,
           scene_game_list: true,
-          language: "en"
+          language: "en",
         },
         gameList: {
           "com.example.game1": 60,
-          "com.example.game2": [45, 60]
+          "com.example.game2": [45, 60],
         },
         powerModes: {
           powersave: { margin_fps: 3.0, core_temp_thresh: 80000 },
           balance: { margin_fps: 1.0, core_temp_thresh: 90000 },
           performance: { margin_fps: 0.3, core_temp_thresh: 95000 },
-          fast: { margin_fps: 0, core_temp_thresh: 95000 }
-        }
+          fast: { margin_fps: 0, core_temp_thresh: 95000 },
+        },
       };
     }
 
     const { errno, stdout, stderr } = await exec(
       `cat /sdcard/Android/fas-rs/games.toml`,
-      { cwd: '/' }
+      { cwd: "/" },
     );
 
     if (errno !== 0) {
-      if (stderr.includes('No such file')) {
-        toast.error('Configuration file not found, please create it first');
-        throw new Error('Configuration file not found');
+      if (stderr.includes("No such file")) {
+        toast.error("Configuration file not found, please create it first");
+        throw new Error("Configuration file not found");
       }
       throw new Error(`Read config failed: ${stderr}`);
     }
@@ -266,8 +301,8 @@ export function useConfig() {
     gameList: GameList;
     powerModes: PowerModes;
   }): Promise<void> => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Development mode: Skipping actual config write');
+    if (process.env.NODE_ENV === "development") {
+      console.log("Development mode: Skipping actual config write");
       return;
     }
 
@@ -279,19 +314,20 @@ export function useConfig() {
         balance: data.powerModes.balance,
         performance: data.powerModes.performance,
         fast: data.powerModes.fast,
-      }).replace(/\[\s+/g, '[').replace(/\s+\]/g, ']');
+      })
+        .replace(/\[\s+/g, "[")
+        .replace(/\s+\]/g, "]");
 
-      const mkdirResult = await exec(
-        `mkdir -p /sdcard/Android/fas-rs`,
-        { cwd: '/' }
-      );
+      const mkdirResult = await exec(`mkdir -p /sdcard/Android/fas-rs`, {
+        cwd: "/",
+      });
       if (mkdirResult.errno !== 0) {
         throw new Error(`Create directory failed: ${mkdirResult.stderr}`);
       }
 
       const { errno, stderr } = await exec(
         `echo '${tomlContent.replace(/'/g, "'\\''")}' > /sdcard/Android/fas-rs/games.toml`,
-        { cwd: '/' }
+        { cwd: "/" },
       );
 
       if (errno !== 0) {
@@ -323,6 +359,6 @@ export function useConfig() {
     startEditGame,
     saveEditedGame,
     toggleLanguage,
-    language
+    language,
   };
 }

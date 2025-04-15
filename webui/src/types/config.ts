@@ -1,7 +1,7 @@
 export type ConfigOptions = {
   keep_std: boolean;
   scene_game_list: boolean;
-  language: 'en' | 'zh';
+  language: "en" | "zh";
 };
 
 export type PowerSettings = {
@@ -10,9 +10,9 @@ export type PowerSettings = {
 };
 
 export type UpdatePowerModeFn = (
-  mode: keyof PowerModes, 
-  setting: keyof PowerSettings, 
-  value: number | number[] | "disabled"
+  mode: keyof PowerModes,
+  setting: keyof PowerSettings,
+  value: number | number[] | "disabled",
 ) => void;
 
 export type PowerModes = {

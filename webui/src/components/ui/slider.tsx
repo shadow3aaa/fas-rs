@@ -1,10 +1,11 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import * as SliderPrimitive from "@radix-ui/react-slider"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import * as SliderPrimitive from "@radix-ui/react-slider";
 
-export function Slider({
+import { cn } from "@/lib/utils";
+
+function Slider({
   className,
   defaultValue,
   value,
@@ -19,75 +20,44 @@ export function Slider({
         : Array.isArray(defaultValue)
           ? defaultValue
           : [min, max],
-    [value, defaultValue, min, max]
-  )
+    [value, defaultValue, min, max],
+  );
 
   return (
-    <div className="flex">
-      <button
-        type="button"
-        onClick={() =>
-          props.onValueChange?.([
-            Math.max(min, (value?.[0] || defaultValue?.[0] || 0) - (props.step ?? 0.1)),
-          ])
-        }
-        className="size-8 flex items-center justify-center rounded-md bg-muted p-2 hover:bg-accent active:scale-95"
-        aria-label="Decrease"
-        disabled={props.disabled}
-      >
-        -
-      </button>
-
-      <SliderPrimitive.Root
-        data-slot="slider"
-        defaultValue={defaultValue}
-        value={value}
-        min={min}
-        max={max}
+    <SliderPrimitive.Root
+      data-slot="slider"
+      defaultValue={defaultValue}
+      value={value}
+      min={min}
+      max={max}
+      className={cn(
+        "relative flex w-full touch-none items-center select-none data-[disabled]:opacity-50 data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col",
+        className,
+      )}
+      {...props}
+    >
+      <SliderPrimitive.Track
+        data-slot="slider-track"
         className={cn(
-          "relative flex w-full touch-none items-center select-none data-[disabled]:opacity-50 data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col",
-          className
+          "bg-muted relative grow overflow-hidden rounded-full data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5",
         )}
-        {...props}
       >
-        <div className="flex-1 mx-2">
-          <SliderPrimitive.Track
-            data-slot="slider-track"
-            className={cn(
-              "bg-muted relative grow overflow-hidden rounded-full data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5"
-            )}
-          >
-            <SliderPrimitive.Range
-              data-slot="slider-range"
-              className={cn(
-                "absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full"
-              )}
-            />
-          </SliderPrimitive.Track>
-        </div>
-
-        {Array.from({ length: _values.length }, (_, index) => (
-          <SliderPrimitive.Thumb
-            data-slot="slider-thumb"
-            key={index}
-            className="border-primary bg-background ring-ring/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
-          />
-        ))}
-      </SliderPrimitive.Root>
-
-      <button
-        type="button"
-        onClick={() =>
-          props.onValueChange?.([
-            Math.min(max, (value?.[0] || defaultValue?.[0] || 0) + (props.step ?? 0.1)),
-          ])
-        }
-        className="size-8 flex items-center justify-center rounded-md bg-muted p-2 hover:bg-accent active:scale-95"
-        aria-label="Increase"
-        disabled={props.disabled}
-      >
-        +
-      </button>
-    </div>
-  )
+        <SliderPrimitive.Range
+          data-slot="slider-range"
+          className={cn(
+            "bg-primary absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full",
+          )}
+        />
+      </SliderPrimitive.Track>
+      {Array.from({ length: _values.length }, (_, index) => (
+        <SliderPrimitive.Thumb
+          data-slot="slider-thumb"
+          key={index}
+          className="border-primary bg-background ring-ring/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+        />
+      ))}
+    </SliderPrimitive.Root>
+  );
 }
+
+export { Slider };
