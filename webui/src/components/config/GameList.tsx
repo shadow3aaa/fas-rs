@@ -86,7 +86,7 @@ export function GameList({
               size="icon"
               className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 text-white"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4" strokeWidth={5} />
             </Button>
           )}
         </CardHeader>
@@ -132,7 +132,7 @@ export function GameList({
             onClick={() => setIsAddingGame(false)}
           />
 
-          <Card className="bg-muted/10 border border-primary shadow-lg mb-4 relative z-50">
+          <Card className="bg-background border border-primary shadow-lg mb-4 relative z-50">
             <Button
               onClick={() => setIsAddingGame(false)}
               variant="destructive"
