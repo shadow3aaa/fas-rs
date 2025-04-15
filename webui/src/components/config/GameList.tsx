@@ -1,29 +1,36 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { GameItem } from "./GameItem"
-import type { GameList as GameListType, FpsValue } from "@/types/config"
-import { Plus, X } from "lucide-react"
-import { useTranslation } from "react-i18next"
-import { useRef, useState, useEffect } from "react"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { GameItem } from "./GameItem";
+import type { GameList as GameListType, FpsValue } from "@/types/config";
+import { Plus, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { useRef, useState, useEffect } from "react";
 
 interface GameListProps {
-  gameList: GameListType
-  newGamePackage: string
-  setNewGamePackage: (value: string) => void
-  newGameFps: string
-  setNewGameFps: (value: string) => void
-  isAddingGame: boolean
-  setIsAddingGame: (value: boolean) => void
-  editingGame: string | null
-  editingGameFps: string
-  setEditingGameFps: (value: string) => void
-  addNewGame: () => void
-  removeGame: (game: string) => void
-  startEditGame: (game: string, fps: FpsValue) => void
-  saveEditedGame: () => void
+  gameList: GameListType;
+  newGamePackage: string;
+  setNewGamePackage: (value: string) => void;
+  newGameFps: string;
+  setNewGameFps: (value: string) => void;
+  isAddingGame: boolean;
+  setIsAddingGame: (value: boolean) => void;
+  editingGame: string | null;
+  editingGameFps: string;
+  setEditingGameFps: (value: string) => void;
+  addNewGame: () => void;
+  removeGame: (game: string) => void;
+  startEditGame: (game: string, fps: FpsValue) => void;
+  saveEditedGame: () => void;
 }
 
 export function GameList({
@@ -42,33 +49,35 @@ export function GameList({
   startEditGame,
   saveEditedGame,
 }: GameListProps) {
-  const { t } = useTranslation()
-  const [isPopupVisible, setIsPopupVisible] = useState(false)
-  const packageInputRef = useRef<HTMLInputElement>(null)
-  const fpsInputRef = useRef<HTMLInputElement>(null)
+  const { t } = useTranslation();
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const packageInputRef = useRef<HTMLInputElement>(null);
+  const fpsInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isAddingGame) {
       setTimeout(() => {
-        setIsPopupVisible(true)
-      }, 50)
+        setIsPopupVisible(true);
+      }, 50);
 
       setTimeout(() => {
         if (packageInputRef.current) {
-          packageInputRef.current.focus()
+          packageInputRef.current.focus();
         }
-      }, 350)
+      }, 350);
     } else {
-      setIsPopupVisible(false)
+      setIsPopupVisible(false);
     }
-  }, [isAddingGame])
+  }, [isAddingGame]);
 
   return (
     <div className="relative">
       <Card className="shadow-sm border border-border/40">
         <CardHeader className="pb-2 border-b border-border/20 flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-lg font-bold">{t("common:game_list")}</CardTitle>
+            <CardTitle className="text-lg font-bold">
+              {t("common:game_list")}
+            </CardTitle>
             <CardDescription>{t("common:configure_fps")}</CardDescription>
           </div>
           {!isAddingGame && (
@@ -87,7 +96,9 @@ export function GameList({
           <div className="space-y-4 overflow-x-auto">
             <div className="grid grid-cols-1 gap-4">
               {Object.entries(gameList).length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">{t("common:no_games")}</div>
+                <div className="text-center py-8 text-muted-foreground">
+                  {t("common:no_games")}
+                </div>
               ) : (
                 Object.entries(gameList).map(([game, fps], index) => (
                   <GameItem
@@ -136,7 +147,9 @@ export function GameList({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-base font-medium">{t("common:package_name")}</label>
+                <label className="text-base font-medium">
+                  {t("common:package_name")}
+                </label>
                 <Input
                   ref={packageInputRef}
                   type="text"
@@ -149,7 +162,9 @@ export function GameList({
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-base font-medium">{t("common:fps_values")}</label>
+                <label className="text-base font-medium">
+                  {t("common:fps_values")}
+                </label>
                 <Input
                   ref={fpsInputRef}
                   type="text"
@@ -161,10 +176,19 @@ export function GameList({
               </div>
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
-              <Button onClick={() => setIsAddingGame(false)} variant="outline" size="lg" className="px-8 py-5 text-lg">
+              <Button
+                onClick={() => setIsAddingGame(false)}
+                variant="outline"
+                size="lg"
+                className="px-8 py-5 text-lg"
+              >
                 {t("common:cancel")}
               </Button>
-              <Button onClick={addNewGame} size="lg" className="px-10 py-5 text-lg">
+              <Button
+                onClick={addNewGame}
+                size="lg"
+                className="px-10 py-5 text-lg"
+              >
                 {t("common:add")}
               </Button>
             </CardFooter>
@@ -172,5 +196,5 @@ export function GameList({
         </div>
       )}
     </div>
-  )
+  );
 }

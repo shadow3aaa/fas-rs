@@ -14,7 +14,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 export default function Navbar() {
-  const { i18n } = useTranslation(); 
+  const { i18n } = useTranslation();
   const [currentLang, setCurrentLang] = useState(i18n.language);
   const { setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);

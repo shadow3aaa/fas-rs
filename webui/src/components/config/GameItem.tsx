@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import type { FpsValue } from "@/types/config"
-import { Pencil, Save, Trash2, X, Gamepad } from "lucide-react"
-import { DeleteGameDialog } from "./DeleteGameDialog"
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import type { FpsValue } from "@/types/config";
+import { Pencil, Save, Trash2, X, Gamepad } from "lucide-react";
+import { DeleteGameDialog } from "./DeleteGameDialog";
 
 interface GameItemProps {
-  game: string
-  fps: FpsValue
-  editingGame: string | null
-  editingGameFps: string
-  setEditingGameFps: (value: string) => void
-  startEditGame: (game: string, fps: FpsValue) => void
-  saveEditedGame: () => void
-  removeGame: (game: string) => void
-  index: number
+  game: string;
+  fps: FpsValue;
+  editingGame: string | null;
+  editingGameFps: string;
+  setEditingGameFps: (value: string) => void;
+  startEditGame: (game: string, fps: FpsValue) => void;
+  saveEditedGame: () => void;
+  removeGame: (game: string) => void;
+  index: number;
 }
 
 export function GameItem({
@@ -31,35 +31,35 @@ export function GameItem({
   removeGame,
   index, // eslint-disable-line @typescript-eslint/no-unused-vars
 }: GameItemProps) {
-  const isEditing = editingGame === game
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [isPopupVisible, setIsPopupVisible] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const isEditing = editingGame === game;
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isEditing) {
       setTimeout(() => {
-        setIsPopupVisible(true)
-      }, 50)
+        setIsPopupVisible(true);
+      }, 50);
 
       setTimeout(() => {
         if (inputRef.current) {
-          inputRef.current.focus()
+          inputRef.current.focus();
         }
-      }, 350)
+      }, 350);
     } else {
-      setIsPopupVisible(false)
+      setIsPopupVisible(false);
     }
-  }, [isEditing])
+  }, [isEditing]);
 
   const handleDelete = () => {
-    setShowDeleteDialog(true)
-  }
+    setShowDeleteDialog(true);
+  };
 
   const confirmDelete = () => {
-    removeGame(game)
-    setShowDeleteDialog(false)
-  }
+    removeGame(game);
+    setShowDeleteDialog(false);
+  };
 
   return (
     <>
@@ -68,11 +68,15 @@ export function GameItem({
           <div className="p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Gamepad className="h-5 w-5 text-primary" />
-              <span className="font-mono text-sm sm:text-base break-words w-full font-medium">{game}</span>
+              <span className="font-mono text-sm sm:text-base break-words w-full font-medium">
+                {game}
+              </span>
             </div>
             <div className="pl-7">
               <span className="text-muted-foreground text-sm">FPS: </span>
-              <span className="text-primary font-medium">{Array.isArray(fps) ? fps.join(", ") : fps}</span>
+              <span className="text-primary font-medium">
+                {Array.isArray(fps) ? fps.join(", ") : fps}
+              </span>
             </div>
             <div className="flex space-x-3 w-full mt-2">
               <Button
@@ -83,7 +87,12 @@ export function GameItem({
               >
                 <Pencil className="h-4 w-4" />
               </Button>
-              <Button onClick={handleDelete} variant="destructive" size="sm" className="h-9 w-9 rounded-full">
+              <Button
+                onClick={handleDelete}
+                variant="destructive"
+                size="sm"
+                className="h-9 w-9 rounded-full"
+              >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
@@ -107,7 +116,9 @@ export function GameItem({
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center gap-2 w-full">
                 <Gamepad className="h-5 w-5 text-primary" />
-                <span className="font-mono text-sm sm:text-base w-full break-words font-medium">{game}</span>
+                <span className="font-mono text-sm sm:text-base w-full break-words font-medium">
+                  {game}
+                </span>
               </div>
               <Input
                 ref={inputRef}
@@ -126,7 +137,11 @@ export function GameItem({
                 >
                   <X className="h-5 w-5" />
                 </Button>
-                <Button onClick={saveEditedGame} size="sm" className="h-10 w-10 rounded-full">
+                <Button
+                  onClick={saveEditedGame}
+                  size="sm"
+                  className="h-10 w-10 rounded-full"
+                >
                   <Save className="h-5 w-5" />
                 </Button>
               </div>
@@ -142,5 +157,5 @@ export function GameItem({
         gameName={game}
       />
     </>
-  )
+  );
 }
