@@ -158,19 +158,19 @@ export function GameList({
                   {t("common:package_name")}
                 </label>
                 <Combobox
-                  value={newGamePackage}
-                  onValueChange={setNewGamePackage}
-                  options={apps.map((app) => ({
-                    label: app.name,
-                    value: app.package_name,
-                  }))}
-                  placeholder={t("common:search_app")}
-                  emptyText={
-                    isLoading ? t("common:loading") : t("common:no_apps_found")
-                  }
-                  searchText={t("common:search_app")}
-                  className="min-h-[64px] text-xl"
-                />
+  value={newGamePackage}
+  onValueChange={setNewGamePackage}
+  options={apps.map((app) => ({
+    label: app.package_name,
+    value: app.package_name,
+  }))}
+  placeholder={t("common:search_app")}
+  emptyText={
+    isLoading ? t("common:loading") : t("common:no_apps_found")
+  }
+  searchText={t("common:search_app")}
+  className="min-h-[64px] text-xl"
+/>
               </div>
               <div className="space-y-2">
                 <label className="text-base font-medium">

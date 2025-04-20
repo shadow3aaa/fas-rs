@@ -136,17 +136,10 @@ fn get_installed_packages() -> Result<Vec<PackageInfo>> {
     let packages = output_str
         .lines()
         .filter_map(|line| {
-            let parts: Vec<&str> = line.splitn(2, ':').collect();
-            if parts.len() == 2 {
-                let package_part = parts[1].splitn(2, '=').collect::<Vec<&str>>();
-                if package_part.len() == 2 {
-                    let package_name = package_part[1].trim().to_string();
-                    return Some(PackageInfo { 
-                        package_name, 
-                    });
-                }
-            }
-            None
+            line.strip_prefix("package:") // Directly strip the package: prefix
+                .map(|pkg| PackageInfo {
+                    package_name: pkg.trim().to_string(),
+                })
         })
         .collect();
 
