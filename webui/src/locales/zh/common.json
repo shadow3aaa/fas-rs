@@ -35,5 +35,8 @@
   "tab_power": "模式",
   "delete_game": "删除游戏",
   "delete_game_confirm": "您确定要删除 {{game}} 吗？此操作无法撤消。",
-  "delete": "删除"
+  "delete": "删除",
+  "search_app": "搜索应用...",
+  "no_apps_found": "未找到应用",
+  "loading_apps": "正在加载应用..."
 }

@@ -15,6 +15,9 @@ import type { GameList as GameListType, FpsValue } from "@/types/config";
 import { Plus, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useRef, useState, useEffect } from "react";
+import { Combobox } from "@/components/ui/combobox";
+import { useQuery } from "@tanstack/react-query";
+import { fetchApps } from "@/lib/api";
 
 interface GameListProps {
   gameList: GameListType;
@@ -53,6 +56,10 @@ export function GameList({
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const packageInputRef = useRef<HTMLInputElement>(null);
   const fpsInputRef = useRef<HTMLInputElement>(null);
+  const { data: apps = [], isLoading } = useQuery({
+    queryKey: ["apps"],
+    queryFn: fetchApps,
+  });
 
   useEffect(() => {
     if (isAddingGame) {
@@ -150,15 +157,19 @@ export function GameList({
                 <label className="text-base font-medium">
                   {t("common:package_name")}
                 </label>
-                <Input
-                  ref={packageInputRef}
-                  type="text"
+                <Combobox
                   value={newGamePackage}
-                  onChange={(e) => setNewGamePackage(e.target.value)}
-                  placeholder="com.example.game"
-                  className="min-h-[64px] text-xl whitespace-pre-wrap leading-relaxed focus-visible:ring-primary"
-                  style={{ whiteSpace: "pre-wrap" }}
-                  inputMode="text"
+                  onValueChange={setNewGamePackage}
+                  options={apps.map((app) => ({
+                    label: app.name,
+                    value: app.package_name,
+                  }))}
+                  placeholder={t("common:search_app")}
+                  emptyText={
+                    isLoading ? t("common:loading") : t("common:no_apps_found")
+                  }
+                  searchText={t("common:search_app")}
+                  className="min-h-[64px] text-xl"
                 />
               </div>
               <div className="space-y-2">

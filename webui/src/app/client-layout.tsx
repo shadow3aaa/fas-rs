@@ -7,6 +7,10 @@ import { useState, useEffect } from "react";
 import i18n from "../i18n";
 import Navbar from "@/components/Navbar";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
+
 export default function ClientLayout({
   children,
 }: {
@@ -30,11 +34,13 @@ export default function ClientLayout({
   }, []);
 
   return (
-    <I18nextProvider i18n={i18n}>
-      <div className="flex min-h-screen flex-col bg-background">
-        <Navbar />
-        <main className="flex-1">{children}</main>
-      </div>
-    </I18nextProvider>
+    <QueryClientProvider client={queryClient}>
+      <I18nextProvider i18n={i18n}>
+        <div className="flex min-h-screen flex-col bg-background">
+          <Navbar />
+          <main className="flex-1">{children}</main>
+        </div>
+      </I18nextProvider>
+    </QueryClientProvider>
   );
 }

@@ -35,5 +35,8 @@
   "tab_power": "Modes",
   "delete_game": "Delete Game",
   "delete_game_confirm": "Are you sure you want to delete {{game}}? This action cannot be undone.",
-  "delete": "Delete"
+  "delete": "Delete",
+  "search_app": "Search application...",
+  "no_apps_found": "No applications found",
+  "loading_apps": "Loading applications..."
 }

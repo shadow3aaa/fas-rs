@@ -12,3 +12,6 @@
 
 # Darwin
 /.DS_Store
+
+# pnpm
+.pnpm*
