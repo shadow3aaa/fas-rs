@@ -110,7 +110,7 @@ fn start_webserver() -> Result<()> {
                 )
                 .service(get_installed_apps)
         })
-        .bind(("0.0.0.0", 8080))?
+        .bind(("127.0.0.1", 8080))?
         .run()
         .await
     })
@@ -146,7 +146,7 @@ fn get_installed_packages() -> Result<Vec<PackageInfo>> {
     let packages = output_str
         .lines()
         .filter_map(|line| {
-            line.strip_prefix("package:") // Directly strip the package: prefix
+            line.strip_prefix("package:") 
                 .map(|pkg| PackageInfo {
                     package_name: pkg.trim().to_string(),
                 })
