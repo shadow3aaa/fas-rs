@@ -21,13 +21,12 @@ import {
 interface ComboboxProps {
   value: string;
   onValueChange: (value: string) => void;
-  options: Array<{ label: string; value: string }>;
+  options: Array<{ label: string; value: string; description?: string }>;
   placeholder?: string;
   emptyText?: string;
   searchText?: string;
   className?: string;
 }
-
 export function Combobox({
   value,
   onValueChange,
@@ -54,7 +53,7 @@ export function Combobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
+      <PopoverContent className="w-full p-0" side="bottom" align="start">
         <Command>
           <CommandInput placeholder={searchText} className="h-9" />
           <CommandList>
@@ -69,7 +68,14 @@ export function Combobox({
                     setOpen(false);
                   }}
                 >
-                  {option.label}
+                  <div className="flex flex-col">
+                    <span className="font-medium">{option.label}</span>
+                    {option.description && (
+                      <span className="text-xs text-muted-foreground">
+                        {option.description}
+                      </span>
+                    )}
+                  </div>
                   <Check
                     className={cn(
                       "ml-auto",
