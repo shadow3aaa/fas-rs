@@ -59,14 +59,11 @@ const USER_CONFIG: &str = "/sdcard/Android/fas-rs/games.toml";
 
 #[derive(Debug, Serialize)]
 struct AppInfo {
-    name: String,
     package_name: String,
 }
 
-
 #[derive(Debug)]
 struct PackageInfo {
-    app_name: String,
     package_name: String,
 }
 
@@ -99,60 +96,6 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn get_app_name(package: &str) -> Result<String> {
-    let output = Command::new("dumpsys")
-        .args(["package", package])
-        .output()?;
-
-    if !output.status.success() {
-        return Ok(package.to_string());
-    }
-
-    let output_str = String::from_utf8_lossy(&output.stdout);
-    output_str
-        .lines()
-        .find(|l| l.trim().starts_with("applicationInfo:"))
-        .and_then(|l| {
-            l.split("label='")
-                .nth(1)
-                .and_then(|s| s.split('\'').next())
-        })
-        .map(|s| s.to_string())
-        .ok_or_else(|| anyhow::anyhow!("Label not found")) // Convert Option to Result
-        .or_else(|_| Ok(package.to_string())) // Fallback to package name
-}
-
-fn get_installed_packages() -> Result<Vec<PackageInfo>> {
-    let output = Command::new("pm")
-        .args(["list", "packages", "-f"])
-        .output()?;
-
-    if !output.status.success() {
-        return Err(anyhow::anyhow!("Failed to get package list"));
-    }
-
-    let output_str = String::from_utf8(output.stdout)?;
-    let packages = output_str
-        .lines()
-        .filter_map(|line| {
-            let parts: Vec<&str> = line.splitn(2, ':').collect();
-            if parts.len() == 2 {
-                let package_part = parts[1].splitn(2, '=').collect::<Vec<&str>>();
-                if package_part.len() == 2 {
-                    let package_name = package_part[1].trim().to_string();
-                    let app_name = get_app_name(&package_name).unwrap_or(package_name.clone());
-                    return Some(PackageInfo {
-                        app_name,
-                        package_name,
-                    });
-                }
-            }
-            None
-        })
-        .collect();
-
-    Ok(packages)
-}
 fn start_webserver() -> Result<()> {
     actix_web::rt::System::new().block_on(async {
         HttpServer::new(|| {
@@ -171,7 +114,6 @@ async fn get_installed_apps() -> impl Responder {
             let apps = packages
                 .into_iter()
                 .map(|pkg| AppInfo {
-                    name: pkg.app_name,
                     package_name: pkg.package_name,
                 })
                 .collect::<Vec<_>>();
@@ -179,6 +121,36 @@ async fn get_installed_apps() -> impl Responder {
         }
         Err(_) => web::Json(Vec::<AppInfo>::new()),
     }
+}
+
+fn get_installed_packages() -> Result<Vec<PackageInfo>> {
+    let output = Command::new("pm")
+        .args(["list", "packages", "-3"])
+        .output()?;
+
+    if !output.status.success() {
+        return Err(anyhow::anyhow!("Failed to get package list"));
+    }
+
+    let output_str = String::from_utf8(output.stdout)?;
+    let packages = output_str
+        .lines()
+        .filter_map(|line| {
+            let parts: Vec<&str> = line.splitn(2, ':').collect();
+            if parts.len() == 2 {
+                let package_part = parts[1].splitn(2, '=').collect::<Vec<&str>>();
+                if package_part.len() == 2 {
+                    let package_name = package_part[1].trim().to_string();
+                    return Some(PackageInfo { 
+                        package_name, 
+                    });
+                }
+            }
+            None
+        })
+        .collect();
+
+    Ok(packages)
 }
 
 fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
