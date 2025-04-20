@@ -25,7 +25,10 @@ env:
   CARGO_TERM_COLOR: always
 jobs:
   release-build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [self-hosted, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup ndk

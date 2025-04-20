@@ -29,6 +29,7 @@ mod cpu_common;
 mod file_handler;
 mod framework;
 mod misc;
+mod routes;
 
 use std::{
     env, fs,
@@ -54,7 +55,8 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 const USER_CONFIG: &str = "/sdcard/Android/fas-rs/games.toml";
 
-fn main() -> Result<()> {
+#[rocket::main]
+async fn main() -> Result<()> {
     let args: Vec<_> = env::args().collect();
 
     if args[1] == "merge" {
@@ -78,7 +80,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
+async fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
     #[cfg(not(debug_assertions))]
     let logger_spec = LogSpecification::info();
 
@@ -105,6 +107,12 @@ fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
         .config(config)
         .controller(cpu)
         .start_run()?;
+
+    // Start web server
+    rocket::build()
+        .mount("/", routes![routes::apps::get_installed_apps])
+        .launch()
+        .await?;
 
     Ok(())
 }
