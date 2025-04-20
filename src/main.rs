@@ -40,6 +40,7 @@ use std::{
 use framework::prelude::*;
 
 use actix_web::{get, web, App, HttpServer, Responder};
+use actix_cors::Cors;
 use anyhow::Result;
 use flexi_logger::{DeferredNow, LogSpecification, Logger, Record};
 use log::{error, warn};
@@ -99,17 +100,21 @@ fn main() -> Result<()> {
 fn start_webserver() -> Result<()> {
     actix_web::rt::System::new().block_on(async {
         HttpServer::new(|| {
-            use actix_cors::Cors;
             App::new()
                 .wrap(
-                    Cors::permissive() 
+                    Cors::default()
+                        .allow_any_origin()
+                        .allow_any_method()
+                        .allow_any_header()
+                        .supports_credentials(),
                 )
                 .service(get_installed_apps)
         })
-        .bind(("127.0.0.1", 8080))?
+        .bind(("0.0.0.0", 8080))?
         .run()
         .await
-    }).map_err(Into::into)
+    })
+    .map_err(Into::into)
 }
 
 #[get("/api/apps")]
