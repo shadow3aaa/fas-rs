@@ -106,7 +106,7 @@ fn start_webserver() -> Result<()> {
         .bind(("0.0.0.0", 8080))?
         .run()
         .await
-    })
+    }).map_err(Into::into)
 }
 
 #[get("/api/apps")]
