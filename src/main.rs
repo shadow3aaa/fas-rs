@@ -99,9 +99,14 @@ fn main() -> Result<()> {
 fn start_webserver() -> Result<()> {
     actix_web::rt::System::new().block_on(async {
         HttpServer::new(|| {
-            App::new().service(get_installed_apps)
+            use actix_cors::Cors;
+            App::new()
+                .wrap(
+                    Cors::permissive() 
+                )
+                .service(get_installed_apps)
         })
-        .bind(("0.0.0.0", 8080))?
+        .bind(("127.0.0.1", 8080))?
         .run()
         .await
     }).map_err(Into::into)

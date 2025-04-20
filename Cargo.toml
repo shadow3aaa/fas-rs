@@ -50,6 +50,7 @@ num_cpus = "1.16.0"
 nix = { version = "0.29.0", features = ["sched"] }
 actix-web = "4.10.2"
 actix-rt = "2.10.0"
+actix-cors = "0.7.1"
 
 [build-dependencies]
 anyhow = "1.0.98"

@@ -46,20 +46,31 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between", className)}
+          className={cn(
+            "w-full justify-between h-10 px-3 text-left font-normal bg-[#1a1a1a] border-neutral-700",
+            className,
+          )}
         >
-          {value
-            ? options.find((option) => option.value === value)?.label
-            : placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+          <span className="truncate">
+            {value
+              ? options.find((option) => option.value === value)?.label
+              : placeholder}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
-        <Command>
-          <CommandInput placeholder={searchText} className="h-9" />
-          <CommandList>
-            <CommandEmpty>{emptyText}</CommandEmpty>
-            <CommandGroup>
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] p-0 max-h-[250px]"
+        align="start"
+        sideOffset={4}
+      >
+        <Command className="max-h-[250px]">
+          <CommandInput placeholder={searchText} className="h-8" />
+          <CommandList className="max-h-[200px]">
+            <CommandEmpty className="py-2 text-center text-sm">
+              {emptyText}
+            </CommandEmpty>
+            <CommandGroup className="overflow-y-auto">
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
@@ -68,11 +79,12 @@ export function Combobox({
                     onValueChange(currentValue === value ? "" : currentValue);
                     setOpen(false);
                   }}
+                  className="py-1.5"
                 >
-                  {option.label}
+                  <span className="flex-1 truncate">{option.label}</span>
                   <Check
                     className={cn(
-                      "ml-auto",
+                      "ml-2 h-4 w-4 shrink-0",
                       value === option.value ? "opacity-100" : "opacity-0",
                     )}
                   />

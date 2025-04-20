@@ -54,7 +54,6 @@ export function GameList({
 }: GameListProps) {
   const { t } = useTranslation();
   const [isPopupVisible, setIsPopupVisible] = useState(false);
-  const packageInputRef = useRef<HTMLInputElement>(null);
   const fpsInputRef = useRef<HTMLInputElement>(null);
   const { data: apps = [], isLoading } = useQuery({
     queryKey: ["apps"],
@@ -66,12 +65,6 @@ export function GameList({
       setTimeout(() => {
         setIsPopupVisible(true);
       }, 50);
-
-      setTimeout(() => {
-        if (packageInputRef.current) {
-          packageInputRef.current.focus();
-        }
-      }, 350);
     } else {
       setIsPopupVisible(false);
     }
@@ -134,47 +127,52 @@ export function GameList({
           }`}
         >
           <div
-            className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 transition-opacity duration-300"
             style={{ opacity: isPopupVisible ? 1 : 0 }}
             onClick={() => setIsAddingGame(false)}
           />
 
-          <Card className="bg-background border border-primary shadow-lg mb-4 relative z-50">
+          <Card className="bg-[#121212] border border-neutral-800 shadow-lg mb-4 relative z-50 rounded-xl">
             <Button
               onClick={() => setIsAddingGame(false)}
-              variant="destructive"
+              variant="ghost"
               size="icon"
-              className="absolute right-2 top-2 h-8 w-8 rounded-full"
+              className="absolute right-2 top-2 h-8 w-8 rounded-full bg-neutral-700/50 hover:bg-neutral-700 text-white border-none"
             >
               <X className="h-4 w-4" />
             </Button>
 
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md">{t("common:add_game")}</CardTitle>
+            <CardHeader className="pb-2 pt-4">
+              <CardTitle className="text-xl text-white">
+                {t("common:add_game")}
+              </CardTitle>
             </CardHeader>
+
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-base font-medium">
+              <div className="space-y-1.5">
+                <label className="text-base font-medium text-white">
                   {t("common:package_name")}
                 </label>
                 <Combobox
-  value={newGamePackage}
-  onValueChange={setNewGamePackage}
-  options={apps.map((app) => ({
-    label: app.package_name,
-    value: app.package_name,
-  }))}
-  placeholder={t("common:search_app")}
-  emptyText={
-    isLoading ? t("common:loading") : t("common:no_apps_found")
-  }
-  searchText={t("common:search_app")}
-  className="min-h-[64px] text-xl"
-/>
+                  value={newGamePackage}
+                  onValueChange={setNewGamePackage}
+                  options={apps.map((app) => ({
+                    label: app.package_name,
+                    value: app.package_name,
+                  }))}
+                  placeholder={t("common:search_app")}
+                  emptyText={
+                    isLoading ? t("common:loading") : t("common:no_apps_found")
+                  }
+                  searchText={t("common:search_app")}
+                  className="bg-[#1a1a1a] border-neutral-700"
+                />
               </div>
-              <div className="space-y-2">
-                <label className="text-base font-medium">
-                  {t("common:fps_values")}
+
+              <div className="space-y-1.5">
+                <label className="text-base font-medium text-white">
+                  {t("common:fps_values")}{" "}
+                  <span className="text-neutral-400">(comma_separated)</span>
                 </label>
                 <Input
                   ref={fpsInputRef}
@@ -182,23 +180,22 @@ export function GameList({
                   value={newGameFps}
                   onChange={(e) => setNewGameFps(e.target.value)}
                   placeholder="30, 60, 90"
-                  className="h-16 text-xl focus-visible:ring-primary"
+                  className="h-10 bg-[#1a1a1a] border-neutral-700 focus-visible:ring-offset-0 focus-visible:ring-neutral-500"
                 />
               </div>
             </CardContent>
-            <CardFooter className="flex justify-end gap-2">
+
+            <CardFooter className="flex justify-end gap-2 pt-2">
               <Button
                 onClick={() => setIsAddingGame(false)}
                 variant="outline"
-                size="lg"
-                className="px-8 py-5 text-lg"
+                className="bg-transparent border-neutral-600 hover:bg-neutral-800 hover:text-white text-neutral-300"
               >
                 {t("common:cancel")}
               </Button>
               <Button
                 onClick={addNewGame}
-                size="lg"
-                className="px-10 py-5 text-lg"
+                className="bg-white text-black hover:bg-neutral-200"
               >
                 {t("common:add")}
               </Button>
