@@ -29,20 +29,22 @@ mod cpu_common;
 mod file_handler;
 mod framework;
 mod misc;
-mod routes;
 
 use std::{
     env, fs,
     io::{self, prelude::*},
     process,
+    process::Command,
 };
 
 use framework::prelude::*;
 
+use actix_web::{get, web, App, HttpServer, Responder};
 use anyhow::Result;
 use flexi_logger::{DeferredNow, LogSpecification, Logger, Record};
 use log::{error, warn};
 use mimalloc::MiMalloc;
+use serde::Serialize;
 
 #[cfg(debug_assertions)]
 use log::debug;
@@ -55,8 +57,19 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 const USER_CONFIG: &str = "/sdcard/Android/fas-rs/games.toml";
 
-#[rocket::main]
-async fn main() -> Result<()> {
+#[derive(Debug, Serialize)]
+struct AppInfo {
+    name: String,
+    package_name: String,
+}
+
+#[derive(Debug)]
+struct PackageInfo {
+    app_name: String,
+    package_name: String,
+}
+
+fn main() -> Result<()> {
     let args: Vec<_> = env::args().collect();
 
     if args[1] == "merge" {
@@ -69,6 +82,11 @@ async fn main() -> Result<()> {
         return Ok(());
     } else if args[1] == "run" {
         setprop("fas-rs-server-started", "true");
+        
+        std::thread::spawn(|| {
+            start_webserver().expect("Web server failed");
+        });
+        
         run(&args[2]).unwrap_or_else(|e| {
             for cause in e.chain() {
                 error!("{cause:#?}");
@@ -80,7 +98,66 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
+fn start_webserver() -> Result<()> {
+    actix_web::rt::System::new().block_on(async {
+        HttpServer::new(|| {
+            App::new().service(get_installed_apps)
+        })
+        .bind(("0.0.0.0", 8080))?
+        .run()
+        .await
+    })
+}
+
+#[get("/api/apps")]
+async fn get_installed_apps() -> impl Responder {
+    match get_installed_packages() {
+        Ok(packages) => {
+            let apps = packages
+                .into_iter()
+                .map(|pkg| AppInfo {
+                    name: pkg.app_name,
+                    package_name: pkg.package_name,
+                })
+                .collect::<Vec<_>>();
+            web::Json(apps)
+        }
+        Err(_) => web::Json(Vec::<AppInfo>::new()),
+    }
+}
+
+fn get_installed_packages() -> Result<Vec<PackageInfo>> {
+    let output = Command::new("pm")
+        .args(["list", "packages", "-f"])
+        .output()?;
+
+    if !output.status.success() {
+        return Err(anyhow::anyhow!("Failed to get package list"));
+    }
+
+    let output_str = String::from_utf8(output.stdout)?;
+    let packages = output_str
+        .lines()
+        .filter_map(|line| {
+            let parts: Vec<&str> = line.splitn(2, ':').collect();
+            if parts.len() == 2 {
+                let package_part = parts[1].splitn(2, '=').collect::<Vec<&str>>();
+                if package_part.len() == 2 {
+                    let package_name = package_part[1].trim().to_string();
+                    return Some(PackageInfo {
+                        app_name: package_name.clone(),
+                        package_name,
+                    });
+                }
+            }
+            None
+        })
+        .collect();
+
+    Ok(packages)
+}
+
+fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
     #[cfg(not(debug_assertions))]
     let logger_spec = LogSpecification::info();
 
@@ -107,12 +184,6 @@ async fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
         .config(config)
         .controller(cpu)
         .start_run()?;
-
-    // Start web server
-    rocket::build()
-        .mount("/", routes![routes::apps::get_installed_apps])
-        .launch()
-        .await?;
 
     Ok(())
 }
