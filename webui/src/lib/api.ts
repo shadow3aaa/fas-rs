@@ -1,24 +1,24 @@
-import axios from "axios";
-
-const apiClient = axios.create({
-  baseURL: "http://localhost:8080",
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
 export interface App {
   package_name: string;
 }
 
 export const fetchApps = async (): Promise<App[]> => {
   try {
-    const response = await apiClient.get<App[]>("/api/apps");
+    const response = await fetch("http://127.0.0.1:8080/api/apps", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-    console.log("API Response:", response.data);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-    return Array.isArray(response.data)
-      ? response.data.map((item) => {
+    const data = await response.json();
+
+    return Array.isArray(data)
+      ? data.map((item) => {
           if (item && typeof item.package_name === "object") {
             const firstKey = Object.keys(item.package_name)[0];
             return { package_name: firstKey || "unknown" };
