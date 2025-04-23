@@ -34,18 +34,14 @@ use std::{
     env, fs,
     io::{self, prelude::*},
     process,
-    process::Command,
 };
 
 use framework::prelude::*;
 
-use actix_web::{get, web, App, HttpServer, Responder};
-use actix_cors::Cors;
 use anyhow::Result;
 use flexi_logger::{DeferredNow, LogSpecification, Logger, Record};
 use log::{error, warn};
 use mimalloc::MiMalloc;
-use serde::Serialize;
 
 #[cfg(debug_assertions)]
 use log::debug;
@@ -57,16 +53,6 @@ use misc::setprop;
 static GLOBAL: MiMalloc = MiMalloc;
 
 const USER_CONFIG: &str = "/sdcard/Android/fas-rs/games.toml";
-
-#[derive(Debug, Serialize)]
-struct AppInfo {
-    package_name: String,
-}
-
-#[derive(Debug)]
-struct PackageInfo {
-    package_name: String,
-}
 
 fn main() -> Result<()> {
     let args: Vec<_> = env::args().collect();
@@ -81,11 +67,6 @@ fn main() -> Result<()> {
         return Ok(());
     } else if args[1] == "run" {
         setprop("fas-rs-server-started", "true");
-        
-        std::thread::spawn(|| {
-            start_webserver().expect("Web server failed");
-        });
-        
         run(&args[2]).unwrap_or_else(|e| {
             for cause in e.chain() {
                 error!("{cause:#?}");
@@ -95,65 +76,6 @@ fn main() -> Result<()> {
     }
 
     Ok(())
-}
-
-fn start_webserver() -> Result<()> {
-    actix_web::rt::System::new().block_on(async {
-        HttpServer::new(|| {
-            App::new()
-                .wrap(
-                    Cors::default()
-                        .allow_any_origin()
-                        .allow_any_method()
-                        .allow_any_header()
-                        .supports_credentials(),
-                )
-                .service(get_installed_apps)
-        })
-        .bind(("127.0.0.1", 8080))?
-        .run()
-        .await
-    })
-    .map_err(Into::into)
-}
-
-#[get("/api/apps")]
-async fn get_installed_apps() -> impl Responder {
-    match get_installed_packages() {
-        Ok(packages) => {
-            let apps = packages
-                .into_iter()
-                .map(|pkg| AppInfo {
-                    package_name: pkg.package_name,
-                })
-                .collect::<Vec<_>>();
-            web::Json(apps)
-        }
-        Err(_) => web::Json(Vec::<AppInfo>::new()),
-    }
-}
-
-fn get_installed_packages() -> Result<Vec<PackageInfo>> {
-    let output = Command::new("pm")
-        .args(["list", "packages", "-3"])
-        .output()?;
-
-    if !output.status.success() {
-        return Err(anyhow::anyhow!("Failed to get package list"));
-    }
-
-    let output_str = String::from_utf8(output.stdout)?;
-    let packages = output_str
-        .lines()
-        .filter_map(|line| {
-            line.strip_prefix("package:") 
-                .map(|pkg| PackageInfo {
-                    package_name: pkg.trim().to_string(),
-                })
-        })
-        .collect();
-
-    Ok(packages)
 }
 
 fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
