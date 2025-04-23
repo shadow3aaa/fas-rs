@@ -32,7 +32,7 @@ jobs:
         run: |
           ndk_url=$(wget -qO- https://github.com/android/ndk/releases/latest | grep -e 'https://dl.google.com/android/repository/android-ndk-.*-linux.zip' | sed -n 's/.*<a href="\([^"]*\)".*/\1/p')
           wget -O ndk.zip $ndk_url -nv
-          mkdir ~/ndk_temp
+          mkdir -p ~/ndk_temp
           unzip ndk.zip -d ~/ndk_temp 2>&1 > /dev/null
           mv ~/ndk_temp/*/* ~/ndk_temp
       - name: Setup rust toolchains
@@ -56,8 +56,9 @@ jobs:
         run: |
           export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
           export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
-
           cargo xtask build -r -v
+      - name: Cleanup
+        run: rm -rf ~/ndk_temp
       - name: Prepare artifacts
         run: |
           mkdir -p output/artifact/release

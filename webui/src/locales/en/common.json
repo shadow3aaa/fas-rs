@@ -3,7 +3,8 @@
   "configure_fps": "Configure FPS settings for games",
   "add_game": "Add Game",
   "package_name": "Package Name",
-  "fps_values": "FPS Values (comma-separated)",
+  "fps_values": "FPS Values",
+  "comma_seperated": "comma-separated",
   "cancel": "Cancel",
   "add": "Add",
   "language": "Language",
@@ -35,5 +36,8 @@
   "tab_power": "Modes",
   "delete_game": "Delete Game",
   "delete_game_confirm": "Are you sure you want to delete {{game}}? This action cannot be undone.",
-  "delete": "Delete"
+  "delete": "Delete",
+  "search_app": "Search application...",
+  "no_apps_found": "No applications found",
+  "loading_apps": "Loading applications..."
 }

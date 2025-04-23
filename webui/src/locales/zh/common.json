@@ -3,7 +3,8 @@
   "configure_fps": "配置游戏帧率设置",
   "add_game": "添加游戏",
   "package_name": "包名",
-  "fps_values": "帧率值（逗号分隔）",
+  "fps_values": "帧率值",
+  "comma_separated": "逗号分隔",
   "cancel": "取消",
   "add": "添加",
   "language": "语言",
@@ -35,5 +36,8 @@
   "tab_power": "模式",
   "delete_game": "删除游戏",
   "delete_game_confirm": "您确定要删除 {{game}} 吗？此操作无法撤消。",
-  "delete": "删除"
+  "delete": "删除",
+  "search_app": "搜索应用...",
+  "no_apps_found": "未找到应用",
+  "loading_apps": "正在加载应用..."
 }
