@@ -1,21 +1,22 @@
+import { exec } from "@/lib/kernelsu";
+
 export interface App {
   package_name: string;
 }
 
+export const parseNumberedList = (text: string): App[] => {
+  const lineRegex = /^package:(\S+)/gm;
+  const matches = [...text.matchAll(lineRegex)];
+  return matches.map((m) => ({ package_name: m[1] }));
+};
+
 export const fetchApps = async (): Promise<App[]> => {
   try {
-    const response = await fetch("http://127.0.0.1:8080/api/apps", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    const { errno, stdout } = await exec("pm list packages -3");
+    if (errno) {
+      throw new Error(`Failed to fetch apps: ${stdout}`);
     }
-
-    const data = await response.json();
+    const data = parseNumberedList(stdout);
 
     return Array.isArray(data)
       ? data.map((item) => {
