@@ -41,7 +41,7 @@ toml = "0.8.20"
 serde = { version = "1.0.219", features = ["derive"] }
 rocket = { version = "0.5.1", features = ["json"] }
 sys-mount = { version = "3.0.1", default-features = false }
-quick-xml = { version = "0.37.4", features = ["serialize"] }
+quick-xml = { version = "0.37.5", features = ["serialize"] }
 mlua = { version = "0.10.3", features = ["luajit", "vendored", "error-send"] }
 frame-analyzer = "0.3.3"
 dumpsys-rs = { git = "https://github.com/shadow3aaa/dumpsys-rs" }
