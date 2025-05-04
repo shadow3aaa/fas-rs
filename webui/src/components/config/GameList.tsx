@@ -159,6 +159,7 @@ export function GameList({
                   options={apps.map((app) => ({
                     label: app.package_name,
                     value: app.package_name,
+                    disabled: Object.keys(gameList).includes(app.package_name),
                   }))}
                   placeholder={t("common:search_app")}
                   emptyText={

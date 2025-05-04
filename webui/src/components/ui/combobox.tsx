@@ -21,7 +21,7 @@ import {
 interface ComboboxProps {
   value: string;
   onValueChange: (value: string) => void;
-  options: Array<{ label: string; value: string }>;
+  options: Array<{ label: string; value: string; disabled?: boolean }>;
   placeholder?: string;
   emptyText?: string;
   searchText?: string;
@@ -47,7 +47,7 @@ export function Combobox({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between h-10 px-3 text-left font-normal bg-[#1a1a1a] border-neutral-700",
+            "w-full justify-between h-10 px-3 text-left font-normal bg-card border-neutral-700",
             className,
           )}
         >
@@ -76,10 +76,16 @@ export function Combobox({
                   key={option.value}
                   value={option.value}
                   onSelect={(currentValue) => {
-                    onValueChange(currentValue === value ? "" : currentValue);
-                    setOpen(false);
+                    if (!option.disabled) {
+                      onValueChange(currentValue === value ? "" : currentValue);
+                      setOpen(false);
+                    }
                   }}
-                  className="py-1.5"
+                  disabled={option.disabled}
+                  className={cn(
+                    "py-1.5",
+                    option.disabled && "opacity-50 cursor-not-allowed"
+                  )}
                 >
                   <span className="flex-1 truncate">{option.label}</span>
                   <Check
