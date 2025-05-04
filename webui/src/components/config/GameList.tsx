@@ -132,25 +132,25 @@ export function GameList({
             onClick={() => setIsAddingGame(false)}
           />
 
-          <Card className="bg-[#121212] border border-neutral-800 shadow-lg mb-4 relative z-50 rounded-xl">
+          <Card className="bg-card border-border shadow-lg mb-4 relative z-50 rounded-xl">
             <Button
               onClick={() => setIsAddingGame(false)}
               variant="ghost"
               size="icon"
-              className="absolute right-2 top-2 h-8 w-8 rounded-full bg-neutral-700/50 hover:bg-neutral-700 text-white border-none"
+              className="absolute right-2 top-2 h-8 w-8 rounded-full bg-muted/50 hover:bg-muted text-foreground border-none"
             >
               <X className="h-4 w-4" />
             </Button>
 
             <CardHeader className="pb-2 pt-4">
-              <CardTitle className="text-xl text-white">
+              <CardTitle className="text-xl text-foreground">
                 {t("common:add_game")}
               </CardTitle>
             </CardHeader>
 
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-base font-medium text-white">
+                <label className="text-base font-medium text-foreground">
                   {t("common:package_name")}
                 </label>
                 <Combobox
@@ -165,14 +165,14 @@ export function GameList({
                     isLoading ? t("common:loading") : t("common:no_apps_found")
                   }
                   searchText={t("common:search_app")}
-                  className="bg-[#1a1a1a] border-neutral-700"
+                  className="bg-card border-border"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-base font-medium text-white">
+                <label className="text-base font-medium text-foreground">
                   {t("common:fps_values")}{" "}
-                  <span className="text-neutral-400">(comma_separated)</span>
+                  <span className="text-muted-foreground">(comma_separated)</span>
                 </label>
                 <Input
                   ref={fpsInputRef}
@@ -180,7 +180,7 @@ export function GameList({
                   value={newGameFps}
                   onChange={(e) => setNewGameFps(e.target.value)}
                   placeholder="30, 60, 90"
-                  className="h-10 bg-[#1a1a1a] border-neutral-700 focus-visible:ring-offset-0 focus-visible:ring-neutral-500"
+                  className="h-10 bg-card border-border focus-visible:ring-offset-0 focus-visible:ring-primary"
                 />
               </div>
             </CardContent>
@@ -189,13 +189,14 @@ export function GameList({
               <Button
                 onClick={() => setIsAddingGame(false)}
                 variant="outline"
-                className="bg-transparent border-neutral-600 hover:bg-neutral-800 hover:text-white text-neutral-300"
+                className="border-border hover:bg-muted hover:text-foreground"
               >
                 {t("common:cancel")}
               </Button>
               <Button
                 onClick={addNewGame}
-                className="bg-white text-black hover:bg-neutral-200"
+                variant="default"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {t("common:add")}
               </Button>
