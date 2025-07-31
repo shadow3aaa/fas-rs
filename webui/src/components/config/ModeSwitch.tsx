@@ -36,10 +36,10 @@ export function ModeSwitch() {
 
   useEffect(() => {
     const fetchMode = async () => {
-      if (process.env.NODE_ENV === "development") {
-        setCurrentMode("balance");
-        return;
-      }
+    //   if (process.env.NODE_ENV === "development") {
+    //     setCurrentMode("balance");
+    //     return;
+    //   }
 
       try {
         const { errno, stdout } = await exec(`cat /dev/fas_rs/mode`, { cwd: "/" });
@@ -73,12 +73,12 @@ export function ModeSwitch() {
   };
 
   const switchMode = async (mode: Mode) => {
-    if (process.env.NODE_ENV === "development") {
-      setCurrentMode(mode);
-      toast.info(`Switch mode to ${mode} (skipped in dev)`);
-      console.log(`Switch mode to ${mode} (skipped in dev)`);
-      return;
-    }
+    // if (process.env.NODE_ENV === "development") {
+    //   setCurrentMode(mode);
+    //   toast.info(`Switch mode to ${mode} (skipped in dev)`);
+    //   console.log(`Switch mode to ${mode} (skipped in dev)`);
+    //   return;
+    // }
 
     try {
       const { errno, stderr } = await exec(`echo -n ${mode} > /dev/fas_rs/mode`, {
