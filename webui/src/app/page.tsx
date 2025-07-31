@@ -7,6 +7,7 @@ import { GeneralConfig } from "@/components/config/GeneralConfig";
 import { GameList } from "@/components/config/GameList";
 import { PowerModes } from "@/components/config/PowerModes";
 import { Settings, Gamepad, Zap } from "lucide-react";
+import { ModeSwitch } from "@/components/config/ModeSwitch";
 
 export default function Home() {
   const { t } = useTranslation();
@@ -71,6 +72,10 @@ export default function Home() {
 
           {/* General Config Tab */}
           <TabsContent value="config" className="space-y-4">
+            {/* Mode Switch Card */}
+            <ModeSwitch />
+
+            {/* Basic Configuration Card */}
             <GeneralConfig
               configOptions={configOptions}
               toggleConfigOption={toggleConfigOption}
