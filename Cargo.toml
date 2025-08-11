@@ -36,7 +36,7 @@ log = "0.4.27"
 anyhow = { version = "1.0.98" }
 inotify = { version = "0.11.0", default-features = false }
 flexi_logger = "0.31.2"
-libc = "0.2.174"
+libc = "0.2.175"
 toml = "0.9.5"
 serde = { version = "1.0.219", features = ["derive"] }
 sys-mount = { version = "3.0.1", default-features = false }
