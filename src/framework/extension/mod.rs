@@ -27,7 +27,7 @@ use std::{
 use crate::framework::error::Result;
 pub use api::Api;
 
-const EXTENSIONS_PATH: &str = "/dev/fas_rs/extensions";
+const EXTENSIONS_PATH: &str = "/data/adb/fas_rs/extensions";
 
 pub struct Extension {
     sx: SyncSender<Box<dyn Api>>,
