@@ -39,7 +39,7 @@ use std::{
 use framework::prelude::*;
 
 use anyhow::Result;
-use flexi_logger::{DeferredNow, LogSpecification, Logger, Record};
+use env_logger::Builder;
 use log::{error, warn};
 use mimalloc::MiMalloc;
 
@@ -79,16 +79,22 @@ fn main() -> Result<()> {
 }
 
 fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
-    #[cfg(not(debug_assertions))]
-    let logger_spec = LogSpecification::info();
+    let mut builder = Builder::new();
 
-    #[cfg(debug_assertions)]
-    let logger_spec = LogSpecification::debug();
+    builder.format(|buf, record| {
+        let local_time = chrono::Local::now();
+        let time_str = local_time.format("%Y-%m-%d %H:%M:%S%.3f").to_string();
 
-    Logger::with(logger_spec)
-        .log_to_stdout()
-        .format(log_format)
-        .start()?;
+        writeln!(
+            buf,
+            "[{}] [{}] {} {}",
+            time_str,
+            record.level(),
+            record.target(),
+            record.args()
+        )
+    });
+    builder.filter_level(log::LevelFilter::Info).init();
 
     let std_path = std_path.as_ref();
 
@@ -107,13 +113,4 @@ fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
         .start_run()?;
 
     Ok(())
-}
-
-fn log_format(
-    write: &mut dyn Write,
-    now: &mut DeferredNow,
-    record: &Record<'_>,
-) -> Result<(), io::Error> {
-    let time = now.format("%Y-%m-%d %H:%M:%S");
-    write!(write, "[{time}] {}: {}", record.level(), record.args())
 }
