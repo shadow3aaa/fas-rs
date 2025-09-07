@@ -27,7 +27,7 @@ use log::{error, info};
 use toml::Value;
 
 use crate::framework::{error::Result, node::Mode};
-pub use data::{Config as ConfigConfig, ConfigData, MarginFps, ModeConfig, TemperatureThreshold};
+pub use data::{ConfigData, MarginFps, ModeConfig, TemperatureThreshold};
 use read::wait_and_read;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -124,10 +124,5 @@ impl Config {
             Mode::Performance => &self.inner.config().performance,
             Mode::Fast => &self.inner.config().fast,
         }
-    }
-
-    #[must_use]
-    pub fn config(&mut self) -> ConfigConfig {
-        self.inner.config().config
     }
 }

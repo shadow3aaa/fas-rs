@@ -32,10 +32,10 @@ pub(super) fn wait_and_read(path: &Path, std_path: &Path, sx: &Sender<ConfigData
     loop {
         match read_config_with_retry(path) {
             Ok(mut config) => {
-                if config.config.scene_game_list {
-                    if let Err(e) = read_scene_games(&mut config) {
-                        error!("Failed to read scene games: {e}");
-                    }
+                if config.config.scene_game_list
+                    && let Err(e) = read_scene_games(&mut config)
+                {
+                    error!("Failed to read scene games: {e}");
                 }
                 sx.send(config).unwrap();
             }

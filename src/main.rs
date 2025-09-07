@@ -30,11 +30,7 @@ mod file_handler;
 mod framework;
 mod misc;
 
-use std::{
-    env, fs,
-    io::{self, prelude::*},
-    process,
-};
+use std::{env, fs, io::prelude::*, process};
 
 use framework::prelude::*;
 
