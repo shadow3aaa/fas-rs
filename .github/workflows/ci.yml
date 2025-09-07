@@ -28,25 +28,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Cache NDK
+        id: cache-ndk
+        uses: actions/cache@v4
+        with:
+          path: ~/ndk_temp
+          key: ndk-${{ runner.os }}-ndk_temp
       - name: Setup ndk
+        if: steps.cache-ndk.outputs.cache-hit != 'true'
         run: |
           ndk_url=$(wget -qO- https://github.com/android/ndk/releases/latest | grep -e 'https://dl.google.com/android/repository/android-ndk-.*-linux.zip' | sed -n 's/.*<a href="\([^"]*\)".*/\1/p')
           wget -O ndk.zip $ndk_url -nv
           mkdir -p ~/ndk_temp
           unzip ndk.zip -d ~/ndk_temp 2>&1 > /dev/null
           mv ~/ndk_temp/*/* ~/ndk_temp
-      - name: Setup rust toolchains
-        run: |
-          rustup default nightly
-          rustup target add aarch64-linux-android
-          rustup component add rust-src
-          rustup update
-      - name: Install cargo ndk
-        run: cargo install cargo-ndk
-      - name: Other deps
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+          targets: aarch64-linux-android
+          components: rust-src
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "ndk-${{ env.NDK_VERSION }}-rust"
+      - name: Install build dependencies
         run: |
           sudo apt update
-          sudo apt install gcc-multilib
+          sudo apt install -y gcc-multilib
+          cargo install cargo-ndk --locked
       - name: Build
         run: |
           export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
@@ -69,25 +78,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Cache NDK
+        id: cache-ndk
+        uses: actions/cache@v4
+        with:
+          path: ~/ndk_temp
+          key: ndk-${{ runner.os }}-ndk_temp
       - name: Setup ndk
+        if: steps.cache-ndk.outputs.cache-hit != 'true'
         run: |
           ndk_url=$(wget -qO- https://github.com/android/ndk/releases/latest | grep -e 'https://dl.google.com/android/repository/android-ndk-.*-linux.zip' | sed -n 's/.*<a href="\([^"]*\)".*/\1/p')
           wget -O ndk.zip $ndk_url -nv
-          mkdir ~/ndk_temp
+          mkdir -p ~/ndk_temp
           unzip ndk.zip -d ~/ndk_temp 2>&1 > /dev/null
           mv ~/ndk_temp/*/* ~/ndk_temp
-      - name: Setup rust toolchains
-        run: |
-          rustup default nightly
-          rustup target add aarch64-linux-android
-          rustup component add rust-src
-          rustup update
-      - name: Install cargo ndk
-        run: cargo install cargo-ndk
-      - name: Other deps
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+          targets: aarch64-linux-android
+          components: rust-src
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "ndk-${{ env.NDK_VERSION }}-rust"
+      - name: Install build dependencies
         run: |
           sudo apt update
-          sudo apt install gcc-multilib
+          sudo apt install -y gcc-multilib
+          cargo install cargo-ndk --locked
       - name: Build
         run: |
           export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
