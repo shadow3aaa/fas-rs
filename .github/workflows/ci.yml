@@ -41,6 +41,7 @@ jobs:
           rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
           rustup component add rust-src
           rustup update
+      - uses: Swatinem/rust-cache@v2
       - name: Install cargo ndk
         run: cargo install cargo-ndk
       - name: Setup WebUI Deps
@@ -87,6 +88,7 @@ jobs:
           rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
           rustup component add rust-src
           rustup update
+      - uses: Swatinem/rust-cache@v2
       - name: Install cargo ndk
         run: cargo install cargo-ndk
       - name: Setup WebUI Deps
