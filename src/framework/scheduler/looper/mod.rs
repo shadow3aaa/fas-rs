@@ -156,17 +156,17 @@ impl Looper {
     }
 
     fn switch_mode(&mut self) {
-        if let Ok(new_mode) = self.node.get_mode() {
-            if likely(self.fas_state.mode != new_mode) {
-                info!("Switch mode: {} -> {}", self.fas_state.mode, new_mode);
-                self.fas_state.mode = new_mode;
+        if let Ok(new_mode) = self.node.get_mode()
+            && likely(self.fas_state.mode != new_mode)
+        {
+            info!("Switch mode: {} -> {}", self.fas_state.mode, new_mode);
+            self.fas_state.mode = new_mode;
 
-                if self.fas_state.working_state == State::Working {
-                    self.controller_state.controller.init_game(
-                        self.fas_state.buffer.as_ref().unwrap().package_info.pid,
-                        &self.extension,
-                    );
-                }
+            if self.fas_state.working_state == State::Working {
+                self.controller_state.controller.init_game(
+                    self.fas_state.buffer.as_ref().unwrap().package_info.pid,
+                    &self.extension,
+                );
             }
         }
     }
@@ -233,20 +233,19 @@ impl Looper {
     }
 
     pub fn retain_topapp(&mut self) {
-        if let Some(buffer) = self.fas_state.buffer.as_ref() {
-            if !self
+        if let Some(buffer) = self.fas_state.buffer.as_ref()
+            && !self
                 .windows_watcher
                 .topapp_pids()
                 .contains(&buffer.package_info.pid)
-            {
-                let _ = self
-                    .analyzer_state
-                    .analyzer
-                    .detach_app(buffer.package_info.pid);
-                let pkg = buffer.package_info.pkg.clone();
-                trigger_unload_fas(&self.extension, buffer.package_info.pid, pkg);
-                self.fas_state.buffer = None;
-            }
+        {
+            let _ = self
+                .analyzer_state
+                .analyzer
+                .detach_app(buffer.package_info.pid);
+            let pkg = buffer.package_info.pkg.clone();
+            trigger_unload_fas(&self.extension, buffer.package_info.pid, pkg);
+            self.fas_state.buffer = None;
         }
 
         if self.fas_state.buffer.is_none() {

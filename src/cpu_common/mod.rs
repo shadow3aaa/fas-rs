@@ -350,8 +350,8 @@ impl Controller {
         sorted_policies: &[i32],
     ) -> HashMap<i32, isize> {
         for policy in sorted_policies {
-            if let Some(freq) = fas_freqs.get(policy).copied() {
-                if let ExtraPolicy::AbsRangeBound(ref abs_bound) = *EXTRA_POLICY_MAP
+            if let Some(freq) = fas_freqs.get(policy).copied()
+                && let ExtraPolicy::AbsRangeBound(ref abs_bound) = *EXTRA_POLICY_MAP
                     .get()
                     .context("EXTRA_POLICY_MAP not initialized")
                     .unwrap()
@@ -359,13 +359,12 @@ impl Controller {
                     .context("CPU Policy not found")
                     .unwrap()
                     .lock()
-                {
-                    let clamped_freq = freq.clamp(
-                        abs_bound.min.unwrap_or(0),
-                        abs_bound.max.unwrap_or(isize::MAX),
-                    );
-                    fas_freqs.insert(*policy, clamped_freq);
-                }
+            {
+                let clamped_freq = freq.clamp(
+                    abs_bound.min.unwrap_or(0),
+                    abs_bound.max.unwrap_or(isize::MAX),
+                );
+                fas_freqs.insert(*policy, clamped_freq);
             }
         }
 
