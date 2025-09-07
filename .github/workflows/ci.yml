@@ -38,16 +38,11 @@ jobs:
       - name: Setup rust toolchains
         run: |
           rustup default nightly
-          rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+          rustup target add aarch64-linux-android
           rustup component add rust-src
           rustup update
       - name: Install cargo ndk
         run: cargo install cargo-ndk
-      - name: Setup WebUI Deps
-        run: |
-          npm install next@latest react@latest react-dom@latest
-          cd webui
-          npm install
       - name: Other deps
         run: |
           sudo apt update
