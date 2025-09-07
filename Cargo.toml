@@ -35,7 +35,6 @@ thiserror = "2.0.16"
 log = "0.4.28"
 anyhow = { version = "1.0.99" }
 inotify = { version = "0.11.0", default-features = false }
-flexi_logger = "0.31.2"
 libc = "0.2.175"
 toml = "0.9.5"
 serde = { version = "1.0.219", features = ["derive"] }
@@ -47,6 +46,8 @@ dumpsys-rs = { git = "https://github.com/shadow3aaa/dumpsys-rs" }
 mimalloc = "0.1.48"
 num_cpus = "1.17.0"
 nix = { version = "0.30.1", features = ["sched"] }
+env_logger = "0.11.8"
+chrono = "0.4.41"
 
 [build-dependencies]
 anyhow = "1.0.99"
