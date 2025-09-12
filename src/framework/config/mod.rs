@@ -125,4 +125,15 @@ impl Config {
             Mode::Fast => &self.inner.config().fast,
         }
     }
+
+    pub fn logger_level(&mut self) -> log::LevelFilter {
+        match self.inner.config().logger_level.as_str() {
+            "debug" => log::LevelFilter::Debug,
+            "info" => log::LevelFilter::Info,
+            _ => {
+                log::error!("logger level is error");
+                log::LevelFilter::Info
+            }
+        }
+    }
 }

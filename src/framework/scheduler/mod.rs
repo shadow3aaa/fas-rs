@@ -68,7 +68,7 @@ impl Scheduler {
 
     pub fn start_run(self) -> Result<()> {
         let extension = Extension::init()?;
-        let config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
+        let mut config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
 
         let controller = self
             .controller
@@ -76,6 +76,8 @@ impl Scheduler {
 
         let node = Node::init()?;
         let analyzer = Analyzer::new()?;
+
+        log::set_max_level(config.logger_level());
 
         Looper::new(analyzer, config, node, extension, controller).enter_loop()
     }

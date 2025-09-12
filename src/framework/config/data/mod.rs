@@ -32,6 +32,7 @@ pub struct ConfigData {
     pub balance: ModeConfig,
     pub performance: ModeConfig,
     pub fast: ModeConfig,
+    pub logger_level: String,
 }
 
 #[allow(clippy::struct_excessive_bools)]
