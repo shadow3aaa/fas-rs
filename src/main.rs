@@ -39,7 +39,6 @@ use env_logger::Builder;
 use log::{error, warn};
 use mimalloc::MiMalloc;
 
-#[cfg(debug_assertions)]
 use log::debug;
 
 use cpu_common::Controller;
@@ -100,7 +99,6 @@ fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
     let config = Config::new(USER_CONFIG, std_path)?;
     let cpu = Controller::new()?;
 
-    #[cfg(debug_assertions)]
     debug!("{cpu:#?}");
 
     Scheduler::new()

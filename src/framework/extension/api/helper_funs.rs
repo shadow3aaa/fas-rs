@@ -18,7 +18,6 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use anyhow::Context;
-#[cfg(debug_assertions)]
 use log::debug;
 use log::warn;
 
@@ -56,7 +55,6 @@ pub fn set_extra_policy_abs(policy: i32, min: Option<isize>, max: Option<isize>)
         .unwrap()
         .lock() = extra_policy;
 
-    #[cfg(debug_assertions)]
     debug!("EXTRA_POLICY_MAP: {:?}", EXTRA_POLICY_MAP.get().unwrap());
 }
 
@@ -85,7 +83,6 @@ pub fn set_extra_policy_rel(
         .unwrap()
         .lock() = extra_policy;
 
-    #[cfg(debug_assertions)]
     debug!("EXTRA_POLICY_MAP: {:?}", EXTRA_POLICY_MAP.get().unwrap());
 }
 

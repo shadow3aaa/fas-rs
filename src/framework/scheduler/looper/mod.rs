@@ -23,7 +23,6 @@ use std::time::{Duration, Instant};
 
 use frame_analyzer::Analyzer;
 use likely_stable::{likely, unlikely};
-#[cfg(debug_assertions)]
 use log::debug;
 use log::info;
 use log::warn;
@@ -133,7 +132,6 @@ impl Looper {
             }
 
             if let Some(data) = self.recv_message() {
-                #[cfg(debug_assertions)]
                 debug!("original frametime: {:?}", data.frametime);
                 if let Some(state) = self.buffer_update(&data) {
                     match state {
@@ -142,7 +140,6 @@ impl Looper {
                     }
                 }
             } else if let Some(buffer) = self.fas_state.buffer.as_mut() {
-                #[cfg(debug_assertions)]
                 debug!("janked !");
                 buffer.additional_frametime(&self.extension);
 
@@ -205,7 +202,6 @@ impl Looper {
 
     fn do_policy(&mut self) {
         if unlikely(self.fas_state.working_state != State::Working) {
-            #[cfg(debug_assertions)]
             debug!("Not running policy!");
             return;
         }

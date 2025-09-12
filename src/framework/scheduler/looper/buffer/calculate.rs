@@ -18,7 +18,6 @@
 use std::time::Duration;
 
 use likely_stable::unlikely;
-#[cfg(debug_assertions)]
 use log::debug;
 
 use super::Buffer;
@@ -27,26 +26,22 @@ use crate::{Extension, api::trigger_target_fps_change, framework::config::Target
 impl Buffer {
     pub fn calculate_current_fps(&mut self) {
         let avg_time_long = self.calculate_average_frametime(None);
-        #[cfg(debug_assertions)]
         debug!("avg_time_long: {avg_time_long:?}");
 
         self.frametime_state.avg_time_long = avg_time_long;
 
         let current_fps_long = 1.0 / avg_time_long.as_secs_f64();
-        #[cfg(debug_assertions)]
         debug!("current_fps_long: {current_fps_long:.2}");
 
         self.frametime_state.current_fps_long = current_fps_long;
 
         let avg_time_short = self
             .calculate_average_frametime(self.target_fps().map(|target_fps| target_fps as usize));
-        #[cfg(debug_assertions)]
         debug!("avg_time_short: {avg_time_short:?}");
 
         self.frametime_state.avg_time_short = avg_time_short;
 
         let current_fps_short = 1.0 / avg_time_short.as_secs_f64();
-        #[cfg(debug_assertions)]
         debug!("current_fps_short: {current_fps_short:.2}");
 
         self.frametime_state.current_fps_short = current_fps_short;
@@ -106,7 +101,6 @@ impl Buffer {
 
         for &target_fps in &target_fpses {
             if current_fps <= f64::from(target_fps) + 3.0 {
-                #[cfg(debug_assertions)]
                 debug!("Matched target_fps: current: {current_fps:.2} target_fps: {target_fps}");
                 return Some(target_fps);
             }

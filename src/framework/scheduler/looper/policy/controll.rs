@@ -18,7 +18,6 @@
 use std::time::{Duration, Instant};
 
 use likely_stable::unlikely;
-#[cfg(debug_assertions)]
 use log::debug;
 
 use super::super::buffer::Buffer;
@@ -52,12 +51,9 @@ pub fn calculate_control(
     let adjusted_last_frame = get_normalized_last_frame(buffer, adjusted_target_fps);
     let target_frametime = Duration::from_secs(1);
 
-    #[cfg(debug_assertions)]
-    {
-        debug!("adjusted_target_fps: {adjusted_target_fps}");
-        debug!("adjusted_last_frame: {adjusted_last_frame:?}");
-        debug!("target_frametime: {target_frametime:?}");
-    }
+    debug!("adjusted_target_fps: {adjusted_target_fps}");
+    debug!("adjusted_last_frame: {adjusted_last_frame:?}");
+    debug!("target_frametime: {target_frametime:?}");
 
     Some((
         calculate_control_inner(controller_state, adjusted_last_frame, target_frametime),
@@ -107,7 +103,6 @@ fn calculate_control_inner(
     let error_p = (current_frametime.as_nanos() as f64 - target_frametime.as_nanos() as f64)
         * controller_state.params.kp;
 
-    #[cfg(debug_assertions)]
     debug!("error_p {error_p}");
 
     error_p as isize

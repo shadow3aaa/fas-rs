@@ -29,7 +29,6 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-#[cfg(debug_assertions)]
 use log::debug;
 use log::warn;
 use nix::{
@@ -77,7 +76,6 @@ impl Controller {
                 .collect()
         });
 
-        #[cfg(debug_assertions)]
         debug!("cpu infos: {cpu_infos:?}");
 
         let max_freq = cpu_infos
@@ -157,7 +155,6 @@ impl Controller {
     }
 
     pub fn fas_update_freq(&mut self, control: isize, is_janked: bool) {
-        #[cfg(debug_assertions)]
         debug!("change freq: {control}");
 
         let fas_freqs = self.compute_target_frequencies(control, is_janked);
@@ -234,7 +231,6 @@ impl Controller {
                     } else {
                         let util_tracking_sugg_freq =
                             (cur_freq_max as f64 * self.util_max.unwrap() / 0.5) as isize; // min_util: 50%
-                        #[cfg(debug_assertions)]
                         debug!(
                             "util: {}, cur_freq_max: {}, util_tracking_sugg_freq: {}",
                             self.util_max.unwrap(),
@@ -389,7 +385,6 @@ impl Controller {
                     ExtraPolicy::RelRangeBound(ref rel_bound) => {
                         let rel_to_freq = fas_freqs.get(&rel_bound.rel_to).copied().unwrap_or(0);
 
-                        #[cfg(debug_assertions)]
                         debug!("policy{policy} rel_to {rel_to_freq}");
 
                         freq.clamp(
@@ -400,7 +395,6 @@ impl Controller {
                     _ => freq,
                 };
 
-                #[cfg(debug_assertions)]
                 debug!("policy{policy} freq after relative bound: {adjusted_freq}");
 
                 fas_freqs.insert(*policy, adjusted_freq);

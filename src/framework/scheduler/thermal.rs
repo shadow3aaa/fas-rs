@@ -18,7 +18,6 @@
 use std::{fs, path::PathBuf};
 
 use anyhow::Result;
-#[cfg(debug_assertions)]
 use log::debug;
 
 use crate::{Config, Mode, framework::config::TemperatureThreshold};
@@ -61,11 +60,8 @@ impl Thermal {
 
         self.temperature_update();
 
-        #[cfg(debug_assertions)]
-        {
-            debug!("target_core_temperature: {target_core_temperature}");
-            debug!("core_temperature: {}", self.core_temperature);
-        }
+        debug!("target_core_temperature: {target_core_temperature}");
+        debug!("core_temperature: {}", self.core_temperature);
 
         if self.core_temperature > target_core_temperature {
             self.target_fps_offset -= 0.1;
