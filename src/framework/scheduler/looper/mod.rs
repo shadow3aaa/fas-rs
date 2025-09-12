@@ -26,6 +26,7 @@ use likely_stable::{likely, unlikely};
 #[cfg(debug_assertions)]
 use log::debug;
 use log::info;
+use log::warn;
 use policy::{ControllerParams, controll::calculate_control};
 
 use super::{FasData, thermal::Thermal, topapp::TopAppsWatcher};
@@ -128,6 +129,7 @@ impl Looper {
 
             if self.windows_watcher.visible_freeform_window() {
                 self.disable_fas();
+                warn!("has freedom, fas is disabled");
             }
 
             if let Some(data) = self.recv_message() {
