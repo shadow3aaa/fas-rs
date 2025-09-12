@@ -20,6 +20,7 @@ mod core;
 
 use std::{
     fs,
+    path::Path,
     sync::mpsc::{self, SyncSender},
     thread,
 };
@@ -36,12 +37,14 @@ pub struct Extension {
 impl Extension {
     pub fn init() -> Result<Self> {
         let _ = fs::create_dir_all(EXTENSIONS_PATH);
+        let extensions_status = Path::new(EXTENSIONS_PATH).join("enable");
         let (sx, rx) = mpsc::sync_channel(16);
 
-        thread::Builder::new()
-            .name("ExtensionThread".into())
-            .spawn(move || core::thread(&rx))?;
-
+        if extensions_status.exists() {
+            thread::Builder::new()
+                .name("ExtensionThread".into())
+                .spawn(move || core::thread(&rx))?;
+        }
         Ok(Self { sx })
     }
 
