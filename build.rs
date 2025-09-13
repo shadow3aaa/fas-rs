@@ -52,8 +52,14 @@ fn gen_module_prop(data: &CargoConfig) -> Result<()> {
     let version_code: usize = package.version.replace('.', "").trim().parse()?;
     let authors = &package.authors;
     let mut author = String::new();
+    let mut conut = 0;
     for a in authors {
-        author += &format!("{a} ");
+        conut += 1;
+        if conut > 1 {
+            author += &format!("& {a}");
+        } else {
+            author += &format!("{a} ");
+        }
     }
     let author = author.trim();
 
