@@ -30,10 +30,10 @@ until [ -d $DIR ]; do
 done
 
 if [ -f $MERGE_FLAG ]; then
-	$MODDIR/fas-rs merge $MODDIR/games.toml >$DIR/.update_games.toml
+	$MODDIR/fas-rs-next merge $MODDIR/games.toml >$DIR/.update_games.toml
 	rm $MERGE_FLAG
 	mv $DIR/.update_games.toml $DIR/games.toml
 fi
 
-killall fas-rs
-RUST_BACKTRACE=1 nohup $MODDIR/fas-rs run $MODDIR/games.toml >$LOG 2>&1 &
+killall fas-rs-next
+RUST_BACKTRACE=1 nohup $MODDIR/fas-rs-next run $MODDIR/games.toml >$LOG 2>&1 &
