@@ -151,20 +151,20 @@ fn build(release: bool, verbose: bool) -> Result<()> {
     fs::remove_file(temp_dir.join(".gitignore")).unwrap();
     file::copy(
         bin_path(release),
-        temp_dir.join("fas-rs"),
+        temp_dir.join("fas-rs-next"),
         &file::CopyOptions::new().overwrite(true),
     )
     .unwrap();
 
     let build_type = if release { "release" } else { "debug" };
-    let package_path = Path::new("output").join(format!("fas-rs({build_type}).zip"));
+    let package_path = Path::new("output").join(format!("fas-rs-next({build_type}).zip"));
 
     let options: FileOptions<'_, ()> = FileOptions::default()
         .compression_method(CompressionMethod::Deflated)
         .compression_level(Some(9));
     zip_create_from_directory_with_options(&package_path, &temp_dir, |_| options).unwrap();
 
-    println!("fas-rs built successfully: {:?}", package_path);
+    println!("fas-rs-next built successfully: {:?}", package_path);
 
     Ok(())
 }
@@ -260,7 +260,7 @@ fn bin_path(release: bool) -> PathBuf {
     Path::new("target")
         .join("aarch64-linux-android")
         .join(if release { "release" } else { "debug" })
-        .join("fas-rs")
+        .join("fas-rs-next")
 }
 
 fn cargo_ndk() -> Command {
