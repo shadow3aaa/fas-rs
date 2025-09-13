@@ -66,7 +66,7 @@ jobs:
       - name: Prepare artifacts
         run: |
           mkdir -p output/artifact/release
-          unzip "output/fas-rs(release).zip" -d output/artifact/release
+          unzip "output/fas-rs-next(release).zip" -d output/artifact/release
       - name: Upload release version
         uses: actions/upload-artifact@v4
         with:
