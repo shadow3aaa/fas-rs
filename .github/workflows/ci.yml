@@ -73,3 +73,12 @@ jobs:
           name: fas-rs(release)
           compression-level: 9
           path: output/artifact/release
+      - name: Upload
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          BOT_CI_SESSION: ${{ secrets.BOT_CI_SESSION }}
+          COMMIT_MESSAGE: ${{ format('{0}', github.event.head_commit.message) }}
+        run: |
+          pip3 install telethon
+          python3 .github/bot.py
