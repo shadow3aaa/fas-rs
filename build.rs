@@ -33,15 +33,6 @@ struct CargoConfig {
     pub package: Package,
 }
 
-#[allow(non_snake_case)]
-#[derive(Serialize)]
-struct UpdateJson {
-    versionCode: usize,
-    version: String,
-    zipUrl: String,
-    changelog: String,
-}
-
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=Cargo.lock");
     println!("cargo:rerun-if-changed=Cargo.toml");
