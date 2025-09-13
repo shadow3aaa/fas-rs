@@ -94,6 +94,7 @@
 [config]
 keep_std = true
 scene_game_list = true
+logger_level = "info"
 
 [game_list]
 "com.hypergryph.arknights" = [30, 60]
@@ -109,15 +110,15 @@ scene_game_list = true
 "com.tencent.tmgp.sgame" = [30, 60, 90, 120]
 
 [powersave]
-margin_fps = 3
+margin_fps = 3.0
 core_temp_thresh = 80000
 
 [balance]
-margin_fps = 1
+margin_fps = 1.0
 core_temp_thresh = 90000
 
 [performance]
-margin_fps = 0
+margin_fps = 0.3
 core_temp_thresh = 95000
 
 [fast]
