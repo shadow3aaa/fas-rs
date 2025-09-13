@@ -24,7 +24,7 @@ use super::data::{ConfigData, SceneAppList};
 use crate::framework::error::Result;
 
 const SCENE_PROFILE: &str = "/data/data/com.omarea.vtools/shared_prefs/games.xml";
-const MAX_RETRY_COUNT: u8 = 10;
+const MAX_RETRY_COUNT: u8 = 20;
 
 pub(super) fn wait_and_read(path: &Path, std_path: &Path, sx: &Sender<ConfigData>) -> Result<()> {
     let std_config = read_config(std_path)?;
