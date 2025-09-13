@@ -20,7 +20,7 @@ members = ["xtask"]
 
 [package]
 name = "fas-rs-next"
-version = "4.9.0"
+version = "5.0.0"
 edition = "2024"
 description = "Frame aware scheduling for android. Requires kernel ebpf support."
 authors = ["shadow3", "Tools-cx-app"]
