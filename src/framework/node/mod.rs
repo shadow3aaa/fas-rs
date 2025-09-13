@@ -11,7 +11,7 @@ use crate::framework::error::{Error, Result};
 use likely_stable::unlikely;
 pub use power_mode::Mode;
 
-const NODE_PATH: &str = "/dev/fas_rs";
+const NODE_PATH: &str = "/data/adb/fas_rs/node";
 const REFRESH_TIME: Duration = Duration::from_secs(1);
 
 pub struct Node {
