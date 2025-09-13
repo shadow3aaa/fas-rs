@@ -44,6 +44,13 @@
 
 - ### **配置路径: `/sdcard/Android/fas-rs/games.toml`**
 
+  - **logger_level**
+
+    - 类型: `String`
+    - `info`: 使用 info 级别logger \*
+    - `debug`: 使用 debug 级别logger
+    - 此功能需要重启fas-rs-next / 重启设备
+
 - ### **参数(`config`)说明:**
 
   - **keep_std**
@@ -57,8 +64,6 @@
     - 类型: `bool`
     - `true`: 使用 scene 游戏列表 \*
     - `false`: 不使用 scene 游戏列表
-
-  - `*`: 默认配置
 
 - ### **游戏列表(`game_list`)说明:**
 
