@@ -23,7 +23,7 @@ use std::time::{Duration, Instant};
 
 use frame_analyzer::Analyzer;
 use likely_stable::{likely, unlikely};
-use log::{debug, info, warn};
+use log::{debug, info};
 use policy::{ControllerParams, controll::calculate_control};
 
 use super::{FasData, thermal::Thermal, topapp::TopAppsWatcher};

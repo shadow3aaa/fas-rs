@@ -18,7 +18,7 @@
 use std::{fs, io::Write};
 
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 struct Package {
