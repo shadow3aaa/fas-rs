@@ -24,6 +24,7 @@ use toml::Table;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ConfigData {
+    pub logger_level: String,
     pub config: Config,
     pub game_list: Table,
     #[serde(skip)]
@@ -32,7 +33,6 @@ pub struct ConfigData {
     pub balance: ModeConfig,
     pub performance: ModeConfig,
     pub fast: ModeConfig,
-    pub logger_level: String,
 }
 
 #[allow(clippy::struct_excessive_bools)]
