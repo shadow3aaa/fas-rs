@@ -27,6 +27,7 @@ use std::{
 
 use crate::framework::error::Result;
 pub use api::Api;
+use log::warn;
 
 const EXTENSIONS_PATH: &str = "/data/adb/fas_rs/extensions";
 
@@ -44,6 +45,8 @@ impl Extension {
             thread::Builder::new()
                 .name("ExtensionThread".into())
                 .spawn(move || core::thread(&rx))?;
+        } else {
+            warn!("extension is not enable");
         }
         Ok(Self { sx })
     }
