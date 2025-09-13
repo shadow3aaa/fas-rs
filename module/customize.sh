@@ -64,5 +64,6 @@ set_perm_recursive $MODPATH 0 0 0755 0644
 set_perm $MODPATH/fas-rs-next 0 0 0755
 
 local_print "配置文件夹：/sdcard/Android/fas-rs" "Configuration folder: /sdcard/Android/fas-rs"
+local_print "Telegram Groups: https://t.me/fas_rs_next" "Telegram Groups: https://t.me/fas_rs_next"
 
 resetprop fas-rs-installed true
