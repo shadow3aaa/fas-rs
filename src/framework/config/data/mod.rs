@@ -36,12 +36,13 @@ pub struct ConfigData {
 }
 
 #[allow(clippy::struct_excessive_bools)]
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
     #[serde(default = "Config::default_value_keep_std")]
     pub keep_std: bool,
     #[serde(default = "Config::default_value_scene_game_list")]
     pub scene_game_list: bool,
+    pub logger_level: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
