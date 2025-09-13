@@ -18,7 +18,7 @@
 use std::{fs, path::Path, sync::mpsc::Sender, time::Duration};
 
 use inotify::{Inotify, WatchMask};
-use log::{debug, error};
+use log::{debug, error, info};
 
 use super::data::{ConfigData, SceneAppList};
 use crate::framework::error::Result;
@@ -106,6 +106,8 @@ fn wait_until_update(path: &Path) -> Result<()> {
 
     let mut buffer = [0; 1024];
     inotify.read_events_blocking(&mut buffer)?;
+
+    info!("the config file modifyed, reloaded");
 
     Ok(())
 }
