@@ -64,6 +64,5 @@ set_perm_recursive $MODPATH 0 0 0755 0644
 set_perm $MODPATH/fas-rs-next 0 0 0755
 
 local_print "配置文件夹：/sdcard/Android/fas-rs" "Configuration folder: /sdcard/Android/fas-rs"
-local_echo "updateJson=https://github.com/shadow3aaa/fas-rs/raw/master/update/update.json" "updateJson=https://github.com/shadow3aaa/fas-rs/raw/master/update/update_en.json" >>$MODPATH/module.prop
 
 resetprop fas-rs-installed true

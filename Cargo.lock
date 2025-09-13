@@ -678,7 +678,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "fas-rs"
+name = "fas-rs-next"
 version = "4.9.0"
 dependencies = [
  "anyhow",
