@@ -19,7 +19,7 @@ use std::time::{Duration, Instant};
 
 use dumpsys_rs::Dumpsys;
 
-const REFRESH_TIME: Duration = Duration::from_secs(1);
+const REFRESH_TIME: Duration = Duration::from_millis(500);
 
 #[derive(Default)]
 struct WindowsInfo {
