@@ -85,9 +85,9 @@ fn adjust_target_fps(target_fps: f64, controller_state: &mut ControllerState) ->
         if util <= 0.1 {
             controller_state.target_fps_offset = 0.0;
         } else if util <= 0.55 {
-            controller_state.target_fps_offset -= 0.1;
+            controller_state.target_fps_offset -= 0.01;
         } else if util >= 0.65 {
-            controller_state.target_fps_offset += 0.1;
+            controller_state.target_fps_offset += 0.01;
         }
     }
 
