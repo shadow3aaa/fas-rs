@@ -23,13 +23,6 @@ mod pid_utils;
 pub mod prelude;
 mod scheduler;
 
-#[allow(unused_imports)]
-pub use config::Config;
-#[allow(unused_imports)]
 pub use error::Result;
-#[allow(unused_imports)]
-pub use extension::{Api, Extension, api};
-#[allow(unused_imports)]
-pub use node::Mode;
-#[allow(unused_imports)]
+pub use extension::{Extension, api};
 pub use scheduler::Scheduler;
