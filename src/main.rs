@@ -32,17 +32,14 @@ mod misc;
 
 use std::{env, fs, io::prelude::*, process};
 
-use framework::prelude::*;
-
 use anyhow::Result;
 use env_logger::Builder;
-use log::{error, warn};
+use log::{error, debug, warn};
 use mimalloc::MiMalloc;
-
-use log::debug;
 
 use cpu_common::Controller;
 use misc::setprop;
+use framework::prelude::*;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
