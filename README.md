@@ -22,7 +22,7 @@
 [ci-badge]: https://img.shields.io/github/actions/workflow/status/Tools-cx-app/fas-rs-next/ci.yml?style=for-the-badge&label=CI%20Build&logo=githubactions
 [ci-url]: https://github.com/Tools-cx-app/fas-rs-next/actions/workflows/ci.yml
 [release-badge]: https://img.shields.io/github/v/release/Tools-cx-app/fas-rs-next?style=for-the-badge&logo=rust
-[release-url]: https://github.com/Tools-cx-app/fas-rs-next/latest
+[release-url]: https://github.com/Tools-cx-app/fas-rs-next/releases/latest
 [download-badge]: https://img.shields.io/github/downloads/Tools-cx-app/fas-rs-next/total?style=for-the-badge
 [download-url]: https://github.com/Tools-cx-app/fas-rs-next/releases/latest
 [telegram-badge]: https://img.shields.io/badge/Group-blue?style=for-the-badge&logo=telegram&label=Telegram
