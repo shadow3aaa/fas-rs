@@ -24,6 +24,7 @@ use crate::framework::error::{Error, Result};
 
 #[derive(Deserialize, Serialize)]
 struct ConfigData {
+    pub logger_level: String,
     pub config: Table,
     pub game_list: Table,
     pub powersave: Table,
@@ -50,6 +51,7 @@ impl Config {
             .ok_or(Error::ParseConfig)?
         {
             let new_conf = ConfigData {
+                logger_level: std_conf.logger_level,
                 config: std_conf.config,
                 game_list: local_conf.game_list,
                 powersave: std_conf.powersave,
@@ -65,8 +67,10 @@ impl Config {
         let balance = Self::table_merge(std_conf.balance, local_conf.balance);
         let performance = Self::table_merge(std_conf.performance, local_conf.performance);
         let fast = Self::table_merge(std_conf.fast, local_conf.fast);
+        let logger_level = local_conf.logger_level;
 
         let new_conf = ConfigData {
+            logger_level,
             config,
             game_list: local_conf.game_list,
             powersave,
