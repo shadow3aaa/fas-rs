@@ -64,9 +64,9 @@ impl Thermal {
         debug!("core_temperature: {}", self.core_temperature);
 
         if self.core_temperature > target_core_temperature {
-            self.target_fps_offset -= 0.1;
+            self.target_fps_offset -= 0.01;
         } else {
-            self.target_fps_offset += 0.1;
+            self.target_fps_offset += 0.01;
         }
 
         self.target_fps_offset
