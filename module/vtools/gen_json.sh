@@ -21,11 +21,11 @@ version=$(cat $propPath | grep "version=" | cut -d "=" -f2)
 versionCode=$(cat $propPath | grep "versionCode=" | cut -d "=" -f2)
 
 json=$(
-	cat <<EOF
+  cat <<EOF
 {
     "name": "fas-rs",
-    "author": "shadow3",
-    "version": "$version",
+    "author": "shadow3 & Tools-cx-app",
+    "version": "- fas-rs-next: $version",
     "versionCode": ${versionCode},
     "features": {
         "strict": true,
