@@ -75,8 +75,9 @@ fn read_config_with_retry(path: &Path) -> Result<ConfigData> {
 }
 
 fn read_scene_games(config: &mut ConfigData) -> Result<()> {
-    if Path::new(SCENE_PROFILE).exists() {
-        let scene_apps = fs::read_to_string(SCENE_PROFILE)?;
+    let p = Path::new(SCENE_PROFILE);
+    if p.exists() {
+        let scene_apps = fs::read_to_string(p)?;
         let scene_apps: SceneAppList = quick_xml::de::from_str(&scene_apps)?;
         let game_list = scene_apps
             .apps
@@ -94,7 +95,7 @@ fn read_scene_games(config: &mut ConfigData) -> Result<()> {
 fn wait_until_update(path: &Path) -> Result<()> {
     let mut inotify = Inotify::init()?;
 
-    if Path::new(SCENE_PROFILE).exists() {
+    if fs::exists(SCENE_PROFILE) {
         inotify
             .watches()
             .add(SCENE_PROFILE, WatchMask::MODIFY | WatchMask::CLOSE_WRITE)?;
