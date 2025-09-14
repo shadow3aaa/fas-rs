@@ -24,13 +24,13 @@ use crate::framework::error::{Error, Result};
 
 #[derive(Deserialize, Serialize)]
 struct ConfigData {
-    pub logger_level: String,
-    pub config: Table,
-    pub game_list: Table,
-    pub powersave: Table,
-    pub balance: Table,
-    pub performance: Table,
-    pub fast: Table,
+    logger_level: String,
+    config: Table,
+    game_list: Table,
+    powersave: Table,
+    balance: Table,
+    performance: Table,
+    fast: Table,
 }
 
 impl Config {
