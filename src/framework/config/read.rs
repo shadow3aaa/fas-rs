@@ -95,7 +95,7 @@ fn read_scene_games(config: &mut ConfigData) -> Result<()> {
 fn wait_until_update(path: &Path) -> Result<()> {
     let mut inotify = Inotify::init()?;
 
-    if fs::exists(SCENE_PROFILE) {
+    if fs::exists(SCENE_PROFILE)? {
         inotify
             .watches()
             .add(SCENE_PROFILE, WatchMask::MODIFY | WatchMask::CLOSE_WRITE)?;
