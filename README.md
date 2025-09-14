@@ -49,7 +49,6 @@
     - 类型: `String`
     - `info`: 使用 info 级别logger \*
     - `debug`: 使用 debug 级别logger
-    - 此功能需要重启fas-rs-next / 重启设备
 
 - ### **参数(`config`)说明:**
 

@@ -46,6 +46,12 @@
 
 - ### **Configuration Path: `/sdcard/Android/fas-rs/games.toml`**
 
+  - **logger_level**
+
+- Type: `String`
+- `info`: Use the info level logger
+- `debug`: Use the debug level logger
+
 - ### **Parameter (`config`) Description:**
 
   - **keep_std**
