@@ -91,7 +91,7 @@ impl Config {
         self.inner.config().game_list.get(pkg).cloned().map_or_else(
             || {
                 if self.inner.config().scene_game_list.contains(pkg) {
-                    Some(TargetFps::Array(vec![30, 45, 60, 90, 120, 144]))
+                    Some(TargetFps::Array(vec![15, 25, 30, 45, 60, 90, 120, 144]))
                 } else {
                     None
                 }
