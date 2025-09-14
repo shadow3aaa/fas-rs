@@ -107,15 +107,6 @@ impl Config {
                     Some(TargetFps::Array(arr))
                 }
                 Value::Integer(i) => Some(TargetFps::Value(i as u32)),
-                Value::String(s) => {
-                    if s == "auto" {
-                        Some(TargetFps::Array(vec![30, 45, 60, 90, 120, 144]))
-                    } else {
-                        error!("Find target game {pkg} in config, but meet illegal data type");
-                        error!("Sugg: try \'{pkg} = \"auto\"\'");
-                        None
-                    }
-                }
                 _ => {
                     error!("Find target game {pkg} in config, but meet illegal data type");
                     error!("Sugg: try \'{pkg} = \"auto\"\'");
