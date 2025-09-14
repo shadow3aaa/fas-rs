@@ -17,16 +17,16 @@
 
 [readme-en-badge]: https://img.shields.io/badge/README-English-blue.svg?style=for-the-badge&logo=readme
 [readme-en-url]: README_EN.md
-[stars-badge]: https://img.shields.io/github/stars/shadow3aaa/fas-rs?style=for-the-badge&logo=github
-[stars-url]: https://github.com/shadow3aaa/fas-rs
-[ci-badge]: https://img.shields.io/github/actions/workflow/status/shadow3aaa/fas-rs/ci.yml?style=for-the-badge&label=CI%20Build&logo=githubactions
-[ci-url]: https://github.com/shadow3aaa/fas-rs/actions/workflows/ci.yml
-[release-badge]: https://img.shields.io/github/v/release/shadow3aaa/fas-rs?style=for-the-badge&logo=rust
-[release-url]: https://github.com/shadow3aaa/fas-rs/releases/latest
-[download-badge]: https://img.shields.io/github/downloads/shadow3aaa/fas-rs/total?style=for-the-badge
-[download-url]: https://github.com/shadow3aaa/fas-rs/releases/latest
+[stars-badge]: https://img.shields.io/github/stars/Tools-cx-app/fas-rs-next?style=for-the-badge&logo=github
+[stars-url]: https://github.com/Tools-cx-app/fas-rs-next
+[ci-badge]: https://img.shields.io/github/actions/workflow/status/Tools-cx-app/fas-rs-next/ci.yml?style=for-the-badge&label=CI%20Build&logo=githubactions
+[ci-url]: https://github.com/Tools-cx-app/fas-rs-next/actions/workflows/ci.yml
+[release-badge]: https://img.shields.io/github/v/release/Tools-cx-app/fas-rs-next?style=for-the-badge&logo=rust
+[release-url]: https://github.com/Tools-cx-app/fas-rs-next/latest
+[download-badge]: https://img.shields.io/github/downloads/Tools-cx-app/fas-rs-next/total?style=for-the-badge
+[download-url]: https://github.com/Tools-cx-app/fas-rs-next/releases/latest
 [telegram-badge]: https://img.shields.io/badge/Group-blue?style=for-the-badge&logo=telegram&label=Telegram
-[telegram-url]: https://t.me/fas_rs_official
+[telegram-url]: https://t.me/fas_rs_next
 
 ## **简介**
 
@@ -168,7 +168,7 @@ rustup component add rust-src
 cargo install cargo-ndk
 
 # Clone
-git clone https://github.com/shadow3aaa/fas-rs
+git clone https://github.com/Tools-cx-app/fas-rs-next
 cd fas-rs
 
 # Compile
@@ -178,3 +178,7 @@ cargo xtask build -r
 ## **捐赠**
 
 [🐷🐷的爱发电](https://afdian.com/a/shadow3qaq)，你的捐赠可以增加🐷🐷维护开发此项目的动力。
+
+## 鸣谢
+
+- [shadow3aaa](https://github.com/shadow3aaa/)
