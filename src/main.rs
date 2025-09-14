@@ -73,7 +73,10 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
+fn run<S>(std_path: S) -> Result<()>
+where
+    S: AsRef<str>,
+{
     let mut builder = Builder::new();
 
     builder.format(|buf, record| {

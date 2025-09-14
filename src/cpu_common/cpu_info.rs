@@ -41,7 +41,10 @@ pub struct Info {
 }
 
 impl Info {
-    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self> {
+    pub fn new<P>(path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
         let path = path.as_ref().to_path_buf();
         let file_name = path
             .file_name()

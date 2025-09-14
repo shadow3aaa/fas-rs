@@ -28,7 +28,11 @@ use libc::{MS_BIND, MS_REC, mount, umount, umount2};
 
 use crate::framework::error::Result;
 
-fn lock_value<P: AsRef<Path>, S: AsRef<str>>(path: P, value: S) {
+fn lock_value<P, S>(path: P, value: S)
+where
+    P: AsRef<Path>,
+    S: AsRef<str>,
+{
     let value = value.as_ref();
     let path = path.as_ref();
 

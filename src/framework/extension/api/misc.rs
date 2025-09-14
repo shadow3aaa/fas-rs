@@ -25,12 +25,12 @@ pub fn get_api_version(lua: &Lua) -> u8 {
     lua.globals().get("API_VERSION").unwrap_or(0)
 }
 
-pub fn do_callback<P: AsRef<Path>, S: AsRef<str>, A: IntoLuaMulti>(
-    extension: P,
-    lua: &Lua,
-    function: S,
-    args: A,
-) {
+pub fn do_callback<P, S, A>(extension: P, lua: &Lua, function: S, args: A)
+where
+    P: AsRef<Path>,
+    S: AsRef<str>,
+    A: IntoLuaMulti,
+{
     let function = function.as_ref();
     let extension = extension.as_ref();
 
