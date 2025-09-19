@@ -132,12 +132,12 @@ impl Looper {
                 continue;
             }
 
-            if let Some(buffer) = self.fas_state.buffer.as_ref() {
-                if EXCLUDE_LIST.contains(&buffer.package_info.pkg.as_str()) {
-                    self.disable_fas();
-                    debug!("pkg is in EXCLUDE_LIST, fas is disabled");
-                    continue;
-                }
+            if let Some(buffer) = self.fas_state.buffer.as_ref()
+                && EXCLUDE_LIST.contains(&buffer.package_info.pkg.as_str())
+            {
+                self.disable_fas();
+                debug!("pkg is in EXCLUDE_LIST, fas is disabled");
+                continue;
             }
 
             if let Some(data) = self.recv_message() {
