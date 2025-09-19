@@ -8,18 +8,25 @@ API_HASH = "d524b414d21f4d37f08684c1df41ac9c"
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 CHAT_ID = int(os.environ.get("CHAT_ID"))
+RUN_URL = os.environ.get("RUN_URL")
+COMMIT_URL = os.environ.get("COMMIT_URL")
 COMMIT_MESSAGE = os.environ.get("COMMIT_MESSAGE")
 BOT_CI_SESSION = os.environ.get("BOT_CI_SESSION")
 MSG_TEMPLATE = """
+New push to Github
 ```
 {commit_message}
 ```
+[Commit]({commit_url})
+[Workflow run]({run_url})
 """.strip()
 
 
 def get_caption():
     msg = MSG_TEMPLATE.format(
         commit_message=COMMIT_MESSAGE,
+        commit_url=COMMIT_URL,
+        run_url=RUN_URL,
     )
     if len(msg) > 1024:
         return COMMIT_URL
