@@ -45,6 +45,7 @@ pub enum Error {
     #[error(transparent)]
     Io(#[from] io::Error),
     #[error(transparent)]
+    #[cfg(feature = "extension")]
     Lua {
         #[from]
         source: mlua::Error,
