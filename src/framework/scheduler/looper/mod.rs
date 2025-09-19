@@ -43,6 +43,7 @@ use buffer::{Buffer, BufferWorkingState};
 use clean::Cleaner;
 
 const DELAY_TIME: Duration = Duration::from_secs(3);
+const EXCLUDE_LIST: &[&str] = &["com.tungsten.fcl"];
 
 #[derive(PartialEq)]
 enum State {
@@ -129,6 +130,14 @@ impl Looper {
                 self.disable_fas();
                 debug!("has freedom, fas is disabled");
                 continue;
+            }
+
+            if let Some(buffer) = self.fas_state.buffer.as_ref() {
+                if EXCLUDE_LIST.contains(&buffer.package_info.pkg.as_str()) {
+                    self.disable_fas();
+                    debug!("pkg is in EXCLUDE_LIST, fas is disabled");
+                    continue;
+                }
             }
 
             if let Some(data) = self.recv_message() {
