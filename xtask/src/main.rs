@@ -133,7 +133,7 @@ fn build(release: bool, verbose: bool, extension: bool) -> Result<()> {
             "build-std",
             "-Z",
             "trim-paths",
-            "-features",
+            "--features",
             "extension",
         ]);
     } else {
