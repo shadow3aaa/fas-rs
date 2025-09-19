@@ -20,14 +20,12 @@ mod core;
 
 use std::{
     fs,
-    path::Path,
     sync::mpsc::{self, SyncSender},
     thread,
 };
 
 use crate::framework::error::Result;
 pub use api::Api;
-use log::warn;
 
 const EXTENSIONS_PATH: &str = "/data/adb/fas_rs/extensions";
 
