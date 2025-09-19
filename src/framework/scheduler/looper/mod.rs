@@ -128,6 +128,7 @@ impl Looper {
             if self.windows_watcher.visible_freeform_window() {
                 self.disable_fas();
                 debug!("has freedom, fas is disabled");
+                continue;
             }
 
             if let Some(data) = self.recv_message() {
