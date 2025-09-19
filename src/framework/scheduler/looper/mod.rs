@@ -27,10 +27,6 @@ use log::{debug, info};
 use policy::{ControllerParams, controll::calculate_control};
 
 use super::{FasData, thermal::Thermal, topapp::TopAppsWatcher};
-#[cfg(feature = "extension")]
-use crate::api::{trigger_load_fas, trigger_start_fas, trigger_stop_fas, trigger_unload_fas};
-#[cfg(feature = "extension")]
-use crate::framework::Extension;
 use crate::{
     Controller,
     framework::{
@@ -39,6 +35,11 @@ use crate::{
         node::{Mode, Node},
         pid_utils::get_process_name,
     },
+};
+#[cfg(feature = "extension")]
+use crate::{
+    api::{trigger_load_fas, trigger_start_fas, trigger_stop_fas, trigger_unload_fas},
+    framework::Extension,
 };
 use buffer::{Buffer, BufferWorkingState};
 use clean::Cleaner;

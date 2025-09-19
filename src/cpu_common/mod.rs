@@ -29,8 +29,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use log::debug;
-use log::warn;
+use log::{debug, warn};
 use nix::{
     sched::{CpuSet, sched_getaffinity},
     unistd::Pid,
