@@ -15,4 +15,7 @@
 // You should have received a copy of the GNU General Public License along
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
+#[cfg(feature = "extension")]
 pub use super::{Extension, Scheduler, api, config::Config, node::Mode};
+#[cfg(not(feature = "extension"))]
+pub use super::{Scheduler, config::Config, node::Mode};

@@ -17,6 +17,7 @@
 
 mod config;
 mod error;
+#[cfg(feature = "extension")]
 mod extension;
 mod node;
 mod pid_utils;
@@ -24,5 +25,6 @@ pub mod prelude;
 mod scheduler;
 
 pub use error::Result;
+#[cfg(feature = "extension")]
 pub use extension::{Extension, api};
 pub use scheduler::Scheduler;

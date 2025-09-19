@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU General Public License along
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
+#[allow(dead_code)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum ExtraPolicy {
     AbsRangeBound(AbsRangeBound),

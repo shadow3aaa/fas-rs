@@ -21,7 +21,9 @@ use likely_stable::unlikely;
 use log::debug;
 
 use super::Buffer;
-use crate::{Extension, api::trigger_target_fps_change, framework::config::TargetFps};
+use crate::framework::config::TargetFps;
+#[cfg(feature = "extension")]
+use crate::{Extension, api::trigger_target_fps_change};
 
 impl Buffer {
     pub fn calculate_current_fps(&mut self) {
@@ -66,7 +68,7 @@ impl Buffer {
             )
             .unwrap_or_default()
     }
-
+    #[cfg(feature = "extension")]
     pub fn calculate_target_fps(&mut self, extension: &Extension) {
         let new_target_fps = self.target_fps();
         if self.target_fps_state.target_fps != new_target_fps || new_target_fps.is_none() {
@@ -79,10 +81,21 @@ impl Buffer {
         }
     }
 
+    #[cfg(not(feature = "extension"))]
+    pub fn calculate_target_fps(&mut self) {
+        let new_target_fps = self.target_fps();
+        if self.target_fps_state.target_fps != new_target_fps || new_target_fps.is_none() {
+            self.reset_frametime_state();
+            self.target_fps_state.target_fps = new_target_fps;
+            self.unusable();
+        }
+    }
+
     fn reset_frametime_state(&mut self) {
         self.frametime_state.frametimes.clear();
     }
 
+    #[cfg(feature = "extension")]
     fn trigger_target_fps_change(&self, extension: &Extension, target_fps: u32) {
         trigger_target_fps_change(extension, target_fps, self.package_info.pkg.clone());
     }
