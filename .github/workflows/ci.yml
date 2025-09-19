@@ -70,7 +70,7 @@ jobs:
       - name: Upload release version
         uses: actions/upload-artifact@v4
         with:
-          name: fas-rs(release)
+          name: fas-rs-next(release)
           compression-level: 9
           path: output/artifact/release
       - name: Upload
@@ -134,7 +134,7 @@ jobs:
       - name: Upload release version
         uses: actions/upload-artifact@v4
         with:
-          name: fas-rs(release)
+          name: fas-rs-next-extension(release)
           compression-level: 9
           path: output/artifact/release
       - name: Upload
