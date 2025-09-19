@@ -35,6 +35,9 @@ use zip_ext::zip_create_from_directory_with_options;
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
+    /// Enable extension features
+    #[clap(long, default_value = "false")]
+    extension: bool,
 }
 
 #[derive(Subcommand)]
@@ -95,7 +98,7 @@ fn main() -> Result<()> {
             check(release, verbose)?;
         }
         Commands::Build { release, verbose } => {
-            build(release, verbose)?;
+            build(release, verbose, cli.extension)?;
         }
         Commands::Clean => {
             clean()?;
@@ -114,22 +117,36 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn build(release: bool, verbose: bool) -> Result<()> {
+fn build(release: bool, verbose: bool, extension: bool) -> Result<()> {
     let temp_dir = temp_dir(release);
 
     let _ = fs::remove_dir_all(&temp_dir);
     fs::create_dir_all(&temp_dir)?;
 
     let mut cargo = cargo_ndk();
-    cargo.args([
-        "build",
-        "--target",
-        "aarch64-linux-android",
-        "-Z",
-        "build-std",
-        "-Z",
-        "trim-paths",
-    ]);
+    if extension {
+        cargo.args([
+            "build",
+            "--target",
+            "aarch64-linux-android",
+            "-Z",
+            "build-std",
+            "-Z",
+            "trim-paths",
+            "-features",
+            "extension",
+        ]);
+    } else {
+        cargo.args([
+            "build",
+            "--target",
+            "aarch64-linux-android",
+            "-Z",
+            "build-std",
+            "-Z",
+            "trim-paths",
+        ]);
+    }
 
     if release {
         cargo.arg("--release");

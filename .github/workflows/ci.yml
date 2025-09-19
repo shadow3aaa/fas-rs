@@ -78,6 +78,71 @@ jobs:
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
+          FILE: "./output/fas-rs-next(release).zip"
+          BOT_CI_SESSION: ${{ secrets.BOT_CI_SESSION }}
+          COMMIT_MESSAGE: ${{ format('{0}', github.event.head_commit.message) }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ANOTHER: ${{ github.event.head_commit.author.name }}
+        run: |
+          pip3 install telethon
+          python3 .github/bot.py
+  release-extension-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache NDK
+        id: cache-ndk
+        uses: actions/cache@v4
+        with:
+          path: ~/ndk_temp
+          key: ndk-${{ runner.os }}-ndk_temp
+      - name: Setup ndk
+        if: steps.cache-ndk.outputs.cache-hit != 'true'
+        run: |
+          ndk_url=$(wget -qO- https://github.com/android/ndk/releases/latest | grep -e 'https://dl.google.com/android/repository/android-ndk-.*-linux.zip' | sed -n 's/.*<a href="\([^"]*\)".*/\1/p')
+          wget -O ndk.zip $ndk_url -nv
+          mkdir -p ~/ndk_temp
+          unzip ndk.zip -d ~/ndk_temp 2>&1 > /dev/null
+          mv ~/ndk_temp/*/* ~/ndk_temp
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+          targets: aarch64-linux-android
+          components: rust-src
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "ndk-${{ env.NDK_VERSION }}-rust"
+      - name: Install build dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y gcc-multilib
+          cargo install cargo-ndk --locked
+      - name: Build
+        run: |
+          export ANDROID_NDK_HOME=$(realpath ~/ndk_temp)
+          export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
+          cargo xtask --extension build -r -v
+          mv "output/fas-rs-next(release).zip" "output/fas-rs-next-extension(release).zip"
+      - name: Cleanup
+        run: rm -rf ~/ndk_temp
+      - name: Prepare artifacts
+        run: |
+          mkdir -p output/artifact/release
+          unzip "output/fas-rs-next-extension(release).zip" -d output/artifact/release
+      - name: Upload release version
+        uses: actions/upload-artifact@v4
+        with:
+          name: fas-rs(release)
+          compression-level: 9
+          path: output/artifact/release
+      - name: Upload
+        if: github.event_name == 'push'
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          FILE: "./output/fas-rs-next-extension(release).zip"
           BOT_CI_SESSION: ${{ secrets.BOT_CI_SESSION }}
           COMMIT_MESSAGE: ${{ format('{0}', github.event.head_commit.message) }}
           COMMIT_URL: ${{ github.event.head_commit.url }}

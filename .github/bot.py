@@ -13,6 +13,7 @@ COMMIT_URL = os.environ.get("COMMIT_URL")
 COMMIT_MESSAGE = os.environ.get("COMMIT_MESSAGE")
 BOT_CI_SESSION = os.environ.get("BOT_CI_SESSION")
 ANOTHER = os.environ.get("ANOTHER")
+FILE = os.environ.get("FILE")
 MSG_TEMPLATE = """
 New push to Github
 ```
@@ -43,7 +44,7 @@ async def send_telegram_message():
         print("[+] Sending")
         await client.send_file(
             entity=CHAT_ID,
-            file='./output/fas-rs-next(release).zip',
+            file=FILE,
             caption=get_caption(),
             parse_mode="markdown"
         )
