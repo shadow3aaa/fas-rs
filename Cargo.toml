@@ -36,7 +36,7 @@ log = "0.4.28"
 anyhow = { version = "1.0.99" }
 inotify = { version = "0.11.0", default-features = false }
 libc = "0.2.175"
-toml = "0.9.5"
+toml = "0.9.7"
 serde = { version = "1.0.221", features = ["derive"] }
 sys-mount = { version = "3.0.1", default-features = false }
 quick-xml = { version = "0.38.3", features = ["serialize"] }
@@ -51,7 +51,7 @@ chrono = "0.4.42"
 
 [build-dependencies]
 anyhow = "1.0.99"
-toml = "0.9.5"
+toml = "0.9.7"
 serde_json = "1.0.144"
 serde = { version = "1.0.221", features = ["derive"] }
 rocket = { version = "0.5.0", features = ["json"] }
