@@ -12,11 +12,12 @@ RUN_URL = os.environ.get("RUN_URL")
 COMMIT_URL = os.environ.get("COMMIT_URL")
 COMMIT_MESSAGE = os.environ.get("COMMIT_MESSAGE")
 BOT_CI_SESSION = os.environ.get("BOT_CI_SESSION")
+ANOTHER = os.environ.get("ANOTHER")
 MSG_TEMPLATE = """
 New push to Github
 ```
 {commit_message}
-```
+``` by {another}
 [Commit]({commit_url})
 [Workflow run]({run_url})
 """.strip()

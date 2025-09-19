@@ -82,6 +82,7 @@ jobs:
           COMMIT_MESSAGE: ${{ format('{0}', github.event.head_commit.message) }}
           COMMIT_URL: ${{ github.event.head_commit.url }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ANOTHER: ${{ github.event.head_commit.author.name }}
         run: |
           pip3 install telethon
           python3 .github/bot.py
