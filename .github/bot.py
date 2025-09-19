@@ -28,6 +28,7 @@ def get_caption():
         commit_message=COMMIT_MESSAGE,
         commit_url=COMMIT_URL,
         run_url=RUN_URL,
+        another=ANOTHER,
     )
     if len(msg) > 1024:
         return COMMIT_URL
