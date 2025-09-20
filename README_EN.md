@@ -40,7 +40,7 @@
 
 ## **Extension System**
 
-- To maximize user-space flexibility, `fas-rs` has its own extension system. For development instructions, see the [extension template repository](https://github.com/shadow3aaa/fas-rs-extension-module-template).
+- To maximize user-space flexibility, `fas-rs-next` has its own extension system. For development instructions, see the [extension template repository](https://github.com/shadow3aaa/fas-rs-extension-module-template).
 
 ## **Customization (Configuration)**
 
@@ -80,7 +80,7 @@
   - #### **Mode Switching:**
 
     - Currently, `fas-rs` does not have an official mode switching manager but integrates with the [`scene`](http://vtools.omarea.com) configuration interface. If you do not use scene, the default `balance` configuration is used.
-    - If you have some understanding of programming on Linux, you can switch to the corresponding mode by writing any of the 4 modes to the `/dev/fas_rs/mode` node, and you can also read it to know the current mode of `fas-rs`.
+    - If you have some understanding of programming on Linux, you can switch to the corresponding mode by writing any of the 4 modes to the `/data/adb/fas_rs/node` node, and you can also read it to know the current mode of `fas-rs-next`.
 
   - #### **Mode Parameter Description:**
 
@@ -93,16 +93,17 @@
     - **core_temp_thresh:**
 
       - Type: `integer` or `"disabled"`
-      - `integer`: Core temperature to trigger thermal control by `fas-rs` (unit 0.001℃)
-      - `"disabled"`: Disable `fas-rs` built-in thermal control
+      - `integer`: Core temperature to trigger thermal control by `fas-rs-next` (unit 0.001℃)
+      - `"disabled"`: Disable `fas-rs-next` built-in thermal control
 
 ### **Standard Example of `games.toml` Configuration:**
 
 ```toml
+logger_level = "info"
+
 [config]
 keep_std = true
 scene_game_list = true
-logger_level = "info"
 
 [game_list]
 "com.hypergryph.arknights" = [30, 60]
@@ -136,7 +137,7 @@ core_temp_thresh = 95000
 
 ## **Configuration Merging**
 
-- ### `fas-rs` has a built-in configuration merging system to address future configuration feature changes. Its behavior is as follows
+- ### `fas-rs-next` has a built-in configuration merging system to address future configuration feature changes. Its behavior is as follows
 
   - Delete configurations in the local configuration that do not exist in the standard configuration
   - Insert configurations that are missing in the local configuration but exist in the standard configuration
@@ -153,7 +154,7 @@ core_temp_thresh = 95000
   - Manual example
 
     ```bash
-    fas-rs merge /path/to/std/profile
+    fas-rs-next merge /path/to/std/profile
     ```
 
 ## **Compilation**
@@ -172,8 +173,8 @@ rustup component add rust-src
 cargo install cargo-ndk
 
 # Clone
-git clone https://github.com/shadow3aaa/fas-rs
-cd fas-rs
+git clone https://github.com/Tools-cx-app/fas-rs-next
+cd fas-rs-next
 
 # Compile
 cargo xtask build -r

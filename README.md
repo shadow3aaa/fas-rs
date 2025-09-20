@@ -38,7 +38,7 @@
 
 ## **插件系统**
 
-- 为了最大化用户态的灵活性，`fas-rs`有自己的一套插件系统，开发说明详见[插件的模板仓库](https://github.com/shadow3aaa/fas-rs-extension-module-template)
+- 为了最大化用户态的灵活性，`fas-rs-next`有自己的一套插件系统，开发说明详见[插件的模板仓库](https://github.com/shadow3aaa/fas-rs-extension-module-template)
 
 ## **自定义(配置)**
 
@@ -75,8 +75,8 @@
 
   - #### **模式切换:**
 
-    - 目前`fas-rs`还没有官方的切换模式的管理器，而是接入了[`scene`](http://vtools.omarea.com)的配置接口，如果你不用 scene 则默认使用`balance`的配置
-    - 如果你有在 linux 上编程的一些了解，向`/dev/fas_rs/mode`节点写入 4 模式中的任意一个即可切换到对应模式，同时读取它也可以知道现在`fas-rs`所处的模式
+    - 目前`fas-rs-next`还没有官方的切换模式的管理器，而是接入了[`scene`](http://vtools.omarea.com)的配置接口，如果你不用 scene 则默认使用`balance`的配置
+    - 如果你有在 linux 上编程的一些了解，向`/data/adb/fas_rs/node`节点写入 4 模式中的任意一个即可切换到对应模式，同时读取它也可以知道现在`fas-rs`所处的模式
 
   - #### **模式参数说明:**
 
@@ -89,16 +89,17 @@
     - **core_temp_thresh:**
 
       - 类型: `整数`或者`"disabled"`
-      - `整数`: 让`fas-rs`触发温控的核心温度(单位0.001℃)
-      - `"disabled"`: 关闭`fas-rs`内置温控
+      - `整数`: 让`fas-rs-next`触发温控的核心温度(单位0.001℃)
+      - `"disabled"`: 关闭`fas-rs-next`内置温控
 
 ### **`games.toml`配置标准例:**
 
 ```toml
+logger_level = "info"
+
 [config]
 keep_std = true
 scene_game_list = true
-logger_level = "info"
 
 [game_list]
 "com.hypergryph.arknights" = [30, 60]
@@ -132,7 +133,7 @@ core_temp_thresh = 95000
 
 ## **配置合并**
 
-- ### `fas-rs`内置配置合并系统，来解决未来的配置功能变动问题。它的行为如下
+- ### `fas-rs-next`内置配置合并系统，来解决未来的配置功能变动问题。它的行为如下
 
   - 删除本地配置中，标准配置不存在的配置
   - 插入本地配置缺少，标准配置存在的配置
@@ -149,7 +150,7 @@ core_temp_thresh = 95000
   - 手动例
 
     ```bash
-    fas-rs merge /path/to/std/profile
+    fas-rs-next merge /path/to/std/profile
     ```
 
 ## **编译**
@@ -169,7 +170,7 @@ cargo install cargo-ndk
 
 # Clone
 git clone https://github.com/Tools-cx-app/fas-rs-next
-cd fas-rs
+cd fas-rs-next
 
 # Compile
 cargo xtask build -r
