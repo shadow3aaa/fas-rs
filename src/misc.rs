@@ -15,9 +15,15 @@
 // You should have received a copy of the GNU General Public License along
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
-use std::process::{Command, ExitStatus};
+use std::{
+    fs,
+    path::Path,
+    process::{Command, ExitStatus},
+};
 
 use log::warn;
+
+const DEVSET: &str = "/dev/cpuset/fas-rs-next";
 
 pub fn resetprop<S>(k: S, v: S)
 where
@@ -41,4 +47,17 @@ where
     if !output.success() {
         let _ = Command::new("setprop").args([key, value]).spawn();
     }
+}
+
+pub fn save_process<S, C>(p: S, c: C)
+where
+    S: Into<i64>,
+    C: AsRef<str>,
+{
+    let p: i64 = p.into();
+    let c = c.as_ref();
+    let path = Path::new(DEVSET);
+    let _ = fs::create_dir_all(path);
+    let _ = fs::write(path.join("cgroup.procs"), p.to_string());
+    let _ = fs::write(path.join("cpus"), c);
 }

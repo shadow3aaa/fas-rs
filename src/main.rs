@@ -41,6 +41,8 @@ use cpu_common::Controller;
 use framework::prelude::*;
 use misc::resetprop;
 
+use crate::misc::save_process;
+
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
 
@@ -95,7 +97,7 @@ where
     let std_path = std_path.as_ref();
 
     let self_pid = process::id();
-    let _ = fs::write("/dev/cpuset/background/cgroup.procs", self_pid.to_string());
+    save_process(self_pid, "7");
 
     let config = Config::new(USER_CONFIG, std_path)?;
     let cpu = Controller::new()?;
