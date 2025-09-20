@@ -130,6 +130,7 @@ impl Config {
         match self.inner.config().logger_level.as_str() {
             "debug" => log::LevelFilter::Debug,
             "info" => log::LevelFilter::Info,
+            "warn" => log::LevelFilter::Warn,
             _ => {
                 log::error!("logger level is error");
                 log::LevelFilter::Info
