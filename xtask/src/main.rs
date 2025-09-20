@@ -173,6 +173,14 @@ fn build(release: bool, verbose: bool, extension: bool) -> Result<()> {
     )
     .unwrap();
 
+    build_webui()?;
+    dir::copy(
+        webroot_dir(),
+        &temp_dir,
+        &dir::CopyOptions::new().overwrite(true),
+    )
+    .unwrap();
+
     let build_type = if release { "release" } else { "debug" };
     let package_path = Path::new("output").join(format!("fas-rs-next({build_type}).zip"));
 
@@ -287,4 +295,21 @@ fn cargo_ndk() -> Command {
         .env("RUSTFLAGS", "-C default-linker-libraries")
         .env("CARGO_CFG_BPF_TARGET_ARCH", "aarch64");
     command
+}
+
+fn webroot_dir() -> PathBuf {
+    Path::new("webui").join("webroot")
+}
+
+fn build_webui() -> Result<()> {
+    let npm = || {
+        let mut command = Command::new("npm");
+        command.current_dir("webui");
+        command
+    };
+
+    npm().arg("install").spawn()?.wait()?;
+    npm().args(["run", "build"]).spawn()?.wait()?;
+
+    Ok(())
 }
