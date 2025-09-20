@@ -39,7 +39,7 @@ use mimalloc::MiMalloc;
 
 use cpu_common::Controller;
 use framework::prelude::*;
-use misc::setprop;
+use misc::resetprop;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -58,13 +58,13 @@ fn main() -> Result<()> {
 
         return Ok(());
     } else if args[1] == "run" {
-        setprop("fas-rs-server-started", "true");
+        resetprop("fas-rs-server-started", "true");
         run(&args[2]).unwrap_or_else(|e| {
             for cause in e.chain() {
                 error!("{cause:#?}");
             }
             error!("{:#?}", e.backtrace());
-            setprop("fas-rs-server-started", "false");
+            resetprop("fas-rs-server-started", "false");
         });
     }
 

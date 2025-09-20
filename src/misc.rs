@@ -15,13 +15,25 @@
 // You should have received a copy of the GNU General Public License along
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
-use std::process::Command;
+use std::{fs, process::Command};
 
-pub fn setprop<S>(k: S, v: S)
+const RESRETPROP: &[&str] = &["/data/adb/ksu/bin/resetprop"];
+
+pub fn resetprop<S>(k: S, v: S)
 where
     S: AsRef<str>,
 {
     let key = k.as_ref();
     let value = v.as_ref();
-    let _ = Command::new("setprop").args([key, value]).spawn();
+    let mut state = false;
+    for p in RESRETPROP {
+        if fs::exists(p).unwrap_or(false) {
+            let _ = Command::new(p).args([key, value]).spawn();
+            state = true;
+            break;
+        }
+    }
+    if !state {
+        let _ = Command::new("setprop").args([key, value]).spawn();
+    }
 }
