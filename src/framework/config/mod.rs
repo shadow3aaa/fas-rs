@@ -27,7 +27,7 @@ use log::{error, info};
 use toml::Value;
 
 use crate::framework::{error::Result, node::Mode};
-pub use data::{Config as ConfigConfig, ConfigData, MarginFps, ModeConfig, TemperatureThreshold};
+pub use data::{ConfigData, MarginFps, ModeConfig, TemperatureThreshold};
 use read::wait_and_read;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -42,7 +42,10 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new<P: AsRef<Path>>(p: P, sp: P) -> Result<Self> {
+    pub fn new<P>(p: P, sp: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
         let path = p.as_ref();
         let std_path = sp.as_ref();
         let toml_raw = fs::read_to_string(path)?;
@@ -68,14 +71,20 @@ impl Config {
         Ok(Self { inner })
     }
 
-    pub fn need_fas<S: AsRef<str>>(&mut self, pkg: S) -> bool {
+    pub fn need_fas<S>(&mut self, pkg: S) -> bool
+    where
+        S: AsRef<str>,
+    {
         let pkg = pkg.as_ref();
 
         self.inner.config().game_list.contains_key(pkg)
             || self.inner.config().scene_game_list.contains(pkg)
     }
 
-    pub fn target_fps<S: AsRef<str>>(&mut self, pkg: S) -> Option<TargetFps> {
+    pub fn target_fps<S>(&mut self, pkg: S) -> Option<TargetFps>
+    where
+        S: AsRef<str>,
+    {
         let pkg = pkg.as_ref();
         let pkg = pkg.split(':').next()?;
 
@@ -124,10 +133,5 @@ impl Config {
             Mode::Performance => &self.inner.config().performance,
             Mode::Fast => &self.inner.config().fast,
         }
-    }
-
-    #[must_use]
-    pub fn config(&mut self) -> ConfigConfig {
-        self.inner.config().config
     }
 }

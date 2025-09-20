@@ -33,7 +33,10 @@ struct ConfigData {
 }
 
 impl Config {
-    pub fn merge<S: AsRef<str>>(l: S, s: S) -> Result<String> {
+    pub fn merge<S>(l: S, s: S) -> Result<String>
+    where
+        S: AsRef<str>,
+    {
         let local_conf = l.as_ref();
         let std_conf = s.as_ref();
 
