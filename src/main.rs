@@ -28,7 +28,6 @@
 mod cpu_common;
 mod file_handler;
 mod framework;
-mod misc;
 
 use std::{env, fs, io::prelude::*, process};
 
@@ -39,7 +38,6 @@ use mimalloc::MiMalloc;
 
 use cpu_common::Controller;
 use framework::prelude::*;
-use misc::resetprop;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -58,13 +56,11 @@ fn main() -> Result<()> {
 
         return Ok(());
     } else if args[1] == "run" {
-        resetprop("fas-rs-server-started", "true");
         run(&args[2]).unwrap_or_else(|e| {
             for cause in e.chain() {
                 error!("{cause:#?}");
             }
             error!("{:#?}", e.backtrace());
-            resetprop("fas-rs-server-started", "false");
         });
     }
 

@@ -23,8 +23,6 @@ LOG=$DIR/fas_log.txt
 
 sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
 
-resetprop fas-rs-installed true
-
 until [ -d $DIR ]; do
 	sleep 1
 done
