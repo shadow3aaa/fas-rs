@@ -64,6 +64,7 @@ fn main() -> Result<()> {
                 error!("{cause:#?}");
             }
             error!("{:#?}", e.backtrace());
+            setprop("fas-rs-server-started", "false");
         });
     }
 
