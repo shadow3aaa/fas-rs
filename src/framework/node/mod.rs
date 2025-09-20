@@ -34,7 +34,10 @@ impl Node {
         Ok(result)
     }
 
-    pub fn create_node<S: AsRef<str>>(&mut self, i: S, d: S) -> Result<()> {
+    pub fn create_node<S>(&mut self, i: S, d: S) -> Result<()>
+    where
+        S: AsRef<str>,
+    {
         let id = i.as_ref();
         let default = d.as_ref();
 
@@ -43,7 +46,10 @@ impl Node {
         self.refresh()
     }
 
-    pub fn remove_node<S: AsRef<str>>(&mut self, i: S) -> Result<()> {
+    pub fn remove_node<S>(&mut self, i: S) -> Result<()>
+    where
+        S: AsRef<str>,
+    {
         let id = i.as_ref();
 
         let path = Path::new(NODE_PATH).join(id);
@@ -52,7 +58,10 @@ impl Node {
         self.refresh()
     }
 
-    pub fn get_node<S: AsRef<str>>(&mut self, id: S) -> Result<String> {
+    pub fn get_node<S>(&mut self, id: S) -> Result<String>
+    where
+        S: AsRef<str>,
+    {
         let id = id.as_ref();
 
         if unlikely(self.timer.elapsed() > REFRESH_TIME) {

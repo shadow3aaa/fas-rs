@@ -78,7 +78,10 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn run<S: AsRef<str>>(std_path: S) -> Result<()> {
+fn run<S>(std_path: S) -> Result<()>
+where
+    S: AsRef<str>,
+{
     #[cfg(not(debug_assertions))]
     let logger_spec = LogSpecification::info();
 

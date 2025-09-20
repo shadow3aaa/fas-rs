@@ -38,7 +38,10 @@ impl FileHandler {
         }
     }
 
-    pub fn read_to_string(&mut self, path: impl AsRef<Path>) -> Result<String> {
+    pub fn read_to_string<P>(&mut self, path: P) -> Result<String>
+    where
+        P: AsRef<Path>,
+    {
         let mut string = String::new();
         match self.files.entry(path.as_ref().to_path_buf()) {
             Entry::Occupied(mut entry) => {
@@ -56,11 +59,11 @@ impl FileHandler {
         Ok(string)
     }
 
-    pub fn write_with_workround(
-        &mut self,
-        path: impl AsRef<Path>,
-        content: impl AsRef<[u8]>,
-    ) -> Result<()> {
+    pub fn write_with_workround<P, S>(&mut self, path: P, content: S) -> Result<()>
+    where
+        P: AsRef<Path>,
+        S: AsRef<[u8]>,
+    {
         if let Err(e) = self.write(path.as_ref(), content.as_ref()) {
             match e.kind() {
                 ErrorKind::PermissionDenied => {
@@ -76,7 +79,11 @@ impl FileHandler {
         }
     }
 
-    pub fn write(&mut self, path: impl AsRef<Path>, content: impl AsRef<[u8]>) -> io::Result<()> {
+    pub fn write<P, S>(&mut self, path: P, content: S) -> io::Result<()>
+    where
+        P: AsRef<Path>,
+        S: AsRef<[u8]>,
+    {
         match self.files.entry(path.as_ref().to_path_buf()) {
             Entry::Occupied(mut entry) => {
                 entry.get_mut().write_all(content.as_ref())?;
