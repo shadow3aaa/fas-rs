@@ -38,27 +38,6 @@ impl FileHandler {
         }
     }
 
-    pub fn read_to_string<P>(&mut self, path: P) -> Result<String>
-    where
-        P: AsRef<Path>,
-    {
-        let mut string = String::new();
-        match self.files.entry(path.as_ref().to_path_buf()) {
-            Entry::Occupied(mut entry) => {
-                let mut string = String::new();
-                entry.get_mut().rewind()?;
-                entry.get().read_to_string(&mut string)?;
-            }
-            Entry::Vacant(entry) => {
-                let mut file = File::open(path.as_ref())?;
-                file.read_to_string(&mut string)?;
-                entry.insert(file);
-            }
-        }
-
-        Ok(string)
-    }
-
     pub fn write_with_workround<P, S>(&mut self, path: P, content: S) -> Result<()>
     where
         P: AsRef<Path>,
