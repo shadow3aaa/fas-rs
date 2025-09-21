@@ -16,6 +16,7 @@
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
 #[derive(Debug, PartialEq, Eq)]
+#[allow(dead_code)]
 pub enum ExtraPolicy {
     AbsRangeBound(AbsRangeBound),
     RelRangeBound(RelRangeBound),

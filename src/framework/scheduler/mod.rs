@@ -21,8 +21,9 @@ mod topapp;
 
 use std::time::Duration;
 
+#[cfg(feature = "extension")]
+use super::Extension;
 use super::{
-    Extension,
     config::Config,
     error::{Error, Result},
     node::Node,
@@ -67,6 +68,7 @@ impl Scheduler {
     }
 
     pub fn start_run(self) -> Result<()> {
+        #[cfg(feature = "extension")]
         let extension = Extension::init()?;
         let config = self.config.ok_or(Error::SchedulerMissing("Config"))?;
 
@@ -76,7 +78,13 @@ impl Scheduler {
 
         let node = Node::init()?;
         let analyzer = Analyzer::new()?;
-
-        Looper::new(analyzer, config, node, extension, controller).enter_loop()
+        #[cfg(feature = "extension")]
+        {
+            Looper::new(analyzer, config, node, extension, controller).enter_loop()
+        }
+        #[cfg(not(feature = "extension"))]
+        {
+            Looper::new(analyzer, config, node, controller).enter_loop()
+        }
     }
 }

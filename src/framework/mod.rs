@@ -17,6 +17,7 @@
 
 mod config;
 mod error;
+#[cfg(feature = "extension")]
 mod extension;
 mod node;
 mod pid_utils;
@@ -28,6 +29,7 @@ pub use config::Config;
 #[allow(unused_imports)]
 pub use error::Result;
 #[allow(unused_imports)]
+#[cfg(feature = "extension")]
 pub use extension::{Api, Extension, api};
 #[allow(unused_imports)]
 pub use node::Mode;

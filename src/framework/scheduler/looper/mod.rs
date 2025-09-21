@@ -28,12 +28,16 @@ use log::debug;
 use log::info;
 use policy::{ControllerParams, controll::calculate_control};
 
+#[cfg(feature = "extension")]
+use crate::{
+    api::{trigger_load_fas, trigger_start_fas, trigger_stop_fas, trigger_unload_fas},
+    framework::Extension,
+};
+
 use super::{FasData, thermal::Thermal, topapp::TopAppsWatcher};
 use crate::{
     Controller,
-    api::{trigger_load_fas, trigger_start_fas, trigger_stop_fas, trigger_unload_fas},
     framework::{
-        Extension,
         config::Config,
         error::Result,
         node::{Mode, Node},
@@ -73,6 +77,7 @@ struct ControllerState {
     usage_sample_timer: Instant,
 }
 
+#[cfg(feature = "extension")]
 pub struct Looper {
     analyzer_state: AnalyzerState,
     config: Config,
@@ -85,7 +90,20 @@ pub struct Looper {
     controller_state: ControllerState,
 }
 
+#[cfg(not(feature = "extension"))]
+pub struct Looper {
+    analyzer_state: AnalyzerState,
+    config: Config,
+    node: Node,
+    therminal: Thermal,
+    windows_watcher: TopAppsWatcher,
+    cleaner: Cleaner,
+    fas_state: FasState,
+    controller_state: ControllerState,
+}
+
 impl Looper {
+    #[cfg(feature = "extension")]
     pub fn new(
         analyzer: Analyzer,
         config: Config,
@@ -102,6 +120,34 @@ impl Looper {
             config,
             node,
             extension,
+            therminal: Thermal::new().unwrap(),
+            windows_watcher: TopAppsWatcher::new(),
+            cleaner: Cleaner::new(),
+            fas_state: FasState {
+                mode: Mode::Balance,
+                buffer: None,
+                working_state: State::NotWorking,
+                delay_timer: Instant::now(),
+            },
+            controller_state: ControllerState {
+                controller,
+                params: ControllerParams::default(),
+                target_fps_offset: 0.0,
+                usage_sample_timer: Instant::now(),
+            },
+        }
+    }
+
+    #[cfg(not(feature = "extension"))]
+    pub fn new(analyzer: Analyzer, config: Config, node: Node, controller: Controller) -> Self {
+        Self {
+            analyzer_state: AnalyzerState {
+                analyzer,
+                restart_counter: 0,
+                restart_timer: Instant::now(),
+            },
+            config,
+            node,
             therminal: Thermal::new().unwrap(),
             windows_watcher: TopAppsWatcher::new(),
             cleaner: Cleaner::new(),
@@ -142,7 +188,10 @@ impl Looper {
             } else if let Some(buffer) = self.fas_state.buffer.as_mut() {
                 #[cfg(debug_assertions)]
                 debug!("janked !");
+                #[cfg(feature = "extension")]
                 buffer.additional_frametime(&self.extension);
+                #[cfg(not(feature = "extension"))]
+                buffer.additional_frametime();
 
                 match buffer.state.working_state {
                     BufferWorkingState::Unusable => {
@@ -162,10 +211,15 @@ impl Looper {
                 self.fas_state.mode = new_mode;
 
                 if self.fas_state.working_state == State::Working {
+                    #[cfg(feature = "extension")]
                     self.controller_state.controller.init_game(
                         self.fas_state.buffer.as_ref().unwrap().package_info.pid,
                         &self.extension,
                     );
+                    #[cfg(not(feature = "extension"))]
+                    self.controller_state
+                        .controller
+                        .init_game(self.fas_state.buffer.as_ref().unwrap().package_info.pid);
                 }
             }
         }
@@ -243,8 +297,10 @@ impl Looper {
                     .analyzer_state
                     .analyzer
                     .detach_app(buffer.package_info.pid);
+                #[cfg(feature = "extension")]
+                {
                 let pkg = buffer.package_info.pkg.clone();
-                trigger_unload_fas(&self.extension, buffer.package_info.pid, pkg);
+                trigger_unload_fas(&self.extension, buffer.package_info.pid, pkg);}
                 self.fas_state.buffer = None;
             }
         }
@@ -261,10 +317,15 @@ impl Looper {
             State::Working => {
                 self.fas_state.working_state = State::NotWorking;
                 self.cleaner.undo_cleanup();
-                self.controller_state
-                    .controller
-                    .init_default(&self.extension);
-                trigger_stop_fas(&self.extension);
+                #[cfg(feature = "extension")]
+                {
+                    self.controller_state
+                        .controller
+                        .init_default(&self.extension);
+                    trigger_stop_fas(&self.extension);
+                }
+                #[cfg(not(feature = "extension"))]
+                self.controller_state.controller.init_default();
             }
             State::Waiting => self.fas_state.working_state = State::NotWorking,
             State::NotWorking => (),
@@ -276,6 +337,7 @@ impl Looper {
             State::NotWorking => {
                 self.fas_state.working_state = State::Waiting;
                 self.fas_state.delay_timer = Instant::now();
+                #[cfg(feature = "extension")]
                 trigger_start_fas(&self.extension);
             }
             State::Waiting => {
@@ -283,10 +345,15 @@ impl Looper {
                     self.fas_state.working_state = State::Working;
                     self.cleaner.cleanup();
                     self.controller_state.target_fps_offset = 0.0;
+                    #[cfg(feature = "extension")]
                     self.controller_state.controller.init_game(
                         self.fas_state.buffer.as_ref().unwrap().package_info.pid,
                         &self.extension,
                     );
+                    #[cfg(not(feature = "extension"))]
+                    self.controller_state
+                        .controller
+                        .init_game(self.fas_state.buffer.as_ref().unwrap().package_info.pid);
                 }
             }
             State::Working => (),
@@ -304,7 +371,10 @@ impl Looper {
         let frametime = data.frametime;
 
         if let Some(buffer) = self.fas_state.buffer.as_mut() {
+            #[cfg(feature = "extension")]
             buffer.push_frametime(frametime, &self.extension);
+            #[cfg(not(feature = "extension"))]
+            buffer.push_frametime(frametime);
             Some(buffer.state.working_state)
         } else {
             let Ok(pkg) = get_process_name(data.pid) else {
@@ -313,11 +383,14 @@ impl Looper {
             let target_fps = self.config.target_fps(&pkg)?;
 
             info!("New fas buffer on: [{pkg}]");
-
+            #[cfg(feature = "extension")]
             trigger_load_fas(&self.extension, pid, pkg.clone());
 
             let mut buffer = Buffer::new(target_fps, pid, pkg);
+            #[cfg(feature = "extension")]
             buffer.push_frametime(frametime, &self.extension);
+            #[cfg(not(feature = "extension"))]
+            buffer.push_frametime(frametime);
 
             self.fas_state.buffer = Some(buffer);
 

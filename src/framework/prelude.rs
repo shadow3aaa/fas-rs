@@ -16,4 +16,7 @@
 // with fas-rs. If not, see <https://www.gnu.org/licenses/>.
 
 #![allow(unused_imports)]
+#[cfg(feature = "extension")]
 pub use super::{Api, Extension, Scheduler, api, config::Config, node::Mode};
+#[cfg(not(feature = "extension"))]
+pub use super::{Scheduler, config::Config, node::Mode};

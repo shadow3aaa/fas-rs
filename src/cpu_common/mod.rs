@@ -39,10 +39,11 @@ use nix::{
 use parking_lot::Mutex;
 use process_monitor::ProcessMonitor;
 
+use crate::file_handler::FileHandler;
+#[cfg(feature = "extension")]
 use crate::{
     Extension,
     api::{trigger_init_cpu_freq, trigger_reset_cpu_freq},
-    file_handler::FileHandler,
 };
 use cpu_info::Info;
 use extra_policy::ExtraPolicy;
@@ -141,7 +142,7 @@ impl Controller {
             }
         }
     }
-
+    #[cfg(feature = "extension")]
     pub fn init_game(&mut self, pid: i32, extension: &Extension) {
         trigger_init_cpu_freq(extension);
         self.reset_all_cpu_freq();
@@ -149,8 +150,22 @@ impl Controller {
         self.util_max = None;
     }
 
+    #[cfg(feature = "extension")]
     pub fn init_default(&mut self, extension: &Extension) {
         trigger_reset_cpu_freq(extension);
+        self.reset_all_cpu_freq();
+        self.process_monitor.set_pid(None);
+        self.util_max = None;
+    }
+    #[cfg(not(feature = "extension"))]
+    pub fn init_game(&mut self, pid: i32) {
+        self.reset_all_cpu_freq();
+        self.process_monitor.set_pid(Some(pid));
+        self.util_max = None;
+    }
+
+    #[cfg(not(feature = "extension"))]
+    pub fn init_default(&mut self) {
         self.reset_all_cpu_freq();
         self.process_monitor.set_pid(None);
         self.util_max = None;
