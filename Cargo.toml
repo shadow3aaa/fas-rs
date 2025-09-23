@@ -35,7 +35,7 @@ thiserror = "2.0.16"
 log = "0.4.28"
 anyhow = { version = "1.0.100" }
 inotify = { version = "0.11.0", default-features = false }
-flexi_logger = "0.31.2"
+flexi_logger = "0.31.3"
 libc = "0.2.175"
 toml = "0.9.7"
 serde = { version = "1.0.226", features = ["derive"] }
