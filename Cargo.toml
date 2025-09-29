@@ -31,7 +31,7 @@ repository = "https://github.com/shadow3aaa/fas-rs"
 [dependencies]
 likely_stable = "0.1.3"
 parking_lot = "0.12.4"
-thiserror = "2.0.16"
+thiserror = "2.0.17"
 log = "0.4.28"
 anyhow = { version = "1.0.100" }
 inotify = { version = "0.11.0", default-features = false }
