@@ -202,13 +202,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90eea657cc8028447cbda5068f4e10c4fadba0131624f4f7dd1a9c46ffc8d81f"
 dependencies = [
  "assert_matches",
- "aya-obj",
+ "aya-obj 0.1.0",
  "bitflags",
  "bytes",
  "lazy_static",
  "libc",
  "log",
  "object 0.32.2",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "aya"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d18bc4e506fbb85ab7392ed993a7db4d1a452c71b75a246af4a80ab8c9d2dd50"
+dependencies = [
+ "assert_matches",
+ "aya-obj 0.2.1",
+ "bitflags",
+ "bytes",
+ "libc",
+ "log",
+ "object 0.36.7",
+ "once_cell",
  "thiserror 1.0.69",
 ]
 
@@ -223,6 +240,20 @@ dependencies = [
  "hashbrown 0.14.5",
  "log",
  "object 0.32.2",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "aya-obj"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c51b96c5a8ed8705b40d655273bc4212cbbf38d4e3be2788f36306f154523ec7"
+dependencies = [
+ "bytes",
+ "core-error",
+ "hashbrown 0.15.2",
+ "log",
+ "object 0.36.7",
  "thiserror 1.0.69",
 ]
 
@@ -526,13 +557,19 @@ dependencies = [
 
 [[package]]
 name = "ctor"
-version = "0.2.9"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32a2785755761f3ddc1492979ce1e48d2c00d09311c39e4466429188f3dd6501"
+checksum = "ec09e802f5081de6157da9a75701d6c713d8dc3ba52571fd4bd25f412644e8a6"
 dependencies = [
- "quote",
- "syn",
+ "ctor-proc-macro",
+ "dtor",
 ]
+
+[[package]]
+name = "ctor-proc-macro"
+version = "0.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2931af7e13dc045d8e9d26afccc6fa115d64e115c9c84b1166288b46f6782c2"
 
 [[package]]
 name = "ctrlc"
@@ -619,6 +656,21 @@ name = "downcast-rs"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
+
+[[package]]
+name = "dtor"
+version = "0.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97cbdf2ad6846025e8e25df05171abfb30e3ababa12ee0a0e44b9bbe570633a8"
+dependencies = [
+ "dtor-proc-macro",
+]
+
+[[package]]
+name = "dtor-proc-macro"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7454e41ff9012c00d53cf7f475c5e3afa3b91b7c90568495495e8d9bf47a1055"
 
 [[package]]
 name = "dumpsys-rs"
@@ -744,19 +796,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
-name = "frame-analyzer"
-version = "0.3.3"
+name = "foldhash"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7ce6fbd2b7c03e14904f29b22344ea4ae635a94c331eaae645b71d030af9304"
+checksum = "d9c4f5dac5e15c24eb999c26181a6ca40b39fe946cbe4c263c7209467bc83af2"
+
+[[package]]
+name = "frame-analyzer"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ecf8b73c073dc52621b2026b06d712df02eb17de48a1f7aa85273dd4ec464744"
 dependencies = [
  "anyhow",
- "aya",
+ "aya 0.13.1",
  "ctor",
  "ctrlc",
  "frame-analyzer-ebpf-common",
  "libc",
- "mio 0.8.11",
- "thiserror 1.0.69",
+ "mio",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -765,7 +823,7 @@ version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "603d864e46a2ef8c86313d98faa59a73060e5bfcae59d138a80fd8adedb0a854"
 dependencies = [
- "aya",
+ "aya 0.12.0",
 ]
 
 [[package]]
@@ -931,6 +989,11 @@ name = "hashbrown"
 version = "0.15.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf151400ff0baff5465007dd2f3e717f3fe502074ca563069ce3a6629d07b289"
+dependencies = [
+ "allocator-api2",
+ "equivalent",
+ "foldhash",
+]
 
 [[package]]
 name = "heck"
@@ -1314,23 +1377,12 @@ dependencies = [
 
 [[package]]
 name = "mio"
-version = "0.8.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4a650543ca06a924e8b371db273b2756685faae30f8487da1b56505a8f78b0c"
-dependencies = [
- "libc",
- "log",
- "wasi 0.11.0+wasi-snapshot-preview1",
- "windows-sys 0.48.0",
-]
-
-[[package]]
-name = "mio"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2886843bf800fba2e3377cff24abf6379b4c4d5c6681eaf9ea5b0d15090450bd"
 dependencies = [
  "libc",
+ "log",
  "wasi 0.11.0+wasi-snapshot-preview1",
  "windows-sys 0.52.0",
 ]
@@ -1475,6 +1527,9 @@ version = "0.36.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62948e14d923ea95ea2c7c86c71013138b66525b86bdc08d2dcc262bdb497b87"
 dependencies = [
+ "crc32fast",
+ "hashbrown 0.15.2",
+ "indexmap",
  "memchr",
 ]
 
@@ -2219,7 +2274,7 @@ dependencies = [
  "backtrace",
  "bytes",
  "libc",
- "mio 1.0.3",
+ "mio",
  "pin-project-lite",
  "signal-hook-registry",
  "socket2",
@@ -2652,15 +2707,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a2ba9642430ee452d5a7aa78d72907ebe8cfda358e8cb7918a2050581322f97"
 dependencies = [
  "windows-link",
-]
-
-[[package]]
-name = "windows-sys"
-version = "0.48.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "677d2418bec65e3338edb076e806bc1ec15693c5d0104683f2efe857f61056a9"
-dependencies = [
- "windows-targets 0.48.5",
 ]
 
 [[package]]
