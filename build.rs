@@ -106,7 +106,7 @@ fn gen_module_prop(data: &CargoConfig) -> Result<()> {
 
 fn update_json(data: &CargoConfig) -> Result<()> {
     let version = &data.package.version;
-    let version_code: usize = version.replace('.', "").trim().parse()?;
+    let version_code = cal_version_code(version)?;
     let version = format!("v{version}");
 
     let zip_url =
