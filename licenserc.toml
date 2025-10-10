@@ -21,7 +21,6 @@ includes = [
     "src/**",
     "Cargo.toml",
     "build.rs",
-    "make.py",
     "maketools/**",
     "module/**",
     ".github/**",

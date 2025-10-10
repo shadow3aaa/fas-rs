@@ -99,16 +99,16 @@ We only accept commit information or comments written in Chinese or English.
 
 #### Code Style
 
-Most of the code of fas-rs is written in rust, and some compilation scripts use python. Please make sure the code is formatted before submitting and try to resolve warnings.
+Most of the code of fas-rs is written in rust. Please make sure the code is formatted before submitting and try to resolve warnings.
 
 Format all codes of fas-rs:
 
 ```bash
-python3 ./make.py fmt
+cargo xtask format
 ```
 
-Check and try to automatically fix warnings in your code:
+Run lints and try to automatically fix warnings in fas-rs:
 
 ```bash
-python3 ./make.py fix
+cargo xtask lint --fix
 ```
