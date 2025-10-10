@@ -721,7 +721,7 @@ dependencies = [
 
 [[package]]
 name = "fas-rs"
-version = "4.9.0"
+version = "4.9.1"
 dependencies = [
  "anyhow",
  "dumpsys-rs",
