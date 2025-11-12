@@ -40,7 +40,7 @@ libc = "0.2.177"
 toml = "0.9.8"
 serde = { version = "1.0.228", features = ["derive"] }
 sys-mount = { version = "3.0.1", default-features = false }
-quick-xml = { version = "0.38.3", features = ["serialize"] }
+quick-xml = { version = "0.38.4", features = ["serialize"] }
 mlua = { version = "0.11.4", features = ["luajit", "vendored", "error-send"] }
 frame-analyzer = "0.3.4"
 dumpsys-rs = { git = "https://github.com/shadow3aaa/dumpsys-rs" }
