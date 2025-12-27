@@ -44,7 +44,7 @@ quick-xml = { version = "0.38.4", features = ["serialize"] }
 mlua = { version = "0.11.4", features = ["luajit", "vendored", "error-send"] }
 frame-analyzer = "0.3.4"
 dumpsys-rs = { git = "https://github.com/shadow3aaa/dumpsys-rs" }
-mimalloc = "0.1.48"
+mimalloc = { version = "0.1.48", features = ["no_thp", "override"] }
 num_cpus = "1.17.0"
 nix = { version = "0.30.1", features = ["sched"] }
 
