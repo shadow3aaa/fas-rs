@@ -41,7 +41,7 @@ toml = "0.9.10"
 serde = { version = "1.0.228", features = ["derive"] }
 sys-mount = { version = "3.0.1", default-features = false }
 quick-xml = { version = "0.38.4", features = ["serialize"] }
-mlua = { version = "0.11.4", features = ["luajit", "vendored", "error-send"] }
+mlua = { version = "0.11.5", features = ["luajit", "vendored", "error-send"] }
 frame-analyzer = "0.3.4"
 dumpsys-rs = { git = "https://github.com/shadow3aaa/dumpsys-rs" }
 mimalloc = { version = "0.1.48", features = ["no_thp", "override"] }
