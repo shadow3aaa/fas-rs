@@ -21,11 +21,22 @@ DIR=/sdcard/Android/fas-rs
 MERGE_FLAG=$DIR/.need_merge
 LOG=$DIR/fas_log.txt
 
+wait_until_login() {
+    # in case of /data encryption is disabled
+    while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 1; done
+    # we doesn't have the permission to rw "/sdcard" before the user unlocks the screen
+    until [ -d /sdcard/Android ]; do sleep 1; done
+}
+
+wait_until_login
+
 sh $MODDIR/vtools/init_vtools.sh $(realpath $MODDIR/module.prop)
 
 resetprop fas-rs-installed true
 
 until [ -d $DIR ]; do
+	mkdir $DIR
+	cp $MODDIR/games.toml $DIR/games.toml
 	sleep 1
 done
 
