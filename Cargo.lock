@@ -2146,9 +2146,9 @@ dependencies = [
 
 [[package]]
 name = "sys-mount"
-version = "3.0.1"
+version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6acb8bb63826062d5a44b68298cf2e25b84bc151bc0c31c35a83b61f818682a"
+checksum = "d361f5431256ea04c657c0dce767ad95e24fb054d99f0b8a9275cb1c9ea14bfb"
 dependencies = [
  "bitflags",
  "libc",
